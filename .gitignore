@@ -1,0 +1,51 @@
+# Environment files and secrets
+**/.env
+**/.env.*
+!**/.env.example
+**/auth.json
+**/credentials.json
+**/*service-account*.json
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+
+# Dependencies
+**/vendor/
+**/node_modules/
+
+# Local databases and database dumps
+**/*.sqlite
+**/*.sqlite3
+**/*.db
+**/*.sql
+**/*.dump
+
+# Laravel runtime files
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*
+backend/public/build/
+
+# Test and coverage output
+**/.phpunit.cache/
+**/coverage/
+**/build/
+
+# IDE and operating-system files
+**/.idea/
+**/.vscode/
+**/.DS_Store
+**/Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+**/*.log
+**/*.tmp
+**/*.bak
+# Temporarily exclude unverified environment template
+**/.env.example
+
+**/.env.example
