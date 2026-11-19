@@ -5,6 +5,54 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Aptos', 'Segoe UI', 'Helvetica Neue', Arial, ui-sans-serif, sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+
+    --color-blue-50: #fcf8ed;
+    --color-blue-100: #f5ebcf;
+    --color-blue-200: #e9d79e;
+    --color-blue-300: #d7b85f;
+    --color-blue-400: #c29a35;
+    --color-blue-500: #a98220;
+    --color-blue-600: #896615;
+    --color-blue-700: #70520f;
+    --color-blue-800: #503b0c;
+    --color-blue-900: #342609;
+    --color-blue-950: #1b1508;
+
+    --color-slate-50: #fcfbf8;
+    --color-slate-100: #f4f2ed;
+    --color-slate-200: #e7e3d8;
+    --color-slate-300: #d2ccbd;
+    --color-slate-400: #a69e8c;
+    --color-slate-500: #756e60;
+    --color-slate-600: #575144;
+    --color-slate-700: #3f3a31;
+    --color-slate-800: #29261f;
+    --color-slate-900: #161510;
+    --color-slate-950: #090908;
+
+    --color-gray-50: #fcfbf8;
+    --color-gray-100: #f4f2ed;
+    --color-gray-200: #e7e3d8;
+    --color-gray-300: #d2ccbd;
+    --color-gray-400: #a69e8c;
+    --color-gray-500: #756e60;
+    --color-gray-600: #575144;
+    --color-gray-700: #3f3a31;
+    --color-gray-800: #29261f;
+    --color-gray-900: #161510;
+    --color-gray-950: #090908;
+
+    --color-amber-50: #fcf8ed;
+    --color-amber-100: #f5ebcf;
+    --color-amber-200: #e9d79e;
+    --color-amber-300: #d7b85f;
+    --color-amber-400: #c29a35;
+    --color-amber-500: #a98220;
+    --color-amber-600: #896615;
+    --color-amber-700: #70520f;
+    --color-amber-800: #503b0c;
+    --color-amber-900: #342609;
+    --color-amber-950: #1b1508;
 }

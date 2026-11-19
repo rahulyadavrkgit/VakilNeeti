@@ -73,7 +73,7 @@ export default function Home() {
           Everything Your Practice Needs
         </h2>
         <p className="mb-12 text-center text-slate-600">
-          Simple tools designed around an advocate's daily work.
+          Simple tools designed around an advocate&apos;s daily work.
         </p>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
@@ -103,7 +103,7 @@ export default function Home() {
       </section>
 
       <footer className="bg-slate-950 px-6 py-8 text-center text-sm text-slate-300">
-        © {new Date().getFullYear()} VakilNeeti. All rights reserved.
+        © 2026 VakilNeeti. All rights reserved.
       </footer>
     </main>
   );

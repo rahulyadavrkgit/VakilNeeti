@@ -7,12 +7,34 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        body { background: #f1f5f9; color: #1e293b; }
+        body {
+            background: #f6f4ee;
+            color: #1b1913;
+            font-family: var(--font-sans), sans-serif;
+        }
 
-        .vn-sidebar { background: #0f172a; color: #f8fafc; }
+        .vn-sidebar {
+            background: #15140f;
+            color: #fbf8ef;
+            border-right: 1px solid #342f22;
+        }
+
+        .vn-sidebar h1,
+        .vn-content h1,
+        .vn-content h2,
+        .vn-content h3,
+        #vn-auth-dialog h2,
+        #vn-share-dialog h2 {
+            font-family: var(--font-serif), serif;
+            letter-spacing: -0.02em;
+        }
+
+        .vn-main-header {
+            box-shadow: 0 1px 3px rgba(27, 25, 19, .06);
+        }
 
         .vn-nav-heading {
-            color: #94a3b8;
+            color: #c4a95c;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: .09em;
@@ -28,51 +50,70 @@
             padding: 9px 12px;
             margin: 3px 0;
             border-radius: 7px;
-            color: #e2e8f0 !important;
+            color: #eee8d8 !important;
             font-size: 13px;
             font-weight: 500;
             text-decoration: none;
         }
 
         .vn-nav-link:hover {
-            background: #334155;
+            background: #2e2a20;
             color: #fff !important;
         }
 
         .vn-nav-link.vn-active {
-            background: #1d4ed8;
+            background: #896615;
             color: #fff !important;
             font-weight: 700;
-            box-shadow: inset 3px 0 0 #93c5fd;
+            box-shadow: inset 3px 0 0 #e7cb78;
         }
 
         .vn-nav-child {
             margin-left: 12px;
             padding-left: 10px;
-            border-left: 1px solid #475569;
+            border-left: 1px solid #514a37;
         }
 
         .vn-nav-child .vn-nav-link {
             font-size: 12px;
-            color: #cbd5e1 !important;
+            color: #ddd5c1 !important;
         }
 
         .vn-nav-section {
             padding-bottom: 15px;
             margin-bottom: 15px;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid #342f22;
         }
 
-        .vn-content .text-slate-500 { color: #475569 !important; }
-        .vn-content .text-slate-600 { color: #334155 !important; }
-        .vn-content .text-slate-400 { color: #475569 !important; }
+        .vn-content .text-slate-500 { color: #655f52 !important; }
+        .vn-content .text-slate-600 { color: #4a453a !important; }
+        .vn-content .text-slate-400 { color: #756d5e !important; }
 
         .vn-content h2,
-        .vn-content h3 { color: #0f172a; }
+        .vn-content h3 { color: #171610; }
+
+        .vn-content input:focus,
+        .vn-content select:focus,
+        .vn-content textarea:focus,
+        #vn-auth-dialog input:focus,
+        #vn-auth-dialog select:focus {
+            border-color: #a98220;
+            box-shadow: 0 0 0 3px rgba(169, 130, 32, .18);
+            outline: none;
+        }
+
+        .vn-centered-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            margin: 0;
+            transform: translate(-50%, -50%);
+            max-height: 90vh;
+        }
 
         .vn-sidebar a:focus-visible,
         .vn-content a:focus-visible {
-            outline: 3px solid #60a5fa;
+            outline: 3px solid #d5b454;
             outline-offset: 2px;
         }
 
@@ -85,9 +126,13 @@
 </head>
 
 @php
-    $activeFirm = \Illuminate\Support\Facades\DB::table('firm_profiles')
-        ->where('is_active', true)
-        ->first();
+    $currentUser = auth()->user();
+    $activeFirm = $currentUser
+        ? \Illuminate\Support\Facades\DB::table('firm_profiles')
+            ->where('is_active', true)
+            ->when(!$currentUser->is_admin, fn ($query) => $query->where('user_id', $currentUser->id))
+            ->first()
+        : null;
 
     $practiceStates = [];
 $districtPracticeStates = [];
@@ -95,6 +140,7 @@ $districtPracticeStates = [];
 if ($activeFirm) {
     $practiceRows = \Illuminate\Support\Facades\DB::table('firm_practice_states')
         ->where('firm_profile_id', $activeFirm->id)
+        ->when(!$currentUser->is_admin, fn ($query) => $query->where('user_id', $currentUser->id))
         ->where('is_active', true)
         ->orderBy('state_name')
         ->get();
@@ -125,6 +171,7 @@ if ($activeFirm) {
         if ($mode === 'selected') {
             $selectedIds = \Illuminate\Support\Facades\DB::table('firm_practice_districts')
                 ->where('firm_practice_state_id', $practiceRow->id)
+                ->when(!$currentUser->is_admin, fn ($query) => $query->where('user_id', $currentUser->id))
                 ->where('is_active', true)
                 ->pluck('judicial_district_id')
                 ->all();
@@ -156,7 +203,9 @@ if ($activeFirm) {
     <aside class="vn-sidebar w-72 shrink-0 flex flex-col">
 
         <div class="px-6 py-6 border-b border-slate-700">
-            <h1 class="text-2xl font-bold tracking-wide text-white">VakilNeeti</h1>
+            <a href="{{ route('dashboard') }}" class="inline-flex rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
+                <h1 class="text-2xl font-bold tracking-wide text-white">VakilNeeti</h1>
+            </a>
             <p class="text-xs text-slate-300 mt-1">Legal Practice Management</p>
         </div>
 
@@ -164,7 +213,6 @@ if ($activeFirm) {
     $vnActiveSection = null;
 
             if (
-                request()->routeIs('dashboard') ||
                 request()->is('dashboard-studio*')
             ) {
                 $vnActiveSection = 'dashboards';
@@ -226,31 +274,6 @@ if ($activeFirm) {
 @endphp
 
 <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-2">
-
-    {{-- DASHBOARDS --}}
-    <section class="vn-nav-section">
-        <button type="button"
-            data-vn-toggle="dashboards"
-            aria-expanded="{{ $vnActiveSection === 'dashboards' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('dashboards', '/')"
-            class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
-            <span>Dashboards</span>
-            <span class="text-xs">&#9662;</span>
-        </button>
-
-        <div id="vn-submenu-dashboards" data-vn-submenu
-            class="mt-2 space-y-1"
-            @if($vnActiveSection !== 'dashboards') hidden @endif>
-            <a href="{{ route('dashboard') }}"
-               class="vn-nav-link {{ request()->routeIs('dashboard') ? 'vn-active' : '' }}">
-                Practice Dashboard
-            </a>
-            <a href="{{ route('dashboard-studio.index') }}"
-               class="vn-nav-link {{ request()->is('dashboard-studio*') ? 'vn-active' : '' }}">
-                Dashboard Studio
-            </a>
-        </div>
-    </section>
 
     {{-- COURTS --}}
     <section class="vn-nav-section">
@@ -358,6 +381,11 @@ if ($activeFirm) {
         <div id="vn-submenu-cases" data-vn-submenu
             class="mt-2 space-y-1"
             @if($vnActiveSection !== 'cases') hidden @endif>
+
+            <a href="{{ route('case-dashboard.index') }}"
+               class="vn-nav-link {{ request()->is('case-dashboard*') ? 'vn-active' : '' }}">
+                My Case Dashboard
+            </a>
 
             <a href="{{ route('cases.index') }}"
                class="vn-nav-link {{ request()->is('cases*') ? 'vn-active' : '' }}">
@@ -527,6 +555,27 @@ if ($activeFirm) {
         <span>PDF Annotator</span>
     </a>
 </section>
+    {{-- INDIA LAW AND JUSTICE DATA --}}
+    <section class="vn-nav-section">
+        <button type="button"
+            data-vn-toggle="dashboards"
+            aria-expanded="{{ $vnActiveSection === 'dashboards' ? 'true' : 'false' }}"
+            onclick="vnOpenSection('dashboards', '/dashboard-studio')"
+            class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
+            <span>India Law &amp; Justice Data</span>
+            <span class="text-xs">&#9662;</span>
+        </button>
+
+        <div id="vn-submenu-dashboards" data-vn-submenu
+            class="mt-2 space-y-1"
+            @if($vnActiveSection !== 'dashboards') hidden @endif>
+            <a href="{{ route('dashboard-studio.index') }}"
+               class="vn-nav-link {{ request()->is('dashboard-studio*') ? 'vn-active' : '' }}">
+                Create Law Data Dashboards
+            </a>
+        </div>
+    </section>
+
     {{-- PROFILE SETTINGS --}}
     <section class="vn-nav-section">
         <button type="button"
@@ -671,7 +720,7 @@ if ($activeFirm) {
 
         <header class="vn-main-header min-h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 py-3">
             <h2 class="text-lg font-bold text-slate-900">
-                @yield('page-heading', 'Dashboard')
+                @yield('page-heading', 'VakilNeeti')
             </h2>
 
             <div class="flex items-center gap-4">
@@ -680,21 +729,31 @@ if ($activeFirm) {
                 </div>
 
                 @guest
-                    <a href="{{ route('admin.login') }}"
+                    <a href="{{ route('login') }}" data-vn-auth-open="login" aria-haspopup="dialog" aria-controls="vn-auth-dialog"
                        class="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
-                        Administrator sign in
+                        Log in
                     </a>
-                @endguest
-
-                @if(auth()->check() && auth()->user()->is_admin)
-                    <form method="POST" action="{{ route('admin.logout') }}">
+                    <a href="{{ route('register') }}" data-vn-auth-open="register" aria-haspopup="dialog" aria-controls="vn-auth-dialog"
+                       class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                        Create account
+                    </a>
+                @else
+                    <span class="hidden text-sm font-medium text-slate-600 sm:inline">
+                        {{ auth()->user()->name }}
+                    </span>
+                    <form method="POST" action="{{ auth()->user()->is_admin ? route('admin.logout') : route('user.logout') }}">
                         @csrf
                         <button type="submit"
                             class="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
                             Logout
                         </button>
                     </form>
-                @endif
+                @endguest
+
+                <button type="button" id="vn-share-open" aria-haspopup="dialog" aria-controls="vn-share-dialog"
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    Share
+                </button>
             </div>
         </header>
 
@@ -715,6 +774,278 @@ if ($activeFirm) {
 </div>
 
 @stack('scripts')
+
+<dialog id="vn-auth-dialog" aria-labelledby="vn-auth-title"
+        class="vn-centered-dialog w-[94vw] max-w-lg overflow-y-auto rounded-2xl border border-slate-200 p-0 shadow-2xl backdrop:bg-slate-900/60">
+    <div class="p-6 sm:p-8">
+        <div class="mb-5 flex items-start justify-between gap-4">
+            <div>
+                <h2 id="vn-auth-title" class="text-xl font-bold text-slate-900">Log in to VakilNeeti</h2>
+                <p id="vn-auth-description" class="mt-1 text-sm text-slate-600">Access your private workspace and work records.</p>
+            </div>
+            <button type="button" id="vn-auth-close" aria-label="Close account dialog"
+                    class="rounded-lg px-3 py-1 text-xl text-slate-500 hover:bg-slate-100">&times;</button>
+        </div>
+
+        <section data-vn-auth-panel="login">
+            @if(session('status'))
+                <div role="status" class="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">{{ session('status') }}</div>
+            @endif
+            @if($errors->login->any())
+                <div role="alert" class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    @foreach($errors->login->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+            <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label for="vn-login-identifier" class="mb-1 block text-sm font-medium text-slate-700">Email or mobile number</label>
+                    <input id="vn-login-identifier" name="identifier" value="{{ old('identifier') }}" required
+                           autocomplete="username" class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <div>
+                    <label for="vn-login-password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+                    <input id="vn-login-password" type="password" name="password" required
+                           autocomplete="current-password" class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <label class="flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="remember" value="1">
+                    Remember me
+                </label>
+                <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                    Log in
+                </button>
+            </form>
+            <p class="mt-5 text-center text-sm text-slate-600">
+                New to VakilNeeti?
+                <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-blue-700 underline">Create an account</a>
+            </p>
+        </section>
+
+        <section data-vn-auth-panel="register" hidden>
+            @if($errors->registration->any())
+                <div role="alert" class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    @foreach($errors->registration->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+            <form method="POST" action="{{ route('register.send-otp') }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label for="vn-register-name" class="mb-1 block text-sm font-medium text-slate-700">Full name</label>
+                    <input id="vn-register-name" name="name" value="{{ old('name') }}" required maxlength="150"
+                           autocomplete="name" class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <div>
+                    <label for="vn-register-channel" class="mb-1 block text-sm font-medium text-slate-700">Register using</label>
+                    <select id="vn-register-channel" name="channel" class="w-full rounded-lg border border-slate-300 p-3" required>
+                        <option value="email" {{ old('channel', 'email') === 'email' ? 'selected' : '' }}>Email address</option>
+                        <option value="mobile" {{ old('channel') === 'mobile' ? 'selected' : '' }}>Mobile number</option>
+                    </select>
+                </div>
+                <div id="vn-register-email-field">
+                    <label for="vn-register-email" class="mb-1 block text-sm font-medium text-slate-700">Email address</label>
+                    <input id="vn-register-email" type="email" name="email" value="{{ old('email') }}"
+                           autocomplete="email" class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <div id="vn-register-mobile-field" hidden>
+                    <label for="vn-register-mobile" class="mb-1 block text-sm font-medium text-slate-700">Mobile number</label>
+                    <input id="vn-register-mobile" type="tel" name="mobile" value="{{ old('mobile') }}"
+                           placeholder="10-digit Indian mobile number or +91..." autocomplete="tel"
+                           class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <div>
+                    <label for="vn-register-password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+                    <input id="vn-register-password" type="password" name="password" required minlength="8"
+                           autocomplete="new-password" class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <div>
+                    <label for="vn-register-confirm-password" class="mb-1 block text-sm font-medium text-slate-700">Confirm password</label>
+                    <input id="vn-register-confirm-password" type="password" name="password_confirmation" required minlength="8"
+                           autocomplete="new-password" class="w-full rounded-lg border border-slate-300 p-3">
+                </div>
+                <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                    Send verification OTP
+                </button>
+            </form>
+            <p class="mt-5 text-center text-sm text-slate-600">
+                Already registered?
+                <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-blue-700 underline">Log in</a>
+            </p>
+        </section>
+
+        <section data-vn-auth-panel="verify" hidden>
+            @if(session('status'))
+                <div role="status" class="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">{{ session('status') }}</div>
+            @endif
+            @if($errors->verification->any())
+                <div role="alert" class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    @foreach($errors->verification->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+            <p class="mb-5 text-sm text-slate-600">Enter the six-digit OTP sent to your selected contact method.</p>
+            <form method="POST" action="{{ route('register.verify.submit') }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label for="vn-register-otp" class="mb-1 block text-sm font-medium text-slate-700">Six-digit OTP</label>
+                    <input id="vn-register-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                           required autocomplete="one-time-code"
+                           class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
+                </div>
+                <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                    Verify and create account
+                </button>
+            </form>
+            <form method="POST" action="{{ route('register.resend-otp') }}" class="mt-4 text-center">
+                @csrf
+                <button type="submit" class="text-sm font-semibold text-blue-700 underline">Resend OTP</button>
+            </form>
+            <p class="mt-5 text-center text-sm">
+                <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-blue-700 underline">Start again</a>
+            </p>
+        </section>
+    </div>
+</dialog>
+
+<dialog id="vn-share-dialog" aria-labelledby="vn-share-title"
+        class="vn-centered-dialog w-[94vw] max-w-md overflow-y-auto rounded-2xl border border-slate-200 p-0 shadow-2xl backdrop:bg-slate-900/60">
+    <div class="p-6">
+        <div class="mb-3 flex items-start justify-between gap-4">
+            <h2 id="vn-share-title" class="text-xl font-bold text-slate-900">Share this page</h2>
+            <button type="button" id="vn-share-close" aria-label="Close share dialog"
+                    class="rounded-lg px-3 py-1 text-xl text-slate-500 hover:bg-slate-100">&times;</button>
+        </div>
+        <p class="mb-5 text-sm text-slate-600">
+            Share selected text and this page link, or just the page title and link. Private pages still require an account.
+        </p>
+        <div class="grid gap-3 sm:grid-cols-2">
+            <a id="vn-share-whatsapp" href="#" target="_blank" rel="noopener noreferrer" data-direct-share
+               class="rounded-lg bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-green-700">
+                WhatsApp
+            </a>
+            <a id="vn-share-sms" href="#"
+               class="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Text message
+            </a>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    (function () {
+        const authDialog = document.getElementById('vn-auth-dialog');
+        const authClose = document.getElementById('vn-auth-close');
+        const authPanels = document.querySelectorAll('[data-vn-auth-panel]');
+        const authTitle = document.getElementById('vn-auth-title');
+        const authDescription = document.getElementById('vn-auth-description');
+        const authModes = {
+            login: {
+                title: 'Log in to VakilNeeti',
+                description: 'Access your private workspace and work records.'
+            },
+            register: {
+                title: 'Create your VakilNeeti account',
+                description: 'Set up your individual workspace.'
+            },
+            verify: {
+                title: 'Verify your account',
+                description: 'Confirm your email address or mobile number.'
+            }
+        };
+        const shareDialog = document.getElementById('vn-share-dialog');
+        const shareOpen = document.getElementById('vn-share-open');
+        const shareClose = document.getElementById('vn-share-close');
+        const whatsappLink = document.getElementById('vn-share-whatsapp');
+        const smsLink = document.getElementById('vn-share-sms');
+        const registrationChannel = document.getElementById('vn-register-channel');
+        const registrationEmailField = document.getElementById('vn-register-email-field');
+        const registrationMobileField = document.getElementById('vn-register-mobile-field');
+        const registrationEmail = document.getElementById('vn-register-email');
+        const registrationMobile = document.getElementById('vn-register-mobile');
+
+        function showAuth(mode) {
+            authPanels.forEach(function (panel) {
+                panel.hidden = panel.dataset.vnAuthPanel !== mode;
+            });
+            authTitle.textContent = authModes[mode].title;
+            authDescription.textContent = authModes[mode].description;
+
+            if (!authDialog.open) {
+                authDialog.showModal();
+            }
+
+            const firstField = document.querySelector(
+                '[data-vn-auth-panel="' + mode + '"] input, [data-vn-auth-panel="' + mode + '"] select'
+            );
+            if (firstField) {
+                firstField.focus();
+            }
+        }
+
+        document.querySelectorAll('[data-vn-auth-open]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                if (authDialog && typeof authDialog.showModal === 'function') {
+                    event.preventDefault();
+                    showAuth(link.dataset.vnAuthOpen);
+                }
+            });
+        });
+
+        authClose.addEventListener('click', function () {
+            authDialog.close();
+        });
+
+        authDialog.addEventListener('click', function (event) {
+            if (event.target === authDialog) {
+                authDialog.close();
+            }
+        });
+
+        function updateRegistrationFields() {
+            const useEmail = registrationChannel.value === 'email';
+            registrationEmailField.hidden = !useEmail;
+            registrationMobileField.hidden = useEmail;
+            registrationEmail.required = useEmail;
+            registrationMobile.required = !useEmail;
+        }
+
+        registrationChannel.addEventListener('change', updateRegistrationFields);
+        updateRegistrationFields();
+
+        shareOpen.addEventListener('click', function () {
+            const selection = window.getSelection ? window.getSelection() : null;
+            const selectedText = selection ? selection.toString().trim() : '';
+            const sharedText = (selectedText || document.title) + '\n' + window.location.href;
+            const encodedText = encodeURIComponent(sharedText);
+            whatsappLink.href = 'https://wa.me/?text=' + encodedText;
+            smsLink.href = 'sms:?body=' + encodedText;
+            shareDialog.showModal();
+        });
+
+        shareClose.addEventListener('click', function () {
+            shareDialog.close();
+        });
+
+        shareDialog.addEventListener('click', function (event) {
+            if (event.target === shareDialog) {
+                shareDialog.close();
+            }
+        });
+
+        @if(request()->routeIs('login') || session('show_login_modal') || $errors->login->any())
+            showAuth('login');
+        @elseif(request()->routeIs('register.verify') || session('show_verify_modal') || $errors->verification->any())
+            showAuth('verify');
+        @elseif(request()->routeIs('register') || session('show_register_modal') || $errors->registration->any())
+            showAuth('register');
+        @endif
+    }());
+</script>
 
 <dialog id="vn-webview-dialog" class="h-[92vh] w-[94vw] max-w-[1500px] rounded-2xl border-0 p-0 shadow-2xl">
     <div class="flex h-full flex-col bg-slate-100">
@@ -748,18 +1079,28 @@ if ($activeFirm) {
         const newTab = document.getElementById('vn-webview-new-tab');
 
         document.querySelectorAll('a[href]').forEach(function (link) {
+            if (link.hasAttribute('data-direct-share')) return;
+
             const href = link.getAttribute('href');
             if (!/^https?:\/\//i.test(href)) return;
 
             link.addEventListener('click', function (event) {
-                event.preventDefault();
                 const url = new URL(href, window.location.origin);
-                const allowedHost = url.hostname && !['localhost', '127.0.0.1', '::1'].includes(url.hostname);
-                if (!allowedHost) {
-                    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+                const currentHost = window.location.hostname.toLowerCase();
+                const targetHost = url.hostname.toLowerCase();
+                const localHosts = ['localhost', '127.0.0.1', '::1'];
+                const sameSite = targetHost === currentHost ||
+                    (localHosts.includes(targetHost) && localHosts.includes(currentHost));
+
+                if (sameSite) {
+                    if (url.origin !== window.location.origin || link.target.toLowerCase() === '_blank') {
+                        event.preventDefault();
+                        window.location.assign(url.toString());
+                    }
                     return;
                 }
 
+                event.preventDefault();
                 hostLabel.textContent = url.hostname;
                 newTab.href = url.toString();
                 frame.src = url.toString();

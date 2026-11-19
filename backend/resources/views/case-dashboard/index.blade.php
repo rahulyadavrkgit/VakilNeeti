@@ -1,20 +1,29 @@
 @extends('layouts.app')
 
+@section('title', 'My Case & Hearing Dashboard')
+@section('page-heading', 'My Case & Hearing Dashboard')
+
 @section('content')
 <div class="space-y-6">
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Case Management Dashboard</h1>
-            <p class="mt-1 text-sm text-slate-500">Your cases, hearing schedule and case-related deadlines.</p>
+            <h1 class="text-2xl font-bold text-slate-800">My Case &amp; Hearing Dashboard</h1>
+            <p class="mt-1 text-sm text-slate-500">Your private case diary and hearing schedule. India-wide public statistics are in Law Data Dashboards.</p>
         </div>
 
         <div class="flex flex-wrap gap-2">
+            <a href="{{ route('dashboard-studio.index') }}" class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100">
+                India Law Data
+            </a>
             <a href="{{ route('cases.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                 My Cases
             </a>
             <a href="{{ route('cases.calendar') }}" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                 Open Calendar
+            </a>
+            <a href="{{ route('tasks.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Tasks
             </a>
         </div>
     </div>
@@ -71,6 +80,61 @@
         </div>
     </section>
 
+    <section class="grid gap-4 xl:grid-cols-2">
+        <div class="rounded-xl border border-blue-200 bg-white">
+            <div class="border-b border-blue-100 bg-blue-50 p-5">
+                <h2 class="font-semibold text-slate-800">Today's Hearings</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ now()->format('d M Y') }}</p>
+            </div>
+            <div class="divide-y divide-slate-100">
+                @forelse($todayHearings as $hearing)
+                    <div class="p-4">
+                        <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-blue-700 hover:underline">
+                            {{ $hearing->case_title }}
+                        </a>
+                        <p class="mt-1 text-sm text-slate-600">
+                            {{ $hearing->case_number ?: 'Case number unavailable' }}
+                            · {{ $hearing->court_name ?: 'Court not specified' }}
+                        </p>
+                        @if($hearing->hearing_time || $hearing->hearing_stage)
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ $hearing->hearing_time ?: '' }}
+                                @if($hearing->hearing_time && $hearing->hearing_stage) · @endif
+                                {{ $hearing->hearing_stage ?: '' }}
+                            </p>
+                        @endif
+                    </div>
+                @empty
+                    <p class="p-5 text-sm text-slate-500">No hearings scheduled for today.</p>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-amber-200 bg-white">
+            <div class="border-b border-amber-100 bg-amber-50 p-5">
+                <h2 class="font-semibold text-amber-900">Past Hearing Dates — Review Required</h2>
+                <p class="mt-1 text-sm text-amber-800">Confirm the official case status before updating a date.</p>
+            </div>
+            <div class="divide-y divide-slate-100">
+                @forelse($pastDueHearings as $hearing)
+                    <div class="flex flex-wrap justify-between gap-3 p-4">
+                        <div>
+                            <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-blue-700 hover:underline">
+                                {{ $hearing->case_title }}
+                            </a>
+                            <p class="mt-1 text-sm text-slate-600">{{ $hearing->case_number ?: 'Case number unavailable' }}</p>
+                        </div>
+                        <p class="text-sm font-semibold text-amber-800">
+                            {{ \Carbon\Carbon::parse($hearing->next_hearing_date)->format('d M Y') }}
+                        </p>
+                    </div>
+                @empty
+                    <p class="p-5 text-sm text-slate-500">No past hearing dates require review.</p>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
     {{-- Upcoming hearings --}}
     <section class="rounded-xl border border-slate-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
@@ -122,38 +186,6 @@
         </div>
     </section>
 
-    {{-- Case-related tasks --}}
-    <section class="rounded-xl border border-slate-200 bg-white">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
-            <div>
-                <h2 class="font-semibold text-slate-800">Case-related Tasks &amp; Deadlines</h2>
-                <p class="mt-1 text-sm text-slate-500">Pending tasks associated with your cases.</p>
-            </div>
-            <a href="{{ route('tasks.index') }}" class="text-sm font-medium text-blue-600 hover:underline">All Tasks</a>
-        </div>
-
-        <div class="divide-y divide-slate-100">
-            @forelse($pendingTasks as $task)
-                <div class="p-4">
-                    <p class="font-medium text-slate-800">{{ $task->title }}</p>
-                    <a href="{{ route('cases.show', $task->legal_case_id) }}" class="mt-1 inline-block text-sm text-blue-600 hover:underline">
-                        {{ $task->case_title }}
-                        @if($task->case_number)
-                            ({{ $task->case_number }})
-                        @endif
-                    </a>
-                    <div class="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                        <span>Priority: {{ ucfirst($task->priority) }}</span>
-                        <span>Status: {{ ucfirst(str_replace('_', ' ', $task->status)) }}</span>
-                        <span>Due: {{ $task->due_at ? \Carbon\Carbon::parse($task->due_at)->format('d M Y, h:i A') : 'Not set' }}</span>
-                    </div>
-                </div>
-            @empty
-                <p class="p-6 text-sm text-slate-500">No pending case-related tasks.</p>
-            @endforelse
-        </div>
-    </section>
-
     {{-- Recently updated cases --}}
     <section class="rounded-xl border border-slate-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
@@ -199,6 +231,35 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </section>
+
+    <section class="rounded-xl border border-slate-200 bg-white">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
+            <div>
+                <h2 class="font-semibold text-slate-800">Recent Hearing History</h2>
+                <p class="mt-1 text-sm text-slate-500">Recorded hearings in your case diary.</p>
+            </div>
+            <a href="{{ route('hearings.history') }}" class="text-sm font-medium text-blue-600 hover:underline">Full Hearing History</a>
+        </div>
+        <div class="divide-y divide-slate-100">
+            @forelse($recentHearings as $hearing)
+                <div class="p-4">
+                    <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-blue-700 hover:underline">
+                        {{ $hearing->case_title }}
+                    </a>
+                    <p class="mt-1 text-sm text-slate-600">
+                        {{ $hearing->case_number ?: 'Case number unavailable' }}
+                        · {{ $hearing->hearing_date ? \Carbon\Carbon::parse($hearing->hearing_date)->format('d M Y') : 'Date unavailable' }}
+                        · {{ $hearing->court_name ?: 'Court not specified' }}
+                    </p>
+                    @if($hearing->hearing_stage)
+                        <p class="mt-1 text-xs text-slate-500">Stage: {{ $hearing->hearing_stage }}</p>
+                    @endif
+                </div>
+            @empty
+                <p class="p-5 text-sm text-slate-500">No hearing history is available.</p>
+            @endforelse
         </div>
     </section>
 

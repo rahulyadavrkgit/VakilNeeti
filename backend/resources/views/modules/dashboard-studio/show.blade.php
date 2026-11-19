@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', $dashboard->title)
+@section('page-heading', $dashboard->title)
+
 @section('content')
 <style>
     .ds-wrap{max-width:1450px;margin:25px auto;padding:0 20px;color:var(--vn-text,#1f2937)}

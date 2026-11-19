@@ -11,6 +11,39 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
+        $activeStatuses = ['pending', 'in_progress'];
+        $today = today();
+
+        $totalTasks = Task::count();
+        $pendingTasksCount = Task::whereIn('status', $activeStatuses)->count();
+        $completedTasksCount = Task::where('status', 'completed')->count();
+        $overdueTasksCount = Task::whereNotNull('due_at')
+            ->where('due_at', '<', now())
+            ->whereIn('status', $activeStatuses)
+            ->count();
+
+        $overdueTasks = Task::with(['client', 'legalCase'])
+            ->whereNotNull('due_at')
+            ->where('due_at', '<', now())
+            ->whereIn('status', $activeStatuses)
+            ->orderBy('due_at')
+            ->limit(6)
+            ->get();
+
+        $todayTasks = Task::with(['client', 'legalCase'])
+            ->whereDate('due_at', $today)
+            ->whereIn('status', $activeStatuses)
+            ->orderBy('due_at')
+            ->limit(6)
+            ->get();
+
+        $upcomingTasks = Task::with(['client', 'legalCase'])
+            ->where('due_at', '>', $today->copy()->endOfDay())
+            ->whereIn('status', $activeStatuses)
+            ->orderBy('due_at')
+            ->limit(6)
+            ->get();
+
         $query = Task::with(['client', 'legalCase'])->latest();
 
         if ($request->filled('status') &&
@@ -25,7 +58,16 @@ class TaskController extends Controller
 
         $tasks = $query->paginate(15)->withQueryString();
 
-        return view('tasks.index', compact('tasks'));
+        return view('tasks.index', compact(
+            'tasks',
+            'totalTasks',
+            'pendingTasksCount',
+            'completedTasksCount',
+            'overdueTasksCount',
+            'overdueTasks',
+            'todayTasks',
+            'upcomingTasks'
+        ));
     }
 
     public function create(Request $request)

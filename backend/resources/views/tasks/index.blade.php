@@ -15,7 +15,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h2 class="text-xl font-bold text-slate-900">Tasks & Reminders</h2>
-            <p class="text-sm text-slate-500">Manage client-related and case-related work.</p>
+            <p class="text-sm text-slate-500">Track your work, deadlines and reminders separately from India-wide legal data dashboards.</p>
         </div>
 
         <a href="{{ route('tasks.create') }}"
@@ -23,6 +23,61 @@
             + Create Task
         </a>
     </div>
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-5">
+            <p class="text-sm font-medium text-slate-500">All Tasks</p>
+            <p class="mt-2 text-3xl font-bold text-slate-800">{{ $totalTasks }}</p>
+        </div>
+        <div class="rounded-xl border border-amber-200 bg-white p-5">
+            <p class="text-sm font-medium text-slate-500">Open Tasks</p>
+            <p class="mt-2 text-3xl font-bold text-amber-700">{{ $pendingTasksCount }}</p>
+        </div>
+        <div class="rounded-xl border border-red-200 bg-white p-5">
+            <p class="text-sm font-medium text-slate-500">Overdue</p>
+            <p class="mt-2 text-3xl font-bold text-red-700">{{ $overdueTasksCount }}</p>
+            <p class="mt-1 text-xs text-slate-500">Showing up to 6 overdue tasks below</p>
+        </div>
+        <div class="rounded-xl border border-green-200 bg-white p-5">
+            <p class="text-sm font-medium text-slate-500">Completed Tasks</p>
+            <p class="mt-2 text-3xl font-bold text-green-700">{{ $completedTasksCount }}</p>
+        </div>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-3">
+        @foreach([
+            ['title' => 'Overdue Tasks', 'items' => $overdueTasks, 'color' => 'red'],
+            ["title" => "Today's Tasks", 'items' => $todayTasks, 'color' => 'blue'],
+            ['title' => 'Upcoming Tasks', 'items' => $upcomingTasks, 'color' => 'amber'],
+        ] as $taskGroup)
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-5 py-4">
+                    <h3 class="font-bold text-slate-900">{{ $taskGroup['title'] }}</h3>
+                    <p class="mt-1 text-xs text-slate-500">{{ $taskGroup['items']->count() }} shown</p>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    @forelse($taskGroup['items'] as $task)
+                        <div class="p-4">
+                            <a href="{{ route('tasks.show', $task) }}" class="font-semibold text-blue-700 hover:underline">
+                                {{ $task->title }}
+                            </a>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ $task->client?->display_name ?: 'No client linked' }}
+                                @if($task->legalCase)
+                                    · {{ $task->legalCase->case_title }}
+                                @endif
+                            </p>
+                            <p class="mt-1 text-xs {{ $taskGroup['color'] === 'red' ? 'font-semibold text-red-700' : 'text-slate-600' }}">
+                                Due: {{ $task->due_at?->format('d M Y, h:i A') ?? 'Not scheduled' }}
+                            </p>
+                        </div>
+                    @empty
+                        <p class="p-4 text-sm text-slate-500">No {{ strtolower($taskGroup['title']) }}.</p>
+                    @endforelse
+                </div>
+            </div>
+        @endforeach
+    </section>
 
     <form method="GET" action="{{ route('tasks.index') }}"
           class="flex flex-wrap gap-3 rounded-xl border bg-white p-4">

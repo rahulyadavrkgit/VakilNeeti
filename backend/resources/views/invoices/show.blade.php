@@ -18,7 +18,6 @@
 
         <div class="flex flex-wrap gap-2">
     <a href="{{ route('invoices.pdf', $invoice) }}"
-       target="_blank"
        class="rounded-lg bg-blue-700 px-5 py-2 text-white hover:bg-blue-800">
         Download PDF
     </a>

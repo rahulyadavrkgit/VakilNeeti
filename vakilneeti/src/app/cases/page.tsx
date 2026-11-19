@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import CaseForm from "../components/CaseForm";
 
 type CaseRecord = {
@@ -99,7 +100,9 @@ export default function CasesPage() {
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-blue-700">
-              VakilNeeti / Dashboard
+              <Link href="/dashboard" className="hover:underline">
+                VakilNeeti / Dashboard
+              </Link>
             </p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">
               My Cases

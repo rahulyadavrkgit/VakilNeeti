@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Dashboard() {
   const stats = [
     { title: "Total Cases", value: "125", icon: "⚖️" },
@@ -15,9 +17,19 @@ export default function Dashboard() {
         </h1>
 
         <nav className="space-y-4">
+          <Link
+            href="/dashboard"
+            className="block rounded-lg p-3 hover:bg-blue-800"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/cases"
+            className="block rounded-lg p-3 hover:bg-blue-800"
+          >
+            My Cases
+          </Link>
           {[
-            "Dashboard",
-            "My Cases",
             "Hearing Calendar",
             "Today's Hearings",
             "Tasks & Reminders",
@@ -25,12 +37,13 @@ export default function Dashboard() {
             "Documents",
             "Settings",
           ].map((item) => (
-            <div
+            <span
               key={item}
-              className="cursor-pointer rounded-lg p-3 hover:bg-blue-800"
+              className="block rounded-lg p-3 text-blue-100"
+              aria-disabled="true"
             >
               {item}
-            </div>
+            </span>
           ))}
         </nav>
       </aside>

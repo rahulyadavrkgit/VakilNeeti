@@ -1,11 +1,14 @@
 @extends('layouts.app')
 
+@section('title', 'India Law & Justice Data Dashboards')
+@section('page-heading', 'India Law & Justice Data Dashboards')
+
 @section('content')
 <div style="max-width:1200px;margin:25px auto;padding:0 20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
         <div>
-            <h1 style="font-size:28px;font-weight:700;">Dashboard Studio</h1>
-            <p style="color:#64748b;">Create and manage independent data dashboards.</p>
+            <h1 style="font-size:28px;font-weight:700;">India Law &amp; Justice Data Dashboards</h1>
+            <p style="color:#64748b;">Build public-data dashboards to understand case pendency and disposal across India. These dashboards are separate from your private case-management records.</p>
         </div>
         <span style="font-size:12px;background:#e0f2fe;color:#075985;padding:7px 12px;border-radius:20px;">
             Administrator workspace
@@ -26,15 +29,40 @@
         </div>
     @endif
 
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin:20px 0;">
+        <h2 style="font-size:19px;font-weight:650;margin-bottom:8px;color:#1e3a8a;">Suggested India case-statistics dashboards</h2>
+        <p style="color:#475569;font-size:14px;margin-bottom:15px;">
+            Create dashboards for court-level pendency and disposal, state-wise High Court comparisons,
+            or district and subordinate court trends. Add verified official datasets as sources before displaying figures.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
+            <div style="background:white;border:1px solid #dbeafe;border-radius:8px;padding:13px;">
+                <strong>Court-level overview</strong>
+                <p style="color:#64748b;font-size:13px;margin-top:5px;">Compare pending and disposed cases by court level.</p>
+            </div>
+            <div style="background:white;border:1px solid #dbeafe;border-radius:8px;padding:13px;">
+                <strong>High Court comparison</strong>
+                <p style="color:#64748b;font-size:13px;margin-top:5px;">Explore state-wise pendency and disposal data.</p>
+            </div>
+            <div style="background:white;border:1px solid #dbeafe;border-radius:8px;padding:13px;">
+                <strong>District court trends</strong>
+                <p style="color:#64748b;font-size:13px;margin-top:5px;">Review district-level and year-wise case trends.</p>
+            </div>
+        </div>
+        <p style="color:#64748b;font-size:12px;margin-top:12px;">
+            Figures are not prefilled; they appear only after you connect and test an official data.gov.in resource.
+        </p>
+    </div>
+
     <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:25px 0;">
-        <h2 style="font-size:19px;font-weight:650;margin-bottom:15px;">Create a dashboard</h2>
+        <h2 style="font-size:19px;font-weight:650;margin-bottom:15px;">Create a law data dashboard</h2>
 
         <form method="POST" action="{{ route('dashboard-studio.store') }}">
             @csrf
             <div style="margin-bottom:12px;">
                 <label for="title" style="display:block;font-weight:600;margin-bottom:6px;">Dashboard name</label>
                 <input id="title" name="title" required maxlength="150"
-                       placeholder="Example: District Court Statistics"
+                       placeholder="Example: High Court Pendency by State"
                        style="width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:7px;">
             </div>
 

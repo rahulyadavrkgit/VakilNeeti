@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -47,7 +48,7 @@ class UserRegistrationController extends Controller
 
     public function sendOtp(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:150'],
             'channel' => ['required', 'in:email,mobile'],
             'email' => ['nullable', 'required_if:channel,email', 'email', 'max:255'],
@@ -55,13 +56,24 @@ class UserRegistrationController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator, 'registration')
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('show_register_modal', true);
+        }
+
+        $validated = $validator->validated();
+
         try {
             $mobile = $validated['channel'] === 'mobile'
                 ? $this->normalizeMobile($validated['mobile'])
                 : null;
         } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['mobile' => $e->getMessage()])
-                ->withInput($request->except('password', 'password_confirmation'));
+            return back()
+                ->withErrors(['mobile' => $e->getMessage()], 'registration')
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('show_register_modal', true);
         }
 
         $email = $validated['channel'] === 'email'
@@ -69,21 +81,27 @@ class UserRegistrationController extends Controller
             : null;
 
         if ($email && User::where('email', $email)->exists()) {
-            return back()->withErrors(['email' => 'This email address is already registered.'])
-                ->withInput($request->except('password', 'password_confirmation'));
+            return back()
+                ->withErrors(['email' => 'This email address is already registered.'], 'registration')
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('show_register_modal', true);
         }
 
         if ($mobile && User::where('mobile', $mobile)->exists()) {
-            return back()->withErrors(['mobile' => 'This mobile number is already registered.'])
-                ->withInput($request->except('password', 'password_confirmation'));
+            return back()
+                ->withErrors(['mobile' => 'This mobile number is already registered.'], 'registration')
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('show_register_modal', true);
         }
 
         $key = 'registration-otp:' . ($email ?: $mobile);
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            return back()->withErrors([
-                'identifier' => 'Too many OTP requests. Please try again later.'
-            ]);
+            return back()
+                ->withErrors([
+                    'identifier' => 'Too many OTP requests. Please try again later.'
+                ], 'registration')
+                ->with('show_register_modal', true);
         }
 
         $existing = DB::table('user_registration_otps')
@@ -98,9 +116,12 @@ class UserRegistrationController extends Controller
 
         if ($existing && $existing->last_sent_at &&
             Carbon::parse($existing->last_sent_at)->addSeconds(60)->isFuture()) {
-            return back()->withErrors([
-                'identifier' => 'Please wait 60 seconds before requesting another OTP.'
-            ])->withInput($request->except('password', 'password_confirmation'));
+            return back()
+                ->withErrors([
+                    'identifier' => 'Please wait 60 seconds before requesting another OTP.'
+                ], 'registration')
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('show_register_modal', true);
         }
 
         $otp = (string) random_int(100000, 999999);
@@ -112,9 +133,12 @@ class UserRegistrationController extends Controller
                 if ($mailer === 'log' || $mailer === 'array' ||
                     empty(config('mail.mailers.smtp.username')) ||
                     empty(config('mail.mailers.smtp.password'))) {
-                    return back()->withErrors([
-                        'email' => 'Email OTP delivery is not configured. Configure SMTP before registering.'
-                    ])->withInput($request->except('password', 'password_confirmation'));
+                    return back()
+                        ->withErrors([
+                            'email' => 'Email OTP delivery is not configured. Configure SMTP before registering.'
+                        ], 'registration')
+                        ->withInput($request->except('password', 'password_confirmation'))
+                        ->with('show_register_modal', true);
                 }
 
                 Mail::raw(
@@ -129,9 +153,12 @@ class UserRegistrationController extends Controller
                 $from = config('vakilneeti.twilio_from');
 
                 if (!$sid || !$token || !$from) {
-                    return back()->withErrors([
-                        'mobile' => 'SMS OTP delivery is not configured. Configure the SMS provider before registering.'
-                    ])->withInput($request->except('password', 'password_confirmation'));
+                    return back()
+                        ->withErrors([
+                            'mobile' => 'SMS OTP delivery is not configured. Configure the SMS provider before registering.'
+                        ], 'registration')
+                        ->withInput($request->except('password', 'password_confirmation'))
+                        ->with('show_register_modal', true);
                 }
 
                 $response = Http::asForm()
@@ -143,17 +170,23 @@ class UserRegistrationController extends Controller
                     ]);
 
                 if (!$response->successful()) {
-                    return back()->withErrors([
-                        'mobile' => 'The SMS provider could not send the OTP. Check your SMS configuration.'
-                    ])->withInput($request->except('password', 'password_confirmation'));
+                    return back()
+                        ->withErrors([
+                            'mobile' => 'The SMS provider could not send the OTP. Check your SMS configuration.'
+                        ], 'registration')
+                        ->withInput($request->except('password', 'password_confirmation'))
+                        ->with('show_register_modal', true);
                 }
             }
         } catch (\Throwable $e) {
             report($e);
 
-            return back()->withErrors([
-                'identifier' => 'OTP delivery failed. Check your email or SMS provider configuration.'
-            ])->withInput($request->except('password', 'password_confirmation'));
+            return back()
+                ->withErrors([
+                    'identifier' => 'OTP delivery failed. Check your email or SMS provider configuration.'
+                ], 'registration')
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('show_register_modal', true);
         }
 
         RateLimiter::hit($key, 3600);
@@ -194,7 +227,8 @@ class UserRegistrationController extends Controller
     {
         if (!$request->session()->has('pending_user_registration')) {
             return redirect()->route('register')
-                ->withErrors(['registration' => 'Start registration first.']);
+                ->withErrors(['registration' => 'Start registration first.'], 'registration')
+                ->with('show_register_modal', true);
         }
 
         return view('auth.user-verify');
@@ -202,15 +236,22 @@ class UserRegistrationController extends Controller
 
     public function verifyOtp(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'otp' => ['required', 'digits:6'],
         ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator, 'verification')
+                ->with('show_verify_modal', true);
+        }
 
         $pending = $request->session()->get('pending_user_registration');
 
         if (!$pending) {
             return redirect()->route('register')
-                ->withErrors(['registration' => 'Your registration session expired. Start again.']);
+                ->withErrors(['registration' => 'Your registration session expired. Start again.'], 'registration')
+                ->with('show_register_modal', true);
         }
 
         $column = $pending['channel'] === 'email'
@@ -223,11 +264,14 @@ class UserRegistrationController extends Controller
 
         if (!$record || Carbon::parse($record->expires_at)->isPast()) {
             return redirect()->route('register')
-                ->withErrors(['otp' => 'OTP expired. Please start registration again.']);
+                ->withErrors(['otp' => 'OTP expired. Please start registration again.'], 'registration')
+                ->with('show_register_modal', true);
         }
 
         if ($record->attempts >= 5) {
-            return back()->withErrors(['otp' => 'Maximum verification attempts reached. Start registration again.']);
+            return back()
+                ->withErrors(['otp' => 'Maximum verification attempts reached. Start registration again.'], 'verification')
+                ->with('show_verify_modal', true);
         }
 
         DB::table('user_registration_otps')
@@ -235,7 +279,9 @@ class UserRegistrationController extends Controller
             ->increment('attempts');
 
         if (!$record->$column || !Hash::check($request->otp, $record->$column)) {
-            return back()->withErrors(['otp' => 'Incorrect OTP. Please try again.']);
+            return back()
+                ->withErrors(['otp' => 'Incorrect OTP. Please try again.'], 'verification')
+                ->with('show_verify_modal', true);
         }
 
         $user = DB::transaction(function () use ($pending, $record) {
@@ -277,7 +323,8 @@ class UserRegistrationController extends Controller
 
         if (!$pending) {
             return redirect()->route('register')
-                ->withErrors(['registration' => 'Start registration again.']);
+                ->withErrors(['registration' => 'Start registration again.'], 'registration')
+                ->with('show_register_modal', true);
         }
 
         $requestData = [
@@ -293,7 +340,9 @@ class UserRegistrationController extends Controller
         $key = 'registration-otp:' . ($pending['email'] ?: $pending['mobile']);
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            return back()->withErrors(['otp' => 'Too many OTP requests. Please try later.']);
+            return back()
+                ->withErrors(['otp' => 'Too many OTP requests. Please try later.'], 'verification')
+                ->with('show_verify_modal', true);
         }
 
         $record = DB::table('user_registration_otps')
@@ -302,7 +351,9 @@ class UserRegistrationController extends Controller
 
         if ($record && $record->last_sent_at &&
             Carbon::parse($record->last_sent_at)->addSeconds(60)->isFuture()) {
-            return back()->withErrors(['otp' => 'Please wait 60 seconds before requesting another OTP.']);
+            return back()
+                ->withErrors(['otp' => 'Please wait 60 seconds before requesting another OTP.'], 'verification')
+                ->with('show_verify_modal', true);
         }
 
         $otp = (string) random_int(100000, 999999);
@@ -312,7 +363,9 @@ class UserRegistrationController extends Controller
                 if (config('mail.default') === 'log' ||
                     empty(config('mail.mailers.smtp.username')) ||
                     empty(config('mail.mailers.smtp.password'))) {
-                    return back()->withErrors(['otp' => 'Email OTP delivery is not configured.']);
+                    return back()
+                        ->withErrors(['otp' => 'Email OTP delivery is not configured.'], 'verification')
+                        ->with('show_verify_modal', true);
                 }
 
                 Mail::raw(
@@ -326,7 +379,9 @@ class UserRegistrationController extends Controller
                 $from = config('vakilneeti.twilio_from');
 
                 if (!$sid || !$token || !$from) {
-                    return back()->withErrors(['otp' => 'SMS OTP delivery is not configured.']);
+                    return back()
+                        ->withErrors(['otp' => 'SMS OTP delivery is not configured.'], 'verification')
+                        ->with('show_verify_modal', true);
                 }
 
                 $response = Http::asForm()->withBasicAuth($sid, $token)
@@ -337,12 +392,16 @@ class UserRegistrationController extends Controller
                     ]);
 
                 if (!$response->successful()) {
-                    return back()->withErrors(['otp' => 'SMS provider could not send the OTP.']);
+                    return back()
+                        ->withErrors(['otp' => 'SMS provider could not send the OTP.'], 'verification')
+                        ->with('show_verify_modal', true);
                 }
             }
         } catch (\Throwable $e) {
             report($e);
-            return back()->withErrors(['otp' => 'OTP delivery failed. Check provider configuration.']);
+            return back()
+                ->withErrors(['otp' => 'OTP delivery failed. Check provider configuration.'], 'verification')
+                ->with('show_verify_modal', true);
         }
 
         RateLimiter::hit($key, 3600);
@@ -361,11 +420,19 @@ class UserRegistrationController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
+        $validator = Validator::make($request->all(), [
             'identifier' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator, 'login')
+                ->withInput($request->except('password'))
+                ->with('show_login_modal', true);
+        }
+
+        $credentials = $validator->validated();
         $identifier = trim($credentials['identifier']);
 
         $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
@@ -374,8 +441,9 @@ class UserRegistrationController extends Controller
             try {
                 $identifier = $this->normalizeMobile($identifier);
             } catch (\InvalidArgumentException $e) {
-                return back()->withErrors(['identifier' => $e->getMessage()])
-                    ->onlyInput('identifier');
+                return back()->withErrors(['identifier' => $e->getMessage()], 'login')
+                    ->withInput($request->only('identifier'))
+                    ->with('show_login_modal', true);
             }
         } else {
             $identifier = Str::lower($identifier);
@@ -386,15 +454,19 @@ class UserRegistrationController extends Controller
         if (!$user || ($field === 'email' && !$user->email_verified_at) ||
             ($field === 'mobile' && !$user->mobile_verified_at) ||
             !Hash::check($credentials['password'], $user->password)) {
-            return back()->withErrors([
-                'identifier' => 'Invalid credentials or contact method not verified.'
-            ])->onlyInput('identifier');
+            return back()
+                ->withErrors([
+                    'identifier' => 'Invalid credentials or contact method not verified.'
+                ], 'login')
+                ->withInput($request->only('identifier'))
+                ->with('show_login_modal', true);
         }
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
-        return redirect('/')->with('auth_login_success', 'Login successful.');
+        return redirect()->intended('/')
+            ->with('auth_login_success', 'Login successful.');
     }
 
     public function logout(Request $request): RedirectResponse

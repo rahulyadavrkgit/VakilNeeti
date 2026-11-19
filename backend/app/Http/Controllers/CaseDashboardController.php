@@ -39,6 +39,18 @@ class CaseDashboardController extends Controller
             ->when(!auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
             ->whereNotNull('court_hearings.next_hearing_date');
 
+        $hearingColumns = [
+            'court_hearings.id',
+            'court_hearings.case_id',
+            'court_hearings.next_hearing_date',
+            'court_hearings.hearing_time',
+            'court_hearings.hearing_stage',
+            'legal_cases.case_title',
+            'legal_cases.case_number',
+            'legal_cases.cnr_number',
+            'legal_cases.court_name',
+        ];
+
         // Four non-overlapping hearing counters.
         $hearingsToday = (clone $hearingBase)
             ->whereDate('court_hearings.next_hearing_date', $today)
@@ -80,35 +92,47 @@ class CaseDashboardController extends Controller
             ->limit(50)
             ->get();
 
-        $recentCases = DB::table('legal_cases')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
-            ->orderByDesc('updated_at')
+        $todayHearings = (clone $hearingBase)
+            ->whereDate('court_hearings.next_hearing_date', $today)
+            ->select($hearingColumns)
+            ->orderBy('court_hearings.hearing_time')
+            ->limit(20)
+            ->get();
+
+        $pastDueHearings = (clone $hearingBase)
+            ->whereDate('court_hearings.next_hearing_date', '<', $today)
+            ->select($hearingColumns)
+            ->orderByDesc('court_hearings.next_hearing_date')
             ->limit(10)
             ->get();
 
-        $pendingTasks = DB::table('tasks')
-            ->leftJoin('legal_cases', function ($join) {
-                $join->on('tasks.case_id', '=', 'legal_cases.id');
+        $recentHearings = DB::table('court_hearings')
+            ->join('legal_cases', function ($join) {
+                $join->on('court_hearings.case_id', '=', 'legal_cases.id');
                 if (!auth()->user()->is_admin) {
                     $join->where('legal_cases.user_id', auth()->id());
                 }
             })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('tasks.user_id', auth()->id()))
-            ->whereNotNull('tasks.case_id')
-            ->whereNotIn('tasks.status', ['completed', 'cancelled'])
-            ->orderByRaw('tasks.due_at IS NULL')
-            ->orderBy('tasks.due_at')
+            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
+            ->whereNotNull('court_hearings.hearing_date')
+            ->orderByDesc('court_hearings.hearing_date')
+            ->orderByDesc('court_hearings.id')
             ->limit(10)
             ->select(
-                'tasks.id',
-                'tasks.title',
-                'tasks.due_at',
-                'tasks.priority',
-                'tasks.status',
-                'legal_cases.id as legal_case_id',
+                'court_hearings.id',
+                'court_hearings.case_id',
+                'court_hearings.hearing_date',
+                'court_hearings.hearing_stage',
                 'legal_cases.case_title',
-                'legal_cases.case_number'
+                'legal_cases.case_number',
+                'legal_cases.court_name'
             )
+            ->get();
+
+        $recentCases = DB::table('legal_cases')
+            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->orderByDesc('updated_at')
+            ->limit(10)
             ->get();
 
         return view('case-dashboard.index', compact(
@@ -119,8 +143,10 @@ class CaseDashboardController extends Controller
             'hearingsNext7Days',
             'hearingsNext30Days',
             'upcomingHearings',
+            'todayHearings',
+            'pastDueHearings',
+            'recentHearings',
             'recentCases',
-            'pendingTasks'
         ));
     }
 }
