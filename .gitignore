@@ -1,8 +1,10 @@
 # Environment files and secrets
-**/.env
-**/.env.*
-!**/.env.example
-**/auth.json
+.env
+.env.*
+!.env.example
+# Temporarily exclude unverified environment template
+.env.example
+/auth.json
 **/credentials.json
 **/*service-account*.json
 **/*.pem
@@ -11,8 +13,8 @@
 **/*.pfx
 
 # Dependencies
-**/vendor/
-**/node_modules/
+/vendor/
+/node_modules/
 
 # Local databases and database dumps
 **/*.sqlite
@@ -21,22 +23,31 @@
 **/*.sql
 **/*.dump
 
-# Laravel runtime files
-backend/storage/logs/*
-backend/storage/framework/cache/*
-backend/storage/framework/sessions/*
-backend/storage/framework/views/*
-backend/bootstrap/cache/*
-backend/public/build/
+# Laravel runtime files (storage/ and bootstrap/cache/ use their own nested .gitignore files)
+/storage/*.key
+/storage/pail
+/public/build/
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
 
 # Test and coverage output
-**/.phpunit.cache/
+/.phpunit.cache
+.phpunit.result.cache
 **/coverage/
 **/build/
 
-# IDE and operating-system files
-**/.idea/
-**/.vscode/
+# Tooling and IDE
+.phpactor.json
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+/.codex
+/.cursor/
+/.idea/
+/.nova
+/.vscode/
+/.zed
 **/.DS_Store
 **/Thumbs.db
 desktop.ini
@@ -45,7 +56,3 @@ desktop.ini
 **/*.log
 **/*.tmp
 **/*.bak
-# Temporarily exclude unverified environment template
-**/.env.example
-
-**/.env.example

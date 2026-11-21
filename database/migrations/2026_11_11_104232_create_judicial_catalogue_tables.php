@@ -79,11 +79,11 @@ return new class extends Migration
                 $table->id();
 
                 $table->foreignId('court_establishment_id')
-                    ->constrained('court_establishments')
+                    ->constrained('court_establishments', indexName: 'cejd_court_establishment_id_foreign')
                     ->cascadeOnDelete();
 
                 $table->foreignId('judicial_district_id')
-                    ->constrained('judicial_districts')
+                    ->constrained('judicial_districts', indexName: 'cejd_judicial_district_id_foreign')
                     ->cascadeOnDelete();
 
                 $table->boolean('is_primary')->default(false);
