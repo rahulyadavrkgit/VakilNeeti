@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -19,20 +19,29 @@ return new class extends Migration
             ->where('is_admin', true)
             ->value('id');
 
-        if (!$adminId) {
-            throw new RuntimeException('Administrator account not found.');
-        }
-
         foreach ($this->tables as $tableName) {
-            if (!Schema::hasTable($tableName)) {
+            if (! Schema::hasTable($tableName)) {
                 continue;
             }
 
-            if (!Schema::hasColumn($tableName, 'user_id')) {
+            if (! Schema::hasColumn($tableName, 'user_id')) {
                 Schema::table($tableName, function (Blueprint $table) {
                     $table->unsignedBigInteger('user_id')->nullable();
                     $table->index('user_id');
                 });
+            }
+
+            $hasUnownedRecords = DB::table($tableName)
+                ->whereNull('user_id')
+                ->exists();
+
+            if (! $hasUnownedRecords) {
+                continue;
+            }
+
+            // Existing records must be assigned to an owner; a fresh install has none to backfill.
+            if (! $adminId) {
+                throw new RuntimeException('Administrator account not found.');
             }
 
             DB::table($tableName)
