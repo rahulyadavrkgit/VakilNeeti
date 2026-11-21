@@ -1,3 +1,4 @@
+
 <?php
 
 return [
@@ -8,9 +9,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This file is for storing the credentials for third party services such
-    | as Resend, Postmark, AWS, and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | as Resend, Postmark, AWS, and more.
     |
     */
 
@@ -33,6 +32,23 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'otp_bypass_enabled' => env('OTP_BYPASS_ENABLED', false),
+
+    'twilio' => [
+
+        // Existing ordinary SMS configuration
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM'),
+        'messaging_service_sid' => env('TWILIO_MESSAGING_SERVICE_SID'),
+
+        // Twilio Verify configuration
+        'api_key' => env('TWILIO_API_KEY'),
+        'api_secret' => env('TWILIO_API_SECRET'),
+        'verify_service_sid' => env('TWILIO_VERIFY_SERVICE_SID'),
+
     ],
 
 ];

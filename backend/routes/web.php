@@ -12,6 +12,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\LegalCaseController;
+use App\Http\Controllers\CaseWorkspaceController;
 use App\Http\Controllers\CaseCalendarController;
 use App\Http\Controllers\CourtCatalogueController;
 use App\Http\Controllers\ModuleDashboardController;
@@ -70,6 +71,25 @@ Route::get('/cases/import/history', [OfficialCourtImportController::class, 'hist
 
 Route::post('/cases/import/{import}/save', [OfficialCourtImportController::class, 'store'])
     ->name('cases.import.save');
+Route::post('/cases/{case}/notes', [CaseWorkspaceController::class, 'storeNote'])
+    ->whereNumber('case')
+    ->name('cases.notes.store');
+Route::post('/cases/{case}/appointments', [CaseWorkspaceController::class, 'storeAppointment'])
+    ->whereNumber('case')
+    ->name('cases.appointments.store');
+Route::post('/cases/{case}/expenses', [CaseWorkspaceController::class, 'storeExpense'])
+    ->whereNumber('case')
+    ->name('cases.expenses.store');
+Route::post('/cases/{case}/time-entries', [CaseWorkspaceController::class, 'storeTimeEntry'])
+    ->whereNumber('case')
+    ->name('cases.time-entries.store');
+Route::post('/cases/{case}/documents', [CaseWorkspaceController::class, 'storeDocument'])
+    ->whereNumber('case')
+    ->name('cases.documents.store');
+Route::get('/cases/{case}/documents/{document}', [CaseWorkspaceController::class, 'downloadDocument'])
+    ->whereNumber('case')
+    ->whereNumber('document')
+    ->name('cases.documents.download');
 Route::get('/cases/{case}', [LegalCaseController::class, 'show'])
     ->whereNumber('case')
     ->name('cases.show');
@@ -198,6 +218,12 @@ Route::get('/case-dashboard', [\App\Http\Controllers\CaseDashboardController::cl
     ->name('case-dashboard.index');
 Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'index'])
     ->name('profile.index');
+Route::post('/profile/preferences', [\App\Http\Controllers\ProfileController::class, 'updatePreferences'])
+    ->name('profile.preferences.update');
+Route::get('/profile/advocate', [\App\Http\Controllers\AdvocateProfileController::class, 'index'])
+    ->name('profile.advocate.index');
+Route::post('/profile/advocate', [\App\Http\Controllers\AdvocateProfileController::class, 'update'])
+    ->name('profile.advocate.update');
 Route::get('/profile/practice-states', [\App\Http\Controllers\PracticeStateController::class, 'index'])
     ->name('profile.practice-states.index');
 
@@ -424,8 +450,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/register/verify', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'showVerify'])->name('register.verify');
     Route::post('/register/verify', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'verifyOtp'])->middleware('throttle:10,10')->name('register.verify.submit');
     Route::post('/register/resend-otp', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'resendOtp'])->middleware('throttle:5,10')->name('register.resend-otp');
+    Route::get('/register/profile', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'showProfileSetup'])->name('register.profile');
+    Route::post('/register/profile', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'completeProfile'])->middleware('throttle:10,10')->name('register.profile.submit');
     Route::get('/login', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'showLogin'])->name('login');
-    Route::post('/login', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'login'])->middleware('throttle:10,10')->name('login.submit');
+    Route::post('/login', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'sendLoginOtp'])->middleware('throttle:5,10')->name('login.submit');
+    Route::post('/login/verify', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'verifyLoginOtp'])->middleware('throttle:10,10')->name('login.verify.submit');
 });
 
 Route::post('/user-logout', [\App\Http\Controllers\Auth\UserRegistrationController::class, 'logout'])

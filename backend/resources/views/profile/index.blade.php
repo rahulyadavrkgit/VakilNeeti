@@ -6,8 +6,7 @@
     <div class="rounded-2xl bg-slate-900 p-6 text-white">
         <h1 class="text-2xl font-bold">Profile Settings</h1>
         <p class="mt-2 text-sm text-slate-300">
-            Manage your personal identity, professional credentials, law office,
-            practice jurisdictions, invoices, GST and tax compliance.
+            Manage the profile and practice settings for your {{ $isCompany ? 'company' : 'individual advocate' }} account.
         </p>
     </div>
 
@@ -15,12 +14,10 @@
     <section class="rounded-xl border border-slate-200 bg-white p-5">
         <div class="mb-4">
             <h2 class="text-lg font-bold text-slate-800">1. Profile Information</h2>
-            <p class="mt-1 text-sm text-slate-600">
-                Manage personal, professional, firm and contact information from one section.
-            </p>
+            <p class="mt-1 text-sm text-slate-600">Manage the account-specific profile and contact information used in VakilNeeti.</p>
         </div>
 
-        @if($firm)
+        @if(($isCompany || $showAllProfileTypes) && $firm)
             <div class="mb-5 rounded-lg bg-slate-50 p-4">
                 <h3 class="font-semibold text-slate-800">Current Firm / Law Office</h3>
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -52,40 +49,53 @@
                     </div>
                 </div>
             </div>
-        @else
+        @elseif($isCompany)
             <p class="mb-5 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-                Firm details have not been configured. Add your firm information to use it in invoices and internal documents.
+                Add your company or firm details to use them on invoices and internal documents.
             </p>
         @endif
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-
-            <a href="{{ route('profile.personal.index') }}"
-               class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                <h3 class="font-semibold text-slate-800">Personal Profile</h3>
-                <p class="mt-2 text-sm text-slate-600">
-                    Personal identity, address and individual information.
-                </p>
-                <p class="mt-4 text-sm font-semibold text-blue-600">Manage Personal Profile &rarr;</p>
-            </a>
-
-            <a href="{{ route('profile.professional.index') }}"
-               class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                <h3 class="font-semibold text-slate-800">Professional Profile</h3>
-                <p class="mt-2 text-sm text-slate-600">
-                    Bar Council enrolment, AOR details, qualifications and professional information.
-                </p>
-                <p class="mt-4 text-sm font-semibold text-blue-600">Manage Professional Profile &rarr;</p>
-            </a>
-
-            <a href="{{ route('firm-profile.index') }}"
-               class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                <h3 class="font-semibold text-slate-800">Firm / Law Office / Company Profile</h3>
-                <p class="mt-2 text-sm text-slate-600">
-                    Firm identity, proprietor, business address, GST registration and office details.
-                </p>
-                <p class="mt-4 text-sm font-semibold text-blue-600">Manage Firm Profile &rarr;</p>
-            </a>
+            @if($showAllProfileTypes)
+                <a href="{{ route('profile.personal.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Personal Profile</h3>
+                    <p class="mt-2 text-sm text-slate-600">Manage personal identity, address and individual information.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">Manage Personal Profile &rarr;</p>
+                </a>
+                <a href="{{ route('profile.advocate.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Advocate Profile</h3>
+                    <p class="mt-2 text-sm text-slate-600">Manage registration, practice areas and court information.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">Manage Advocate Profile &rarr;</p>
+                </a>
+                <a href="{{ route('profile.professional.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Professional Profile</h3>
+                    <p class="mt-2 text-sm text-slate-600">Manage credentials, qualifications and professional information.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">Manage Professional Profile &rarr;</p>
+                </a>
+                <a href="{{ route('firm-profile.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Company / Firm Profile</h3>
+                    <p class="mt-2 text-sm text-slate-600">Manage firm identity, business address and tax details.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">Manage Company Profile &rarr;</p>
+                </a>
+            @elseif($isCompany)
+                <a href="{{ route('firm-profile.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Company / Firm Profile</h3>
+                    <p class="mt-2 text-sm text-slate-600">Manage company identity, proprietor, business address, GST and office details.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">Manage Company Profile &rarr;</p>
+                </a>
+            @else
+                <a href="{{ route('profile.advocate.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Advocate Profile</h3>
+                    <p class="mt-2 text-sm text-slate-600">Update your registration details, practice areas, profile photo and court information.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">Manage Advocate Profile &rarr;</p>
+                </a>
+            @endif
 
             <a href="{{ route('profile.contacts.index') }}"
                class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
@@ -97,6 +107,50 @@
             </a>
 
         </div>
+    </section>
+
+    <section class="rounded-xl border border-slate-200 bg-white p-5">
+        <h2 class="text-lg font-bold text-slate-800">Workspace preferences</h2>
+        <p class="mt-1 text-sm text-slate-600">Choose the tools and information you want to focus on.</p>
+
+        @if(session('preferences_success'))
+            <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('preferences_success') }}</p>
+        @endif
+        @error('onboarding_features')
+            <p role="alert" class="mt-3 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+        @error('onboarding_features.*')
+            <p role="alert" class="mt-3 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+
+        <form id="workspace-preferences-form" method="POST" action="{{ route('profile.preferences.update') }}" class="mt-4 space-y-4">
+            @csrf
+            <fieldset>
+                <legend class="sr-only">Select workspace features</legend>
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($onboardingFeatures as $value => $label)
+                        <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm hover:border-amber-400 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50">
+                            <input type="checkbox" name="onboarding_features[]" value="{{ $value }}"
+                                   @checked(in_array($value, (array) old('onboarding_features', $user->onboarding_features ?? []), true))
+                                   class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
+
+            <label class="block text-sm font-medium text-slate-700" data-preferences-other
+                   @if(!in_array('other', (array) old('onboarding_features', $user->onboarding_features ?? []), true)) hidden @endif>
+                Describe the other feature
+                <textarea name="onboarding_other" rows="2" maxlength="500" @required(in_array('other', (array) old('onboarding_features', $user->onboarding_features ?? []), true))
+                          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">{{ old('onboarding_other', $user->onboarding_other) }}</textarea>
+                @error('onboarding_other') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+            </label>
+
+            <button type="submit" class="rounded-lg bg-amber-400 px-5 py-2.5 font-semibold text-slate-950 hover:bg-amber-300">
+                Save preferences
+            </button>
+        </form>
     </section>
 
     {{-- PRACTICE STATES --}}
@@ -163,4 +217,26 @@
     </section>
 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const preferencesForm = document.querySelector('#workspace-preferences-form');
+        if (!preferencesForm) return;
+
+        const otherField = preferencesForm.querySelector('[data-preferences-other]');
+        const otherInput = otherField.querySelector('textarea');
+
+        function toggleOtherField() {
+            const selected = Boolean(preferencesForm.querySelector('input[name="onboarding_features[]"][value="other"]:checked'));
+            otherField.hidden = !selected;
+            otherInput.disabled = !selected;
+            otherInput.required = selected;
+        }
+
+        preferencesForm.querySelectorAll('input[name="onboarding_features[]"]').forEach(function (input) {
+            input.addEventListener('change', toggleOtherField);
+        });
+        toggleOtherField();
+    });
+</script>
 @endsection

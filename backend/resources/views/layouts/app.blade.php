@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <title>@yield('title', 'VakilNeeti') | VakilNeeti</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -127,6 +128,8 @@
 
 @php
     $currentUser = auth()->user();
+    $isCompanyAccount = $currentUser?->account_type === 'company';
+    $showAllProfileTypes = (bool) ($currentUser?->is_admin ?? false);
     $activeFirm = $currentUser
         ? \Illuminate\Support\Facades\DB::table('firm_profiles')
             ->where('is_active', true)
@@ -204,7 +207,11 @@ if ($activeFirm) {
 
         <div class="px-6 py-6 border-b border-slate-700">
             <a href="{{ route('dashboard') }}" class="inline-flex rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
-                <h1 class="text-2xl font-bold tracking-wide text-white">VakilNeeti</h1>
+                <span class="inline-flex items-center rounded-lg bg-white px-3 py-2">
+                    <img src="{{ asset('images/vakilneeti-logo.png') }}"
+                         alt="VakilNeeti"
+                         class="h-12 w-auto max-w-[210px] object-contain">
+                </span>
             </a>
             <p class="text-xs text-slate-300 mt-1">Legal Practice Management</p>
         </div>
@@ -594,9 +601,14 @@ if ($activeFirm) {
             {{-- PROFILE INFORMATION GROUP --}}
             <details class="mt-1"
                 @if(
-                    request()->is('profile/personal*') ||
-                    request()->is('profile/professional*') ||
-                    request()->is('firm-profile*') ||
+                    ($showAllProfileTypes && (
+                        request()->is('profile/personal*') ||
+                        request()->is('profile/professional*') ||
+                        request()->is('profile/advocate*') ||
+                        request()->is('firm-profile*')
+                    )) ||
+                    ($isCompanyAccount && request()->is('firm-profile*')) ||
+                    (!$isCompanyAccount && request()->is('profile/advocate*')) ||
                     request()->is('profile/contacts*')
                 ) open @endif>
 
@@ -606,20 +618,34 @@ if ($activeFirm) {
                 </summary>
 
                 <div class="vn-nav-child mt-1">
-                    <a href="{{ route('profile.personal.index') }}"
-                       class="vn-nav-link {{ request()->is('profile/personal*') ? 'vn-active' : '' }}">
-                        Personal Profile
-                    </a>
-
-                    <a href="{{ route('profile.professional.index') }}"
-                       class="vn-nav-link {{ request()->is('profile/professional*') ? 'vn-active' : '' }}">
-                        Professional Profile
-                    </a>
-
-                    <a href="{{ route('firm-profile.index') }}"
-                       class="vn-nav-link {{ request()->is('firm-profile*') ? 'vn-active' : '' }}">
-                        Firm / Law Office / Company Profile
-                    </a>
+                    @if($showAllProfileTypes)
+                        <a href="{{ route('profile.personal.index') }}"
+                           class="vn-nav-link {{ request()->is('profile/personal*') ? 'vn-active' : '' }}">
+                            Personal Profile
+                        </a>
+                        <a href="{{ route('profile.advocate.index') }}"
+                           class="vn-nav-link {{ request()->is('profile/advocate*') ? 'vn-active' : '' }}">
+                            Advocate Profile
+                        </a>
+                        <a href="{{ route('profile.professional.index') }}"
+                           class="vn-nav-link {{ request()->is('profile/professional*') ? 'vn-active' : '' }}">
+                            Professional Profile
+                        </a>
+                        <a href="{{ route('firm-profile.index') }}"
+                           class="vn-nav-link {{ request()->is('firm-profile*') ? 'vn-active' : '' }}">
+                            Firm / Law Office / Company Profile
+                        </a>
+                    @elseif($isCompanyAccount)
+                        <a href="{{ route('firm-profile.index') }}"
+                           class="vn-nav-link {{ request()->is('firm-profile*') ? 'vn-active' : '' }}">
+                            Firm / Law Office / Company Profile
+                        </a>
+                    @else
+                        <a href="{{ route('profile.advocate.index') }}"
+                           class="vn-nav-link {{ request()->is('profile/advocate*') ? 'vn-active' : '' }}">
+                            Advocate Profile
+                        </a>
+                    @endif
 
                     <a href="{{ route('profile.contacts.index') }}"
                        class="vn-nav-link {{ request()->is('profile/contacts*') ? 'vn-active' : '' }}">
@@ -707,11 +733,94 @@ if ($activeFirm) {
             }
         }
     }
+
+    const vnSupportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    document.querySelectorAll('.vn-nav-section').forEach(function (container) {
+        const toggle = container.querySelector('[data-vn-toggle]');
+
+        if (toggle) {
+            const submenu = document.getElementById('vn-submenu-' + toggle.dataset.vnToggle);
+            let wasOpenBeforeReveal = null;
+
+            function revealSubmenu() {
+                if (wasOpenBeforeReveal === null) {
+                    wasOpenBeforeReveal = !submenu.hidden;
+                }
+
+                submenu.hidden = false;
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function restoreSubmenu() {
+                if (container.matches(':hover') || container.contains(document.activeElement)) {
+                    return;
+                }
+
+                if (wasOpenBeforeReveal === false) {
+                    submenu.hidden = true;
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+
+                wasOpenBeforeReveal = null;
+            }
+
+            if (vnSupportsHover) {
+                container.addEventListener('mouseenter', revealSubmenu);
+            }
+
+            container.addEventListener('mouseleave', restoreSubmenu);
+            container.addEventListener('focusin', revealSubmenu);
+            container.addEventListener('focusout', function (event) {
+                if (!event.relatedTarget || !container.contains(event.relatedTarget)) {
+                    window.requestAnimationFrame(restoreSubmenu);
+                }
+            });
+        }
+
+        container.querySelectorAll('details').forEach(function (details) {
+            let wasOpenBeforeReveal = null;
+
+            function revealDetails() {
+                if (wasOpenBeforeReveal === null) {
+                    wasOpenBeforeReveal = details.open;
+                }
+
+                details.open = true;
+            }
+
+            function restoreDetails() {
+                if (details.matches(':hover') || details.contains(document.activeElement)) {
+                    return;
+                }
+
+                if (wasOpenBeforeReveal === false) {
+                    details.open = false;
+                }
+
+                wasOpenBeforeReveal = null;
+            }
+
+            if (vnSupportsHover) {
+                details.addEventListener('mouseenter', revealDetails);
+            }
+
+            details.addEventListener('mouseleave', restoreDetails);
+            details.addEventListener('focusin', revealDetails);
+            details.addEventListener('focusout', function (event) {
+                if (!event.relatedTarget || !details.contains(event.relatedTarget)) {
+                    window.requestAnimationFrame(restoreDetails);
+                }
+            });
+        });
+    });
 </script>
 
         <div class="border-t border-slate-700 px-6 py-4">
-            <p class="text-xs font-semibold text-slate-200">VakilNeeti</p>
-            <p class="text-xs text-slate-400 mt-1">Legal Practice Workspace</p>
+            <img src="{{ asset('images/vakilneeti-logo.png') }}"
+                 alt="VakilNeeti"
+                 class="h-8 w-auto max-w-[150px] rounded bg-white px-2 py-1 object-contain">
+            <p class="text-xs text-slate-400 mt-2">Legal Practice Workspace</p>
         </div>
 
     </aside>
@@ -798,26 +907,41 @@ if ($activeFirm) {
                     @endforeach
                 </div>
             @endif
-            <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
-                @csrf
-                <div>
-                    <label for="vn-login-identifier" class="mb-1 block text-sm font-medium text-slate-700">Email or mobile number</label>
-                    <input id="vn-login-identifier" name="identifier" value="{{ old('identifier') }}" required
-                           autocomplete="username" class="w-full rounded-lg border border-slate-300 p-3">
-                </div>
-                <div>
-                    <label for="vn-login-password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
-                    <input id="vn-login-password" type="password" name="password" required
-                           autocomplete="current-password" class="w-full rounded-lg border border-slate-300 p-3">
-                </div>
-                <label class="flex items-center gap-2 text-sm text-slate-700">
-                    <input type="checkbox" name="remember" value="1">
-                    Remember me
-                </label>
-                <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
-                    Log in
-                </button>
-            </form>
+            @if(session('show_login_otp') || session('login_otp_mobile'))
+                <p class="mb-4 text-sm text-slate-600">
+                    Enter the four-digit OTP sent to {{ session('login_otp_mobile') }}.
+                </p>
+                <form method="POST" action="{{ route('login.verify.submit') }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="vn-login-otp" class="mb-1 block text-sm font-medium text-slate-700">Phone OTP</label>
+                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                               required autocomplete="one-time-code"
+                               class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                        Verify and log in
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('login.submit') }}" class="mt-4 text-center">
+                    @csrf
+                    <input type="hidden" name="mobile" value="{{ session('login_otp_mobile') }}">
+                    <button type="submit" class="text-sm font-semibold text-blue-700 underline">Resend OTP</button>
+                </form>
+            @else
+                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="vn-login-mobile" class="mb-1 block text-sm font-medium text-slate-700">Phone number</label>
+                        <input id="vn-login-mobile" type="tel" name="mobile" value="{{ old('mobile') }}" required
+                               placeholder="10-digit Indian mobile number" autocomplete="tel"
+                               class="w-full rounded-lg border border-slate-300 p-3">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                        Send OTP
+                    </button>
+                </form>
+            @endif
             <p class="mt-5 text-center text-sm text-slate-600">
                 New to VakilNeeti?
                 <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-blue-700 underline">Create an account</a>
@@ -835,40 +959,13 @@ if ($activeFirm) {
             <form method="POST" action="{{ route('register.send-otp') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label for="vn-register-name" class="mb-1 block text-sm font-medium text-slate-700">Full name</label>
-                    <input id="vn-register-name" name="name" value="{{ old('name') }}" required maxlength="150"
-                           autocomplete="name" class="w-full rounded-lg border border-slate-300 p-3">
-                </div>
-                <div>
-                    <label for="vn-register-channel" class="mb-1 block text-sm font-medium text-slate-700">Register using</label>
-                    <select id="vn-register-channel" name="channel" class="w-full rounded-lg border border-slate-300 p-3" required>
-                        <option value="email" {{ old('channel', 'email') === 'email' ? 'selected' : '' }}>Email address</option>
-                        <option value="mobile" {{ old('channel') === 'mobile' ? 'selected' : '' }}>Mobile number</option>
-                    </select>
-                </div>
-                <div id="vn-register-email-field">
-                    <label for="vn-register-email" class="mb-1 block text-sm font-medium text-slate-700">Email address</label>
-                    <input id="vn-register-email" type="email" name="email" value="{{ old('email') }}"
-                           autocomplete="email" class="w-full rounded-lg border border-slate-300 p-3">
-                </div>
-                <div id="vn-register-mobile-field" hidden>
                     <label for="vn-register-mobile" class="mb-1 block text-sm font-medium text-slate-700">Mobile number</label>
                     <input id="vn-register-mobile" type="tel" name="mobile" value="{{ old('mobile') }}"
                            placeholder="10-digit Indian mobile number or +91..." autocomplete="tel"
-                           class="w-full rounded-lg border border-slate-300 p-3">
-                </div>
-                <div>
-                    <label for="vn-register-password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
-                    <input id="vn-register-password" type="password" name="password" required minlength="8"
-                           autocomplete="new-password" class="w-full rounded-lg border border-slate-300 p-3">
-                </div>
-                <div>
-                    <label for="vn-register-confirm-password" class="mb-1 block text-sm font-medium text-slate-700">Confirm password</label>
-                    <input id="vn-register-confirm-password" type="password" name="password_confirmation" required minlength="8"
-                           autocomplete="new-password" class="w-full rounded-lg border border-slate-300 p-3">
+                           required class="w-full rounded-lg border border-slate-300 p-3">
                 </div>
                 <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
-                    Send verification OTP
+                    Continue with phone OTP
                 </button>
             </form>
             <p class="mt-5 text-center text-sm text-slate-600">
@@ -888,11 +985,11 @@ if ($activeFirm) {
                     @endforeach
                 </div>
             @endif
-            <p class="mb-5 text-sm text-slate-600">Enter the six-digit OTP sent to your selected contact method.</p>
+            <p class="mb-5 text-sm text-slate-600">Enter the four-digit OTP sent to your mobile number.</p>
             <form method="POST" action="{{ route('register.verify.submit') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label for="vn-register-otp" class="mb-1 block text-sm font-medium text-slate-700">Six-digit OTP</label>
+                    <label for="vn-register-otp" class="mb-1 block text-sm font-medium text-slate-700">Four-digit OTP</label>
                     <input id="vn-register-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
                            required autocomplete="one-time-code"
                            class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
@@ -946,7 +1043,7 @@ if ($activeFirm) {
         const authModes = {
             login: {
                 title: 'Log in to VakilNeeti',
-                description: 'Access your private workspace and work records.'
+                description: 'Sign in securely with a phone OTP.'
             },
             register: {
                 title: 'Create your VakilNeeti account',
@@ -954,7 +1051,7 @@ if ($activeFirm) {
             },
             verify: {
                 title: 'Verify your account',
-                description: 'Confirm your email address or mobile number.'
+                description: 'Confirm your phone number to continue registration.'
             }
         };
         const shareDialog = document.getElementById('vn-share-dialog');
@@ -962,11 +1059,6 @@ if ($activeFirm) {
         const shareClose = document.getElementById('vn-share-close');
         const whatsappLink = document.getElementById('vn-share-whatsapp');
         const smsLink = document.getElementById('vn-share-sms');
-        const registrationChannel = document.getElementById('vn-register-channel');
-        const registrationEmailField = document.getElementById('vn-register-email-field');
-        const registrationMobileField = document.getElementById('vn-register-mobile-field');
-        const registrationEmail = document.getElementById('vn-register-email');
-        const registrationMobile = document.getElementById('vn-register-mobile');
 
         function showAuth(mode) {
             authPanels.forEach(function (panel) {
@@ -1005,17 +1097,6 @@ if ($activeFirm) {
                 authDialog.close();
             }
         });
-
-        function updateRegistrationFields() {
-            const useEmail = registrationChannel.value === 'email';
-            registrationEmailField.hidden = !useEmail;
-            registrationMobileField.hidden = useEmail;
-            registrationEmail.required = useEmail;
-            registrationMobile.required = !useEmail;
-        }
-
-        registrationChannel.addEventListener('change', updateRegistrationFields);
-        updateRegistrationFields();
 
         shareOpen.addEventListener('click', function () {
             const selection = window.getSelection ? window.getSelection() : null;

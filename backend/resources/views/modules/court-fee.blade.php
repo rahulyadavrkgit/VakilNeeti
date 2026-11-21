@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Court Fee')
 @section('page-heading', 'Court Fee')
@@ -6,7 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <section id="overview" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-widest text-blue-300">VakilNeeti Legal Resources</p>
+        <div class="mb-3 flex flex-wrap items-center gap-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-10 w-auto max-w-[180px] rounded bg-white px-2 py-1 object-contain"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
         <h1 class="mt-2 text-2xl font-bold">Court Fee Resources &amp; Estimator</h1>
         <p class="mt-2 max-w-3xl text-sm text-slate-300">
             Review filing considerations and make a transparent, user-rate-based estimate before checking the applicable official schedule.
@@ -141,3 +141,4 @@
     });
 </script>
 @endpush
+

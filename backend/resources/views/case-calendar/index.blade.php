@@ -10,7 +10,7 @@
         <div>
             <h2 class="text-xl font-bold text-slate-900">Calendar & Hearings</h2>
             <p class="text-sm text-slate-500">
-                Court hearings, next hearing dates and task deadlines.
+                Court hearings, appointments and task deadlines.
             </p>
         </div>
 
@@ -64,11 +64,15 @@
             <span class="h-3 w-3 rounded-full bg-amber-500"></span>
             Task Deadline
         </span>
+        <span class="flex items-center gap-2">
+            <span class="h-3 w-3 rounded-full bg-green-600"></span>
+            Appointment
+        </span>
     </div>
 
     @if($eventsByDate->isEmpty())
         <div class="rounded-xl border bg-white p-4 text-sm text-slate-500">
-            No hearings or task deadlines are recorded for this month.
+            No hearings, appointments or task deadlines are recorded for this month.
         </div>
     @endif
 
@@ -111,6 +115,7 @@
                                     $eventClass = match($event['type']) {
                                         'hearing' => 'bg-blue-100 text-blue-800',
                                         'next_hearing' => 'bg-purple-100 text-purple-800',
+                                        'appointment' => 'bg-green-100 text-green-800',
                                         default => 'bg-amber-100 text-amber-800',
                                     };
                                     $eventUrl = $event['type'] === 'task'

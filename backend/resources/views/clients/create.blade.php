@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <title>VakilNeeti | Add Client</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -12,7 +13,7 @@
 <div class="flex min-h-screen">
 
     <aside class="w-64 shrink-0 bg-slate-950 px-5 py-7 text-white">
-        <h1 class="mb-10 text-2xl font-bold">VakilNeeti</h1>
+        <div class="mb-10"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
         <nav class="space-y-2">
             <a href="/" class="block rounded-lg px-4 py-3 hover:bg-slate-800">Dashboard</a>
             <a href="{{ route('clients.index') }}" class="block rounded-lg bg-blue-600 px-4 py-3 font-semibold">Clients</a>
@@ -23,7 +24,7 @@
 
         <div class="mb-8">
             <a href="{{ route('clients.index') }}" class="text-blue-600 hover:underline">
-                ← Back to Clients
+                â† Back to Clients
             </a>
             <h2 class="mt-4 text-3xl font-bold">Add New Client</h2>
             <p class="mt-2 text-slate-600">Enter the client's basic information.</p>
@@ -205,3 +206,4 @@
 
 </body>
 </html>
+

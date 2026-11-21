@@ -9,6 +9,10 @@ class FirmProfileController extends Controller
 {
     public function index()
     {
+        if (auth()->user()->account_type !== 'company' && !auth()->user()->is_admin) {
+            return redirect()->route('profile.advocate.index');
+        }
+
         $firm = FirmProfile::first();
 
         return view('firm-profile.index', compact('firm'));
@@ -16,6 +20,10 @@ class FirmProfileController extends Controller
 
     public function update(Request $request)
     {
+        if ($request->user()->account_type !== 'company' && !$request->user()->is_admin) {
+            return redirect()->route('profile.advocate.index');
+        }
+
         $request->merge([
             'gstin' => trim((string) $request->input('gstin')) === '' ? null : strtoupper(trim((string) $request->input('gstin'))),
         ]);

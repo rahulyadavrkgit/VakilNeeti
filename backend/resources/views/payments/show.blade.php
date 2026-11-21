@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <title>Payment Receipt | VakilNeeti</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -13,7 +14,7 @@
 
     <div class="mb-6 flex justify-between">
         <a href="{{ route('payments.index') }}" class="text-blue-600 hover:underline">
-            ← Back to Payments
+            â† Back to Payments
         </a>
 
         <button onclick="window.print()"
@@ -26,7 +27,7 @@
 
         <div class="flex justify-between border-b pb-8">
             <div>
-                <h1 class="text-3xl font-bold text-blue-700">VakilNeeti</h1>
+                <div class="mb-2"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
                 <p class="mt-2 text-slate-500">Legal Practice Management</p>
             </div>
 
@@ -83,27 +84,27 @@
             <p class="text-slate-500">Amount Received</p>
 
             <h2 class="mt-3 text-4xl font-bold text-green-700">
-                ₹{{ number_format($payment->amount, 2) }}
+                â‚¹{{ number_format($payment->amount, 2) }}
             </h2>
         </div>
 
         <div class="space-y-3 border-t pt-6">
             <div class="flex justify-between">
                 <span>Invoice Total</span>
-                <span>₹{{ number_format($payment->invoice->total_amount, 2) }}</span>
+                <span>â‚¹{{ number_format($payment->invoice->total_amount, 2) }}</span>
             </div>
 
             <div class="flex justify-between">
                 <span>Total Received Against Invoice</span>
                 <span>
-                    ₹{{ number_format($payment->invoice->payments->sum('amount'), 2) }}
+                    â‚¹{{ number_format($payment->invoice->payments->sum('amount'), 2) }}
                 </span>
             </div>
 
             <div class="flex justify-between text-lg font-bold">
                 <span>Outstanding Balance</span>
                 <span>
-                    ₹{{ number_format(max(0, $payment->invoice->total_amount - $payment->invoice->payments->sum('amount')), 2) }}
+                    â‚¹{{ number_format(max(0, $payment->invoice->total_amount - $payment->invoice->payments->sum('amount')), 2) }}
                 </span>
             </div>
         </div>
@@ -134,3 +135,4 @@
 
 </body>
 </html>
+

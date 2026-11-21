@@ -43,11 +43,37 @@ class LegalCase extends Model
     {
         return $this->hasMany(CourtHearing::class, 'case_id');
     }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(CaseNote::class, 'case_id');
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(CaseAppointment::class, 'case_id');
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(CaseExpense::class, 'case_id');
+    }
+
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(CaseTimeEntry::class, 'case_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(CaseDocument::class, 'case_id');
+    }
+
     public function causeListAppearances(): HasMany
-{
-    return $this->hasMany(
-        CauseListAppearance::class,
-        'legal_case_id'
-    );
-}
+    {
+        return $this->hasMany(
+            CauseListAppearance::class,
+            'legal_case_id'
+        );
+    }
 }

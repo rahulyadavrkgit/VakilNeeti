@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'External Website')
 @section('page-heading', 'External Website')
@@ -7,7 +7,7 @@
 <div class="mx-auto max-w-[1600px] space-y-4">
     <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-wider text-blue-700">VakilNeeti Webview</p>
+            <div class="flex flex-wrap items-center gap-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-9 w-auto max-w-[160px] rounded bg-white px-2 py-1 object-contain"><span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Webview</span></div>
             <p class="mt-1 max-w-3xl truncate text-sm font-medium text-slate-700" title="{{ $url }}">
                 {{ $host }}
             </p>
@@ -36,7 +36,7 @@
     </section>
 
     <p class="text-xs text-slate-500">
-        The website controls whether it can be displayed inside a webview. If it does not load, use “Open in browser”.
+        The website controls whether it can be displayed inside a webview. If it does not load, use â€œOpen in browserâ€.
     </p>
 </div>
 
@@ -52,3 +52,4 @@
 </script>
 @endpush
 @endsection
+

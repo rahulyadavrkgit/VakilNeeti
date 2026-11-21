@@ -46,7 +46,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">Firm Name *</label>
                     <input type="text" name="firm_name"
-                           value="{{ old('firm_name', $firm->firm_name ?? 'SR Law Offices') }}"
+                           value="{{ old('firm_name', $firm->firm_name ?? '') }}"
                            required
                            class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
@@ -54,7 +54,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">Proprietor / Owner Name</label>
                     <input type="text" name="proprietor_name"
-                           value="{{ old('proprietor_name', $firm->proprietor_name ?? 'Rahul Yadav') }}"
+                           value="{{ old('proprietor_name', $firm->proprietor_name ?? '') }}"
                            class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
@@ -134,14 +134,14 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">Email</label>
                     <input type="email" name="email"
-                           value="{{ old('email', $firm->email ?? 'srlawoffices.in@gmail.com') }}"
+                           value="{{ old('email', $firm->email ?? '') }}"
                            class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-2">Phone</label>
                     <input type="text" name="phone"
-                           value="{{ old('phone', $firm->phone ?? '7303712227') }}"
+                           value="{{ old('phone', $firm->phone ?? '') }}"
                            class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
 

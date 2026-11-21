@@ -1,13 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <title>Initial Administrator Setup | VakilNeeti</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-slate-100 px-4 py-10">
     <main class="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-4"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
         <h1 class="text-xl font-bold text-slate-800">Initial Administrator Setup</h1>
 
         <p class="mt-2 text-sm text-slate-600">
@@ -62,3 +64,4 @@
     </main>
 </body>
 </html>
+

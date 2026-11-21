@@ -2,208 +2,189 @@
 
 namespace App\Http\Controllers\Auth;
 
+
+
 use App\Http\Controllers\Controller;
+
 use App\Models\User;
+use App\Services\TwilioSmsService;
+
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\View\View;
+
 use Illuminate\Http\RedirectResponse;
 
+use Illuminate\Http\Request;
+
+use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Facades\Hash;
+
+use Illuminate\Support\Facades\RateLimiter;
+
+use Illuminate\Support\Facades\Storage;
+
+use Illuminate\Support\Facades\Validator;
+
+use Illuminate\Support\Str;
+
+use Illuminate\View\View;
+
+
+
 class UserRegistrationController extends Controller
+
 {
+
+    private const SPECIALIZATIONS = [
+
+        'Civil',
+
+        'Criminal',
+
+        'Family Law',
+
+        'Corporate Law',
+
+        'Labour Law',
+
+        'Intellectual Property Law',
+
+        'Divorce Law',
+
+        'Property Law',
+
+        'Consumer Service Law',
+
+        'Tax Law',
+
+        'Real Estate',
+
+    ];
+
+    private const ACCOUNT_ROLES = [
+        'independent_practitioner' => 'Independent practitioner',
+        'senior_counsel' => 'Senior counsel',
+        'advocate' => 'Junior to senior advocate',
+        'student_intern' => 'Law student / Intern',
+        'law_firm' => 'Law firm',
+        'commercial_company' => 'Commercial company',
+    ];
+
+    private const COMPANY_ROLES = ['law_firm', 'commercial_company'];
+
+    private const ONBOARDING_FEATURES = [
+        'personalized_hearings' => 'Personalized court hearing lists',
+        'daily_orders' => 'Daily orders and case details',
+        'invoices_expenses_documents' => 'Invoices, expenses and document management',
+        'judgment_research' => 'Judgment research',
+        'mis_reports' => 'MIS reports',
+        'other' => 'Other',
+    ];
+
+
+
     public function showRegister(): View
+
     {
+
         return view('auth.user-register');
+
     }
+
+
 
     public function showLogin(): View
+
     {
+
         return view('auth.user-login');
+
     }
+
+
 
     private function normalizeMobile(string $mobile): string
+
     {
-        $mobile = preg_replace('/[\s\-\(\)]/', '', $mobile);
+
+        $mobile = preg_replace('/[\s\\-\\(\\)]/', '', $mobile);
+
+
 
         if (preg_match('/^[6-9][0-9]{9}$/', $mobile)) {
-            return '+91' . $mobile;
+
+            return '+91'.$mobile;
+
         }
 
-        if (preg_match('/^\+91[6-9][0-9]{9}$/', $mobile)) {
+
+
+        if (preg_match('/^\\+91[6-9][0-9]{9}$/', $mobile)) {
+
             return $mobile;
+
         }
+
+
 
         throw new \InvalidArgumentException(
+
             'Enter a valid Indian mobile number with 10 digits or +91 country code.'
+
         );
+
     }
 
-    public function sendOtp(Request $request): RedirectResponse
+    private function otpBypassEnabled(): bool
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:150'],
-            'channel' => ['required', 'in:email,mobile'],
-            'email' => ['nullable', 'required_if:channel,email', 'email', 'max:255'],
-            'mobile' => ['nullable', 'required_if:channel,mobile', 'string', 'max:20'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        return app()->environment('local')
+            && (bool) config('services.otp_bypass_enabled', false);
+    }
 
-        if ($validator->fails()) {
-            return back()
-                ->withErrors($validator, 'registration')
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->with('show_register_modal', true);
-        }
 
-        $validated = $validator->validated();
 
-        try {
-            $mobile = $validated['channel'] === 'mobile'
-                ? $this->normalizeMobile($validated['mobile'])
-                : null;
-        } catch (\InvalidArgumentException $e) {
-            return back()
-                ->withErrors(['mobile' => $e->getMessage()], 'registration')
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->with('show_register_modal', true);
-        }
-
-        $email = $validated['channel'] === 'email'
-            ? Str::lower(trim($validated['email']))
-            : null;
-
-        if ($email && User::where('email', $email)->exists()) {
-            return back()
-                ->withErrors(['email' => 'This email address is already registered.'], 'registration')
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->with('show_register_modal', true);
-        }
-
-        if ($mobile && User::where('mobile', $mobile)->exists()) {
-            return back()
-                ->withErrors(['mobile' => 'This mobile number is already registered.'], 'registration')
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->with('show_register_modal', true);
-        }
-
-        $key = 'registration-otp:' . ($email ?: $mobile);
+    private function sendMobileOtp(
+        string $mobile,
+        string $purpose,
+        TwilioSmsService $smsService,
+        ?int $userId = null
+    ): ?string {
+        $key = $purpose . '-otp:' . $mobile;
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            return back()
-                ->withErrors([
-                    'identifier' => 'Too many OTP requests. Please try again later.'
-                ], 'registration')
-                ->with('show_register_modal', true);
+            return 'Too many OTP requests. Please try again later.';
         }
 
         $existing = DB::table('user_registration_otps')
-            ->where(function ($query) use ($email, $mobile) {
-                if ($email) {
-                    $query->where('email', $email);
-                } else {
-                    $query->where('mobile', $mobile);
-                }
-            })
+            ->where('mobile', $mobile)
             ->first();
 
-        if ($existing && $existing->last_sent_at &&
-            Carbon::parse($existing->last_sent_at)->addSeconds(60)->isFuture()) {
-            return back()
-                ->withErrors([
-                    'identifier' => 'Please wait 60 seconds before requesting another OTP.'
-                ], 'registration')
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->with('show_register_modal', true);
+        if (
+            $existing &&
+            $existing->last_sent_at &&
+            Carbon::parse($existing->last_sent_at)->addSeconds(60)->isFuture()
+        ) {
+            return 'Please wait 60 seconds before requesting another OTP.';
         }
 
-        $otp = (string) random_int(100000, 999999);
+        $deliveryError = $smsService->startVerification($mobile);
 
-        try {
-            if ($email) {
-                $mailer = config('mail.default');
-
-                if ($mailer === 'log' || $mailer === 'array' ||
-                    empty(config('mail.mailers.smtp.username')) ||
-                    empty(config('mail.mailers.smtp.password'))) {
-                    return back()
-                        ->withErrors([
-                            'email' => 'Email OTP delivery is not configured. Configure SMTP before registering.'
-                        ], 'registration')
-                        ->withInput($request->except('password', 'password_confirmation'))
-                        ->with('show_register_modal', true);
-                }
-
-                Mail::raw(
-                    "Your VakilNeeti registration OTP is: {$otp}\n\nThis OTP expires in 10 minutes. Do not share it with anyone.",
-                    function ($message) use ($email) {
-                        $message->to($email)->subject('VakilNeeti registration verification');
-                    }
-                );
-            } else {
-                $sid = config('vakilneeti.twilio_sid');
-                $token = config('vakilneeti.twilio_token');
-                $from = config('vakilneeti.twilio_from');
-
-                if (!$sid || !$token || !$from) {
-                    return back()
-                        ->withErrors([
-                            'mobile' => 'SMS OTP delivery is not configured. Configure the SMS provider before registering.'
-                        ], 'registration')
-                        ->withInput($request->except('password', 'password_confirmation'))
-                        ->with('show_register_modal', true);
-                }
-
-                $response = Http::asForm()
-                    ->withBasicAuth($sid, $token)
-                    ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
-                        'From' => $from,
-                        'To' => $mobile,
-                        'Body' => "Your VakilNeeti registration OTP is {$otp}. It expires in 10 minutes. Do not share it."
-                    ]);
-
-                if (!$response->successful()) {
-                    return back()
-                        ->withErrors([
-                            'mobile' => 'The SMS provider could not send the OTP. Check your SMS configuration.'
-                        ], 'registration')
-                        ->withInput($request->except('password', 'password_confirmation'))
-                        ->with('show_register_modal', true);
-                }
-            }
-        } catch (\Throwable $e) {
-            report($e);
-
-            return back()
-                ->withErrors([
-                    'identifier' => 'OTP delivery failed. Check your email or SMS provider configuration.'
-                ], 'registration')
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->with('show_register_modal', true);
+        if ($deliveryError !== null) {
+            return $deliveryError;
         }
 
         RateLimiter::hit($key, 3600);
 
-        DB::table('user_registration_otps')->where(function ($query) use ($email, $mobile) {
-            if ($email) {
-                $query->where('email', $email);
-            } else {
-                $query->where('mobile', $mobile);
-            }
-        })->delete();
+        DB::table('user_registration_otps')
+            ->where('mobile', $mobile)
+            ->delete();
 
         DB::table('user_registration_otps')->insert([
-            'email' => $email,
+            'user_id' => $userId,
             'mobile' => $mobile,
-            'email_otp_hash' => $email ? Hash::make($otp) : null,
-            'mobile_otp_hash' => $mobile ? Hash::make($otp) : null,
+            'mobile_otp_hash' => null,
             'expires_at' => now()->addMinutes(10),
             'attempts' => 0,
             'last_sent_at' => now(),
@@ -211,275 +192,616 @@ class UserRegistrationController extends Controller
             'updated_at' => now(),
         ]);
 
-        $request->session()->put('pending_user_registration', [
-            'name' => $validated['name'],
-            'email' => $email,
-            'mobile' => $mobile,
-            'channel' => $validated['channel'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        return redirect()->route('register.verify')
-            ->with('status', 'OTP sent. Check your selected email address or mobile phone.');
+        return null;
     }
+
+
+
+    public function sendOtp(Request $request, TwilioSmsService $smsService): RedirectResponse
+{
+    $validator = Validator::make($request->all(), [
+        'mobile' => ['required', 'string', 'max:20'],
+    ]);
+
+    if ($validator->fails()) {
+        return back()->withErrors($validator, 'registration')
+            ->withInput($request->only('mobile'))
+            ->with('show_register_modal', true);
+    }
+
+    try {
+        $mobile = $this->normalizeMobile($validator->validated()['mobile']);
+    } catch (\InvalidArgumentException $exception) {
+        return back()->withErrors(['mobile' => $exception->getMessage()], 'registration')
+            ->withInput($request->only('mobile'))
+            ->with('show_register_modal', true);
+    }
+
+    if (User::where('mobile', $mobile)->exists()) {
+        return back()->withErrors([
+            'mobile' => 'This mobile number is already registered. Please log in.',
+        ], 'registration')->withInput($request->only('mobile'))
+            ->with('show_register_modal', true);
+    }
+
+    $pending = ['mobile' => $mobile];
+
+    if ($this->otpBypassEnabled()) {
+        $pending['otp_bypassed'] = true;
+        $request->session()->forget('pending_user_registration');
+        $request->session()->put('verified_registration', $pending);
+
+        return redirect()->route('register.profile')
+            ->with('status', 'Development mode: mobile OTP verification skipped.');
+    }
+
+    $error = $this->sendMobileOtp($mobile, 'registration', $smsService);
+
+    if ($error) {
+        return back()->withErrors(['mobile' => $error], 'registration')
+            ->withInput($request->only('mobile'))
+            ->with('show_register_modal', true);
+    }
+
+    $request->session()->put('pending_user_registration', $pending);
+
+    return redirect()->route('register.verify')
+        ->with('status', 'A four-digit OTP has been sent to your mobile number.');
+}
+
+
+
 
     public function showVerify(Request $request): View|RedirectResponse
+
     {
+
         if (!$request->session()->has('pending_user_registration')) {
+
             return redirect()->route('register')
+
                 ->withErrors(['registration' => 'Start registration first.'], 'registration')
+
                 ->with('show_register_modal', true);
+
         }
+
+
 
         return view('auth.user-verify');
+
     }
 
+
+
     public function verifyOtp(Request $request): RedirectResponse
+
     {
+
         $validator = Validator::make($request->all(), [
-            'otp' => ['required', 'digits:6'],
+
+            'otp' => ['required', 'digits:4'],
+
         ]);
 
+
+
         if ($validator->fails()) {
+
             return back()
+
                 ->withErrors($validator, 'verification')
+
                 ->with('show_verify_modal', true);
+
         }
+
+
 
         $pending = $request->session()->get('pending_user_registration');
 
+
+
         if (!$pending) {
+
             return redirect()->route('register')
+
                 ->withErrors(['registration' => 'Your registration session expired. Start again.'], 'registration')
+
                 ->with('show_register_modal', true);
+
         }
 
-        $column = $pending['channel'] === 'email'
-            ? 'email_otp_hash'
-            : 'mobile_otp_hash';
+
 
         $record = DB::table('user_registration_otps')
-            ->where($pending['channel'], $pending[$pending['channel']])
+
+            ->where('mobile', $pending['mobile'])
+
+            ->whereNull('user_id')
+
             ->first();
 
+
+
         if (!$record || Carbon::parse($record->expires_at)->isPast()) {
+
             return redirect()->route('register')
+
                 ->withErrors(['otp' => 'OTP expired. Please start registration again.'], 'registration')
+
                 ->with('show_register_modal', true);
+
         }
+
+
 
         if ($record->attempts >= 5) {
+
             return back()
+
                 ->withErrors(['otp' => 'Maximum verification attempts reached. Start registration again.'], 'verification')
+
                 ->with('show_verify_modal', true);
+
         }
 
-        DB::table('user_registration_otps')
-            ->where('id', $record->id)
-            ->increment('attempts');
 
-        if (!$record->$column || !Hash::check($request->otp, $record->$column)) {
+
+        DB::table('user_registration_otps')->where('id', $record->id)->increment('attempts');
+
+
+
+        if (!$record->mobile_otp_hash || !Hash::check($request->string('otp')->toString(), $record->mobile_otp_hash)) {
+
             return back()
+
                 ->withErrors(['otp' => 'Incorrect OTP. Please try again.'], 'verification')
+
                 ->with('show_verify_modal', true);
+
         }
 
-        $user = DB::transaction(function () use ($pending, $record) {
-            $attributes = [
-                'name' => $pending['name'],
-                'email' => $pending['email'],
-                'mobile' => $pending['mobile'],
-                'password' => $pending['password'],
-            ];
 
-            if ($pending['channel'] === 'email') {
-                $attributes['email_verified_at'] = now();
-            } else {
-                $attributes['mobile_verified_at'] = now();
-            }
 
-            $user = User::create($attributes);
-            $user->is_admin = false;
-            $user->save();
-
-            DB::table('user_registration_otps')
-                ->where('id', $record->id)
-                ->delete();
-
-            return $user;
-        });
+        DB::table('user_registration_otps')->where('id', $record->id)->delete();
 
         $request->session()->forget('pending_user_registration');
+
+        $request->session()->put('verified_registration', $pending);
+
+
+
+        return redirect()->route('register.profile');
+
+    }
+
+
+
+    public function resendOtp(Request $request, TwilioSmsService $smsService): RedirectResponse
+
+    {
+
+        $pending = $request->session()->get('pending_user_registration');
+
+
+
+        if (!$pending) {
+
+            return redirect()->route('register')
+
+                ->withErrors(['registration' => 'Start registration again.'], 'registration')
+
+                ->with('show_register_modal', true);
+
+        }
+
+
+
+        $error = $this->sendMobileOtp($pending['mobile'], 'registration', $smsService);
+
+
+
+        if ($error) {
+
+            return back()
+
+                ->withErrors(['otp' => $error], 'verification')
+
+                ->with('show_verify_modal', true);
+
+        }
+
+
+
+        return back()
+
+            ->with('status', 'A new OTP has been sent to your mobile number.')
+
+            ->with('show_verify_modal', true);
+
+    }
+
+
+
+    public function showProfileSetup(Request $request): View|RedirectResponse
+
+    {
+
+        $pending = $request->session()->get('verified_registration');
+
+
+
+        if (!$pending) {
+
+            return redirect()->route('register')
+
+                ->withErrors(['registration' => 'Verify your mobile number before completing registration.'], 'registration')
+
+                ->with('show_register_modal', true);
+
+        }
+
+
+
+        return view('auth.user-profile-setup', [
+
+            'pending' => $pending,
+
+            'specializations' => self::SPECIALIZATIONS,
+            'accountRoles' => self::ACCOUNT_ROLES,
+            'onboardingFeatures' => self::ONBOARDING_FEATURES,
+
+        ]);
+
+    }
+
+
+
+    public function completeProfile(Request $request): RedirectResponse
+
+    {
+
+        $pending = $request->session()->get('verified_registration');
+
+
+
+        if (!$pending) {
+
+            return redirect()->route('register')
+
+                ->withErrors(['registration' => 'Verify your mobile number before completing registration.'], 'registration')
+
+                ->with('show_register_modal', true);
+
+        }
+
+
+
+        $rules = [
+            'account_role' => ['required', 'in:'.implode(',', array_keys(self::ACCOUNT_ROLES))],
+            'onboarding_features' => ['required', 'array', 'min:1', 'max:'.count(self::ONBOARDING_FEATURES)],
+            'onboarding_features.*' => ['required', 'distinct', 'in:'.implode(',', array_keys(self::ONBOARDING_FEATURES))],
+            'onboarding_other' => ['nullable', 'string', 'max:500'],
+            'full_name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+        ];
+
+        $accountRole = $request->input('account_role');
+        $accountType = in_array($accountRole, self::COMPANY_ROLES, true)
+            ? 'company'
+            : 'individual';
+        $selectedFeatures = (array) $request->input('onboarding_features', []);
+
+        if (in_array('other', $selectedFeatures, true)) {
+            $rules['onboarding_other'] = ['required', 'string', 'max:500'];
+        }
+
+        if ($accountType === 'individual') {
+            $isStudent = $accountRole === 'student_intern';
+
+            $rules += [
+                'bar_council_registration_number' => [$isStudent ? 'nullable' : 'required', 'string', 'max:100'],
+                'bar_registration_year' => [
+                    $isStudent ? 'nullable' : 'required',
+                    'integer',
+                    'between:1950,'.now()->year,
+                ],
+            ];
+        } else {
+            $gstin = strtoupper(trim((string) $request->input('gstin')));
+            $request->merge(['gstin' => $gstin === '' ? null : $gstin]);
+
+            $rules += [
+                'firm_name' => ['required', 'string', 'max:255'],
+                'proprietor_name' => ['nullable', 'string', 'max:255'],
+                'address' => ['nullable', 'string', 'max:5000'],
+                'city' => ['required', 'string', 'max:255'],
+                'district' => ['required', 'string', 'max:255'],
+                'region' => ['required', 'string', 'max:255'],
+                'state_code' => ['nullable', 'string', 'max:15'],
+                'pincode' => ['nullable', 'regex:/^[0-9]{6}$/'],
+                'gstin' => [
+                    'nullable',
+                    'string',
+                    'size:15',
+                    'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/',
+                ],
+                'firm_email' => ['nullable', 'email', 'max:255'],
+                'firm_phone' => ['nullable', 'string', 'max:20'],
+            ];
+        }
+
+        $validated = $request->validate($rules);
+        try {
+
+            $user = DB::transaction(function () use ($validated, $pending, $accountType): User {
+                $user = User::create([
+                    'name' => $validated['full_name'],
+                    'email' => Str::lower($validated['email']),
+                    'mobile' => $pending['mobile'],
+                    'password' => Hash::make(Str::random(64)),
+                    'mobile_verified_at' => !($pending['otp_bypassed'] ?? false) ? now() : null,
+                    'account_type' => $accountType,
+                    'account_role' => $validated['account_role'],
+                    'onboarding_features' => $validated['onboarding_features'],
+                    'onboarding_other' => $validated['onboarding_other'] ?? null,
+                ]);
+
+                if ($accountType === 'individual') {
+                    DB::table('advocate_profiles')->insert([
+                        'user_id' => $user->id,
+                        'bar_council_registration_number' => $validated['bar_council_registration_number'] ?? null,
+                        'bar_registration_year' => $validated['bar_registration_year'] ?? null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    DB::table('firm_profiles')->insert([
+                        'user_id' => $user->id,
+                        'firm_name' => $validated['firm_name'],
+                        'proprietor_name' => $validated['proprietor_name'] ?? null,
+                        'address' => $validated['address'] ?? null,
+                        'city' => $validated['city'],
+                        'district' => $validated['district'] ?? null,
+                        'state' => $validated['region'],
+                        'state_code' => $validated['state_code'] ?? null,
+                        'pincode' => $validated['pincode'] ?? null,
+                        'gstin' => $validated['gstin'] ?? null,
+                        'email' => isset($validated['firm_email']) ? Str::lower($validated['firm_email']) : null,
+                        'phone' => $validated['firm_phone'] ?? null,
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+
+
+                return $user;
+
+            });
+
+        } catch (\Throwable $exception) {
+
+            throw $exception;
+
+        }
+
+
+
+        $request->session()->forget('verified_registration');
+
+        Auth::login($user);
+
+        $request->session()->regenerate();
+
+
+
+        return redirect('/')
+            ->with('auth_login_success', 'Your account is ready. You can now sign in with a phone OTP.');
+
+    }
+
+
+
+    public function sendLoginOtp(
+    Request $request,
+    TwilioSmsService $smsService
+): RedirectResponse {
+    $validator = Validator::make($request->all(), [
+        'mobile' => ['required', 'string', 'max:20'],
+    ]);
+
+    if ($validator->fails()) {
+        return back()->withErrors($validator, 'login')
+            ->withInput($request->only('mobile'))
+            ->with('show_login_modal', true);
+    }
+
+    try {
+        $mobile = $this->normalizeMobile($validator->validated()['mobile']);
+    } catch (\InvalidArgumentException $exception) {
+        return back()->withErrors(['mobile' => $exception->getMessage()], 'login')
+            ->withInput($request->only('mobile'))
+            ->with('show_login_modal', true);
+    }
+
+    $userQuery = User::where('mobile', $mobile);
+
+    if (!$this->otpBypassEnabled()) {
+        $userQuery->whereNotNull('mobile_verified_at');
+    }
+
+    $user = $userQuery->first();
+
+    if (!$user) {
+        return back()->withErrors([
+            'mobile' => 'No account was found for this number. Create an account first.',
+        ], 'login')->withInput($request->only('mobile'))
+            ->with('show_login_modal', true);
+    }
+
+    if ($this->otpBypassEnabled()) {
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect('/')
-            ->with('auth_login_success', 'Registration verified. Your account is ready.');
+        return redirect()->intended('/')
+            ->with('auth_login_success', 'Development mode: login successful without OTP.');
     }
 
-    public function resendOtp(Request $request): RedirectResponse
-    {
-        $pending = $request->session()->get('pending_user_registration');
+    $error = $this->sendMobileOtp($mobile, 'login', $smsService, $user->id);
 
-        if (!$pending) {
-            return redirect()->route('register')
-                ->withErrors(['registration' => 'Start registration again.'], 'registration')
-                ->with('show_register_modal', true);
-        }
-
-        $requestData = [
-            'name' => $pending['name'],
-            'channel' => $pending['channel'],
-            'email' => $pending['email'],
-            'mobile' => $pending['mobile'],
-            'password' => 'TemporaryPassword123!',
-            'password_confirmation' => 'TemporaryPassword123!',
-        ];
-
-        // Reuse the same delivery and cooldown controls without changing the pending password.
-        $key = 'registration-otp:' . ($pending['email'] ?: $pending['mobile']);
-
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            return back()
-                ->withErrors(['otp' => 'Too many OTP requests. Please try later.'], 'verification')
-                ->with('show_verify_modal', true);
-        }
-
-        $record = DB::table('user_registration_otps')
-            ->where($pending['channel'], $pending[$pending['channel']])
-            ->first();
-
-        if ($record && $record->last_sent_at &&
-            Carbon::parse($record->last_sent_at)->addSeconds(60)->isFuture()) {
-            return back()
-                ->withErrors(['otp' => 'Please wait 60 seconds before requesting another OTP.'], 'verification')
-                ->with('show_verify_modal', true);
-        }
-
-        $otp = (string) random_int(100000, 999999);
-
-        try {
-            if ($pending['channel'] === 'email') {
-                if (config('mail.default') === 'log' ||
-                    empty(config('mail.mailers.smtp.username')) ||
-                    empty(config('mail.mailers.smtp.password'))) {
-                    return back()
-                        ->withErrors(['otp' => 'Email OTP delivery is not configured.'], 'verification')
-                        ->with('show_verify_modal', true);
-                }
-
-                Mail::raw(
-                    "Your VakilNeeti registration OTP is: {$otp}\n\nThis OTP expires in 10 minutes. Do not share it.",
-                    fn ($message) => $message->to($pending['email'])
-                        ->subject('VakilNeeti registration verification')
-                );
-            } else {
-                $sid = config('vakilneeti.twilio_sid');
-                $token = config('vakilneeti.twilio_token');
-                $from = config('vakilneeti.twilio_from');
-
-                if (!$sid || !$token || !$from) {
-                    return back()
-                        ->withErrors(['otp' => 'SMS OTP delivery is not configured.'], 'verification')
-                        ->with('show_verify_modal', true);
-                }
-
-                $response = Http::asForm()->withBasicAuth($sid, $token)
-                    ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
-                        'From' => $from,
-                        'To' => $pending['mobile'],
-                        'Body' => "Your VakilNeeti registration OTP is {$otp}. It expires in 10 minutes."
-                    ]);
-
-                if (!$response->successful()) {
-                    return back()
-                        ->withErrors(['otp' => 'SMS provider could not send the OTP.'], 'verification')
-                        ->with('show_verify_modal', true);
-                }
-            }
-        } catch (\Throwable $e) {
-            report($e);
-            return back()
-                ->withErrors(['otp' => 'OTP delivery failed. Check provider configuration.'], 'verification')
-                ->with('show_verify_modal', true);
-        }
-
-        RateLimiter::hit($key, 3600);
-
-        DB::table('user_registration_otps')->where('id', $record->id)->update([
-            'email_otp_hash' => $pending['channel'] === 'email' ? Hash::make($otp) : null,
-            'mobile_otp_hash' => $pending['channel'] === 'mobile' ? Hash::make($otp) : null,
-            'expires_at' => now()->addMinutes(10),
-            'attempts' => 0,
-            'last_sent_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return back()->with('status', 'A new OTP has been sent.');
+    if ($error) {
+        return back()->withErrors(['mobile' => $error], 'login')
+            ->withInput($request->only('mobile'))
+            ->with('show_login_modal', true);
     }
 
-    public function login(Request $request): RedirectResponse
+    $request->session()->put('login_otp_mobile', $mobile);
+
+    return redirect()->route('login')
+        ->with('status', 'A four-digit OTP has been sent to your mobile number.')
+        ->with('show_login_otp', true);
+}
+
+
+
+
+
+    public function verifyLoginOtp(Request $request): RedirectResponse
+
     {
+
         $validator = Validator::make($request->all(), [
-            'identifier' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string'],
+
+            'otp' => ['required', 'digits:4'],
+
         ]);
+
+
 
         if ($validator->fails()) {
+
             return back()
+
                 ->withErrors($validator, 'login')
-                ->withInput($request->except('password'))
+
+                ->with('show_login_otp', true);
+
+        }
+
+
+
+        $mobile = $request->session()->get('login_otp_mobile');
+
+        $user = $mobile
+
+            ? User::where('mobile', $mobile)->whereNotNull('mobile_verified_at')->first()
+
+            : null;
+
+        $record = $mobile
+
+            ? DB::table('user_registration_otps')
+
+                ->where('mobile', $mobile)
+
+                ->where('user_id', $user?->id)
+
+                ->first()
+
+            : null;
+
+
+
+        if (!$user || !$record || Carbon::parse($record->expires_at)->isPast()) {
+
+            $request->session()->forget('login_otp_mobile');
+
+
+
+            return redirect()->route('login')
+
+                ->withErrors(['otp' => 'OTP expired. Request a new login OTP.'], 'login')
+
                 ->with('show_login_modal', true);
+
         }
 
-        $credentials = $validator->validated();
-        $identifier = trim($credentials['identifier']);
 
-        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
 
-        if ($field === 'mobile') {
-            try {
-                $identifier = $this->normalizeMobile($identifier);
-            } catch (\InvalidArgumentException $e) {
-                return back()->withErrors(['identifier' => $e->getMessage()], 'login')
-                    ->withInput($request->only('identifier'))
-                    ->with('show_login_modal', true);
-            }
-        } else {
-            $identifier = Str::lower($identifier);
-        }
+        if ($record->attempts >= 5) {
 
-        $user = User::where($field, $identifier)->first();
-
-        if (!$user || ($field === 'email' && !$user->email_verified_at) ||
-            ($field === 'mobile' && !$user->mobile_verified_at) ||
-            !Hash::check($credentials['password'], $user->password)) {
             return back()
-                ->withErrors([
-                    'identifier' => 'Invalid credentials or contact method not verified.'
-                ], 'login')
-                ->withInput($request->only('identifier'))
-                ->with('show_login_modal', true);
+
+                ->withErrors(['otp' => 'Maximum verification attempts reached. Request a new OTP.'], 'login')
+
+                ->with('show_login_otp', true);
+
         }
 
-        Auth::login($user, $request->boolean('remember'));
+
+
+        DB::table('user_registration_otps')->where('id', $record->id)->increment('attempts');
+
+
+
+        if (!$record->mobile_otp_hash || !Hash::check($request->string('otp')->toString(), $record->mobile_otp_hash)) {
+
+            return back()
+
+                ->withErrors(['otp' => 'Incorrect OTP. Please try again.'], 'login')
+
+                ->with('show_login_otp', true);
+
+        }
+
+
+
+        DB::table('user_registration_otps')->where('id', $record->id)->delete();
+
+        $request->session()->forget('login_otp_mobile');
+
+        Auth::login($user);
+
         $request->session()->regenerate();
 
+
+
         return redirect()->intended('/')
+
             ->with('auth_login_success', 'Login successful.');
+
     }
+
+
 
     public function logout(Request $request): RedirectResponse
+
     {
+
         if (Auth::user()?->is_admin) {
+
             return redirect()->route('admin.login')
+
                 ->with('status', 'Use the administrator logout option.');
+
         }
 
+
+
         Auth::logout();
+
         $request->session()->invalidate();
+
         $request->session()->regenerateToken();
 
+
+
         return redirect()->route('login')->with('status', 'You have been logged out.');
+
     }
+
 }
+

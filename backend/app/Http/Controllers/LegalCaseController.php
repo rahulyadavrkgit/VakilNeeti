@@ -144,6 +144,11 @@ class LegalCaseController extends Controller
                 $query->orderByDesc('hearing_date')
                     ->orderByDesc('next_hearing_date');
             },
+            'notes' => fn ($query) => $query->latest(),
+            'appointments' => fn ($query) => $query->orderBy('starts_at'),
+            'expenses' => fn ($query) => $query->orderByDesc('expense_date'),
+            'timeEntries' => fn ($query) => $query->orderByDesc('entry_date'),
+            'documents' => fn ($query) => $query->latest(),
         ]);
 
         return view('cases.show', compact('case'));

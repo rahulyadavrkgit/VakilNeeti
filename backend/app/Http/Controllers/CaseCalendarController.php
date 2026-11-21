@@ -159,6 +159,45 @@ class CaseCalendarController extends Controller
             ];
         }
 
+        $appointmentRows = DB::table('case_appointments as a')
+            ->leftJoin('legal_cases as lc', function ($join) {
+                $join->on('lc.id', '=', 'a.case_id');
+                if (!auth()->user()->is_admin) {
+                    $join->where('lc.user_id', auth()->id());
+                }
+            })
+            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('a.user_id', auth()->id()))
+            ->whereBetween('a.starts_at', [
+                $start->copy()->startOfDay()->toDateTimeString(),
+                $end->copy()->endOfDay()->toDateTimeString(),
+            ])
+            ->select(
+                'a.id',
+                'a.title',
+                'a.starts_at',
+                'a.location',
+                'a.notes',
+                'a.case_id',
+                'lc.case_title',
+                'lc.case_number'
+            )
+            ->get();
+
+        foreach ($appointmentRows as $appointment) {
+            $events[] = [
+                'type' => 'appointment',
+                'label' => 'Appointment',
+                'title' => $appointment->title,
+                'date' => Carbon::parse($appointment->starts_at)->toDateString(),
+                'time' => Carbon::parse($appointment->starts_at)->format('H:i'),
+                'case_id' => $appointment->case_id,
+                'case_number' => $appointment->case_number,
+                'case_title' => $appointment->case_title,
+                'details' => $appointment->location ?: $appointment->notes,
+                'id' => $appointment->id,
+            ];
+        }
+
         $eventsByDate = collect($events)
             ->sortBy(function ($event) {
                 return $event['date'] . ' ' . ($event['time'] ?: '00:00');

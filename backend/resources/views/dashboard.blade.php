@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Case Management Dashboard')
 @section('page-heading', 'Case Management Dashboard')
@@ -11,9 +11,7 @@
     <section class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-5">
             <div>
-                <p class="text-xs font-bold uppercase tracking-widest text-blue-300">
-                    VakilNeeti Workspace
-                </p>
+                <div class="mb-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
 
                 <h2 class="mt-2 text-2xl font-bold text-white">
                     Case Management Dashboard
@@ -184,7 +182,7 @@
     <section class="rounded-xl border border-amber-300 bg-white shadow-sm">
         <div class="border-b border-amber-200 bg-amber-50 px-5 py-4">
             <h3 class="font-bold text-amber-900">
-                Past Hearing Dates — Review Required
+                Past Hearing Dates â€” Review Required
             </h3>
             <p class="mt-1 text-sm text-amber-900">
                 Review the official case status before updating these dates.

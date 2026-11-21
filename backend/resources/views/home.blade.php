@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'All Sections')
 @section('page-heading', 'All Sections')
@@ -6,7 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <header class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <p class="text-xs font-bold uppercase tracking-widest text-blue-300">VakilNeeti</p>
+        <div class="mb-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
         <h1 class="mt-2 text-2xl font-bold">Explore the legal workspace</h1>
         <p class="mt-2 max-w-3xl text-sm text-slate-300">
             Explore Indian court information and legal resources, build public-data dashboards,
@@ -153,3 +153,4 @@
     </section>
 </div>
 @endsection
+
