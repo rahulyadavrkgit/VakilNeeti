@@ -400,6 +400,7 @@ php artisan db:seed --class=DelhiPoliceStationsSeeder --force
 
 | Symptom | Fix |
 |---|---|
+| `Your lock file does not contain a compatible set of packages` | Server PHP is older than the lock allows. Set PHP 8.3+ in hPanel. `composer.json` pins `config.platform.php` to 8.3 so the lock works on 8.3 and newer. Keep that pin when running `composer update`. |
 | **500 error, blank page** | `tail -50 storage/logs/laravel-*.log`; check permissions (step 5.2) |
 | `Vite manifest not found` | `public/build` is missing. Upload it (step 7). |
 | Changed `.env` but nothing happens | `php artisan config:clear && php artisan config:cache` |
