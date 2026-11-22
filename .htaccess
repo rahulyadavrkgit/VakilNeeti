@@ -1,0 +1,26 @@
+# Used when the whole project sits in the web root (e.g. Hostinger public_html).
+# Only public/ is ever served: .env, storage/ (logs), vendor/, composer.json and
+# the rest of the project cannot be downloaded. If the web root is later pointed
+# at public/ directly, this file is outside it and does nothing.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Old links that include /public/ go to the clean address.
+    RewriteCond %{THE_REQUEST} \s/public/([^\s?]*) [NC]
+    RewriteRule ^ /%1 [R=301,L,NE]
+
+    # Serve everything from public/ (Laravel's own public/.htaccess takes over there).
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Without mod_rewrite, refuse to serve any project file.
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
+
+# Never serve hidden files or logs, even by direct path.
+<FilesMatch "^\.|\.(log|sql|sqlite|env|md|lock)$">
+    Require all denied
+</FilesMatch>
