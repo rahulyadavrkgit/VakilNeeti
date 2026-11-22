@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Invoice & GST settings')
+@section('page-heading', 'Invoice & GST settings')
+
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
 

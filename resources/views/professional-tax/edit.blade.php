@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Edit professional tax record')
+@section('page-heading', 'Edit professional tax record')
+
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
     <div>

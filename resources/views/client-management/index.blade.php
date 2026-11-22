@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Client management')
+@section('page-heading', 'Client management')
+
 @section('content')
 <div class="space-y-6">
 

@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Professional profile')
+@section('page-heading', 'Professional profile')
+
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
 

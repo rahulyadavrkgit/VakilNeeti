@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'Court management')
+@section('page-heading', 'Court management')
+@section('meta_description', 'Courts of India in one place: Supreme Court, High Courts, district courts and tribunals, with official links.')
+
 @section('content')
 <div class="space-y-6">
 

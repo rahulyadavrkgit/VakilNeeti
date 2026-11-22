@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Official Court Directory')
+@section('meta_description', 'Official Court Directory: Supreme Court, High Courts and district courts of India by State and district.')
 @section('page-heading', 'Official Court Directory')
 
 @section('content')

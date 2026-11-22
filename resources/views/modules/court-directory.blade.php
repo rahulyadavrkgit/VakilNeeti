@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'Court directory')
+@section('page-heading', 'Court directory')
+@section('meta_description', 'Directory of courts in India: Supreme Court, High Courts and district courts, with official websites.')
+
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
 

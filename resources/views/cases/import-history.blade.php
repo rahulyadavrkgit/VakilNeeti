@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Import history')
+@section('page-heading', 'Import history')
+
 @section('content')
 <div class="max-w-6xl mx-auto py-8 px-4">
 

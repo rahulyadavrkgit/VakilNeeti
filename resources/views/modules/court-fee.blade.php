@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Court Fee')
+@section('meta_description', 'Court fee calculator for Indian courts, with State court fee schedules, rules and exemptions.')
 @section('page-heading', 'Court Fee')
 
 @section('content')

@@ -8,7 +8,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsurePrivatePracticeAccess
 {
-    private array $publicPaths = [
+    /**
+     * Paths anyone can open without logging in.
+     *
+     * @var list<string>
+     */
+    public const PUBLIC_PATHS = [
         'login',
         'register',
         'register/*',
@@ -30,6 +35,10 @@ class EnsurePrivatePracticeAccess
         'miscellaneous-forms/*',
         'bar-directory',
         'bar-directory/*',
+        'courts',
+        'courts/*',
+        'sitemap.xml',
+        'robots.txt',
         'court-directory',
         'court-directory/*',
         'api/court-directory/*',
@@ -44,6 +53,14 @@ class EnsurePrivatePracticeAccess
         'webview/*',
     ];
 
+    /**
+     * Whether a request is for a public page: the home page or one of PUBLIC_PATHS.
+     */
+    public static function isPublic(Request $request): bool
+    {
+        return $request->path() === '/' || $request->is(...self::PUBLIC_PATHS);
+    }
+
     public function handle(Request $request, Closure $next): Response
     {
         // The section directory is public and contains no account-specific records.
@@ -52,7 +69,7 @@ class EnsurePrivatePracticeAccess
         }
 
         // Public reference modules remain accessible without login.
-        foreach ($this->publicPaths as $path) {
+        foreach (self::PUBLIC_PATHS as $path) {
             if ($request->is($path)) {
                 return $next($request);
             }

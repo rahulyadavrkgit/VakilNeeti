@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Bar Associations')
+@section('meta_description', 'National, State, High Court and District Bar Associations and Bar Councils of India, with official links.')
 @section('page-heading', 'Bar Associations')
 
 @section('content')

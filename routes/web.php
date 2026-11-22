@@ -41,6 +41,7 @@ use App\Http\Controllers\ProfessionalProfileController;
 use App\Http\Controllers\ProfessionalTaxController;
 use App\Http\Controllers\ProfileContactController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxComplianceController;
 use App\Http\Controllers\TdsDeductionController;
@@ -469,8 +470,20 @@ Route::get('/bar-directory', [BarDirectoryController::class, 'index'])->name('ba
 // Judicial Architecture & Court Complexes Directory
 
 Route::get('/court-directory', [CourtDirectoryController::class, 'index'])->name('court-directory.index');
-Route::get('/court-directory/supreme-court', [CourtLinksController::class, 'supremeCourt'])->name('court-directory.supreme-court');
-Route::get('/court-directory/display-boards', [CourtLinksController::class, 'displayBoards'])->name('court-directory.display-boards');
+
+// Search engines.
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+
+// Courts: quick links to official court services (public).
+Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/supreme-court', 'supremeCourt')->name('supreme-court');
+    Route::get('/delhi-high-court', 'delhiHighCourt')->name('delhi-high-court');
+    Route::get('/delhi-district-courts', 'delhiDistrictCourts')->name('delhi-district-courts');
+    Route::get('/display-boards', 'displayBoards')->name('display-boards');
+    Route::get('/ecourts-services', 'ecourtsServices')->name('ecourts-services');
+});
 // Criminal Laws: old and new statutory section comparison.
 Route::get(
     '/new-criminal-laws/compare/{pair}',

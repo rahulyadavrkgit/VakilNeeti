@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'TDS follow-up history')
+@section('page-heading', 'TDS follow-up history')
+
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 

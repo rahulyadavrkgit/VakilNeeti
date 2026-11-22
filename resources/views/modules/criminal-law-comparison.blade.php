@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'IPC to BNS section comparison')
+@section('page-heading', 'IPC to BNS section comparison')
+@section('meta_description', 'Compare sections of the IPC, CrPC and Evidence Act with the new BNS, BNSS and BSA, side by side.')
+
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6 px-4 py-5">
 

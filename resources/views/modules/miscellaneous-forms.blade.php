@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Miscellaneous Forms')
+@section('meta_description', 'Court forms, civil and criminal forms, affidavits, applications, police and RTI forms in one place.')
 @section('page-heading', 'Miscellaneous Forms')
 
 @section('content')

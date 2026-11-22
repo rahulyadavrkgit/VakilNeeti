@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'New Criminal Laws: BNS, BNSS and BSA')
+@section('page-heading', 'New Criminal Laws: BNS, BNSS and BSA')
+@section('meta_description', 'Bharatiya Nyaya Sanhita, Bharatiya Nagarik Suraksha Sanhita and Bharatiya Sakshya Adhiniyam: overview and section-by-section comparison with the IPC, CrPC and Evidence Act.')
+
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 

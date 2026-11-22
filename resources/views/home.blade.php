@@ -128,21 +128,29 @@
         </div>
     @endauth
 
-    <nav class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Quick links">
-        @foreach([
-            ['route' => 'cases.index', 'icon' => '▤', 'label' => 'My cases'],
-            ['route' => 'cases.calendar', 'icon' => '▦', 'label' => 'Calendar'],
-            ['route' => 'clients.index', 'icon' => '♙', 'label' => 'Clients'],
-            ['route' => 'profile.index', 'icon' => '⚙', 'label' => 'Profile'],
-        ] as $quickLink)
-            <a href="{{ route($quickLink['route']) }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-[#8fc9c0] hover:shadow-md">
-                <span class="text-xl text-[#16776e]" aria-hidden="true">{{ $quickLink['icon'] }}</span>{{ $quickLink['label'] }}
-            </a>
-        @endforeach
-    </nav>
-
-    <h2 class="pt-2 text-xl font-semibold text-slate-900">All modules</h2>
-
+    <section aria-labelledby="explore-heading">
+        <h2 id="explore-heading" class="sr-only">Explore VakilNiti</h2>
+        <nav class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" aria-label="Modules">
+            <x-module-tile :href="route('case-dashboard.index')" icon="briefcase" title="Case Management" description="Cases, hearings, tasks" badge="New" />
+            <x-module-tile :href="url('/pdf-annotator')" icon="pdf" title="PDF Annotator" description="Highlight, search, draw" badge="New" />
+            <x-module-tile :href="route('courts.supreme-court')" icon="pillars" title="Supreme Court" description="Court list, boards, e-pass" />
+            <x-module-tile :href="route('courts.delhi-high-court')" icon="building" title="Delhi High Court" description="Roster, cause list, orders" />
+            <x-module-tile :href="route('courts.delhi-district-courts')" icon="gavel" title="Delhi District Courts" description="All seven complexes" />
+            <x-module-tile :href="route('courts.display-boards')" icon="board" title="Display Boards" description="Live courtroom boards" />
+            <x-module-tile :href="route('cases.calendar')" icon="calendar" title="Court Calendar" description="Hearings by day, week, month" />
+            <x-module-tile :href="route('courts.ecourts-services')" icon="search" title="eCourts Services" description="Case status, ePay, eFiling" />
+            <x-module-tile :href="route('clients.index')" icon="people" title="Clients & Billing" description="Clients, invoices, payments" />
+            <x-module-tile :href="url('/police-administration')" icon="shield" title="Police Administration" description="Stations and portals" />
+            <x-module-tile :href="url('/new-criminal-laws')" icon="law" title="New Criminal Laws" description="BNS, BNSS, BSA" />
+            <x-module-tile :href="route('bare-acts.index')" icon="book" title="Bare Acts" description="Central Acts and codes" />
+            <x-module-tile :href="route('miscellaneous-forms.index')" icon="form" title="Misc. Forms" description="Court, RTI, affidavits" />
+            <x-module-tile :href="url('/court-fee')" icon="calculator" title="Court Fee" description="Calculator and schedules" />
+            <x-module-tile :href="route('bar-associations.index')" icon="bar" title="Bar Associations" description="Bars and Bar Councils" />
+            <x-module-tile :href="route('courts.index')" icon="map" title="All Courts" description="High Courts, districts, tribunals" />
+            <x-module-tile :href="route('dashboard-studio.index')" icon="chart" title="Law Data" description="Build data dashboards" />
+            <x-module-tile :href="route('profile.index')" icon="settings" title="Profile" description="Practice and invoice settings" />
+        </nav>
+    </section>
     @php
         $sections = [
             [
@@ -165,8 +173,11 @@
                 'title' => 'Courts',
                 'links' => [
                     ['label' => 'Court Directory', 'url' => route('court-directory.index')],
-                    ['label' => 'Supreme Court of India', 'url' => route('court-directory.supreme-court')],
-                    ['label' => 'Court Display Boards', 'url' => route('court-directory.display-boards')],
+                    ['label' => 'Supreme Court of India', 'url' => route('courts.supreme-court')],
+                    ['label' => 'Delhi High Court', 'url' => route('courts.delhi-high-court')],
+                    ['label' => 'Delhi District Courts', 'url' => route('courts.delhi-district-courts')],
+                    ['label' => 'Court Display Boards', 'url' => route('courts.display-boards')],
+                    ['label' => 'eCourts Services', 'url' => route('courts.ecourts-services')],
                     ['label' => 'High Courts', 'url' => route('court-directory.index', ['level' => 'high-court'])],
                     ['label' => 'District & Subordinate Courts', 'url' => route('court-directory.index', ['level' => 'district'])],
                     ['label' => 'Appellate Courts & Tribunals', 'url' => route('court-catalogue.index')],
@@ -252,7 +263,12 @@
         ];
     @endphp
 
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <details class="group rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-lg font-semibold text-slate-900">
+            All links
+            <x-icon name="chevron" class="text-slate-400 transition group-open:rotate-180" />
+        </summary>
+    <section class="grid gap-4 border-t border-slate-100 p-4 sm:grid-cols-2 xl:grid-cols-3">
         @foreach($sections as $section)
             <article class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#b8dfd9] hover:shadow-md">
                 <h2 class="text-lg font-semibold text-slate-900">{{ $section['title'] }}</h2>
@@ -268,6 +284,7 @@
             </article>
         @endforeach
     </section>
+    </details>
 </div>
 @endsection
 

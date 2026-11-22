@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'PDF Annotator & Editor')
+@section('meta_description', 'Free PDF annotator for advocates: highlight, search, draw, add notes and download court documents in your browser.')
 @section('page-heading', 'PDF Annotator & Editor')
 
 @push('styles')

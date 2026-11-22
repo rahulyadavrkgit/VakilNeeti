@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Upcoming TDS follow-ups')
+@section('page-heading', 'Upcoming TDS follow-ups')
+
 @section('content')
 @include('tds.partials.follow-up-navigation')
 <div class="space-y-6">

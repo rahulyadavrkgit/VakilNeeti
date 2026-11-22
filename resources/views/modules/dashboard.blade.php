@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Dashboard')
+@section('page-heading', 'Dashboard')
+
 @section('content')
 <div class="max-w-7xl mx-auto space-y-6">
 

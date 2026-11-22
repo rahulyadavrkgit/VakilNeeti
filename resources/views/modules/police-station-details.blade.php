@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'Police station details')
+@section('page-heading', 'Police station details')
+@section('meta_description', 'Address, jurisdiction and official contact details of this police station.')
+
 @section('content')
 <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
 

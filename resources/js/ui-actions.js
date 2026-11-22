@@ -8,9 +8,9 @@
  * - data-autoprint                 on any element: opens the print dialog after the page loads.
  * - data-copy="text"               on a button: copies the text to the clipboard.
  * - data-switch="group" (radio) with data-switch-panel="group:value"  shows the matching panel.
+ * - data-filter-list="id" on an input: live-filters [data-filter-item] (and data-filter-also="selector") inside #id.
  * - data-toggle-open="id"          toggles the `open` state of a <details>/<dialog> by id.
  * - data-toggle-display="id"       shows/hides an element by id.
- * - data-vn-open-section="key" data-vn-open-url="/path"  sidebar section buttons.
  * - data-vn-close-webview          closes the external webview page.
  * - data-filter-dashboard-table="sourceId"  live table filter in Dashboard Studio.
  */
@@ -31,7 +31,7 @@ document.addEventListener('click', (event) => {
     }
 
     const action = event.target.closest(
-        '[data-print], [data-toggle-open], [data-toggle-display], [data-vn-open-section], [data-vn-close-webview]',
+        '[data-print], [data-toggle-open], [data-toggle-display], [data-vn-close-webview]',
     );
 
     if (!action) {
@@ -52,8 +52,6 @@ document.addEventListener('click', (event) => {
         if (target) {
             target.style.display = target.style.display === 'none' ? 'block' : 'none';
         }
-    } else if (action.dataset.vnOpenSection) {
-        callGlobal('vnOpenSection', action.dataset.vnOpenSection, action.dataset.vnOpenUrl);
     } else if (action.hasAttribute('data-vn-close-webview')) {
         callGlobal('vnCloseWebview');
     }
@@ -237,4 +235,34 @@ document.addEventListener('change', (event) => {
     document.querySelectorAll(`[data-switch-panel^="${radio.dataset.switch}:"]`).forEach((panel) => {
         panel.hidden = panel.dataset.switchPanel !== `${radio.dataset.switch}:${radio.value}`;
     });
+});
+
+// Live list filter: an input with data-filter-list="id" hides [data-filter-item] children of #id that do not match.
+document.addEventListener('input', (event) => {
+    const input = event.target.closest('[data-filter-list]');
+    const list = input ? document.getElementById(input.dataset.filterList) : null;
+
+    if (!list) {
+        return;
+    }
+
+    const query = input.value.trim().toLowerCase();
+    let shown = 0;
+
+    const selector = input.dataset.filterAlso ? `[data-filter-item], ${input.dataset.filterAlso}` : '[data-filter-item]';
+
+    list.querySelectorAll(selector).forEach((item) => {
+        const matches = query === '' || item.textContent.toLowerCase().includes(query);
+        item.hidden = !matches;
+
+        if (matches) {
+            shown++;
+
+            if (query !== '' && item instanceof HTMLDetailsElement) {
+                item.open = true;
+            }
+        }
+    });
+
+    list.querySelector('[data-filter-empty]')?.toggleAttribute('hidden', shown > 0);
 });

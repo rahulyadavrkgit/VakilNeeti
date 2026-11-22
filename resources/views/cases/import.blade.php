@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Import official court record')
+@section('page-heading', 'Import official court record')
+
 @section('content')
 <div class="max-w-5xl mx-auto py-8 px-4">
 

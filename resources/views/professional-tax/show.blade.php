@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Professional tax record')
+@section('page-heading', 'Professional tax record')
+
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
     <div class="flex flex-wrap items-center justify-between gap-3">

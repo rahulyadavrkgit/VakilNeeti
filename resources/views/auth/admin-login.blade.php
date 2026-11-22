@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Admin log in')
+@section('page-heading', 'Admin log in')
+
 @section('content')
 <div class="mx-auto mt-10 max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
 

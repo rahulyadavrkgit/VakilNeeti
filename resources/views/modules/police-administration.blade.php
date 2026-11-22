@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'Police administration')
+@section('page-heading', 'Police administration')
+@section('meta_description', 'Police stations, State police departments, police districts and ranges, and official police portals across India.')
+
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
 

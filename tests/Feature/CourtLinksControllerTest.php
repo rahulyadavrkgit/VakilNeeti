@@ -3,36 +3,77 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\CourtLinksController;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CourtLinksControllerTest extends TestCase
 {
-    public function test_supreme_court_page_links_to_every_official_service_in_a_new_tab(): void
+    /**
+     * @return array<string, array{0: string, 1: list<array<string, string>>}>
+     */
+    public static function linkPages(): array
     {
-        $response = $this->get(route('court-directory.supreme-court'))
-            ->assertOk()
-            ->assertSee('Physical display board')
-            ->assertSee('E-gate pass');
+        return [
+            'supreme court' => ['courts.supreme-court', CourtLinksController::SUPREME_COURT],
+            'delhi high court' => ['courts.delhi-high-court', CourtLinksController::DELHI_HIGH_COURT],
+            'ecourts services' => ['courts.ecourts-services', CourtLinksController::ECOURTS_SERVICES],
+        ];
+    }
 
-        foreach (CourtLinksController::SUPREME_COURT as $link) {
-            $response->assertSee('href="'.$link['url'].'" target="_blank" rel="noopener noreferrer" data-direct-share', false);
+    /**
+     * @param  list<array<string, string>>  $links
+     */
+    #[DataProvider('linkPages')]
+    public function test_link_pages_are_public_and_open_every_official_link_in_a_new_tab(string $route, array $links): void
+    {
+        $response = $this->get(route($route))->assertOk();
+
+        foreach ($links as $link) {
+            $this->assertStringStartsWith('https://', $link['url']);
+            $response->assertSee($link['title'])
+                ->assertSee('href="'.$link['url'].'" target="_blank" rel="noopener noreferrer" data-direct-share', false);
         }
 
-        $response->assertSee('https://cdb.sci.gov.in/', false)
+        $response->assertSee('<meta name="description"', false)
+            ->assertSee('"@type":"BreadcrumbList"', false);
+    }
+
+    public function test_supreme_court_page_has_both_display_boards(): void
+    {
+        $this->get(route('courts.supreme-court'))
+            ->assertOk()
+            ->assertSee('https://cdb.sci.gov.in/', false)
             ->assertSee('https://wdb.sci.gov.in/display_original.php', false);
     }
 
-    public function test_display_boards_page_lists_each_court_and_is_public(): void
+    public function test_delhi_district_courts_lists_every_complex_and_district_website(): void
     {
-        $response = $this->get(route('court-directory.display-boards'))->assertOk();
+        $response = $this->get(route('courts.delhi-district-courts'))->assertOk()->assertSee('E-Courts filing portal');
+
+        foreach (CourtLinksController::DELHI_DISTRICT_COMPLEXES as $complex => $districts) {
+            $response->assertSee($complex);
+
+            foreach ($districts as $district) {
+                $response->assertSee($district['district'])->assertSee('href="'.$district['url'].'"', false);
+            }
+        }
+    }
+
+    public function test_display_boards_and_courts_hub_are_public(): void
+    {
+        $response = $this->get(route('courts.display-boards'))->assertOk();
 
         foreach (CourtLinksController::DISPLAY_BOARDS as $court) {
             $response->assertSee($court['court']);
 
             foreach ($court['boards'] as $board) {
-                $this->assertStringStartsWith('https://', $board['url']);
                 $response->assertSee('href="'.$board['url'].'"', false);
             }
         }
+
+        $this->get(route('courts.index'))
+            ->assertOk()
+            ->assertSee(route('courts.supreme-court'), false)
+            ->assertSee(route('courts.delhi-district-courts'), false);
     }
 }

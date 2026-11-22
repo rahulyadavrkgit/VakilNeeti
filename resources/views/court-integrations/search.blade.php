@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Official Court Search')
+@section('meta_description', 'Search official Indian court portals for case status, cause lists and orders, with links to eCourts and High Court services.')
 @section('page-heading', 'Official Court Search')
 
 @section('content')

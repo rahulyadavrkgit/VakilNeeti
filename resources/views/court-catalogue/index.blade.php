@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Court Catalogue')
+@section('meta_description', 'Appellate courts and tribunals of India: NCLT, NCLAT, ITAT, CAT, consumer commissions and more, with official links.')
 @section('page-heading', 'Court Catalogue')
 @section('content')
 <div class="space-y-6">

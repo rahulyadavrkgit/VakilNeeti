@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'TDS deductions')
+@section('page-heading', 'TDS deductions')
+
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 

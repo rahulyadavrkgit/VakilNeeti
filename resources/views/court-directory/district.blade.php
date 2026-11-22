@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title', 'District court directory')
+@section('page-heading', 'District court directory')
+@section('meta_description', 'Courts, judges and official links for this judicial district, from the Official Court Directory on VakilNiti.')
+
 @section('content')
 <div class="max-w-6xl mx-auto px-4 py-6">
 

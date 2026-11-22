@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Bare Acts')
+@section('meta_description', 'Bare Acts of India: Central Acts and the criminal law codes, with links to the official text on India Code.')
 @section('page-heading', 'Bare Acts')
 
 @section('content')
