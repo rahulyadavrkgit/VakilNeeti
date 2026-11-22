@@ -8,7 +8,6 @@
             <h1 class="text-2xl font-bold text-slate-800">TDS Deduction Details</h1>
             <p class="text-sm text-slate-500">{{ $tdsDeduction->deduction_reference }}</p>
         </div>
-        <a href="{{ route('tds.index') }}" class="text-sm text-indigo-600">Back to Register</a>
     </div>
 
     @if(session('success'))
@@ -35,7 +34,7 @@
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Deduction Date</dt>
-                <dd>{{ $tdsDeduction->deduction_date?->format('d-m-Y') ?? 'â€”' }}</dd>
+                <dd>{{ $tdsDeduction->deduction_date?->format('d-m-Y') ?? '—' }}</dd>
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Client</dt>
@@ -47,11 +46,11 @@
             </div>
             <div>
                 <dt class="text-sm text-slate-500">TDS Section</dt>
-                <dd>{{ $tdsDeduction->tds_section ?: 'â€”' }}</dd>
+                <dd>{{ $tdsDeduction->tds_section ?: '—' }}</dd>
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Rate</dt>
-                <dd>{{ $tdsDeduction->deduction_rate !== null ? $tdsDeduction->deduction_rate . '%' : 'â€”' }}</dd>
+                <dd>{{ $tdsDeduction->deduction_rate !== null ? $tdsDeduction->deduction_rate . '%' : '—' }}</dd>
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Deduction Amount</dt>
@@ -59,7 +58,7 @@
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Financial Year</dt>
-                <dd>{{ $tdsDeduction->financial_year ?: 'â€”' }}</dd>
+                <dd>{{ $tdsDeduction->financial_year ?: '—' }}</dd>
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Certificate Status</dt>
@@ -67,11 +66,11 @@
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Certificate Number</dt>
-                <dd>{{ $tdsDeduction->certificate_number ?: 'â€”' }}</dd>
+                <dd>{{ $tdsDeduction->certificate_number ?: '—' }}</dd>
             </div>
             <div>
                 <dt class="text-sm text-slate-500">Certificate Date</dt>
-                <dd>{{ $tdsDeduction->certificate_date?->format('d-m-Y') ?? 'â€”' }}</dd>
+                <dd>{{ $tdsDeduction->certificate_date?->format('d-m-Y') ?? '—' }}</dd>
             </div>
         </dl>
 
@@ -85,9 +84,7 @@
 
     <section class="rounded-xl border bg-white p-6">
         <h2 class="font-semibold text-slate-800">Form 26AS / AIS Credit Reconciliation</h2>
-        <p class="mt-1 text-sm text-slate-500">
-            Record the result after checking the relevant tax statement. This is separate from certificate receipt.
-        </p>
+        <p class="mt-1 text-sm text-slate-500">Record the result after checking your tax statement.</p>
 
         <div class="mt-4 rounded-lg bg-slate-50 p-4">
             <p class="text-sm text-slate-500">Current reconciliation status</p>

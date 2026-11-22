@@ -1,20 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice Details | VakilNeeti</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@extends('layouts.app')
 
-<body class="min-h-screen bg-slate-100 text-slate-900">
+@section('title', 'Invoice Details')
+@section('page-heading', 'Invoice Details')
 
-<div class="mx-auto max-w-5xl p-8">
+@push('styles')
+<style>
+@media print {
+    body { background: white !important; }
+    button, a { display: none !important; }
+    .shadow-sm { box-shadow: none !important; }
+}
+</style>
+@endpush
+
+@section('content')
+
+<div class="mx-auto max-w-5xl">
 
     <div class="mb-6 flex justify-between">
-        <a href="{{ route('invoices.index') }}" class="text-blue-600 hover:underline">
-            Ã¢â€ Â Back to Invoices
-        </a>
 
         <div class="flex flex-wrap gap-2">
     <a href="{{ route('invoices.pdf', $invoice) }}"
@@ -28,7 +31,7 @@
         Share Invoice
     </button>
 
-    <button onclick="window.print()"
+    <button data-print
             class="rounded-lg bg-slate-800 px-5 py-2 text-white">
         Print Invoice
     </button>
@@ -105,43 +108,103 @@
             </div>
         </div>
 
+        @if($invoice->legalCase || $invoice->client_pan || $invoice->client_gstin || $invoice->place_of_supply)
+            <dl class="grid gap-4 border-b py-6 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                @if($invoice->legalCase)
+                    <div><dt class="text-xs font-semibold uppercase text-slate-500">Case</dt><dd class="mt-1"><a href="{{ route('cases.show', $invoice->legalCase) }}" class="font-medium text-[#16776e] hover:underline">{{ $invoice->legalCase->case_title }}</a></dd></div>
+                @endif
+                @if($invoice->client_pan)
+                    <div><dt class="text-xs font-semibold uppercase text-slate-500">Client PAN</dt><dd class="mt-1 font-medium">{{ $invoice->client_pan }}</dd></div>
+                @endif
+                @if($invoice->client_gstin)
+                    <div><dt class="text-xs font-semibold uppercase text-slate-500">Client GSTIN</dt><dd class="mt-1 font-medium">{{ $invoice->client_gstin }}</dd></div>
+                @endif
+                @if($invoice->place_of_supply)
+                    <div><dt class="text-xs font-semibold uppercase text-slate-500">Place of supply</dt><dd class="mt-1 font-medium">{{ $invoice->place_of_supply }}</dd></div>
+                @endif
+            </dl>
+        @endif
+
         <div class="py-8">
-            <h3 class="mb-4 text-lg font-bold">Description of Services</h3>
-            <p class="whitespace-pre-line text-slate-700">
-                {{ $invoice->description ?: 'Professional legal services' }}
-            </p>
+            @if($invoice->items->isNotEmpty())
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="border-b text-xs uppercase text-slate-500">
+                            <tr>
+                                <th class="py-2 pr-3">Description</th>
+                                <th class="py-2 pr-3 text-right">Qty</th>
+                                <th class="py-2 pr-3 text-right">Rate</th>
+                                <th class="py-2 pr-3 text-right">Taxable</th>
+                                <th class="py-2 pr-3 text-right">GST</th>
+                                <th class="py-2 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($invoice->items as $item)
+                                <tr>
+                                    <td class="py-2 pr-3">{{ $item->description }}</td>
+                                    <td class="py-2 pr-3 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
+                                    <td class="py-2 pr-3 text-right">@money($item->rate)</td>
+                                    <td class="py-2 pr-3 text-right">@money($item->taxable_amount)</td>
+                                    <td class="py-2 pr-3 text-right">{{ rtrim(rtrim(number_format((float) $item->tax_rate, 2), '0'), '.') }}%{{ $item->tax_mode === 'inclusive' ? ' incl.' : '' }}</td>
+                                    <td class="py-2 text-right font-medium">@money($item->line_total)</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @if($invoice->description)
+                    <p class="mt-4 whitespace-pre-line text-sm text-slate-600">{{ $invoice->description }}</p>
+                @endif
+            @else
+                <h3 class="mb-4 text-lg font-bold">Description of Services</h3>
+                <p class="whitespace-pre-line text-slate-700">
+                    {{ $invoice->description ?: 'Professional legal services' }}
+                </p>
+            @endif
         </div>
 
         <div class="ml-auto max-w-sm space-y-3 border-t pt-6">
             <div class="flex justify-between">
                 <span>Subtotal</span>
-                <span>Ã¢â€šÂ¹{{ number_format($invoice->subtotal, 2) }}</span>
+                <span>@money($invoice->subtotal)</span>
             </div>
 
             <div class="flex justify-between">
                 <span>Discount</span>
-                <span>Ã¢â€šÂ¹{{ number_format($invoice->discount, 2) }}</span>
+                <span>@money($invoice->discount)</span>
             </div>
 
-            <div class="flex justify-between">
-                <span>Tax</span>
-                <span>Ã¢â€šÂ¹{{ number_format($invoice->tax_amount, 2) }}</span>
-            </div>
+            @if($gst['cgst'] > 0 || $gst['sgst'] > 0)
+                <div class="flex justify-between"><span>CGST</span><span>@money($gst['cgst'])</span></div>
+                <div class="flex justify-between"><span>SGST</span><span>@money($gst['sgst'])</span></div>
+            @elseif($gst['igst'] > 0)
+                <div class="flex justify-between"><span>IGST</span><span>@money($gst['igst'])</span></div>
+            @else
+                <div class="flex justify-between"><span>Tax</span><span>@money($invoice->tax_amount)</span></div>
+            @endif
 
             <div class="flex justify-between border-t pt-4 text-xl font-bold">
                 <span>Total</span>
-                <span>Ã¢â€šÂ¹{{ number_format($invoice->total_amount, 2) }}</span>
+                <span>@money($invoice->total_amount)</span>
             </div>
 
             <div class="flex justify-between font-semibold text-green-700">
                 <span>Received</span>
-                <span>Ã¢â€šÂ¹{{ number_format($invoice->payments->sum('amount'), 2) }}</span>
+                <span>@money($invoice->payments->sum('amount'))</span>
             </div>
 
-            <div class="flex justify-between text-lg font-bold text-red-600">
-                <span>Outstanding</span>
-                <span>Ã¢â€šÂ¹{{ number_format(max(0, $invoice->total_amount - $invoice->payments->sum('amount')), 2) }}</span>
-            </div>
+            @if($invoice->isWrittenOff())
+                <div class="flex justify-between font-semibold text-slate-500">
+                    <span>Written off {{ $invoice->written_off_at->format('d M Y') }}</span>
+                    <span>@money(max(0, $invoice->total_amount - $invoice->payments->sum('amount')))</span>
+                </div>
+            @else
+                <div class="flex justify-between text-lg font-bold text-red-600">
+                    <span>Outstanding</span>
+                    <span>@money($invoice->balanceDue())</span>
+                </div>
+            @endif
         </div>
 
         <div class="mt-10 border-t pt-6">
@@ -153,10 +216,10 @@
                         <p class="font-medium">{{ $payment->receipt_number }}</p>
                         <p class="text-sm text-slate-500">
                             {{ $payment->payment_date->format('d-m-Y') }}
-                            Ã‚Â· {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
+                            · {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
                         </p>
                     </div>
-                    <p class="font-semibold">Ã¢â€šÂ¹{{ number_format($payment->amount, 2) }}</p>
+                    <p class="font-semibold">@money($payment->amount)</p>
                 </div>
             @empty
                 <p class="text-slate-500">No payments received yet.</p>
@@ -171,21 +234,15 @@
         @endif
 
         <div class="mt-10 border-t pt-6 text-center text-sm text-slate-500">
-            This invoice was generated through VakilNeeti.
+            This invoice was generated through VakilNiti.
         </div>
 
     </div>
 </div>
+@endsection
 
-<style>
-@media print {
-    body { background: white !important; }
-    button, a { display: none !important; }
-    .shadow-sm { box-shadow: none !important; }
-}
-</style>
-
-<script>
+@push('scripts')
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 document.addEventListener('DOMContentLoaded', function () {
     const shareButton = document.getElementById('shareInvoiceButton');
 
@@ -291,5 +348,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-</body>
-</html>
+@endpush

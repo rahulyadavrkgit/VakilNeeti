@@ -7,6 +7,7 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
@@ -50,12 +51,14 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'invoice_id' => 'required|exists:invoices,id',
+            'invoice_id' => ['required', 'integer', Rule::exists('invoices', 'id')->where('user_id', auth()->id())],
             'payment_date' => 'required|date',
             'amount' => 'required|numeric|gt:0',
             'payment_method' => 'required|in:cash,upi,bank_transfer,cheque,card,other',
             'transaction_reference' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
+        ], [
+            'invoice_id.exists' => 'Choose one of your invoices.',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -87,7 +90,7 @@ class PaymentController extends Controller
             Payment::create([
                 'invoice_id' => $invoice->id,
                 'client_id' => $invoice->client_id,
-                'receipt_number' => 'REC-' . strtoupper(Str::random(10)),
+                'receipt_number' => 'REC-'.strtoupper(Str::random(10)),
                 'payment_date' => $validated['payment_date'],
                 'amount' => $amount,
                 'payment_method' => $validated['payment_method'],

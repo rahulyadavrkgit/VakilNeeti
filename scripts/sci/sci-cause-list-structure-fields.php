@@ -1,7 +1,7 @@
 ﻿<?php
 
-$inputFile = __DIR__ . '/storage/app/sci-cause-list-cases-raw.json';
-$outputFile = __DIR__ . '/storage/app/sci-cause-list-cases-structured.json';
+$inputFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-cases-raw.json';
+$outputFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-cases-structured.json';
 
 if (!file_exists($inputFile)) {
     exit("Raw case JSON not found. Run the first-stage parser first.\n");

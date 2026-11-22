@@ -1,7 +1,7 @@
 ﻿<?php
 
-$inputDirectory = __DIR__ . '/storage/app/sci-cause-list-final-cases';
-$outputDirectory = __DIR__ . '/storage/app/sci-cause-list-party-data';
+$inputDirectory = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-final-cases';
+$outputDirectory = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-party-data';
 
 if (!is_dir($inputDirectory)) {
     exit("Final case directory not found.\n");

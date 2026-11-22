@@ -7,7 +7,7 @@
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                    VakilNeeti Module
+                    VakilNiti Module
                 </p>
                 <h1 class="text-2xl font-bold text-slate-800 mt-1">
                     {{ $module['title'] }}
@@ -137,9 +137,7 @@
                         — All available District entries
                     @endif
                 </p>
-                <p class="text-xs text-blue-800 mt-1">
-                    This is a temporary browsing filter. Your saved practice jurisdictions have not been changed.
-                </p>
+                <p class="text-xs text-blue-800 mt-1">Temporary filter. Your saved jurisdictions are unchanged.</p>
             </div>
         @elseif(request()->query('explore_state_id'))
             <p class="mt-3 text-sm text-amber-700">
@@ -170,11 +168,6 @@
             <p class="text-sm font-medium text-slate-700">
                 Catalogue integration status
             </p>
-            <p class="text-xs text-slate-500 mt-1">
-                This dashboard and its jurisdiction filters are the initial module foundation.
-                Official records, source verification and module-specific search functions will be integrated in subsequent implementation phases.
-                No unverified records are represented as official data.
-            </p>
         </div>
 
         @if($module['path'] === '/pdf-annotator')
@@ -182,10 +175,7 @@
                 <p class="text-sm font-semibold text-blue-900">
                     Local-only storage requirement
                 </p>
-                <p class="text-xs text-blue-800 mt-1">
-                    The PDF Annotator is intended to process documents locally in the browser.
-                    PDF contents, annotations and signatures must not be uploaded to the VakilNeeti server.
-                </p>
+                <p class="text-xs text-blue-800 mt-1">PDFs are processed in your browser and not uploaded.</p>
             </div>
         @endif
     </section>

@@ -35,7 +35,7 @@
         <div class="rounded-xl border border-slate-200 bg-white p-5">
             <p class="text-sm text-slate-500">Outstanding Amount</p>
             <p class="mt-2 text-2xl font-bold text-amber-700">
-                ₹{{ number_format($outstandingAmount, 2) }}
+                @money($outstandingAmount)
             </p>
         </div>
 

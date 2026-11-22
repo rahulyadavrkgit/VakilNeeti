@@ -3,11 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\PoliceStation;
-use App\Models\PoliceDistrict;
-use App\Models\PoliceRange;
-use App\Models\PoliceSubDivision;
-use App\Models\PoliceDepartmentOffice;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -20,20 +15,12 @@ class ModuleDashboardController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // Read the existing firm Profile practice jurisdictions.
-        $activeFirm = auth()->check()
-            ? DB::table('firm_profiles')
-                ->where('user_id', auth()->id())
-                ->where('is_active', true)
-                ->first()
-            : null;
-
+        // Read the signed-in user's practice jurisdictions.
         $practiceRows = collect();
 
-        if ($activeFirm) {
+        if (auth()->check()) {
             $practiceRows = DB::table('firm_practice_states')
                 ->where('user_id', auth()->id())
-                ->where('firm_profile_id', $activeFirm->id)
                 ->where('is_active', true)
                 ->orderBy('state_name')
                 ->get();
@@ -160,14 +147,14 @@ class ModuleDashboardController extends Controller
             if ($search !== '') {
                 $stationsQuery->where(function ($q) use ($search) {
                     $q->where('station_name', 'like', "%{$search}%")
-                      ->orWhere('station_code', 'like', "%{$search}%")
-                      ->orWhere('address', 'like', "%{$search}%")
-                      ->orWhere('city', 'like', "%{$search}%")
-                      ->orWhere('locality', 'like', "%{$search}%")
-                      ->orWhere('pincode', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('sho_name', 'like', "%{$search}%");
+                        ->orWhere('station_code', 'like', "%{$search}%")
+                        ->orWhere('address', 'like', "%{$search}%")
+                        ->orWhere('city', 'like', "%{$search}%")
+                        ->orWhere('locality', 'like', "%{$search}%")
+                        ->orWhere('pincode', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('sho_name', 'like', "%{$search}%");
                 });
             }
 

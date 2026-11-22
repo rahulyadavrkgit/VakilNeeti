@@ -1,7 +1,7 @@
 ﻿<?php
 
-$inputFile = __DIR__ . '/storage/app/sci-cause-list-cases-structured.json';
-$outputFile = __DIR__ . '/storage/app/sci-cause-list-cases-with-advocates.json';
+$inputFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-cases-structured.json';
+$outputFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-cases-with-advocates.json';
 
 if (!file_exists($inputFile)) {
     exit("Structured case JSON not found.\n");

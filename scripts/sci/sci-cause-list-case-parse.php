@@ -1,7 +1,7 @@
 ﻿<?php
 
-$inputFile = __DIR__ . '/storage/app/sci-sample-cause-list.txt';
-$outputFile = __DIR__ . '/storage/app/sci-cause-list-cases-raw.json';
+$inputFile = dirname(__DIR__, 2) . '/storage/app/sci-sample-cause-list.txt';
+$outputFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-cases-raw.json';
 
 if (!file_exists($inputFile)) {
     exit("Cause list text file not found.\n");

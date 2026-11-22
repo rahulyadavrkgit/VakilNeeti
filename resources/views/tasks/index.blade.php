@@ -15,7 +15,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h2 class="text-xl font-bold text-slate-900">Tasks & Reminders</h2>
-            <p class="text-sm text-slate-500">Track your work, deadlines and reminders separately from India-wide legal data dashboards.</p>
+            <p class="text-sm text-slate-500">Your work, deadlines and reminders.</p>
         </div>
 
         <a href="{{ route('tasks.create') }}"
@@ -195,7 +195,7 @@
                             <form method="POST"
                                   action="{{ route('tasks.destroy', $task) }}"
                                   class="mt-2"
-                                  onsubmit="return confirm('Delete this task?')">
+                                  data-confirm="Delete this task?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"

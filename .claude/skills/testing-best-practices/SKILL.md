@@ -8,7 +8,7 @@ metadata:
 
 # Testing best practices
 
-This skill provides rules for designing Laravel tests. Each rule file explains what to do and why. Use `search-docs` for Laravel API syntax. Fetch the PHPUnit 12.5.42 documentation at `https://phpunit.de/documentation.html` for PHPUnit API syntax.
+This skill provides rules for designing Laravel tests. Use `search-docs` only when unsure of Laravel or PHPUnit syntax.
 This project uses PHPUnit. Follow the corresponding guidance in each rule.
 
 ## Consistency first
@@ -34,15 +34,22 @@ Read this section before you write a test.
 
 ## How to apply
 
-1. Read the code under test. Read the tests in the same directory. Identify every decision in the code.
-2. Select every applicable branch in the rule index. Read every selected rule file.
+1. Read the code under test and one or two nearby tests. Identify every decision in the code.
+2. Read a rule file only when the change needs it and you have not read it this session: usually one, at most two.
 3. Report each defect in the code before you write a test. Examples are a method with no body, a policy that no action calls, and a write action with no validation. Test the actual behavior. Report the defect to the user.
 4. Write the tests. Run the smallest set of tests that covers the change. The tests must pass.
-5. Check every applicable item in `rules/review.md` and every selected rule file. Resolve every mismatch before completion.
+5. Before finishing, check:
+   - Tests cover behaviour, not implementation details or framework behaviour; no two tests catch the same defect.
+   - Every changed decision (branch, validation, calculation, authorization) is covered.
+   - Files are `{ClassName}Test.php`; test names state the result and the condition.
+   - HTTP tests cover login, another user's record (404), and the validation message the user sees.
+   - Each test creates its own data and controls time, randomness and outbound HTTP.
+   - Write tests assert the response and the database state, against known expected values.
+   Open `rules/review.md` only when the user asks for a test review.
 
 ## Rule index
 
-Most changes need more than one rule file.
+Open rule files only as step 2 allows.
 
 | Subject | Rule file |
 | --- | --- |

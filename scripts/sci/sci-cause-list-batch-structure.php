@@ -1,7 +1,7 @@
 ﻿<?php
 
-$inputDirectory = __DIR__ . '/storage/app/sci-cause-list-cases';
-$outputDirectory = __DIR__ . '/storage/app/sci-cause-list-structured';
+$inputDirectory = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-cases';
+$outputDirectory = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-structured';
 
 if (!is_dir($inputDirectory)) {
     exit("Case JSON directory not found.\n");

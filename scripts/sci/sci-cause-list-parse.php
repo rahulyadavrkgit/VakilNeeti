@@ -1,7 +1,7 @@
 ﻿<?php
 
-$htmlFile = __DIR__ . '/storage/app/sci-cause-list-debug.html';
-$outputFile = __DIR__ . '/storage/app/sci-cause-list-parsed.json';
+$htmlFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-debug.html';
+$outputFile = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-parsed.json';
 
 if (!file_exists($htmlFile)) {
     exit("Cause List HTML file not found.\n");

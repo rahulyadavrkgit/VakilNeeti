@@ -5,7 +5,6 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-slate-800">Professional Tax Record</h1>
         <div class="flex gap-3">
-            <a href="{{ route('professional-tax.index') }}" class="text-sm text-indigo-600">Back</a>
             <a href="{{ route('professional-tax.edit', $record) }}"
                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white">Edit Record</a>
         </div>
@@ -24,7 +23,7 @@
             <div><dt class="text-sm text-slate-500">Tax Period</dt><dd>{{ $record->tax_period }}</dd></div>
             <div><dt class="text-sm text-slate-500">Period Type</dt><dd>{{ ucfirst(str_replace('_', ' ', $record->period_type)) }}</dd></div>
             <div><dt class="text-sm text-slate-500">Due Date</dt><dd>{{ $record->due_date?->format('d-m-Y') ?? '—' }}</dd></div>
-            <div><dt class="text-sm text-slate-500">Amount</dt><dd>₹{{ number_format((float) $record->amount, 2) }}</dd></div>
+            <div><dt class="text-sm text-slate-500">Amount</dt><dd>@money((float) $record->amount)</dd></div>
             <div><dt class="text-sm text-slate-500">Payment Status</dt><dd>{{ ucfirst($record->payment_status) }}</dd></div>
             <div><dt class="text-sm text-slate-500">Payment Date</dt><dd>{{ $record->payment_date?->format('d-m-Y') ?? '—' }}</dd></div>
             <div><dt class="text-sm text-slate-500">Challan Number</dt><dd>{{ $record->challan_number ?: '—' }}</dd></div>

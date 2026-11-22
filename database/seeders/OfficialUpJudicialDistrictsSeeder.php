@@ -14,7 +14,7 @@ class OfficialUpJudicialDistrictsSeeder extends Seeder
             ->where('name', 'Uttar Pradesh')
             ->first();
 
-        if (!$state) {
+        if (! $state) {
             throw new RuntimeException(
                 'Uttar Pradesh was not found in the states catalogue. No district records were inserted.'
             );
@@ -24,8 +24,8 @@ class OfficialUpJudicialDistrictsSeeder extends Seeder
 
         $districts = [
             ['Ghaziabad', 'https://ghaziabad.dcourts.gov.in/'],
-            ['Allahabad', 'https://prayagraj.dcourts.gov.in/'],
-            ['Faizabad', 'https://ayodhya.dcourts.gov.in/'],
+            ['Prayagraj', 'https://prayagraj.dcourts.gov.in/'],
+            ['Ayodhya', 'https://ayodhya.dcourts.gov.in/'],
             ['Ghazipur', 'https://ghazipur.dcourts.gov.in/'],
             ['Gorakhpur', 'https://gorakhpur.dcourts.gov.in/'],
             ['Kannauj', 'https://kannauj.dcourts.gov.in/'],
@@ -41,16 +41,16 @@ class OfficialUpJudicialDistrictsSeeder extends Seeder
             ['Ambedkar Nagar', 'https://ambedkarnagar.dcourts.gov.in/'],
             ['Auraiya', 'https://auraiya.dcourts.gov.in/'],
             ['Azamgarh', 'https://azamgarh.dcourts.gov.in/'],
-            ['Bagpat', 'https://baghpat.dcourts.gov.in/'],
+            ['Baghpat', 'https://baghpat.dcourts.gov.in/'],
             ['Bahraich', 'https://bahraich.dcourts.gov.in/'],
             ['Ballia', 'https://ballia.dcourts.gov.in/'],
             ['Balrampur', 'https://balrampurup.dcourts.gov.in/'],
             ['Banda', 'https://banda.dcourts.gov.in/'],
-            ['Barabanki', 'https://barabanki.dcourts.gov.in/'],
+            ['Bara Banki', 'https://barabanki.dcourts.gov.in/'],
             ['Basti', 'https://basti.dcourts.gov.in/'],
             ['Bijnor', 'https://bijnor.dcourts.gov.in/'],
             ['Budaun', 'https://budaun.dcourts.gov.in/'],
-            ['Bulandshahar', 'https://bulandshahar.dcourts.gov.in/'],
+            ['Bulandshahr', 'https://bulandshahar.dcourts.gov.in/'],
             ['Chandauli', 'https://chandauli.dcourts.gov.in/'],
             ['Chitrakoot', 'https://chitrakoot.dcourts.gov.in/'],
             ['Deoria', 'https://deoria.dcourts.gov.in/'],
@@ -61,32 +61,32 @@ class OfficialUpJudicialDistrictsSeeder extends Seeder
             ['Firozabad', 'https://firozabad.dcourts.gov.in/'],
             ['Gautam Buddha Nagar', 'https://gbnagar.dcourts.gov.in/'],
             ['Gonda', 'https://gonda.dcourts.gov.in/'],
-            ['Hamirpur UP', 'https://hamirpurup.dcourts.gov.in/'],
+            ['Hamirpur', 'https://hamirpurup.dcourts.gov.in/'],
             ['Hardoi', 'https://hardoi.dcourts.gov.in/'],
             ['Hathras', 'https://hathras.dcourts.gov.in/'],
             ['Jalaun', 'https://jalaun.dcourts.gov.in/'],
             ['Jhansi', 'https://jhansi.dcourts.gov.in/'],
-            ['Jyotiba Phule Nagar', 'https://amroha.dcourts.gov.in/'],
+            ['Amroha', 'https://amroha.dcourts.gov.in/'],
             ['Kanpur Dehat', 'https://kanpurdehat.dcourts.gov.in/'],
             ['Kanpur Nagar', 'https://kanpurnagar.dcourts.gov.in/'],
-            ['Kanshiramnagar', 'https://kasganj.dcourts.gov.in/'],
+            ['Kasganj', 'https://kasganj.dcourts.gov.in/'],
             ['Kaushambi', 'https://kaushambi.dcourts.gov.in/'],
             ['Kheri', 'https://kheri.dcourts.gov.in/'],
             ['Kushinagar', 'https://kushinagar.dcourts.gov.in/'],
             ['Lalitpur', 'https://lalitpur.dcourts.gov.in/'],
-            ['Maharajganj', 'https://maharajganj.dcourts.gov.in/'],
+            ['Mahrajganj', 'https://maharajganj.dcourts.gov.in/'],
             ['Mahoba', 'https://mahoba.dcourts.gov.in/'],
             ['Mathura', 'https://mathura.dcourts.gov.in/'],
             ['Mau', 'https://mau.dcourts.gov.in/'],
             ['Mirzapur', 'https://mirzapur.dcourts.gov.in/'],
             ['Moradabad', 'https://moradabad.dcourts.gov.in/'],
             ['Pilibhit', 'https://pilibhit.dcourts.gov.in/'],
-            ['RaeBareli', 'https://raebareli.dcourts.gov.in/'],
+            ['Rae Bareli', 'https://raebareli.dcourts.gov.in/'],
             ['Rampur', 'https://rampur.dcourts.gov.in/'],
             ['Sant Kabir Nagar', 'https://santkabirnagar.dcourts.gov.in/'],
             ['Bhadohi', 'https://bhadohi.dcourts.gov.in/'],
             ['Shahjahanpur', 'https://shahjahanpur.dcourts.gov.in/'],
-            ['Shravasti', 'https://shravasti.dcourts.gov.in/'],
+            ['Shrawasti', 'https://shravasti.dcourts.gov.in/'],
             ['Siddharthnagar', 'https://siddharthnagar.dcourts.gov.in/'],
             ['Sonbhadra', 'https://sonbhadra.dcourts.gov.in/'],
             ['Sultanpur', 'https://sultanpur.dcourts.gov.in/'],
@@ -151,9 +151,9 @@ class OfficialUpJudicialDistrictsSeeder extends Seeder
         });
 
         $this->command->info('Uttar Pradesh official eCourts district catalogue processed.');
-        $this->command->info('Directory entries: ' . count($districts));
-        $this->command->info('New entries: ' . $inserted);
-        $this->command->info('Updated existing entries: ' . $updated);
-        $this->command->info('Source: ' . $directoryUrl);
+        $this->command->info('Directory entries: '.count($districts));
+        $this->command->info('New entries: '.$inserted);
+        $this->command->info('Updated existing entries: '.$updated);
+        $this->command->info('Source: '.$directoryUrl);
     }
 }

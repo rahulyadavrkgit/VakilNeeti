@@ -36,12 +36,7 @@
                     </p>
                 @endif
 
-                <p class="mt-2 max-w-3xl text-sm text-slate-600">
-                    Use the official eCourts portal to select the relevant
-                    State, District, Court Complex and Establishment.
-                    The jurisdiction shown above is navigation context;
-                    it does not automatically filter the official portal.
-                </p>
+                <p class="mt-2 max-w-3xl text-sm text-slate-600">Choose the State, District, Court Complex and Establishment on the eCourts portal.</p>
             </div>
 
             <a href="{{ route('profile.practice-states.index') }}"
@@ -57,10 +52,6 @@
                 <h3 class="font-semibold text-slate-900">
                     Official eCourts Services
                 </h3>
-                <p class="mt-1 text-sm text-slate-600">
-                    Court selection and any required verification take place
-                    on the official government portal.
-                </p>
             </div>
 
             <a href="https://services.ecourts.gov.in/ecourtindia_v6/?p=location%2Findex"
@@ -85,19 +76,11 @@
             <h3 class="font-semibold text-amber-900">
                 Portal display limitation
             </h3>
-            <p class="mt-1 text-sm text-amber-900">
-                The official website may prevent display inside an embedded
-                frame. If the portal does not load, use the Open Official
-                eCourts Portal button above.
-            </p>
+            <p class="mt-1 text-sm text-amber-900">If the portal doesn’t load here, use Open Official eCourts Portal.</p>
         </div>
     </section>
 
-    <p class="text-xs text-slate-600">
-        Source: eCourts Services, e-Committee, Supreme Court of India.
-        VakilNeeti does not claim an independent live API connection or
-        automatic retrieval of protected official records on this page.
-    </p>
+    <p class="text-xs text-slate-600">Source: eCourts Services, e-Committee, Supreme Court of India.</p>
 
 </div>
 

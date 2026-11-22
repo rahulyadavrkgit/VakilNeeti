@@ -18,7 +18,7 @@ if ($html === false) {
     exit("Cause List page download failed.\n");
 }
 
-$file = __DIR__ . '/storage/app/sci-cause-list-debug.html';
+$file = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-debug.html';
 
 if (file_put_contents($file, $html) === false) {
     exit("Could not save HTML file.\n");

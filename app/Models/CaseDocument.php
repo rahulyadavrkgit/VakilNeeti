@@ -11,6 +11,7 @@ class CaseDocument extends Model
 
     protected $fillable = [
         'case_id',
+        'folder_id',
         'original_name',
         'storage_path',
         'mime_type',

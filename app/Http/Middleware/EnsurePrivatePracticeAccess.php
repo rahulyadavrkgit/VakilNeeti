@@ -33,6 +33,7 @@ class EnsurePrivatePracticeAccess
         'court-directory',
         'court-directory/*',
         'api/court-directory/*',
+        'api/locations/*',
         'court-management',
         'court-management/*',
         'court-catalogue',
@@ -58,7 +59,7 @@ class EnsurePrivatePracticeAccess
         }
 
         // Private application modules require authentication.
-        if (!$request->user()) {
+        if (! $request->user()) {
             if ($request->is('admin') || $request->is('admin/*')) {
                 return redirect()->route('admin.login');
             }

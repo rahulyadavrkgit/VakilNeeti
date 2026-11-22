@@ -7,18 +7,21 @@
 @include('cases.partials.management-nav')
 <div class="space-y-6">
 
-    <div class="flex justify-end">
-        <a href="{{ route('cases.calendar') }}"
-           class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
-            Open Case Calendar
-        </a>
-    </div>
+    @if(session('success'))
+        <div role="status" class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">{{ session('success') }}</div>
+    @endif
 
-    <div>
-        <h2 class="text-2xl font-bold text-slate-900">My Case Diary</h2>
-        <p class="mt-1 text-sm text-slate-500">
-            View and track the court cases saved in your VakilNeeti diary.
-        </p>
+    <div class="flex flex-wrap items-center justify-end gap-2">
+        <a href="{{ route('cases.find') }}"
+           class="rounded-xl border border-[#8fc9c0] bg-[#e8f4f2] px-4 py-2.5 text-sm font-semibold text-[#16776e] hover:bg-[#d9efeb]">Find my cases</a>
+        <a href="{{ route('cases.calendar') }}"
+           class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Calendar</a>
+        <a href="{{ route('cases.export', request()->query()) }}"
+           class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Export CSV</a>
+        <a href="{{ route('cases.create') }}"
+           class="rounded-xl border border-[#8fc9c0] bg-[#e8f4f2] px-4 py-2.5 text-sm font-semibold text-[#16776e] hover:bg-[#d9efeb]">Import from court</a>
+        <a href="{{ route('cases.manual') }}"
+           class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">+ Add case</a>
     </div>
 
     <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -44,7 +47,7 @@
                 <select id="case_status" name="case_status"
                         class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3">
                     <option value="">All Statuses</option>
-                    @foreach(['pending', 'disposed', 'transferred', 'withdrawn', 'other'] as $status)
+                    @foreach(\App\Models\LegalCase::STATUSES as $status)
                         <option value="{{ $status }}"
                             {{ request('case_status') == $status ? 'selected' : '' }}>
                             {{ ucfirst($status) }}
@@ -69,6 +72,16 @@
                 </select>
             </div>
 
+            <div>
+                <label for="tag" class="mb-2 block text-sm font-medium">Tag</label>
+                <select id="tag" name="tag" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3">
+                    <option value="">All tags</option>
+                    @foreach($tags as $tagOption)
+                        <option value="{{ $tagOption->id }}" @selected((string) request('tag') === (string) $tagOption->id)>{{ $tagOption->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="flex flex-wrap gap-2 md:col-span-3">
                 <button type="submit"
                         class="rounded-lg bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-700">
@@ -81,10 +94,6 @@
             </div>
         </form>
 
-        <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
-            This page displays cases already saved in your diary.
-            Official court information will be updated only through authorised and permitted sources.
-        </div>
     </section>
 
     <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -148,6 +157,16 @@
                                 <div class="text-xs text-slate-500">
                                     CNR: {{ $case->cnr_number ?: 'Not available' }}
                                 </div>
+                                @if($case->file_number)
+                                    <div class="text-xs text-slate-500">File No: {{ $case->file_number }}</div>
+                                @endif
+                                @if($case->tags->isNotEmpty())
+                                    <div class="mt-2 flex flex-wrap gap-1">
+                                        @foreach($case->tags as $caseTag)
+                                            <a href="{{ route('cases.index', ['tag' => $caseTag->id]) }}" class="rounded-full bg-[#e8f4f2] px-2 py-0.5 text-xs font-medium text-[#16776e] hover:bg-[#d9efeb]">{{ $caseTag->name }}</a>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </td>
 
                             <td class="p-4">
@@ -204,16 +223,29 @@
                             </td>
 
                             <td class="p-4">
-                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs">
-                                    {{ ucfirst($case->case_status) }}
+                                @php
+                                    $statusClass = match ($case->case_status) {
+                                        'pending' => 'bg-amber-100 text-amber-800',
+                                        'disposed', 'closed' => 'bg-rose-100 text-rose-700',
+                                        'transferred', 'withdrawn' => 'bg-slate-200 text-slate-700',
+                                        default => 'bg-slate-100 text-slate-700',
+                                    };
+                                @endphp
+                                <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
+                                    {{ ucfirst($case->case_status ?: 'unknown') }}
                                 </span>
                             </td>
 
                             <td class="p-4">
-                                <a href="{{ route('cases.show', $case) }}"
-                                   class="font-medium text-blue-700 hover:underline">
-                                    View Case
-                                </a>
+                                <div class="flex items-center gap-3 whitespace-nowrap">
+                                    <a href="{{ route('cases.show', $case) }}" class="font-semibold text-[#16776e] hover:underline">View</a>
+                                    <a href="{{ route('cases.edit', $case) }}" class="text-slate-600 hover:underline">Edit</a>
+                                    <form method="POST" action="{{ route('cases.destroy', $case) }}" data-confirm="Delete this case from your diary?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-700 hover:underline">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
 
@@ -224,7 +256,8 @@
                                     No case records available
                                 </div>
                                 <p class="mt-2 text-sm text-slate-500">
-                                    Select verified cases from official court search and add them to your diary.
+                                    <a href="{{ route('cases.manual') }}" class="font-semibold text-[#16776e] hover:underline">Add a case</a>
+                                    or <a href="{{ route('cases.create') }}" class="font-semibold text-[#16776e] hover:underline">import one from the court portal</a>.
                                 </p>
                             </td>
                         </tr>

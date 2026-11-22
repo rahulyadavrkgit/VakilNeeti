@@ -16,11 +16,11 @@
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div class="rounded-xl border bg-white p-5">
             <p class="text-sm text-slate-500">Pending Amount</p>
-            <p class="mt-2 text-2xl font-bold">₹{{ number_format((float) $pendingAmount, 2) }}</p>
+            <p class="mt-2 text-2xl font-bold">@money((float) $pendingAmount)</p>
         </div>
         <div class="rounded-xl border bg-white p-5">
             <p class="text-sm text-slate-500">Paid Amount</p>
-            <p class="mt-2 text-2xl font-bold">₹{{ number_format((float) $paidAmount, 2) }}</p>
+            <p class="mt-2 text-2xl font-bold">@money((float) $paidAmount)</p>
         </div>
     </div>
 
@@ -45,7 +45,7 @@
                         <td class="p-3">{{ $record->registration_type }}</td>
                         <td class="p-3">{{ $record->tax_period }}</td>
                         <td class="p-3">{{ $record->due_date?->format('d-m-Y') ?? '—' }}</td>
-                        <td class="p-3">₹{{ number_format((float) $record->amount, 2) }}</td>
+                        <td class="p-3">@money((float) $record->amount)</td>
                         <td class="p-3">{{ ucfirst($record->payment_status) }}</td>
                         <td class="p-3">{{ ucfirst(str_replace('_', ' ', $record->return_status)) }}</td>
                         <td class="p-3">

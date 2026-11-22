@@ -10,10 +10,6 @@
                 Financial Year {{ $financialYear }} | {{ $financialYearStart->format('d M Y') }} to {{ $financialYearEnd->format('d M Y') }}
             </p>
         </div>
-        <a href="{{ route('profile.index') }}"
-           class="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50">
-            Back to Profile
-        </a>
     </div>
 
     @if($firm)
@@ -40,7 +36,7 @@
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Total TDS Recorded</p>
                 <p class="mt-2 text-2xl font-bold text-slate-800">
-                    ₹{{ number_format((float) $tdsTotal, 2) }}
+                    @money((float) $tdsTotal)
                 </p>
                 <a href="{{ route('tds.index') }}" class="mt-3 inline-block text-sm text-indigo-600">Open TDS Register</a>
             </div>
@@ -48,7 +44,7 @@
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Certificates Awaited</p>
                 <p class="mt-2 text-2xl font-bold text-amber-700">
-                    ₹{{ number_format((float) $tdsAwaited, 2) }}
+                    @money((float) $tdsAwaited)
                 </p>
                 <p class="mt-1 text-xs text-slate-500">{{ $tdsAwaitedCount }} records</p>
             </div>
@@ -56,7 +52,7 @@
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Certificates Received</p>
                 <p class="mt-2 text-2xl font-bold text-blue-700">
-                    ₹{{ number_format((float) $tdsReceived, 2) }}
+                    @money((float) $tdsReceived)
                 </p>
                 <p class="mt-1 text-xs text-slate-500">{{ $tdsReceivedCount }} records</p>
             </div>
@@ -64,15 +60,13 @@
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Marked Verified</p>
                 <p class="mt-2 text-2xl font-bold text-green-700">
-                    ₹{{ number_format((float) $tdsVerified, 2) }}
+                    @money((float) $tdsVerified)
                 </p>
                 <p class="mt-1 text-xs text-slate-500">{{ $tdsVerifiedCount }} records</p>
             </div>
         </div>
 
-        <p class="mt-2 text-xs text-slate-500">
-            Certificate status is an internal tracking status. It does not independently establish that TDS credit has appeared in Form 26AS or AIS.
-        </p>
+        <p class="mt-2 text-xs text-slate-500">Internal status only. Check Form 26AS / AIS for credit.</p>
     </section>
 
     <section>
@@ -83,21 +77,21 @@
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Paid</p>
                 <p class="mt-2 text-2xl font-bold text-green-700">
-                    ₹{{ number_format((float) $professionalTaxPaid, 2) }}
+                    @money((float) $professionalTaxPaid)
                 </p>
             </div>
 
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Total Pending</p>
                 <p class="mt-2 text-2xl font-bold text-slate-800">
-                    ₹{{ number_format((float) $professionalTaxPending, 2) }}
+                    @money((float) $professionalTaxPending)
                 </p>
             </div>
 
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Overdue</p>
                 <p class="mt-2 text-2xl font-bold text-red-700">
-                    ₹{{ number_format((float) $professionalTaxOverdue, 2) }}
+                    @money((float) $professionalTaxOverdue)
                 </p>
                 <p class="mt-1 text-xs text-slate-500">Pending records past their recorded due date</p>
             </div>
@@ -105,7 +99,7 @@
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Upcoming / Undated Pending</p>
                 <p class="mt-2 text-2xl font-bold text-blue-700">
-                    ₹{{ number_format((float) $professionalTaxUpcoming, 2) }}
+                    @money((float) $professionalTaxUpcoming)
                 </p>
             </div>
         </div>
@@ -134,7 +128,7 @@
                             </p>
                         </div>
                         <p class="text-sm font-semibold text-slate-800">
-                            ₹{{ number_format((float) $item->amount, 2) }}
+                            @money((float) $item->amount)
                         </p>
                     </div>
                 @empty
@@ -163,7 +157,7 @@
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-semibold">
-                                ₹{{ number_format((float) $record->amount, 2) }}
+                                @money((float) $record->amount)
                             </p>
                             <p class="text-xs {{ $record->payment_status === 'paid' ? 'text-green-600' : 'text-amber-600' }}">
                                 {{ ucfirst($record->payment_status) }}
@@ -195,7 +189,7 @@
                         @foreach($professionalTaxByState as $stateRecord)
                             <tr class="border-b last:border-0">
                                 <td class="px-3 py-3 font-medium">{{ $stateRecord->state }}</td>
-                                <td class="px-3 py-3">₹{{ number_format((float) $stateRecord->total_amount, 2) }}</td>
+                                <td class="px-3 py-3">@money((float) $stateRecord->total_amount)</td>
                                 <td class="px-3 py-3">{{ $stateRecord->paid_count }}</td>
                                 <td class="px-3 py-3">{{ $stateRecord->pending_count }}</td>
                             </tr>

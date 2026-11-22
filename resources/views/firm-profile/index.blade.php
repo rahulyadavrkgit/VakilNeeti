@@ -74,34 +74,48 @@
                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">{{ old('address', $firm->address ?? '') }}</textarea>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
+
+                    @php
+                        $firmState = old('state', $firm->state ?? '');
+                        $firmStateIsUnlisted = filled($firm->state ?? null) && ! array_key_exists($firm->state, \App\Models\State::GST_STATE_CODES);
+                    @endphp
 
                     <div>
-                        <label class="block text-sm font-medium mb-2">City</label>
-                        <input type="text" name="city"
-                               value="{{ old('city', $firm->city ?? '') }}"
-                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-2">District</label>
-                        <input type="text" name="district"
-                               value="{{ old('district', $firm->district ?? '') }}"
-                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-2">State</label>
-                        <input type="text" name="state"
-                               value="{{ old('state', $firm->state ?? '') }}"
-                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                        <label for="firm-state" class="block text-sm font-medium mb-2">State / Union Territory</label>
+                        <select id="firm-state" name="state" data-location-state
+                                class="w-full rounded-lg border-slate-300 bg-white focus:border-blue-500 focus:ring-blue-500">
+                            <x-state-options :groups="$stateGroups" :selected="$firmState" />
+                        </select>
+                        @if($firmStateIsUnlisted)
+                            <p class="mt-1 text-xs text-amber-700">Saved value "{{ $firm->state }}" is not in the official list. Select it again.</p>
+                        @endif
+                        @error('state') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-2">GST State Code</label>
-                        <input type="text" name="state_code" maxlength="2"
-                               value="{{ old('state_code', $firm->state_code ?? '') }}"
-                               placeholder="e.g. 09"
+                        <input type="text" value="{{ \App\Models\State::GST_STATE_CODES[$firmState] ?? '' }}" readonly data-location-gst-code
+                               class="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-600">
+                        <p class="mt-1 text-xs text-slate-500">Filled in automatically from the State / UT.</p>
+                    </div>
+
+                    <div>
+                        <label for="firm-district" class="block text-sm font-medium mb-2">District</label>
+                        <select data-location-district-select aria-label="District" hidden
+                                class="w-full rounded-lg border-slate-300 bg-white focus:border-blue-500 focus:ring-blue-500"></select>
+                        <input type="text" id="firm-district" name="district" data-location-district-input placeholder="Type your district"
+                               value="{{ old('district', $firm->district ?? '') }}"
+                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                        <p data-location-district-hint class="mt-1 text-xs text-slate-500" hidden></p>
+                    </div>
+
+                    <div>
+                        <label for="firm-city" class="block text-sm font-medium mb-2">City / Town</label>
+                        <select data-location-city-select aria-label="City or town" hidden
+                                class="w-full rounded-lg border-slate-300 bg-white focus:border-blue-500 focus:ring-blue-500"></select>
+                        <input type="text" id="firm-city" name="city" autocomplete="address-level2" data-location-city-input placeholder="Type the city or town"
+                               value="{{ old('city', $firm->city ?? '') }}"
                                class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
@@ -147,10 +161,7 @@
 
             </div>
 
-            <p class="mt-4 text-xs text-slate-500">
-                Enter the GSTIN and registered business details exactly as recorded
-                in your GST registration certificate.
-            </p>
+            <p class="mt-4 text-xs text-slate-500">Enter details exactly as on your GST certificate.</p>
         </section>
 
         <div class="flex justify-end border-t pt-5">

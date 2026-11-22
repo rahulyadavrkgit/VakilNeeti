@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CourtHearing extends Model
 {
-    use \App\Models\Concerns\BelongsToUser;
+    use BelongsToUser;
+
     protected $fillable = [
         'case_id',
         'hearing_date',
@@ -28,6 +30,14 @@ class CourtHearing extends Model
             'hearing_date' => 'date',
             'next_hearing_date' => 'date',
         ];
+    }
+
+    /**
+     * Hearings the user typed in or brought from their own calendar can be edited; imported court records stay as recorded.
+     */
+    public function isManual(): bool
+    {
+        return in_array($this->source_type, [null, '', 'manual', 'google_calendar'], true);
     }
 
     public function legalCase(): BelongsTo

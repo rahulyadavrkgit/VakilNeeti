@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $base = __DIR__;
 
@@ -8,7 +8,7 @@ $scripts = [
     'sci-cause-list-batch-parse.php',
     'sci-cause-list-batch-structure.php',
     'sci-cause-list-batch-advocates.php',
-    'sci-cause-list-batch-parties.php'
+    'sci-cause-list-batch-parties.php',
 ];
 
 echo "\n";
@@ -20,19 +20,19 @@ $startTime = microtime(true);
 
 foreach ($scripts as $index => $script) {
 
-    $path = $base . DIRECTORY_SEPARATOR . $script;
+    $path = $base.DIRECTORY_SEPARATOR.$script;
 
-    if (!file_exists($path)) {
+    if (! file_exists($path)) {
         exit("ERROR: Missing script: {$script}\n");
     }
 
     echo "\n";
-    echo "STAGE " . ($index + 1) . ": {$script}\n";
+    echo 'STAGE '.($index + 1).": {$script}\n";
     echo "--------------------------------------------\n";
 
     $command = escapeshellarg(PHP_BINARY)
-        . ' '
-        . escapeshellarg($path);
+        .' '
+        .escapeshellarg($path);
 
     passthru($command, $exitCode);
 
@@ -52,4 +52,3 @@ echo "============================================\n";
 echo "Execution time: {$duration} seconds\n";
 echo "Final output directory:\n";
 echo "storage/app/sci-cause-list-party-data/\n";
-

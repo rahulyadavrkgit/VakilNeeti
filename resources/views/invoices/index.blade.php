@@ -1,18 +1,15 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Invoices')
 @section('page-heading', 'Invoices')
 @section('content')
 <div class="space-y-6">
 
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-3xl font-bold">Invoices</h2>
-                <p class="mt-2 text-slate-600">Manage client invoices and outstanding fees.</p>
-            </div>
+        @include('billing.partials.tabs')
 
+        <div class="flex justify-end">
             <a href="{{ route('invoices.create') }}"
-               class="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
-                + Create Invoice
+               class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">
+                + New invoice
             </a>
         </div>
 
@@ -48,8 +45,8 @@
                             <td class="p-4 font-semibold">{{ $invoice->invoice_number }}</td>
                             <td class="p-4">{{ $invoice->client->display_name ?: $invoice->client->first_name.' '.$invoice->client->last_name }}</td>
                             <td class="p-4">{{ $invoice->invoice_date->format('d-m-Y') }}</td>
-                            <td class="p-4">{{ $invoice->due_date?->format('d-m-Y') ?? 'â€”' }}</td>
-                            <td class="p-4 font-semibold">â‚¹{{ number_format($invoice->total_amount, 2) }}</td>
+                            <td class="p-4">{{ $invoice->due_date?->format('d-m-Y') ?? '—' }}</td>
+                            <td class="p-4 font-semibold">@money($invoice->total_amount)</td>
                             <td class="p-4">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</td>
                             <td class="p-4">
                                 <a href="{{ route('invoices.show', $invoice) }}"

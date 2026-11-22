@@ -1,189 +1,77 @@
 @extends('layouts.app')
 
-@section('title', 'Invoices & Payments')
-@section('page-heading', 'Invoices & Payments')
+@section('title', 'Billing')
+@section('page-heading', 'Billing')
 
 @section('content')
-<div class="space-y-8">
+<div class="space-y-6">
+    @include('billing.partials.tabs')
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-900">Invoices & Payments</h2>
-            <p class="text-sm text-slate-500">
-                Manage client billing, issued invoices and payment receipts.
-            </p>
-        </div>
+    <div class="flex flex-wrap items-end justify-between gap-3">
+        <form method="GET" action="{{ route('billing.index') }}" class="flex flex-wrap items-end gap-2">
+            <label class="text-sm font-medium text-slate-700">
+                Period
+                <select name="period" data-autosubmit class="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2">
+                    @foreach(\App\Http\Controllers\BillingController::PERIODS as $value => $label)
+                        <option value="{{ $value }}" @selected($period === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            @if($period === 'custom')
+                <label class="text-sm font-medium text-slate-700">From
+                    <input type="date" name="from" value="{{ $from?->format('Y-m-d') }}" class="mt-1 block rounded-lg border border-slate-300 px-3 py-2">
+                </label>
+                <label class="text-sm font-medium text-slate-700">To
+                    <input type="date" name="to" value="{{ $to?->format('Y-m-d') }}" class="mt-1 block rounded-lg border border-slate-300 px-3 py-2">
+                </label>
+                <button type="submit" class="rounded-lg bg-[#142235] px-4 py-2 text-sm font-semibold text-white">Apply</button>
+            @endif
+        </form>
 
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('invoices.create') }}"
-               class="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white">
-                + Create Invoice
-            </a>
-
-            <a href="{{ route('payments.create') }}"
-               class="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-                + Record Payment
-            </a>
+            <a href="{{ route('payments.create') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Record payment</a>
+            <a href="{{ route('invoices.create') }}" class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">+ New invoice</a>
         </div>
     </div>
 
-    <!-- INVOICES -->
-    <section class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-900">Invoices</h3>
-            <a href="{{ route('invoices.index') }}"
-               class="text-sm font-semibold text-blue-700 hover:underline">
-                View All Invoices
-            </a>
-        </div>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        @foreach([
+            ['Invoices raised', number_format($stats['invoices_raised']), 'text-slate-900'],
+            ['Invoiced', \App\Enums\Currency::current()->format($stats['invoice_amount']), 'text-slate-900'],
+            ['Received', \App\Enums\Currency::current()->format($stats['payment_received']), 'text-[#16776e]'],
+            ['Expenses', \App\Enums\Currency::current()->format($stats['total_expenses']), 'text-slate-900'],
+            ['Payment due', \App\Enums\Currency::current()->format($stats['payment_due']), 'text-amber-700'],
+            ['Overdue', \App\Enums\Currency::current()->format($stats['payment_overdue']), 'text-rose-700'],
+        ] as [$label, $value, $colour])
+            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</p>
+                <p class="mt-2 text-xl font-bold {{ $colour }}">{{ $value }}</p>
+            </div>
+        @endforeach
+    </div>
+    <p class="-mt-3 text-xs text-slate-500">Due and overdue are current balances; the other figures are for the selected period.</p>
 
-        <div class="overflow-x-auto rounded-xl border bg-white shadow-sm">
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <h2 class="border-b border-slate-200 px-5 py-4 text-lg font-semibold text-slate-900">By client</h2>
+        <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="bg-slate-100 text-slate-700">
-                    <tr>
-                        <th class="p-4">Invoice No.</th>
-                        <th class="p-4">Client</th>
-                        <th class="p-4">Invoice Date</th>
-                        <th class="p-4">Due Date</th>
-                        <th class="p-4">Amount</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4">Action</th>
-                    </tr>
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                    <tr><th class="p-3">Client</th><th class="p-3 text-right">Cases</th><th class="p-3 text-right">Invoiced</th><th class="p-3 text-right">Received</th></tr>
                 </thead>
-
-                <tbody>
-                    @forelse($invoices as $invoice)
-                        <tr class="border-t hover:bg-slate-50">
-                            <td class="p-4 font-semibold">
-                                {{ $invoice->invoice_number }}
-                            </td>
-
-                            <td class="p-4">
-                                @if($invoice->client)
-                                    <a href="{{ route('clients.show', $invoice->client) }}"
-                                       class="text-blue-700 hover:underline">
-                                        {{ $invoice->client->display_name ?: trim($invoice->client->first_name.' '.$invoice->client->last_name) }}
-                                    </a>
-                                @else
-                                    Client unavailable
-                                @endif
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap">
-                                {{ $invoice->invoice_date ? \Carbon\Carbon::parse($invoice->invoice_date)->format('d-m-Y') : '—' }}
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap">
-                                {{ $invoice->due_date ? \Carbon\Carbon::parse($invoice->due_date)->format('d-m-Y') : '—' }}
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap font-medium">
-                                ₹{{ number_format((float)$invoice->total_amount, 2) }}
-                            </td>
-
-                            <td class="p-4">
-                                {{ ucfirst(str_replace('_', ' ', $invoice->status)) }}
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap">
-                                <a href="{{ route('invoices.show', $invoice) }}"
-                                   class="font-semibold text-blue-700 hover:underline">
-                                    View Invoice
-                                </a>
-                            </td>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse($clientRows as $row)
+                        <tr>
+                            <td class="p-3"><a href="{{ route('clients.show', $row['client']) }}" class="font-medium text-slate-900 hover:text-[#16776e]">{{ $row['client']->displayName() }}</a></td>
+                            <td class="p-3 text-right">{{ $row['cases'] }}</td>
+                            <td class="p-3 text-right">@money($row['invoiced'])</td>
+                            <td class="p-3 text-right">@money($row['received'])</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-500">
-                                No invoices found.
-                            </td>
-                        </tr>
+                        <tr><td colspan="4" class="p-6 text-center text-slate-500">No billing activity in this period.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-
-        {{ $invoices->links() }}
     </section>
-
-    <!-- PAYMENTS -->
-    <section class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-900">Payments</h3>
-            <a href="{{ route('payments.index') }}"
-               class="text-sm font-semibold text-blue-700 hover:underline">
-                View All Payments
-            </a>
-        </div>
-
-        <div class="overflow-x-auto rounded-xl border bg-white shadow-sm">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-100 text-slate-700">
-                    <tr>
-                        <th class="p-4">Receipt No.</th>
-                        <th class="p-4">Client</th>
-                        <th class="p-4">Invoice</th>
-                        <th class="p-4">Payment Date</th>
-                        <th class="p-4">Amount</th>
-                        <th class="p-4">Method</th>
-                        <th class="p-4">Action</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @forelse($payments as $payment)
-                        <tr class="border-t hover:bg-slate-50">
-                            <td class="p-4 font-semibold">
-                                {{ $payment->receipt_number }}
-                            </td>
-
-                            <td class="p-4">
-                                @if($payment->client)
-                                    <a href="{{ route('clients.show', $payment->client) }}"
-                                       class="text-blue-700 hover:underline">
-                                        {{ $payment->client->display_name ?: trim($payment->client->first_name.' '.$payment->client->last_name) }}
-                                    </a>
-                                @else
-                                    Client unavailable
-                                @endif
-                            </td>
-
-                            <td class="p-4">
-                                {{ $payment->invoice->invoice_number ?? '—' }}
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap">
-                                {{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '—' }}
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap font-medium">
-                                ₹{{ number_format((float)$payment->amount, 2) }}
-                            </td>
-
-                            <td class="p-4">
-                                {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
-                            </td>
-
-                            <td class="p-4 whitespace-nowrap">
-                                <a href="{{ route('payments.show', $payment) }}"
-                                   class="font-semibold text-blue-700 hover:underline">
-                                    View Receipt
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-500">
-                                No payments found.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{ $payments->links() }}
-    </section>
-
 </div>
 @endsection

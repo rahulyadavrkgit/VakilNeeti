@@ -1,28 +1,10 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <title>Add Client Activity | VakilNeeti</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@extends('layouts.app')
 
-<body class="min-h-screen bg-slate-100 text-slate-900">
-<div class="flex min-h-screen">
+@section('title', 'Add Client Activity')
+@section('page-heading', 'Add Client Activity')
 
-    <aside class="w-64 shrink-0 bg-slate-950 px-5 py-7 text-white">
-        <div class="mb-10"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
-
-        <nav class="space-y-2">
-            <a href="/" class="block rounded-lg px-4 py-3 hover:bg-slate-800">Dashboard</a>
-            <a href="{{ route('clients.index') }}" class="block rounded-lg bg-blue-600 px-4 py-3 font-semibold">Clients</a>
-            <a href="{{ route('invoices.index') }}" class="block rounded-lg px-4 py-3 hover:bg-slate-800">Invoices</a>
-            <a href="{{ route('payments.index') }}" class="block rounded-lg px-4 py-3 hover:bg-slate-800">Payments</a>
-        </nav>
-    </aside>
-
-    <main class="min-w-0 flex-1 p-8">
+@section('content')
+<div class="space-y-6">
 
         <h2 class="text-3xl font-bold">Record Client Activity</h2>
 
@@ -118,9 +100,5 @@
             </div>
 
         </form>
-
-    </main>
 </div>
-</body>
-</html>
-
+@endsection

@@ -2,67 +2,25 @@
 
 namespace App\Http\Controllers\Auth;
 
-
-
 use App\Http\Controllers\Controller;
-
+use App\Models\AdvocateProfile;
+use App\Models\State;
 use App\Models\User;
 use App\Services\TwilioSmsService;
-
 use Carbon\Carbon;
-
 use Illuminate\Http\RedirectResponse;
-
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\Support\Facades\Hash;
-
 use Illuminate\Support\Facades\RateLimiter;
-
-use Illuminate\Support\Facades\Storage;
-
 use Illuminate\Support\Facades\Validator;
-
 use Illuminate\Support\Str;
-
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-
-
 class UserRegistrationController extends Controller
-
 {
-
-    private const SPECIALIZATIONS = [
-
-        'Civil',
-
-        'Criminal',
-
-        'Family Law',
-
-        'Corporate Law',
-
-        'Labour Law',
-
-        'Intellectual Property Law',
-
-        'Divorce Law',
-
-        'Property Law',
-
-        'Consumer Service Law',
-
-        'Tax Law',
-
-        'Real Estate',
-
-    ];
-
     private const ACCOUNT_ROLES = [
         'independent_practitioner' => 'Independent practitioner',
         'senior_counsel' => 'Senior counsel',
@@ -83,35 +41,24 @@ class UserRegistrationController extends Controller
         'other' => 'Other',
     ];
 
-
-
     public function showRegister(): View
-
     {
 
         return view('auth.user-register');
 
     }
 
-
-
     public function showLogin(): View
-
     {
 
         return view('auth.user-login');
 
     }
 
-
-
     private function normalizeMobile(string $mobile): string
-
     {
 
         $mobile = preg_replace('/[\s\\-\\(\\)]/', '', $mobile);
-
-
 
         if (preg_match('/^[6-9][0-9]{9}$/', $mobile)) {
 
@@ -119,18 +66,13 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         if (preg_match('/^\\+91[6-9][0-9]{9}$/', $mobile)) {
 
             return $mobile;
 
         }
 
-
-
         throw new \InvalidArgumentException(
-
             'Enter a valid Indian mobile number with 10 digits or +91 country code.'
 
         );
@@ -143,15 +85,13 @@ class UserRegistrationController extends Controller
             && (bool) config('services.otp_bypass_enabled', false);
     }
 
-
-
     private function sendMobileOtp(
         string $mobile,
         string $purpose,
         TwilioSmsService $smsService,
         ?int $userId = null
     ): ?string {
-        $key = $purpose . '-otp:' . $mobile;
+        $key = $purpose.'-otp:'.$mobile;
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             return 'Too many OTP requests. Please try again later.';
@@ -195,68 +135,62 @@ class UserRegistrationController extends Controller
         return null;
     }
 
-
-
     public function sendOtp(Request $request, TwilioSmsService $smsService): RedirectResponse
-{
-    $validator = Validator::make($request->all(), [
-        'mobile' => ['required', 'string', 'max:20'],
-    ]);
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => ['required', 'string', 'max:20'],
+        ]);
 
-    if ($validator->fails()) {
-        return back()->withErrors($validator, 'registration')
-            ->withInput($request->only('mobile'))
-            ->with('show_register_modal', true);
+        if ($validator->fails()) {
+            return back()->withErrors($validator, 'registration')
+                ->withInput($request->only('mobile'))
+                ->with('show_register_modal', true);
+        }
+
+        try {
+            $mobile = $this->normalizeMobile($validator->validated()['mobile']);
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['mobile' => $exception->getMessage()], 'registration')
+                ->withInput($request->only('mobile'))
+                ->with('show_register_modal', true);
+        }
+
+        if (User::where('mobile', $mobile)->exists()) {
+            return back()->withErrors([
+                'mobile' => 'This mobile number is already registered. Please log in.',
+            ], 'registration')->withInput($request->only('mobile'))
+                ->with('show_register_modal', true);
+        }
+
+        $pending = ['mobile' => $mobile];
+
+        if ($this->otpBypassEnabled()) {
+            $pending['otp_bypassed'] = true;
+            $request->session()->forget('pending_user_registration');
+            $request->session()->put('verified_registration', $pending);
+
+            return redirect()->route('register.profile')
+                ->with('status', 'Development mode: mobile OTP verification skipped.');
+        }
+
+        $error = $this->sendMobileOtp($mobile, 'registration', $smsService);
+
+        if ($error) {
+            return back()->withErrors(['mobile' => $error], 'registration')
+                ->withInput($request->only('mobile'))
+                ->with('show_register_modal', true);
+        }
+
+        $request->session()->put('pending_user_registration', $pending);
+
+        return redirect()->route('register.verify')
+            ->with('status', 'A four-digit OTP has been sent to your mobile number.');
     }
-
-    try {
-        $mobile = $this->normalizeMobile($validator->validated()['mobile']);
-    } catch (\InvalidArgumentException $exception) {
-        return back()->withErrors(['mobile' => $exception->getMessage()], 'registration')
-            ->withInput($request->only('mobile'))
-            ->with('show_register_modal', true);
-    }
-
-    if (User::where('mobile', $mobile)->exists()) {
-        return back()->withErrors([
-            'mobile' => 'This mobile number is already registered. Please log in.',
-        ], 'registration')->withInput($request->only('mobile'))
-            ->with('show_register_modal', true);
-    }
-
-    $pending = ['mobile' => $mobile];
-
-    if ($this->otpBypassEnabled()) {
-        $pending['otp_bypassed'] = true;
-        $request->session()->forget('pending_user_registration');
-        $request->session()->put('verified_registration', $pending);
-
-        return redirect()->route('register.profile')
-            ->with('status', 'Development mode: mobile OTP verification skipped.');
-    }
-
-    $error = $this->sendMobileOtp($mobile, 'registration', $smsService);
-
-    if ($error) {
-        return back()->withErrors(['mobile' => $error], 'registration')
-            ->withInput($request->only('mobile'))
-            ->with('show_register_modal', true);
-    }
-
-    $request->session()->put('pending_user_registration', $pending);
-
-    return redirect()->route('register.verify')
-        ->with('status', 'A four-digit OTP has been sent to your mobile number.');
-}
-
-
-
 
     public function showVerify(Request $request): View|RedirectResponse
-
     {
 
-        if (!$request->session()->has('pending_user_registration')) {
+        if (! $request->session()->has('pending_user_registration')) {
 
             return redirect()->route('register')
 
@@ -266,16 +200,11 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         return view('auth.user-verify');
 
     }
 
-
-
     public function verifyOtp(Request $request): RedirectResponse
-
     {
 
         $validator = Validator::make($request->all(), [
@@ -283,8 +212,6 @@ class UserRegistrationController extends Controller
             'otp' => ['required', 'digits:4'],
 
         ]);
-
-
 
         if ($validator->fails()) {
 
@@ -296,13 +223,9 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         $pending = $request->session()->get('pending_user_registration');
 
-
-
-        if (!$pending) {
+        if (! $pending) {
 
             return redirect()->route('register')
 
@@ -312,8 +235,6 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         $record = DB::table('user_registration_otps')
 
             ->where('mobile', $pending['mobile'])
@@ -322,9 +243,7 @@ class UserRegistrationController extends Controller
 
             ->first();
 
-
-
-        if (!$record || Carbon::parse($record->expires_at)->isPast()) {
+        if (! $record || Carbon::parse($record->expires_at)->isPast()) {
 
             return redirect()->route('register')
 
@@ -333,8 +252,6 @@ class UserRegistrationController extends Controller
                 ->with('show_register_modal', true);
 
         }
-
-
 
         if ($record->attempts >= 5) {
 
@@ -346,13 +263,9 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         DB::table('user_registration_otps')->where('id', $record->id)->increment('attempts');
 
-
-
-        if (!$record->mobile_otp_hash || !Hash::check($request->string('otp')->toString(), $record->mobile_otp_hash)) {
+        if (! $record->mobile_otp_hash || ! Hash::check($request->string('otp')->toString(), $record->mobile_otp_hash)) {
 
             return back()
 
@@ -362,31 +275,22 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         DB::table('user_registration_otps')->where('id', $record->id)->delete();
 
         $request->session()->forget('pending_user_registration');
 
         $request->session()->put('verified_registration', $pending);
 
-
-
         return redirect()->route('register.profile');
 
     }
 
-
-
     public function resendOtp(Request $request, TwilioSmsService $smsService): RedirectResponse
-
     {
 
         $pending = $request->session()->get('pending_user_registration');
 
-
-
-        if (!$pending) {
+        if (! $pending) {
 
             return redirect()->route('register')
 
@@ -396,11 +300,7 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         $error = $this->sendMobileOtp($pending['mobile'], 'registration', $smsService);
-
-
 
         if ($error) {
 
@@ -412,8 +312,6 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         return back()
 
             ->with('status', 'A new OTP has been sent to your mobile number.')
@@ -422,17 +320,12 @@ class UserRegistrationController extends Controller
 
     }
 
-
-
     public function showProfileSetup(Request $request): View|RedirectResponse
-
     {
 
         $pending = $request->session()->get('verified_registration');
 
-
-
-        if (!$pending) {
+        if (! $pending) {
 
             return redirect()->route('register')
 
@@ -441,32 +334,26 @@ class UserRegistrationController extends Controller
                 ->with('show_register_modal', true);
 
         }
-
-
 
         return view('auth.user-profile-setup', [
 
             'pending' => $pending,
 
-            'specializations' => self::SPECIALIZATIONS,
+            'specializations' => AdvocateProfile::SPECIALIZATIONS,
             'accountRoles' => self::ACCOUNT_ROLES,
             'onboardingFeatures' => self::ONBOARDING_FEATURES,
+            'stateGroups' => State::dropdownGroups(),
 
         ]);
 
     }
 
-
-
     public function completeProfile(Request $request): RedirectResponse
-
     {
 
         $pending = $request->session()->get('verified_registration');
 
-
-
-        if (!$pending) {
+        if (! $pending) {
 
             return redirect()->route('register')
 
@@ -475,8 +362,6 @@ class UserRegistrationController extends Controller
                 ->with('show_register_modal', true);
 
         }
-
-
 
         $rules = [
             'account_role' => ['required', 'in:'.implode(',', array_keys(self::ACCOUNT_ROLES))],
@@ -500,14 +385,8 @@ class UserRegistrationController extends Controller
         if ($accountType === 'individual') {
             $isStudent = $accountRole === 'student_intern';
 
-            $rules += [
-                'bar_council_registration_number' => [$isStudent ? 'nullable' : 'required', 'string', 'max:100'],
-                'bar_registration_year' => [
-                    $isStudent ? 'nullable' : 'required',
-                    'integer',
-                    'between:1950,'.now()->year,
-                ],
-            ];
+            $request->merge(AdvocateProfile::normaliseBarInput($request->all()));
+            $rules += AdvocateProfile::barRegistrationRules(! $isStudent);
         } else {
             $gstin = strtoupper(trim((string) $request->input('gstin')));
             $request->merge(['gstin' => $gstin === '' ? null : $gstin]);
@@ -518,8 +397,7 @@ class UserRegistrationController extends Controller
                 'address' => ['nullable', 'string', 'max:5000'],
                 'city' => ['required', 'string', 'max:255'],
                 'district' => ['required', 'string', 'max:255'],
-                'region' => ['required', 'string', 'max:255'],
-                'state_code' => ['nullable', 'string', 'max:15'],
+                'region' => ['required', 'string', Rule::in(array_keys(State::indianStatesAndUnionTerritories()))],
                 'pincode' => ['nullable', 'regex:/^[0-9]{6}$/'],
                 'gstin' => [
                     'nullable',
@@ -532,7 +410,9 @@ class UserRegistrationController extends Controller
             ];
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, AdvocateProfile::barRegistrationMessages() + [
+            'region.in' => 'Select a State or Union Territory from the list.',
+        ]);
         try {
 
             $user = DB::transaction(function () use ($validated, $pending, $accountType): User {
@@ -541,7 +421,7 @@ class UserRegistrationController extends Controller
                     'email' => Str::lower($validated['email']),
                     'mobile' => $pending['mobile'],
                     'password' => Hash::make(Str::random(64)),
-                    'mobile_verified_at' => !($pending['otp_bypassed'] ?? false) ? now() : null,
+                    'mobile_verified_at' => ! ($pending['otp_bypassed'] ?? false) ? now() : null,
                     'account_type' => $accountType,
                     'account_role' => $validated['account_role'],
                     'onboarding_features' => $validated['onboarding_features'],
@@ -551,7 +431,14 @@ class UserRegistrationController extends Controller
                 if ($accountType === 'individual') {
                     DB::table('advocate_profiles')->insert([
                         'user_id' => $user->id,
-                        'bar_council_registration_number' => $validated['bar_council_registration_number'] ?? null,
+                        'bar_council_registration_number' => AdvocateProfile::composeBarRegistration(
+                            $validated['bar_state_code'] ?? null,
+                            $validated['bar_number'] ?? null,
+                            isset($validated['bar_registration_year']) ? (int) $validated['bar_registration_year'] : null,
+                        ),
+                        'bar_state' => $validated['bar_state'] ?? null,
+                        'bar_state_code' => $validated['bar_state_code'] ?? null,
+                        'bar_number' => $validated['bar_number'] ?? null,
                         'bar_registration_year' => $validated['bar_registration_year'] ?? null,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -565,7 +452,7 @@ class UserRegistrationController extends Controller
                         'city' => $validated['city'],
                         'district' => $validated['district'] ?? null,
                         'state' => $validated['region'],
-                        'state_code' => $validated['state_code'] ?? null,
+                        'state_code' => State::GST_STATE_CODES[$validated['region']],
                         'pincode' => $validated['pincode'] ?? null,
                         'gstin' => $validated['gstin'] ?? null,
                         'email' => isset($validated['firm_email']) ? Str::lower($validated['firm_email']) : null,
@@ -576,8 +463,6 @@ class UserRegistrationController extends Controller
                     ]);
                 }
 
-
-
                 return $user;
 
             });
@@ -585,10 +470,7 @@ class UserRegistrationController extends Controller
         } catch (\Throwable $exception) {
 
             throw $exception;
-
         }
-
-
 
         $request->session()->forget('verified_registration');
 
@@ -596,81 +478,78 @@ class UserRegistrationController extends Controller
 
         $request->session()->regenerate();
 
-
+        // New advocates go straight to bringing in their cases from eCourts.
+        if ($accountType === 'individual' && $accountRole !== 'student_intern') {
+            return redirect()->route('cases.find')
+                ->with('auth_login_success', 'Your account is ready. Next, bring in your cases from eCourts, or skip this and go to Home.');
+        }
 
         return redirect('/')
             ->with('auth_login_success', 'Your account is ready. You can now sign in with a phone OTP.');
 
     }
 
-
-
     public function sendLoginOtp(
-    Request $request,
-    TwilioSmsService $smsService
-): RedirectResponse {
-    $validator = Validator::make($request->all(), [
-        'mobile' => ['required', 'string', 'max:20'],
-    ]);
+        Request $request,
+        TwilioSmsService $smsService
+    ): RedirectResponse {
+        $validator = Validator::make($request->all(), [
+            'mobile' => ['required', 'string', 'max:20'],
+        ]);
 
-    if ($validator->fails()) {
-        return back()->withErrors($validator, 'login')
-            ->withInput($request->only('mobile'))
-            ->with('show_login_modal', true);
+        if ($validator->fails()) {
+            return back()->withErrors($validator, 'login')
+                ->withInput($request->only('mobile'))
+                ->with('show_login_modal', true);
+        }
+
+        try {
+            $mobile = $this->normalizeMobile($validator->validated()['mobile']);
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['mobile' => $exception->getMessage()], 'login')
+                ->withInput($request->only('mobile'))
+                ->with('show_login_modal', true);
+        }
+
+        $userQuery = User::where('mobile', $mobile);
+
+        if (! $this->otpBypassEnabled()) {
+            $userQuery->whereNotNull('mobile_verified_at');
+        }
+
+        $user = $userQuery->first();
+
+        if (! $user) {
+            return back()->withErrors([
+                'mobile' => 'No account was found for this number. Create an account first.',
+            ], 'login')->withInput($request->only('mobile'))
+                ->with('show_login_modal', true);
+        }
+
+        if ($this->otpBypassEnabled()) {
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return redirect()->intended('/')
+                ->with('auth_login_success', 'Development mode: login successful without OTP.');
+        }
+
+        $error = $this->sendMobileOtp($mobile, 'login', $smsService, $user->id);
+
+        if ($error) {
+            return back()->withErrors(['mobile' => $error], 'login')
+                ->withInput($request->only('mobile'))
+                ->with('show_login_modal', true);
+        }
+
+        $request->session()->put('login_otp_mobile', $mobile);
+
+        return redirect()->route('login')
+            ->with('status', 'A four-digit OTP has been sent to your mobile number.')
+            ->with('show_login_otp', true);
     }
-
-    try {
-        $mobile = $this->normalizeMobile($validator->validated()['mobile']);
-    } catch (\InvalidArgumentException $exception) {
-        return back()->withErrors(['mobile' => $exception->getMessage()], 'login')
-            ->withInput($request->only('mobile'))
-            ->with('show_login_modal', true);
-    }
-
-    $userQuery = User::where('mobile', $mobile);
-
-    if (!$this->otpBypassEnabled()) {
-        $userQuery->whereNotNull('mobile_verified_at');
-    }
-
-    $user = $userQuery->first();
-
-    if (!$user) {
-        return back()->withErrors([
-            'mobile' => 'No account was found for this number. Create an account first.',
-        ], 'login')->withInput($request->only('mobile'))
-            ->with('show_login_modal', true);
-    }
-
-    if ($this->otpBypassEnabled()) {
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->intended('/')
-            ->with('auth_login_success', 'Development mode: login successful without OTP.');
-    }
-
-    $error = $this->sendMobileOtp($mobile, 'login', $smsService, $user->id);
-
-    if ($error) {
-        return back()->withErrors(['mobile' => $error], 'login')
-            ->withInput($request->only('mobile'))
-            ->with('show_login_modal', true);
-    }
-
-    $request->session()->put('login_otp_mobile', $mobile);
-
-    return redirect()->route('login')
-        ->with('status', 'A four-digit OTP has been sent to your mobile number.')
-        ->with('show_login_otp', true);
-}
-
-
-
-
 
     public function verifyLoginOtp(Request $request): RedirectResponse
-
     {
 
         $validator = Validator::make($request->all(), [
@@ -678,8 +557,6 @@ class UserRegistrationController extends Controller
             'otp' => ['required', 'digits:4'],
 
         ]);
-
-
 
         if ($validator->fails()) {
 
@@ -690,8 +567,6 @@ class UserRegistrationController extends Controller
                 ->with('show_login_otp', true);
 
         }
-
-
 
         $mobile = $request->session()->get('login_otp_mobile');
 
@@ -713,13 +588,9 @@ class UserRegistrationController extends Controller
 
             : null;
 
-
-
-        if (!$user || !$record || Carbon::parse($record->expires_at)->isPast()) {
+        if (! $user || ! $record || Carbon::parse($record->expires_at)->isPast()) {
 
             $request->session()->forget('login_otp_mobile');
-
-
 
             return redirect()->route('login')
 
@@ -728,8 +599,6 @@ class UserRegistrationController extends Controller
                 ->with('show_login_modal', true);
 
         }
-
-
 
         if ($record->attempts >= 5) {
 
@@ -741,13 +610,9 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         DB::table('user_registration_otps')->where('id', $record->id)->increment('attempts');
 
-
-
-        if (!$record->mobile_otp_hash || !Hash::check($request->string('otp')->toString(), $record->mobile_otp_hash)) {
+        if (! $record->mobile_otp_hash || ! Hash::check($request->string('otp')->toString(), $record->mobile_otp_hash)) {
 
             return back()
 
@@ -757,8 +622,6 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         DB::table('user_registration_otps')->where('id', $record->id)->delete();
 
         $request->session()->forget('login_otp_mobile');
@@ -767,18 +630,13 @@ class UserRegistrationController extends Controller
 
         $request->session()->regenerate();
 
-
-
         return redirect()->intended('/')
 
             ->with('auth_login_success', 'Login successful.');
 
     }
 
-
-
     public function logout(Request $request): RedirectResponse
-
     {
 
         if (Auth::user()?->is_admin) {
@@ -789,19 +647,13 @@ class UserRegistrationController extends Controller
 
         }
 
-
-
         Auth::logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-
-
         return redirect()->route('login')->with('status', 'You have been logged out.');
 
     }
-
 }
-

@@ -10,6 +10,8 @@
         </p>
     </div>
 
+    @if(auth()->user()?->is_admin)
+    <p class="text-xs font-bold uppercase tracking-[.16em] text-slate-500">Admin · data coverage</p>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
         <div class="rounded-xl border border-slate-200 bg-white p-5">
@@ -33,6 +35,8 @@
         </div>
 
     </div>
+    <p class="-mt-3 text-xs text-slate-500">Counts show records in VakilNiti, not all courts in India.</p>
+    @endif
 
     <section>
         <h2 class="mb-3 text-lg font-bold text-slate-800">Court Access</h2>
@@ -86,11 +90,6 @@
 
         </div>
     </section>
-
-    <p class="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-        Catalogue counts represent records currently stored in VakilNeeti.
-        They do not represent the total number of courts in India or guarantee live official data.
-    </p>
 
 </div>
 @endsection

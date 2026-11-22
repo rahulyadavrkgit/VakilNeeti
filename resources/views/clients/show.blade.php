@@ -23,14 +23,13 @@
         <div class="flex flex-wrap items-start justify-between gap-5">
 
             <div>
-                <a href="{{ route('clients.index') }}"
-                   class="text-sm text-blue-600 hover:underline">
-                    &larr; Back to Clients
-                </a>
 
                 <h2 class="mt-3 text-2xl font-bold text-slate-900">
-                    {{ $client->display_name ?: trim($client->first_name.' '.$client->middle_name.' '.$client->last_name) }}
+                    {{ $client->displayName() }}
                 </h2>
+                @if($client->company)
+                    <p class="mt-1 text-sm text-slate-600">Works at <a href="{{ route('clients.show', $client->company) }}" class="font-semibold text-[#16776e] hover:underline">{{ $client->company->displayName() }}</a></p>
+                @endif
 
                 <p class="mt-1 text-sm text-slate-500">
                     Client ID: {{ $client->client_code ?? $client->id }}
@@ -116,12 +115,12 @@
 
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Total Invoiced</p>
-                <p class="mt-2 text-2xl font-bold">₹{{ number_format($totalInvoiced, 2) }}</p>
+                <p class="mt-2 text-2xl font-bold">@money($totalInvoiced)</p>
             </div>
 
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Outstanding</p>
-                <p class="mt-2 text-2xl font-bold text-red-600">₹{{ number_format($totalOutstanding, 2) }}</p>
+                <p class="mt-2 text-2xl font-bold text-red-600">@money($totalOutstanding)</p>
             </div>
 
         </div>
@@ -129,13 +128,34 @@
         <div class="rounded-xl border bg-white p-5">
             <h4 class="font-semibold">Client Information</h4>
             <div class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-                <p><span class="text-slate-500">Client type:</span> {{ ucfirst($client->client_type) }}</p>
+                <p><span class="text-slate-500">Client type:</span> {{ $client->isCompany() ? ucfirst($client->client_type) : 'Person' }}</p>
                 <p><span class="text-slate-500">Mobile:</span> {{ $client->mobile ?: 'Not provided' }}</p>
                 <p><span class="text-slate-500">Email:</span> {{ $client->email ?: 'Not provided' }}</p>
-                <p><span class="text-slate-500">Occupation:</span> {{ $client->occupation ?: 'Not provided' }}</p>
-                <p><span class="text-slate-500">Address:</span> {{ $client->address ?: 'Not provided' }}</p>
+                @if($client->phone)<p><span class="text-slate-500">Phone:</span> {{ $client->phone }}</p>@endif
+                @if($client->website)<p><span class="text-slate-500">Website:</span> <a href="{{ $client->website }}" target="_blank" rel="noopener noreferrer" class="text-[#16776e] hover:underline">{{ $client->website }}</a></p>@endif
+                @unless($client->isCompany())<p><span class="text-slate-500">Occupation:</span> {{ $client->occupation ?: 'Not provided' }}</p>@endunless
+                <p class="sm:col-span-2"><span class="text-slate-500">Address:</span> {{ collect([$client->address, $client->locality, $client->city, $client->district, $client->state, $client->pin_code])->filter()->implode(', ') ?: 'Not provided' }}</p>
                 <p><span class="text-slate-500">Referred by:</span> {{ $client->referred_by ?: 'Not provided' }}</p>
             </div>
+
+            @if($client->isCompany())
+                <div class="mt-5 border-t border-slate-100 pt-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <h5 class="text-sm font-semibold text-slate-800">People at {{ $client->displayName() }}</h5>
+                        <a href="{{ route('clients.create') }}" class="text-xs font-semibold text-[#16776e] hover:underline">+ Add person</a>
+                    </div>
+                    <ul class="mt-2 divide-y divide-slate-100 text-sm">
+                        @forelse($client->people as $person)
+                            <li class="flex items-center justify-between gap-2 py-2">
+                                <a href="{{ route('clients.show', $person) }}" class="font-medium text-slate-900 hover:text-[#16776e]">{{ $person->displayName() }}</a>
+                                <span class="text-xs text-slate-500">{{ collect([$person->mobile, $person->email])->filter()->implode(' · ') }}</span>
+                            </li>
+                        @empty
+                            <li class="py-2 text-slate-500">No people linked yet. Choose this company under "Works at" when adding a person.</li>
+                        @endforelse
+                    </ul>
+                </div>
+            @endif
         </div>
     </section>
 
@@ -268,7 +288,7 @@
                         <tr class="border-t">
                             <td class="p-3 font-medium">{{ $invoice->invoice_number }}</td>
                             <td class="p-3">{{ $invoice->invoice_date?->format('d-m-Y') }}</td>
-                            <td class="p-3">₹{{ number_format($invoice->total_amount, 2) }}</td>
+                            <td class="p-3">@money($invoice->total_amount)</td>
                             <td class="p-3">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</td>
                             <td class="p-3">
                                 <a href="{{ route('invoices.show', $invoice) }}" class="text-blue-600 hover:underline">View</a>
@@ -293,9 +313,9 @@
         </div>
 
         <p class="mt-2 text-sm text-slate-600">
-            Received: <strong>₹{{ number_format($totalReceived, 2) }}</strong>
+            Received: <strong>@money($totalReceived)</strong>
             &nbsp;|&nbsp;
-            Outstanding: <strong>₹{{ number_format($totalOutstanding, 2) }}</strong>
+            Outstanding: <strong>@money($totalOutstanding)</strong>
         </p>
 
         <div class="mt-4 overflow-x-auto">
@@ -317,7 +337,7 @@
                             <td class="p-3">{{ $payment->invoice?->invoice_number ?? '—' }}</td>
                             <td class="p-3">{{ $payment->payment_date?->format('d-m-Y') }}</td>
                             <td class="p-3">{{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td>
-                            <td class="p-3">₹{{ number_format($payment->amount, 2) }}</td>
+                            <td class="p-3">@money($payment->amount)</td>
                             <td class="p-3">
                                 <a href="{{ route('payments.show', $payment) }}" class="text-blue-600 hover:underline">Receipt</a>
                             </td>

@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use DOMDocument;
-use DOMXPath;
 use Throwable;
 
 class ImportCriminalLawComparisons extends Command
@@ -45,11 +45,12 @@ class ImportCriminalLawComparisons extends Command
 
             try {
                 $response = Http::timeout(90)
-                    ->withHeaders(['User-Agent' => 'VakilNeeti Legal Research'])
+                    ->withHeaders(['User-Agent' => 'VakilNiti Legal Research'])
                     ->get($url);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     $this->error("Source request failed: HTTP {$response->status()}");
+
                     continue;
                 }
 
@@ -57,25 +58,28 @@ class ImportCriminalLawComparisons extends Command
 
                 if (stripos($html, '<html') === false) {
                     $this->error('The source did not return an HTML page.');
+
                     continue;
                 }
 
-                $dom = new DOMDocument();
+                $dom = new DOMDocument;
 
                 libxml_use_internal_errors(true);
-                $loaded = $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+                $loaded = $dom->loadHTML('<?xml encoding="UTF-8">'.$html);
                 libxml_clear_errors();
 
-                if (!$loaded) {
+                if (! $loaded) {
                     $this->error('Could not parse the official HTML.');
+
                     continue;
                 }
 
                 $xpath = new DOMXPath($dom);
                 $tables = $xpath->query('//table');
 
-                if (!$tables || $tables->length === 0) {
+                if (! $tables || $tables->length === 0) {
                     $this->error('No HTML tables found. Import stopped for this pair.');
+
                     continue;
                 }
 
@@ -93,7 +97,7 @@ class ImportCriminalLawComparisons extends Command
                     foreach ($rows as $row) {
                         $cells = $xpath->query('./th|./td', $row);
 
-                        if (!$cells || $cells->length < 2) {
+                        if (! $cells || $cells->length < 2) {
                             continue;
                         }
 
@@ -127,7 +131,7 @@ class ImportCriminalLawComparisons extends Command
                             continue;
                         }
 
-                        $combined = strtolower($left . ' ' . $right);
+                        $combined = strtolower($left.' '.$right);
 
                         if (
                             str_contains($combined, 'deleted') ||

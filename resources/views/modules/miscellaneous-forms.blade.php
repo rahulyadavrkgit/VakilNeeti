@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Miscellaneous Forms')
 @section('page-heading', 'Miscellaneous Forms')
@@ -6,7 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <section id="court-forms" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <div class="mb-3 flex flex-wrap items-center gap-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-10 w-auto max-w-[180px] rounded bg-white px-2 py-1 object-contain"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
+        <div class="mb-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
         <h1 class="mt-2 text-2xl font-bold">Forms &amp; Filing Resources</h1>
         <p class="mt-2 max-w-3xl text-sm text-slate-300">
             Find official filing portals and common practice-workspace forms from one place.
@@ -25,7 +25,7 @@
 
     <section id="civil-criminal" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Practice workspace forms</h2>
-        <p class="mt-1 text-sm text-slate-600">These create internal VakilNeeti records; they are not court-filed legal documents.</p>
+        <p class="mt-1 text-sm text-slate-600">These create internal VakilNiti records; they are not court-filed legal documents.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <article data-form-card data-search="new case civil criminal case record" class="rounded-lg border border-slate-200 p-4">
                 <h3 class="font-semibold text-slate-900">New case record</h3>
@@ -52,9 +52,7 @@
 
     <section id="affidavits" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Affidavits &amp; applications</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            Use the relevant court or tribunal's current prescribed form and filing instructions. Check requirements for verification, oath, annexures, court fee and permitted format with the filing registry.
-        </p>
+        <p class="mt-2 text-sm text-slate-600">Use the court’s current prescribed form; check filing requirements with the registry.</p>
         <a href="{{ route('court-directory.index') }}"
            class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
             Find an official court directory entry &rarr;
@@ -69,16 +67,14 @@
         </article>
         <article data-form-card data-search="rti right to information application official portal" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold text-slate-900">Right to Information (RTI)</h2>
-            <p class="mt-2 text-sm text-slate-600">For Central Government public authorities, use the official RTI Online service. Other authorities may use separate State or departmental portals.</p>
+            <p class="mt-2 text-sm text-slate-600">Central authorities: use RTI Online. Others may have State portals.</p>
             <a href="https://rtionline.gov.in/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Open RTI Online &rarr;</a>
         </article>
     </section>
 
     <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Court e-filing</h2>
-        <p class="mt-2 text-sm text-slate-600">
-            Check supported courts, current document formats, size limits and filing instructions on the official e-filing portal.
-        </p>
+        <p class="mt-2 text-sm text-slate-600">Check formats, size limits and instructions on the e-filing portal.</p>
         <a href="https://efiling.ecourts.gov.in/" target="_blank" rel="noopener noreferrer"
            class="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
             Open eCourts e-Filing
@@ -92,7 +88,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     const formsSearch = document.getElementById('forms-search');
     const formCards = Array.from(document.querySelectorAll('[data-form-card]'));
     const noFormMatches = document.getElementById('forms-search-empty');

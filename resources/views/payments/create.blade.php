@@ -7,9 +7,6 @@
 <div class="mx-auto max-w-4xl space-y-6">
 
     <div>
-        <a href="{{ route('payments.index') }}" class="text-blue-600 hover:underline">
-            &larr; Back to Payments
-        </a>
         <p class="mt-2 text-sm text-slate-500">
             Record a payment against an outstanding invoice.
         </p>
@@ -56,7 +53,7 @@
                             @selected((string) old('invoice_id') === (string) $invoice->id)>
                             {{ $invoice->invoice_number }}
                             — {{ $invoice->client->display_name ?: trim($invoice->client->first_name.' '.$invoice->client->last_name) }}
-                            — Outstanding: ₹{{ number_format($outstanding, 2) }}
+                            — Outstanding: @money($outstanding)
                         </option>
                     @endforeach
                 </select>
@@ -77,7 +74,7 @@
                 </div>
 
                 <div>
-                    <label for="amount" class="mb-2 block font-medium">Amount Received (₹) *</label>
+                    <label for="amount" class="mb-2 block font-medium">Amount Received (@currency) *</label>
                     <input id="amount" type="number" name="amount" min="0.01" step="0.01"
                            value="{{ old('amount') }}" required
                            class="w-full rounded-lg border border-slate-300 p-3">

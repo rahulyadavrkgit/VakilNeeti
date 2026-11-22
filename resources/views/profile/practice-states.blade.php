@@ -10,13 +10,9 @@
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Practice States & Jurisdictions</h1>
             <p class="mt-1 text-sm text-slate-500">
-                Select the States and Union Territories where you practise. District selection is optional.
+                Where you practise.
             </p>
         </div>
-        <a href="{{ route('profile.index') }}"
-           class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Back to Profile
-        </a>
     </div>
 
     @if(session('success'))
@@ -31,18 +27,6 @@
         </div>
     @endif
 
-    @if(!$firm)
-        <div class="rounded-xl border border-amber-200 bg-amber-50 p-5">
-            <h2 class="font-semibold text-amber-900">Firm Profile required</h2>
-            <p class="mt-2 text-sm text-amber-800">
-                Create or activate your Firm / Law Office Profile before selecting practice jurisdictions.
-            </p>
-            <a href="{{ route('firm-profile.index') }}"
-               class="mt-4 inline-block rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white">
-                Open Firm Profile
-            </a>
-        </div>
-    @else
 
         @if($errors->any())
             <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -62,8 +46,7 @@
                     <div>
                         <h2 class="font-semibold text-slate-800">1. Practice States / Union Territories</h2>
                         <p class="mt-1 text-sm text-slate-500">
-                            Select one or more States/UTs. The corresponding High Court jurisdiction is included automatically.
-                            You do not have to select any district.
+                            The State's High Court is included automatically.
                         </p>
                     </div>
                     <div id="practiceSaveStatus"
@@ -114,16 +97,12 @@
                     No matching State or Union Territory found.
                 </p>
 
-                <p class="mt-3 text-xs text-slate-500">
-                    All 28 States and 8 Union Territories are available in this list. Scroll inside the list to see more.
-                </p>
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 class="font-semibold text-slate-800">2. District Practice (Optional)</h2>
                 <p class="mt-1 text-sm text-slate-500">
-                    Select districts only if you also practise in District and Subordinate Courts.
-                    Leaving districts unselected means High Court-only practice for that State/UT.
+                    Only if you also practise in district courts.
                 </p>
 
                 <div id="stateDistrictSettings" class="mt-4 space-y-3">
@@ -180,16 +159,13 @@
                 <p id="districtEmptyMessage"
                    class="mt-3 text-sm text-slate-500"
                    @if(count($selectedStates)) hidden @endif>
-                    Select a State/UT above. District selection is optional.
+                    Select a State/UT above.
                 </p>
             </div>
         </form>
 
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="font-semibold text-slate-800">3. Saved Practice Jurisdictions</h2>
-            <p class="mt-1 text-xs text-slate-500">
-                This section reflects the saved settings when the page was loaded. Refresh the page to view the latest saved summary.
-            </p>
 
             @forelse($selectedStates as $stateName)
                 @php
@@ -225,11 +201,11 @@
             @endforelse
         </div>
 
+        @if(auth()->user()?->is_admin)
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="font-semibold text-slate-800">Court Catalogue Coverage</h2>
-            <p class="mt-1 text-sm text-slate-500">
-                Counts reflect active local catalogue entries, not the total number of courts in each jurisdiction.
-            </p>
+            <p class="text-xs font-bold uppercase tracking-[.16em] text-slate-500">Admin · data coverage</p>
+            <h2 class="mt-1 font-semibold text-slate-800">Court Catalogue Coverage</h2>
+            <p class="mt-1 text-sm text-slate-500">Counts show catalogue records, not all courts.</p>
 
             @foreach($selectedStates as $stateName)
                 <div class="flex items-center justify-between border-b border-slate-100 py-3">
@@ -240,6 +216,7 @@
                 </div>
             @endforeach
         </div>
+        @endif
 
         <!-- District selection popup -->
         <div id="districtSelectionModal"
@@ -313,12 +290,11 @@
             </div>
         </div>
 
-    @endif
 </div>
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('practiceJurisdictionForm');
     if (!form) return;

@@ -4,10 +4,6 @@
 <div class="max-w-6xl mx-auto px-4 py-6">
 
     <div class="mb-6">
-        <a href="{{ url('/court-management') }}"
-           class="text-sm text-blue-600 hover:underline">
-            ← Back to Court Management
-        </a>
 
         <h1 class="text-2xl font-bold text-slate-800 mt-3">
             {{ $district->district_name }}
@@ -108,7 +104,7 @@
         @empty
             <p class="text-sm text-slate-500">
                 No court establishments are currently linked to this district
-                in the VakilNeeti catalogue.
+                in the VakilNiti catalogue.
             </p>
         @endforelse
     </div>
@@ -118,11 +114,7 @@
             Official Court Services
         </h2>
 
-        <p class="text-sm text-slate-600 mt-2">
-            Use the official eCourts portal to access court services.
-            Availability of district-specific information depends on the
-            official portal and its supported search options.
-        </p>
+        <p class="text-sm text-slate-600 mt-2">Court services are on the official eCourts portal.</p>
 
         <a href="https://services.ecourts.gov.in/ecourtindia_v6/"
            target="_blank"

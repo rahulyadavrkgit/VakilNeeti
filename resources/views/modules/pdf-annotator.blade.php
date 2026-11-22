@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Annotator & Editor | VakilNeeti</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
+@extends('layouts.app')
+
+@section('title', 'PDF Annotator & Editor')
+@section('page-heading', 'PDF Annotator & Editor')
+
+@push('styles')
+<style>
         #vn-pdf-annotator { color:#172033; }
         #vn-pdf-annotator button { border:1px solid #d1d5db; border-radius:7px; padding:8px 12px; background:white; font-size:13px; }
         #vn-pdf-annotator button:hover { background:#eef2ff; }
@@ -27,15 +26,15 @@
         #vn-pdf-annotator [hidden] { display:none !important; }
         @media(max-width:900px) { #vn-pdf-annotator .vn-workspace { grid-template-columns:1fr; } }
     </style>
-</head>
-<body class="bg-slate-50">
+@endpush
+
+@section('content')
 <div id="vn-pdf-annotator" class="max-w-[1600px] mx-auto p-4 md:p-6">
     <header class="flex flex-wrap justify-between items-center gap-3 mb-5">
         <div>
             <h1 class="text-2xl font-bold">PDF Annotator & Editor</h1>
             <p class="text-sm text-slate-500">Local PDF processing · Your files are not uploaded</p>
         </div>
-        <a href="{{ url('/') }}" class="text-sm underline">Back to VakilNeeti</a>
     </header>
 
     <section id="vn-start" class="vn-panel text-center py-14">
@@ -105,7 +104,7 @@
                     <button id="vn-left">Move Page Left</button>
                     <button id="vn-right">Move Page Right</button>
                 </div>
-                <p class="text-xs text-amber-700 mt-2">Text replacement and secure redaction are not included in this installer. Whiteout is a visual cover, not secure redaction.</p>
+                <p class="text-xs text-amber-700 mt-2">Whiteout only covers text visually. It is not secure redaction.</p>
             </div>
         </div>
 
@@ -159,5 +158,4 @@
         PDF processing is performed locally in this browser. Scanned-document OCR, true existing-text reconstruction, permanent redaction and cryptographic digital signatures require additional dedicated implementations.
     </footer>
 </div>
-</body>
-</html>
+@endsection

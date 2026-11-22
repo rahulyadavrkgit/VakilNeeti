@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Client Activities')
 @section('page-heading', 'Client Activities')
 @section('content')
@@ -55,7 +55,7 @@
                                 </td>
 
                                 <td class="p-4 whitespace-nowrap">
-                                    {{ $activity->follow_up_at?->format('d M Y, h:i A') ?? 'â€”' }}
+                                    {{ $activity->follow_up_at?->format('d M Y, h:i A') ?? '—' }}
                                 </td>
 
                                 <td class="p-4">
@@ -78,10 +78,6 @@
             </div>
         </div>
 
-        <a href="{{ route('clients.show', $client) }}"
-           class="mt-6 inline-block text-blue-600 hover:underline">
-            â† Back to Client Profile
-        </a>
 
     </div>
 @endsection

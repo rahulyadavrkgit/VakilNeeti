@@ -11,10 +11,6 @@
             </p>
         </div>
 
-        <a href="{{ route('profile.index') }}"
-           class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-            Back to Profile
-        </a>
     </div>
 
     @if(session('success'))

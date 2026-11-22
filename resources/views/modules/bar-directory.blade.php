@@ -6,9 +6,7 @@
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Bar Councils & Bar Associations Directory</h1>
-            <p class="mt-1 text-sm text-gray-600">
-                Official directory of statutory State Bar Councils, the Bar Council of India (BCI), and court-affiliated Bar Associations.
-            </p>
+            <p class="mt-1 text-sm text-gray-600">State Bar Councils, the Bar Council of India and court bar associations.</p>
         </div>
         <div class="mt-3 sm:mt-0">
             <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800">
@@ -27,7 +25,7 @@
                     <label for="state_id" class="mb-2 block text-sm font-semibold text-gray-700">
                         State / Jurisdiction
                     </label>
-                    <select name="state_id" id="state_id" onchange="this.form.submit()"
+                    <select name="state_id" id="state_id" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">All States & National (BCI)</option>
                         @foreach($availableStates as $state)
@@ -43,7 +41,7 @@
                     <label for="court_type" class="mb-2 block text-sm font-semibold text-gray-700">
                         Court Type (Associations)
                     </label>
-                    <select name="court_type" id="court_type" onchange="this.form.submit()"
+                    <select name="court_type" id="court_type" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">All Court Types</option>
                         <option value="Supreme Court" @selected(request('court_type') === 'Supreme Court')>Supreme Court</option>
@@ -83,7 +81,7 @@
     <!-- Section 1: Bar Councils (Statutory) -->
     <div class="mt-8">
         <h2 class="text-xl font-bold text-gray-900">Statutory Bar Councils</h2>
-        <p class="mt-1 text-sm text-gray-600">Regulatory bodies established under the Advocates Act, 1961 for advocate enrollment and professional discipline.</p>
+        <p class="mt-1 text-sm text-gray-600">Regulators under the Advocates Act, 1961 (enrolment and discipline).</p>
 
         @if(isset($barCouncils) && $barCouncils->count() > 0)
             <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -137,7 +135,7 @@
     <!-- Section 2: Bar Associations (Court-Affiliated) -->
     <div class="mt-10">
         <h2 class="text-xl font-bold text-gray-900">Court-Affiliated Bar Associations</h2>
-        <p class="mt-1 text-sm text-gray-600">Voluntary professional associations representing advocates practicing in specific court complexes.</p>
+        <p class="mt-1 text-sm text-gray-600">Voluntary associations of advocates at each court.</p>
 
         @if(isset($barAssociations) && $barAssociations->count() > 0)
             <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

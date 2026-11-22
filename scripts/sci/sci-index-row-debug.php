@@ -1,6 +1,6 @@
 ﻿<?php
 
-$htmlFile = __DIR__ . '/storage/app/sci-index-debug.html';
+$htmlFile = dirname(__DIR__, 2) . '/storage/app/sci-index-debug.html';
 $html = file_get_contents($htmlFile);
 
 libxml_use_internal_errors(true);

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use App\Enums\Currency;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -44,6 +46,7 @@ class ProfileController extends Controller
             'onboarding_features' => ['required', 'array', 'min:1', 'max:'.count(self::ONBOARDING_FEATURES)],
             'onboarding_features.*' => ['required', 'distinct', 'in:'.implode(',', array_keys(self::ONBOARDING_FEATURES))],
             'onboarding_other' => ['nullable', 'string', 'max:500'],
+            'currency' => ['sometimes', Rule::enum(Currency::class)],
         ];
 
         if (in_array('other', (array) $request->input('onboarding_features', []), true)) {
@@ -54,6 +57,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->onboarding_features = array_values(array_unique($validated['onboarding_features']));
         $user->onboarding_other = $validated['onboarding_other'] ?? null;
+        $user->currency = $validated['currency'] ?? $user->currency;
         $user->save();
 
         return redirect()

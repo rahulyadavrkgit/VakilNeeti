@@ -17,7 +17,7 @@ class MockCourtDataProvider implements CourtDataProvider
 
     public function providerName(): string
     {
-        return 'VakilNeeti Mock Development Provider';
+        return 'VakilNiti Mock Development Provider';
     }
 
     public function supports(string $entityType): bool
@@ -51,7 +51,7 @@ class MockCourtDataProvider implements CourtDataProvider
         string $entityType,
         array $filters = []
     ): iterable {
-        if (!$this->supports($entityType)) {
+        if (! $this->supports($entityType)) {
             throw new \InvalidArgumentException(
                 "Unsupported entity type: {$entityType}"
             );

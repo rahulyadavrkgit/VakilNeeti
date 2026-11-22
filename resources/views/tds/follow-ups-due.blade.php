@@ -12,10 +12,6 @@
             </p>
         </div>
 
-        <a href="{{ route('tds.index') }}"
-           class="rounded-lg border px-4 py-2 text-sm font-medium">
-            Back to TDS Register
-        </a>
     </div>
 
     @if(session('success'))
@@ -68,15 +64,15 @@
                         </td>
 
                         <td class="px-4 py-3">
-                            {{ $deduction?->client?->display_name ?? 'â€”' }}
+                            {{ $deduction?->client?->display_name ?? '—' }}
                         </td>
 
                         <td class="px-4 py-3">
-                            {{ $deduction?->invoice?->invoice_number ?? 'â€”' }}
+                            {{ $deduction?->invoice?->invoice_number ?? '—' }}
                         </td>
 
                         <td class="px-4 py-3">
-                            {{ $deduction?->deduction_reference ?? 'â€”' }}
+                            {{ $deduction?->deduction_reference ?? '—' }}
                         </td>
 
                         <td class="px-4 py-3">
@@ -104,7 +100,7 @@
                                 @csrf
                                 @method('PUT')
                                 <button type="submit"
-                                        onclick="return confirm('Mark this follow-up as completed?')"
+                                        data-confirm="Mark this follow-up as completed?"
                                         class="text-sm font-medium text-green-700 hover:underline">
                                     Mark Completed
                                 </button>

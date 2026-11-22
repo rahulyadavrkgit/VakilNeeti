@@ -1,7 +1,7 @@
 ﻿<?php
 
-$inputDirectory = __DIR__ . '/storage/app/sci-cause-list-structured';
-$outputDirectory = __DIR__ . '/storage/app/sci-cause-list-final-cases';
+$inputDirectory = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-structured';
+$outputDirectory = dirname(__DIR__, 2) . '/storage/app/sci-cause-list-final-cases';
 
 if (!is_dir($inputDirectory)) {
     exit("Structured directory not found.\n");

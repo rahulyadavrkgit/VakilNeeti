@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Set up your account')
 @section('page-heading', 'Set up your account')
@@ -48,8 +48,7 @@
 </div>
 
     <form method="POST" action="{{ route('register.profile.submit') }}" enctype="multipart/form-data"
-          data-states-url="{{ route('api.court-directory.states') }}"
-          data-districts-url="{{ url('/api/court-directory/states') }}"
+          data-onboarding-form
           data-initial-step="{{ $initialStep }}" class="space-y-6">
         @csrf
         <button type="button" data-back data-top-back hidden
@@ -61,8 +60,8 @@
         </button>
 
         <section data-onboarding-step="0" class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-9">
-            <div class="mb-3 flex justify-center"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
-            <h2 tabindex="-1" class="mt-3 text-xl font-bold text-slate-900">Welcome to VakilNeeti</h2>
+            <div class="mb-3 flex justify-center"><img src="{{ asset('images/VakilNiti-logo.png') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
+            <h2 tabindex="-1" class="mt-3 text-xl font-bold text-slate-900">Welcome to VakilNiti</h2>
             <p class="mx-auto mt-3 max-w-xl text-slate-600">
                 Let's find out how we can help you with your cases.
             </p>
@@ -175,31 +174,15 @@
                     <h3 class="text-lg font-bold text-slate-900">Bar Council enrolment details</h3>
                     <p class="mt-1 text-sm text-slate-500">These details are used for advocate identification and case fetching.</p>
 
-                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                        <label class="text-sm font-medium text-slate-700">
-                            Bar Council Registration Number
-                            <span data-student-bar-required class="text-red-600">*</span>
-                            <span data-student-bar-optional class="text-slate-500" hidden>(optional for students / interns)</span>
-                            <input name="bar_council_registration_number" value="{{ old('bar_council_registration_number') }}" maxlength="100" data-student-optional
-                                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                            @error('bar_council_registration_number') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                        </label>
-
-                        <label class="text-sm font-medium text-slate-700">
-                            Bar registration year
-                            <span data-student-year-required class="text-red-600">*</span>
-                            <span data-student-year-optional class="text-slate-500" hidden>(optional for students / interns)</span>
-                            <input type="number" name="bar_registration_year" value="{{ old('bar_registration_year') }}" min="1950" max="{{ now()->year }}" data-student-optional
-                                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                            @error('bar_registration_year') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                        </label>
+                    <div class="mt-4">
+                        <x-bar-registration-fields :state-groups="$stateGroups" :student-optional="true" />
                     </div>
                 </section>
             </div>
             <div data-registration-profile="company" @if($accountType !== 'company') hidden @endif class="space-y-6">
                 <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                     <h3 class="text-lg font-bold text-slate-900">Company / law firm details</h3>
-                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
                         <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                             Company / firm name <span class="text-red-600">*</span>
                             <input name="firm_name" value="{{ old('firm_name') }}" required maxlength="255" autocomplete="organization"
@@ -217,33 +200,38 @@
                             <textarea name="address" rows="2" maxlength="5000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">{{ old('address') }}</textarea>
                             @error('address') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                         </label>
-                        <label class="text-sm font-medium text-slate-700">
-                            City <span class="text-red-600">*</span>
-                            <input name="city" value="{{ old('city') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                            @error('city') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                        </label>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">State / Region <span class="text-red-600">*</span></label>
-                            <select name="region" required data-state-select data-old-value="{{ old('region') }}"
-                                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                                <option value="">Loading states...</option>
+                        <div class="sm:col-span-2">
+                            <label for="registration-region" class="block text-sm font-medium text-slate-700">State / Union Territory <span class="text-red-600">*</span></label>
+                            <select id="registration-region" name="region" required data-location-state
+                                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+                                <x-state-options :groups="$stateGroups" :selected="old('region')" />
                             </select>
                             @error('region') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                            <p data-state-error role="alert" class="mt-1 text-xs text-red-600" hidden></p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700">District <span class="text-red-600">*</span></label>
-                            <select name="district" required data-district-select data-old-value="{{ old('district') }}" disabled
-                                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                                <option value="">Select a state first</option>
-                            </select>
+                            <label for="registration-district" class="block text-sm font-medium text-slate-700">District <span class="text-red-600">*</span></label>
+                            <select data-location-district-select aria-label="District" hidden
+                                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"></select>
+                            <input id="registration-district" name="district" value="{{ old('district') }}" required maxlength="255"
+                                   data-location-district-input placeholder="Type your district"
+                                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                            <span data-location-district-hint class="mt-1 block text-xs text-slate-500" hidden></span>
                             @error('district') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                            <p data-district-error role="alert" class="mt-1 text-xs text-red-600" hidden></p>
+                        </div>
+                        <div class="text-sm font-medium text-slate-700">
+                            <label for="registration-city">City / Town <span class="text-red-600">*</span></label>
+                            <select data-location-city-select aria-label="City or town" hidden
+                                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"></select>
+                            <input id="registration-city" name="city" value="{{ old('city') }}" required maxlength="255" autocomplete="address-level2"
+                                   data-location-city-input placeholder="Type the city or town"
+                                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                            @error('city') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                         </div>
                         <label class="text-sm font-medium text-slate-700">
-                            State code
-                            <input name="state_code" value="{{ old('state_code') }}" readonly data-state-code
+                            GST state code
+                            <input value="{{ \App\Models\State::GST_STATE_CODES[old('region')] ?? '' }}" readonly data-location-gst-code
                                    class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-600">
+                            <span class="mt-1 block text-xs font-normal text-slate-500">Filled in automatically.</span>
                         </label>
                         <label class="text-sm font-medium text-slate-700">
                             PIN code <span class="text-red-600">*</span>
@@ -284,9 +272,9 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     document.addEventListener('DOMContentLoaded', function () {
-        const form = document.querySelector('form[data-states-url]');
+        const form = document.querySelector('form[data-onboarding-form]');
         if (!form) return;
 
         const steps = Array.from(form.querySelectorAll('[data-onboarding-step]'));
@@ -388,86 +376,6 @@
             input.addEventListener('change', updateAccountFields);
         });
 
-        async function loadDistricts(stateCode, districtSelect, stateId) {
-            const districtError = districtSelect.parentElement.querySelector('[data-district-error]');
-            districtSelect.disabled = true;
-            districtSelect.replaceChildren(new Option('Loading districts...', ''));
-            districtError.hidden = true;
-
-            try {
-                const response = await fetch(form.dataset.districtsUrl + '/' + encodeURIComponent(stateId) + '/districts', {
-                    headers: { Accept: 'application/json' },
-                });
-                if (!response.ok) throw new Error('District list request failed (' + response.status + ').');
-                const payload = await response.json();
-                if (!payload.success || !Array.isArray(payload.data)) throw new Error('The district list response was invalid.');
-                if (!payload.data.length) throw new Error('No districts are available for this state.');
-
-                districtSelect.replaceChildren(new Option('Select district', ''));
-                payload.data.forEach(function (district) {
-                    districtSelect.add(new Option(district.district_name, district.district_name));
-                });
-                districtSelect.disabled = false;
-
-                const oldDistrict = districtSelect.dataset.oldValue;
-                if (oldDistrict) districtSelect.value = oldDistrict;
-            } catch (error) {
-                console.error(error);
-                districtSelect.replaceChildren(new Option('Districts unavailable', ''));
-                districtError.textContent = 'Could not load districts. Please try selecting the state again.';
-                districtError.hidden = false;
-            }
-        }
-
-        async function loadStates(stateSelect) {
-            const stateCode = stateSelect.closest('[data-registration-profile]').querySelector('[data-state-code]');
-            const districtSelect = stateSelect.closest('[data-registration-profile]').querySelector('[data-district-select]');
-            const stateError = stateSelect.parentElement.querySelector('[data-state-error]');
-            try {
-                const response = await fetch(form.dataset.statesUrl, { headers: { Accept: 'application/json' } });
-                if (!response.ok) throw new Error('State list request failed (' + response.status + ').');
-                const payload = await response.json();
-                if (!payload.success || !Array.isArray(payload.data)) throw new Error('The state list response was invalid.');
-                if (!payload.data.length) throw new Error('No states are available.');
-
-                stateSelect.replaceChildren(new Option('Select state', ''));
-                payload.data.forEach(function (state) {
-                    const option = new Option(state.name, state.name);
-                    option.dataset.stateId = state.id;
-                    option.dataset.stateCode = state.code || '';
-                    stateSelect.add(option);
-                });
-
-                stateSelect.addEventListener('change', function () {
-                    const selected = stateSelect.selectedOptions[0];
-                    stateCode.value = selected?.dataset.stateCode || '';
-                    districtSelect.dataset.oldValue = '';
-                    if (selected?.dataset.stateId) {
-                        loadDistricts(stateCode, districtSelect, selected.dataset.stateId);
-                    } else {
-                        districtSelect.disabled = true;
-                        districtSelect.replaceChildren(new Option('Select a state first', ''));
-                    }
-                });
-
-                if (stateSelect.dataset.oldValue) {
-                    stateSelect.value = stateSelect.dataset.oldValue;
-                    const selected = stateSelect.selectedOptions[0];
-                    stateCode.value = selected?.dataset.stateCode || stateCode.value;
-                    if (selected?.dataset.stateId) {
-                        await loadDistricts(stateCode, districtSelect, selected.dataset.stateId);
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-                stateSelect.replaceChildren(new Option('States unavailable', ''));
-                stateSelect.disabled = true;
-                stateError.textContent = 'Could not load states. Refresh this page to try again.';
-                stateError.hidden = false;
-            }
-        }
-
-        form.querySelectorAll('[data-state-select]').forEach(loadStates);
         updateAccountFields();
         showStep(currentStep);
     });

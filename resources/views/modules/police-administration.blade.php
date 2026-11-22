@@ -6,9 +6,7 @@
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Police Administration</h1>
-            <p class="mt-1 text-sm text-gray-600">
-                Nationwide directory of police ranges, districts, sub-divisions, police stations, Kotwalis, and Thanas.
-            </p>
+            <p class="mt-1 text-sm text-gray-600">Police ranges, districts, sub-divisions and stations across India.</p>
         </div>
         <div class="mt-3 sm:mt-0">
             <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
@@ -37,7 +35,7 @@
                     <label for="state_id" class="mb-2 block text-sm font-semibold text-gray-700">
                         1. State / Union Territory
                     </label>
-                    <select name="state_id" id="state_id" onchange="this.form.submit()"
+                    <select name="state_id" id="state_id" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">Select State / UT</option>
                         @foreach($availableStates as $state)
@@ -57,7 +55,7 @@
                     <label for="police_range_id" class="mb-2 block text-sm font-semibold text-gray-700">
                         2. Police Range (Optional)
                     </label>
-                    <select name="police_range_id" id="police_range_id" onchange="this.form.submit()"
+                    <select name="police_range_id" id="police_range_id" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             {{ !$selectedState ? 'disabled' : '' }}>
                         <option value="">All Ranges</option>
@@ -74,7 +72,7 @@
                     <label for="district_id" class="mb-2 block text-sm font-semibold text-gray-700">
                         3. District
                     </label>
-                    <select name="district_id" id="district_id" onchange="this.form.submit()"
+                    <select name="district_id" id="district_id" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             {{ !$selectedState ? 'disabled' : '' }}>
                         <option value="">Select District</option>
@@ -97,7 +95,7 @@
                     <label for="police_sub_division_id" class="mb-2 block text-sm font-semibold text-gray-700">
                         4. Sub-Division (Optional)
                     </label>
-                    <select name="police_sub_division_id" id="police_sub_division_id" onchange="this.form.submit()"
+                    <select name="police_sub_division_id" id="police_sub_division_id" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             {{ !$selectedState ? 'disabled' : '' }}>
                         <option value="">All Sub-Divisions</option>
@@ -114,7 +112,7 @@
                     <label for="specialist_category" class="mb-2 block text-sm font-semibold text-gray-700">
                         5. Specialist / Unit Type
                     </label>
-                    <select name="specialist_category" id="specialist_category" onchange="this.form.submit()"
+                    <select name="specialist_category" id="specialist_category" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             {{ !$selectedState ? 'disabled' : '' }}>
                         <option value="">All Units & Stations</option>

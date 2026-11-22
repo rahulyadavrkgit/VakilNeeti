@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Court Catalogue')
 @section('page-heading', 'Court Catalogue')
 @section('content')
@@ -144,7 +144,7 @@
             </div>
 
             <div id="sourceNotice" class="mt-4 text-xs text-slate-500">
-                Court options are loaded from VakilNeeti's local catalogue.
+                Court options are loaded from VakilNiti's local catalogue.
                 Records will appear here as authorised sources are synchronised.
             </div>
 
@@ -166,7 +166,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 document.addEventListener('DOMContentLoaded', function () {
 
     const courtType = document.getElementById('courtType');

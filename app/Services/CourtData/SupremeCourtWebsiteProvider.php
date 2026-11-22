@@ -5,11 +5,11 @@ namespace App\Services\CourtData;
 use App\Contracts\CourtDataProvider;
 use App\Data\CourtDataRecord;
 use DateTimeImmutable;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use RuntimeException;
-use DOMDocument;
-use DOMXPath;
 
 class SupremeCourtWebsiteProvider implements CourtDataProvider
 {
@@ -42,7 +42,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
         string $entityType,
         array $filters = []
     ): iterable {
-        if (!$this->supports($entityType)) {
+        if (! $this->supports($entityType)) {
             throw new InvalidArgumentException(
                 "Unsupported Supreme Court entity type: {$entityType}"
             );
@@ -50,14 +50,14 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
 
         $requestedDate = null;
 
-        if (!empty($filters['date'])) {
+        if (! empty($filters['date'])) {
             $requestedDate = $this->normaliseDate(
                 (string) $filters['date']
             );
         }
 
         $response = Http::accept('text/html')
-            ->withUserAgent('VakilNeeti Court Data Connector/1.0')
+            ->withUserAgent('VakilNiti Court Data Connector/1.0')
             ->timeout((int) config('court-data.sync.timeout', 30))
             ->retry(
                 (int) config('court-data.sync.retry_attempts', 2),
@@ -65,10 +65,10 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
             )
             ->get(self::SOURCE_URL);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new RuntimeException(
                 'The Supreme Court index page returned HTTP status '
-                . $response->status()
+                .$response->status()
             );
         }
 
@@ -90,11 +90,11 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
             $document = new DOMDocument('1.0', 'UTF-8');
 
             $loaded = $document->loadHTML(
-                '<?xml encoding="UTF-8">' . $html,
+                '<?xml encoding="UTF-8">'.$html,
                 LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING
             );
 
-            if (!$loaded) {
+            if (! $loaded) {
                 throw new RuntimeException(
                     'The Supreme Court index HTML could not be parsed.'
                 );
@@ -103,7 +103,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
             $xpath = new DOMXPath($document);
             $tables = $xpath->query('//table');
 
-            if (!$tables || $tables->length === 0) {
+            if (! $tables || $tables->length === 0) {
                 throw new RuntimeException(
                     'No tables were found on the Supreme Court index page.'
                 );
@@ -115,7 +115,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
             foreach ($tables as $table) {
                 $rows = $xpath->query('.//tr', $table);
 
-                if (!$rows || $rows->length === 0) {
+                if (! $rows || $rows->length === 0) {
                     continue;
                 }
 
@@ -124,7 +124,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
                 foreach ($rows as $rowIndex => $row) {
                     $cells = $xpath->query('./th|./td', $row);
 
-                    if (!$cells || $cells->length < 3) {
+                    if (! $cells || $cells->length < 3) {
                         continue;
                     }
 
@@ -184,7 +184,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
                     : '';
 
                 if (
-                    !preg_match(
+                    ! preg_match(
                         '/index\s+for\s+(\d{2}-\d{2}-\d{4})/i',
                         $headingText,
                         $dateMatches
@@ -192,8 +192,8 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
                 ) {
                     throw new RuntimeException(
                         'A published index table was found, but its listing date could not be identified. '
-                        . 'Extracted text node: '
-                        . ($headingText !== '' ? $headingText : '[empty]')
+                        .'Extracted text node: '
+                        .($headingText !== '' ? $headingText : '[empty]')
                     );
                 }
 
@@ -213,7 +213,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
 
                     $cells = $xpath->query('./th|./td', $row);
 
-                    if (!$cells || $cells->length < 2) {
+                    if (! $cells || $cells->length < 2) {
                         continue;
                     }
 
@@ -244,7 +244,7 @@ class SupremeCourtWebsiteProvider implements CourtDataProvider
                         entityType: 'cause_list_index',
                         externalId: $externalId,
                         attributes: [
-                            'parent_external_id' => 'index:' . $listingDate,
+                            'parent_external_id' => 'index:'.$listingDate,
                             'court_name' => 'Supreme Court of India',
                             'listing_date' => $listingDate,
                             'court_number' => $courtNumber,

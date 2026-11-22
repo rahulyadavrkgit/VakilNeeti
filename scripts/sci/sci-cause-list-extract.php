@@ -1,7 +1,7 @@
 ﻿<?php
 
-$pdfFile = __DIR__ . '/storage/app/sci-sample-cause-list.pdf';
-$textFile = __DIR__ . '/storage/app/sci-sample-cause-list.txt';
+$pdfFile = dirname(__DIR__, 2) . '/storage/app/sci-sample-cause-list.pdf';
+$textFile = dirname(__DIR__, 2) . '/storage/app/sci-sample-cause-list.txt';
 
 if (!file_exists($pdfFile)) {
     exit("PDF file not found.\n");

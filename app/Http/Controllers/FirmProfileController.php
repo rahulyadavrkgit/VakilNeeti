@@ -3,24 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\FirmProfile;
+use App\Models\State;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FirmProfileController extends Controller
 {
     public function index()
     {
-        if (auth()->user()->account_type !== 'company' && !auth()->user()->is_admin) {
+        if (auth()->user()->account_type !== 'company' && ! auth()->user()->is_admin) {
             return redirect()->route('profile.advocate.index');
         }
 
         $firm = FirmProfile::first();
 
-        return view('firm-profile.index', compact('firm'));
+        return view('firm-profile.index', [
+            'firm' => $firm,
+            'stateGroups' => State::dropdownGroups(),
+        ]);
     }
 
     public function update(Request $request)
     {
-        if ($request->user()->account_type !== 'company' && !$request->user()->is_admin) {
+        if ($request->user()->account_type !== 'company' && ! $request->user()->is_admin) {
             return redirect()->route('profile.advocate.index');
         }
 
@@ -34,8 +39,7 @@ class FirmProfileController extends Controller
             'address' => ['nullable', 'string'],
             'city' => ['nullable', 'string', 'max:255'],
             'district' => ['nullable', 'string', 'max:255'],
-            'state' => ['nullable', 'string', 'max:255'],
-            'state_code' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', Rule::in(array_keys(State::GST_STATE_CODES))],
             'pincode' => ['nullable', 'string', 'max:10'],
             'gstin' => [
                 'nullable',
@@ -45,7 +49,13 @@ class FirmProfileController extends Controller
             ],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
+        ], [
+            'state.in' => 'Select a State or Union Territory from the list.',
         ]);
+
+        $validated['state_code'] = isset($validated['state'])
+            ? State::GST_STATE_CODES[$validated['state']]
+            : null;
 
         $firm = FirmProfile::first();
 

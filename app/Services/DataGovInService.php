@@ -27,7 +27,7 @@ class DataGovInService
 
         $resourceId = trim($resourceId);
 
-        if (!self::isValidResourceId($resourceId)) {
+        if (! self::isValidResourceId($resourceId)) {
             throw new RuntimeException('Invalid data.gov.in resource ID.');
         }
 
@@ -38,7 +38,7 @@ class DataGovInService
             ->retry(1, 500)
             ->acceptJson()
             ->get(
-                'https://api.data.gov.in/resource/' . $resourceId,
+                'https://api.data.gov.in/resource/'.$resourceId,
                 [
                     'api-key' => $apiKey,
                     'format' => 'json',
@@ -47,30 +47,76 @@ class DataGovInService
                 ]
             );
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new RuntimeException(
-                'data.gov.in returned HTTP ' . $response->status() . '. Check the resource ID, API key and API access.'
+                'data.gov.in returned HTTP '.$response->status().'. Check the resource ID, API key and API access.'
             );
         }
 
         $payload = $response->json();
 
-        if (!is_array($payload)) {
+        if (! is_array($payload)) {
             throw new RuntimeException('The API response was not valid JSON.');
         }
 
         if (isset($payload['error'])) {
-            throw new RuntimeException('data.gov.in API error: ' . (string) $payload['error']);
+            throw new RuntimeException('data.gov.in API error: '.(string) $payload['error']);
         }
 
         return $payload;
+    }
+
+    /**
+     * Fetch every record of a resource, page by page, optionally filtered by exact field values.
+     *
+     * @param  array<string, string|int>  $filters  e.g. ['localBodyTypeName' => 'Municipality']
+     * @return list<array<string, mixed>>
+     */
+    public function fetchAllRecords(string $resourceId, array $filters = [], int $pageSize = 1000): array
+    {
+        $apiKey = trim((string) config('datagov.api_key'));
+
+        if ($apiKey === '') {
+            throw new RuntimeException('The data.gov.in API key is not configured. Add DATA_GOV_IN_API_KEY to the backend .env file.');
+        }
+
+        if (! self::isValidResourceId($resourceId)) {
+            throw new RuntimeException('Invalid data.gov.in resource ID.');
+        }
+
+        $query = ['api-key' => $apiKey, 'format' => 'json', 'limit' => $pageSize];
+
+        foreach ($filters as $field => $value) {
+            $query["filters[{$field}]"] = $value;
+        }
+
+        $records = [];
+        $offset = 0;
+
+        do {
+            $response = Http::timeout(120)
+                ->retry(3, 2000)
+                ->acceptJson()
+                ->get('https://api.data.gov.in/resource/'.trim($resourceId), $query + ['offset' => $offset]);
+
+            if (! $response->successful() || ! is_array($response->json())) {
+                throw new RuntimeException('data.gov.in returned HTTP '.$response->status().' for resource '.$resourceId.'.');
+            }
+
+            $page = $this->records($response->json());
+            array_push($records, ...$page);
+            $total = (int) $response->json('total', 0);
+            $offset += $pageSize;
+        } while ($page !== [] && $offset < $total);
+
+        return $records;
     }
 
     public function records(array $payload): array
     {
         $records = $payload['records'] ?? [];
 
-        if (!is_array($records)) {
+        if (! is_array($records)) {
             return [];
         }
 

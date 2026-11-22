@@ -6,9 +6,7 @@
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Courts & Judicial Directory</h1>
-            <p class="mt-1 text-sm text-gray-600">
-                Verified directory of the Supreme Court of India, High Courts, Permanent Benches, and District Court Complexes.
-            </p>
+            <p class="mt-1 text-sm text-gray-600">Supreme Court, High Courts, benches and district court complexes.</p>
         </div>
         <div class="mt-3 sm:mt-0">
             <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
@@ -25,7 +23,7 @@
                     <label for="state_id" class="mb-2 block text-sm font-semibold text-gray-700">
                         State / Union Territory
                     </label>
-                    <select name="state_id" id="state_id" onchange="this.form.submit()"
+                    <select name="state_id" id="state_id" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">All States & Supreme Court</option>
                         @foreach($availableStates as $state)
@@ -40,7 +38,7 @@
                     <label for="court_type" class="mb-2 block text-sm font-semibold text-gray-700">
                         Court Tier
                     </label>
-                    <select name="court_type" id="court_type" onchange="this.form.submit()"
+                    <select name="court_type" id="court_type" data-autosubmit
                             class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="">All Court Tiers</option>
                         <option value="Supreme Court" @selected(request('court_type') === 'Supreme Court')>Supreme Court</option>

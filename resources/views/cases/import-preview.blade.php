@@ -8,9 +8,7 @@
 
     <div>
         <h1 class="text-2xl font-bold text-slate-900">Review Official Court Record</h1>
-        <p class="mt-2 text-sm text-slate-600">
-            Verify and correct the extracted information. Only confirmed information will be added to My Case Diary.
-        </p>
+        <p class="mt-2 text-sm text-slate-600">Check and correct the details. Only confirmed details are saved.</p>
     </div>
 
     @if ($errors->any())
@@ -34,7 +32,7 @@
         </div>
         @if ($sourceUrl)
             <a href="{{ $sourceUrl }}" target="_blank" rel="noopener noreferrer"
-               class="mt-3 inline-block text-sm text-blue-700 hover:underline">
+               class="mt-3 inline-block text-sm text-[#16776e] hover:underline">
                 Open original official record
             </a>
         @endif
@@ -70,7 +68,7 @@
                             value="{{ old($field, $field === 'court_name' ? ($extracted[$field] ?? $courtSource) : ($extracted[$field] ?? '')) }}"
                             {{ $field === 'case_title' ? 'required' : '' }}
                             maxlength="255"
-                            class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                            class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                     </div>
                 @endforeach
 
@@ -153,16 +151,13 @@
                 </div>
             </div>
 
-            <p class="mt-3 text-xs text-slate-500">
-                A next hearing date can be saved even when the previous hearing date is unavailable.
-                Do not enter an estimated date as an official hearing date.
-            </p>
+            <p class="mt-3 text-xs text-slate-500">You can save a next hearing date without the previous one. Don’t enter estimated dates.</p>
         </section>
 
         <div class="flex flex-wrap gap-3">
             <button type="submit"
-                    onclick="return confirm('Add this reviewed official record to My Case Diary?')"
-                    class="rounded-lg bg-emerald-700 px-5 py-3 font-medium text-white hover:bg-emerald-800">
+                    data-confirm="Add this reviewed official record to My Case Diary?"
+                    class="rounded-lg bg-[#16776e] px-5 py-3 font-medium text-white hover:bg-[#125f58]">
                 Add to My Case Diary
             </button>
 

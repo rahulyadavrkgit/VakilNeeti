@@ -1,0 +1,19 @@
+{
+    "sub_districts": [
+        {"state_code": 9, "state_name_english": "Uttar Pradesh", "district_code": 162, "district_name_english": "Lucknow", "subdistrict_code": 900, "subdistrict_name_english": "Malihabad"},
+        {"state_code": 9, "state_name_english": "Uttar Pradesh", "district_code": 162, "district_name_english": "Lucknow", "subdistrict_code": 901, "subdistrict_name_english": "Mohanlalganj"},
+        {"state_code": 29, "state_name_english": "Karnataka", "district_code": 525, "district_name_english": "Bengaluru Urban", "subdistrict_code": 5000, "subdistrict_name_english": "Anekal"}
+    ],
+    "coverage": [
+        {"stateNameEnglish": "Uttar Pradesh", "localBodyCode": 1001, "localBodyNameEnglish": "LUCKNOW MUNICIPAL CORPORATION", "localBodyTypeName": "Municipal Corporations", "entityType": "District", "entityCode": 162, "entityName": "Lucknow"},
+        {"stateNameEnglish": "Uttar Pradesh", "localBodyCode": 1002, "localBodyNameEnglish": "Nagar Panchayat Malihabad", "localBodyTypeName": "Town Panchayat", "entityType": "Subistrict", "entityCode": 900, "entityName": "Malihabad"},
+        {"stateNameEnglish": "Uttar Pradesh", "localBodyCode": 1003, "localBodyNameEnglish": "Mohanlalganj", "localBodyTypeName": "Town Panchayat", "entityType": "Village", "entityCode": 77777, "entityName": "Some Village"},
+        {"stateNameEnglish": "Uttar Pradesh", "localBodyCode": 1004, "localBodyNameEnglish": "Faraway Town", "localBodyTypeName": "Town Panchayat", "entityType": "Village", "entityCode": 88888, "entityName": "Other Village"},
+        {"stateNameEnglish": "Karnataka", "localBodyCode": 2001, "localBodyNameEnglish": "Bbmp", "localBodyTypeName": "Municipal Corporations", "entityType": "Village", "entityCode": 99999, "entityName": "Ward Village"},
+        {"stateNameEnglish": "Atlantis", "localBodyCode": 3001, "localBodyNameEnglish": "Lost City", "localBodyTypeName": "Municipality", "entityType": "District", "entityCode": 1, "entityName": "Nowhere"}
+    ],
+    "pin_codes": [
+        {"stateNameEnglish": "Uttar Pradesh", "localBodyCode": 1001, "localBodyNameEnglish": "LUCKNOW MUNICIPAL CORPORATION", "localBodyTypeName": "Municipal Corporations", "pincode": 226010},
+        {"stateNameEnglish": "Uttar Pradesh", "localBodyCode": 1001, "localBodyNameEnglish": "LUCKNOW MUNICIPAL CORPORATION", "localBodyTypeName": "Municipal Corporations", "pincode": 226001}
+    ]
+}

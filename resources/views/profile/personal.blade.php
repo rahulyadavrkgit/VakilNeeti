@@ -11,10 +11,6 @@
             </p>
         </div>
 
-        <a href="{{ route('profile.index') }}"
-           class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-            Back to Profile
-        </a>
     </div>
 
     @if(session('success'))
@@ -102,44 +98,18 @@
                               class="w-full rounded-lg border border-slate-300 px-3 py-2">{{ old('address', $profile->address ?? '') }}</textarea>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">City</label>
-                        <input type="text" name="city"
-                               value="{{ old('city', $profile->city ?? '') }}"
-                               class="w-full rounded-lg border border-slate-300 px-3 py-2">
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">District</label>
-                        <input type="text" name="district"
-                               value="{{ old('district', $profile->district ?? '') }}"
-                               class="w-full rounded-lg border border-slate-300 px-3 py-2">
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">State / UT</label>
-                        <input type="text" name="state"
-                               value="{{ old('state', $profile->state ?? '') }}"
-                               class="w-full rounded-lg border border-slate-300 px-3 py-2">
-                    </div>
-
+                <x-location-fields class="md:grid-cols-2" :with-country="true"
+                                   :country="old('country', $profile->country ?? 'India')" :state="old('state', $profile->state ?? null)"
+                                   :district="old('district', $profile->district ?? null)" :city="old('city', $profile->city ?? null)"
+                                   field-class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
                     <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">PIN Code</label>
                         <input type="text" name="pincode"
                                value="{{ old('pincode', $profile->pincode ?? '') }}"
-                               maxlength="10"
+                               maxlength="10" inputmode="numeric"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2">
                     </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Country</label>
-                        <input type="text" name="country"
-                               value="{{ old('country', $profile->country ?? 'India') }}"
-                               required
-                               class="w-full rounded-lg border border-slate-300 px-3 py-2">
-                    </div>
-                </div>
+                </x-location-fields>
             </div>
         </div>
 

@@ -284,7 +284,7 @@
                     </a>
 
                     <button type="button"
-                            onclick="document.getElementById('old-act-viewer').open = !document.getElementById('old-act-viewer').open"
+                            data-toggle-open="old-act-viewer"
                             class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700">
                         View PDF
                     </button>
@@ -314,7 +314,7 @@
                     </a>
 
                     <button type="button"
-                            onclick="document.getElementById('new-act-viewer').open = !document.getElementById('new-act-viewer').open"
+                            data-toggle-open="new-act-viewer"
                             class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700">
                         View PDF
                     </button>
@@ -334,9 +334,7 @@
         </div>
     </div>
 
-    <p class="text-xs text-gray-500">
-        Comparison entries are reproduced from the NCRB source table. They are statutory cross-reference aids, not a substitute for reading the applicable Act, amendments, commencement provisions and authoritative legal text.
-    </p>
+    <p class="text-xs text-gray-500">From the NCRB comparison table. Always read the Act itself.</p>
 
 </div>
 @endsection

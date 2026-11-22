@@ -109,7 +109,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 document.addEventListener('DOMContentLoaded', function () {
     const clientSelect = document.getElementById('client_id');
     const caseSelect = document.getElementById('case_id');

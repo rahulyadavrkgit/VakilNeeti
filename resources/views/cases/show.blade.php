@@ -1,52 +1,99 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <title>{{ $case->case_title ?: 'Case Details' }} | VakilNeeti</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@extends('layouts.app')
 
-<body class="bg-slate-100 text-slate-800">
+@section('title', $case->case_title ?: 'Case Details')
+@section('page-heading', 'Case Details')
 
-<div class="min-h-screen md:flex">
+@section('content')
+<div class="space-y-6">
 
-    <aside class="w-full bg-slate-950 p-5 text-white md:min-h-screen md:w-64">
-        <div class="mb-8"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
+        @php
+            $upcomingHearing = $case->hearings
+                ->filter(fn ($hearing) => $hearing->next_hearing_date && \Carbon\Carbon::parse($hearing->next_hearing_date)->startOfDay()->gte(today()))
+                ->sortBy('next_hearing_date')
+                ->first();
+            $shareText = collect([
+                'Case: '.($case->case_title ?: 'Untitled case'),
+                $case->case_number ? 'Case No: '.$case->case_number : null,
+                $case->court_name ? 'Court: '.$case->court_name : null,
+                'Status: '.ucfirst($case->case_status ?: 'unknown').($case->stage ? ' ('.$case->stage.')' : ''),
+                $upcomingHearing ? 'Next hearing: '.\Carbon\Carbon::parse($upcomingHearing->next_hearing_date)->format('d M Y') : null,
+            ])->filter()->implode("\n");
+            $statusClass = match ($case->case_status) {
+                'pending' => 'bg-amber-100 text-amber-800',
+                'disposed', 'closed' => 'bg-rose-100 text-rose-700',
+                default => 'bg-slate-100 text-slate-700',
+            };
+        @endphp
 
-        <nav class="space-y-2">
-            <a href="{{ route('dashboard') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800">Dashboard</a>
-            <a href="{{ route('clients.index') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800">Clients</a>
-            <a href="{{ route('cases.index') }}" class="block rounded-lg bg-slate-800 px-3 py-2">My Case Diary</a>
-            <a href="{{ route('court-catalogue.index') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800">Court Catalogue</a>
-            <a href="{{ route('invoices.index') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800">Invoices</a>
-            <a href="{{ route('payments.index') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800">Payments</a>
-            <a href="{{ route('tasks.index') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-800">Tasks & Reminders</a>
+        <nav aria-label="Breadcrumb" class="text-sm text-slate-500 print:hidden">
+            <a href="{{ route('cases.index') }}" class="hover:underline">My cases</a>
+            <span aria-hidden="true">›</span>
+            <span class="text-slate-700">{{ \Illuminate\Support\Str::limit($case->case_title ?: 'Untitled case', 60) }}</span>
         </nav>
-    </aside>
 
-    <main class="min-w-0 flex-1 space-y-6 p-5 md:p-8">
-
-        <div>
-            <a href="{{ route('cases.index') }}" class="text-sm font-medium text-blue-700 hover:underline">
-                &larr; Back to My Case Diary
-            </a>
-
-            <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Case Details</p>
-                    <h2 class="mt-1 text-2xl font-bold text-slate-900">
-                        {{ $case->case_title ?: 'Untitled Case' }}
-                    </h2>
-                    <p class="mt-1 text-sm text-slate-500">
-                        {{ $case->case_number ?: 'Case number not available' }}
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-2xl font-bold text-slate-900">{{ $case->case_title ?: 'Untitled case' }}</h2>
+                        <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
+                    </div>
+                    <p class="mt-1 text-sm text-slate-600">
+                        {{ collect([$case->case_number, $case->court_name, $case->cnr_number ? 'CNR '.$case->cnr_number : null, $case->stage ? 'Stage: '.$case->stage : null])->filter()->implode(' · ') ?: 'No case number yet' }}
                     </p>
                 </div>
 
-                <span class="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-800">
-                    {{ ucfirst($case->case_status ?: 'Status unavailable') }}
-                </span>
+                <div class="flex flex-wrap gap-2 print:hidden">
+                    <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                       class="inline-flex items-center gap-1.5 rounded-xl bg-[#25d366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1ebe5b]">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3Z"/></svg>
+                        Share on WhatsApp
+                    </a>
+                    <a href="{{ route('cases.edit', $case) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</a>
+                    <button type="button" data-print class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print</button>
+                    @if($case->isClosed())
+                        <form method="POST" action="{{ route('cases.reopen', $case) }}">
+                            @csrf
+                            <button type="submit" class="rounded-xl border border-[#8fc9c0] bg-[#e8f4f2] px-4 py-2 text-sm font-semibold text-[#16776e] hover:bg-[#d9efeb]">Reopen case</button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('cases.close', $case) }}" data-confirm="Close this case? You can reopen it later.">
+                            @csrf
+                            <button type="submit" class="rounded-xl bg-[#142235] px-4 py-2 text-sm font-semibold text-white hover:bg-[#20334a]">Close case</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-slate-100 pt-4 print:hidden">
+                <form method="POST" action="{{ route('cases.file-number', $case) }}" class="flex items-center gap-2">
+                    @csrf
+                    @method('PATCH')
+                    <label for="case-file-number" class="text-sm font-semibold text-slate-700">File No.</label>
+                    <input id="case-file-number" name="file_number" value="{{ $case->file_number }}" maxlength="100" placeholder="Add"
+                           class="w-36 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm">
+                    <button type="submit" class="text-sm font-semibold text-[#16776e] hover:underline">Save</button>
+                </form>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-semibold text-slate-700">Tags</span>
+                    @foreach($case->tags as $caseTag)
+                        <form method="POST" action="{{ route('cases.tags.detach', [$case, $caseTag]) }}" class="inline-flex">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" title="Remove tag" class="rounded-full bg-[#e8f4f2] px-2.5 py-0.5 text-xs font-medium text-[#16776e] hover:bg-[#d9efeb]">{{ $caseTag->name }} ×</button>
+                        </form>
+                    @endforeach
+                    <form method="POST" action="{{ route('cases.tags.attach', $case) }}" class="flex items-center gap-1">
+                        @csrf
+                        <input name="name" list="case-tag-options" maxlength="50" required placeholder="New tag"
+                               class="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs">
+                        <datalist id="case-tag-options">
+                            @foreach($tags as $tagOption)<option value="{{ $tagOption->name }}"></option>@endforeach
+                        </datalist>
+                        <button type="submit" class="text-xs font-semibold text-[#16776e] hover:underline">Add</button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -57,6 +104,8 @@
         @endif
 
         <nav aria-label="Case workspace" class="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <a href="#case-history" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Case history</a>
+            <a href="#case-clients" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Notify clients</a>
             <a href="#case-notes" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Notes</a>
             <a href="#case-appointments" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Appointments</a>
             <a href="#case-documents" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Documents</a>
@@ -82,11 +131,14 @@
                     <p class="mt-1 text-sm text-slate-500">Upcoming date recorded in your case diary</p>
                 </div>
 
-                @if($nextHearing)
-                    <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                        Upcoming
-                    </span>
-                @endif
+                <div class="flex flex-wrap items-center gap-2">
+                    @if($nextHearing)
+                        <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+                            Upcoming
+                        </span>
+                    @endif
+                    <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="rounded-lg bg-[#16776e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#125f58]">+ Add hearing</a>
+                </div>
             </div>
 
             @if($nextHearing)
@@ -151,6 +203,26 @@
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Judge</p>
                     <p class="mt-1 font-medium">{{ $case->judge_name ?: 'Not available' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">Stage</p>
+                    <p class="mt-1 font-medium">{{ $case->stage ?: 'Not available' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">Disposed on</p>
+                    <p class="mt-1 font-medium">{{ $case->disposed_on?->format('d M Y') ?: 'Not disposed' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">Petitioner's advocate</p>
+                    <p class="mt-1 font-medium">{{ $case->petitioner_advocate ?: 'Not available' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">Respondent's advocate</p>
+                    <p class="mt-1 font-medium">{{ $case->respondent_advocate ?: 'Not available' }}</p>
                 </div>
 
                 <div>
@@ -233,12 +305,92 @@
             </div>
         </section>
 
+        @php
+            $linkedClients = $case->parties->filter(fn ($party) => $party->is_client && $party->client);
+            $advocateName = auth()->user()?->name;
+        @endphp
+        <section id="case-clients" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-lg font-semibold text-slate-900">Notify clients</h3>
+            <p class="mt-1 text-sm text-slate-500">Send a case update on WhatsApp or email. Messages open in your own WhatsApp or email app.</p>
+
+            @if($errors->has('client_id') || $errors->has('name') || $errors->has('mobile') || $errors->has('email'))
+                <div role="alert" class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {{ $errors->first('name') ?: ($errors->first('mobile') ?: ($errors->first('email') ?: $errors->first('client_id'))) }}
+                </div>
+            @endif
+
+            <div class="mt-4 divide-y divide-slate-100">
+                @forelse($linkedClients as $party)
+                    @php
+                        $client = $party->client;
+                        $message = $case->clientUpdateMessage($client->displayName(), $advocateName);
+                        $whatsapp = $client->whatsappNumber();
+                    @endphp
+                    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+                        <div class="min-w-0">
+                            <a href="{{ route('clients.show', $client) }}" class="font-medium text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>
+                            <p class="mt-0.5 text-xs text-slate-500">{{ collect([$client->mobile, $client->email])->filter()->implode(' · ') ?: 'No mobile or email saved' }}</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 print:hidden">
+                            @if($whatsapp)
+                                <a href="https://wa.me/{{ $whatsapp }}?text={{ rawurlencode($message) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                                   class="rounded-lg bg-[#25d366] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1ebe5b]">WhatsApp</a>
+                            @endif
+                            @if($client->email)
+                                <a href="mailto:{{ $client->email }}?subject={{ rawurlencode('Case update: '.($case->case_title ?: 'your matter')) }}&body={{ rawurlencode($message) }}" data-direct-share
+                                   class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Email</a>
+                            @endif
+                            <form method="POST" action="{{ route('cases.clients.destroy', [$case, $party]) }}" data-confirm="Remove this client from the case?">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-sm text-red-700 hover:underline">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <p class="py-3 text-sm text-slate-500">No clients linked to this case yet.</p>
+                @endforelse
+            </div>
+
+            <div class="mt-4 grid gap-4 border-t border-slate-100 pt-4 lg:grid-cols-2 print:hidden">
+                <form method="POST" action="{{ route('cases.clients.store', $case) }}" class="flex flex-wrap items-end gap-2">
+                    @csrf
+                    <label class="min-w-0 flex-1 text-sm font-medium text-slate-700">
+                        Link an existing client
+                        <select name="client_id" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+                            <option value="">Select client</option>
+                            @foreach($clients as $clientOption)
+                                <option value="{{ $clientOption->id }}">{{ $clientOption->displayName() }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <button type="submit" class="rounded-lg bg-[#238b80] px-4 py-2 text-sm font-semibold text-white hover:bg-[#16776e]">Link</button>
+                </form>
+
+                <form method="POST" action="{{ route('cases.clients.store', $case) }}" class="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+                    @csrf
+                    <label class="text-sm font-medium text-slate-700">
+                        New contact
+                        <input name="name" required maxlength="150" placeholder="Name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+                    </label>
+                    <input name="mobile" maxlength="20" inputmode="tel" placeholder="Mobile" aria-label="Mobile" class="rounded-lg border border-slate-300 px-3 py-2">
+                    <input name="email" type="email" maxlength="255" placeholder="Email" aria-label="Email" class="rounded-lg border border-slate-300 px-3 py-2">
+                    <button type="submit" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Add</button>
+                </form>
+            </div>
+        </section>
+
         <!-- Case Timeline / Hearing History -->
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-lg font-semibold text-slate-900">Case Timeline & Hearing History</h3>
-            <p class="mt-1 text-sm text-slate-500">
-                Hearing events and proceedings currently recorded in VakilNeeti.
-            </p>
+        <section id="case-history" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-900">Case Timeline & Hearing History</h3>
+                    <p class="mt-1 text-sm text-slate-500">
+                        Hearing events and proceedings currently recorded in VakilNiti.
+                    </p>
+                </div>
+                <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="text-sm font-semibold text-[#16776e] hover:underline">+ Add hearing</a>
+            </div>
 
             <div class="mt-5 space-y-4">
                 @forelse($case->hearings as $hearing)
@@ -249,8 +401,11 @@
                                 <p class="font-semibold text-slate-900">
                                     {{ $hearing->hearing_date?->format('d M Y') ?: 'Hearing date not available' }}
                                 </p>
-                                <span class="text-xs text-slate-500">
-                                    {{ ucfirst($hearing->source_type ?: 'Manual') }} record
+                                <span class="flex items-center gap-3 text-xs text-slate-500">
+                                    {{ $hearing->isManual() ? 'Added by you' : 'Imported court record' }}
+                                    @if($hearing->isManual())
+                                        <a href="{{ route('hearings.edit', $hearing) }}" class="font-semibold text-[#16776e] hover:underline">Edit</a>
+                                    @endif
                                 </span>
                             </div>
 
@@ -380,7 +535,7 @@
                     <article class="flex flex-wrap justify-between gap-3 py-3">
                         <div>
                             <h4 class="font-semibold text-slate-900">{{ $appointment->title }}</h4>
-                            <p class="mt-1 text-sm text-slate-600">{{ $appointment->starts_at->format('d M Y, h:i A') }}@if($appointment->location) Â· {{ $appointment->location }}@endif</p>
+                            <p class="mt-1 text-sm text-slate-600">{{ $appointment->starts_at->format('d M Y, h:i A') }}@if($appointment->location) · {{ $appointment->location }}@endif</p>
                             @if($appointment->notes)<p class="mt-1 whitespace-pre-line text-sm text-slate-500">{{ $appointment->notes }}</p>@endif
                         </div>
                     </article>
@@ -391,31 +546,94 @@
         </section>
 
         <section id="case-documents" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-lg font-semibold text-slate-900">Case Documents</h3>
-            <p class="mt-1 text-sm text-slate-500">Upload case files (PDF, Office documents, JPG, or PNG; up to 20 MB). Files are stored privately.</p>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-900">Case Documents</h3>
+                    <p class="mt-1 text-sm text-slate-500">PDF, Office, JPG or PNG · up to 20 MB each · stored privately.</p>
+                </div>
 
-            <form method="POST" action="{{ route('cases.documents.store', $case) }}" enctype="multipart/form-data" class="mt-4 flex flex-wrap items-end gap-3">
-                @csrf
-                <label class="min-w-0 flex-1 text-sm font-medium text-slate-700">
-                    Choose a file
-                    <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" required class="mt-1 block w-full rounded-lg border border-slate-300 text-sm file:mr-3 file:border-0 file:bg-slate-100 file:px-3 file:py-2">
-                    @error('file') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                </label>
-                <button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Upload document</button>
-            </form>
+                <div class="flex flex-wrap gap-2 print:hidden">
+                    <form method="POST" action="{{ route('cases.folders.store', $case) }}" class="flex items-center gap-1">
+                        @csrf
+                        <input type="hidden" name="parent_id" value="{{ $currentFolder?->id }}">
+                        <input name="name" required maxlength="120" placeholder="New folder name" aria-label="New folder name"
+                               class="w-40 rounded-lg border border-slate-300 px-2.5 py-2 text-sm">
+                        <button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Create folder</button>
+                    </form>
 
-            <div class="mt-5 divide-y divide-slate-100">
-                @forelse($case->documents as $document)
+                    <form method="POST" action="{{ route('cases.documents.store', $case) }}" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="folder_id" value="{{ $currentFolder?->id }}">
+                        <label class="inline-flex cursor-pointer items-center rounded-lg bg-[#238b80] px-3 py-2 text-sm font-semibold text-white hover:bg-[#16776e]">
+                            Upload files
+                            <input type="file" name="files[]" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" data-upload-files class="sr-only">
+                        </label>
+                    </form>
+
+                    <form method="POST" action="{{ route('cases.documents.store', $case) }}" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="folder_id" value="{{ $currentFolder?->id }}">
+                        <label class="inline-flex cursor-pointer items-center rounded-lg border border-[#8fc9c0] bg-[#e8f4f2] px-3 py-2 text-sm font-semibold text-[#16776e] hover:bg-[#d9efeb]">
+                            Upload folder
+                            <input type="file" name="files[]" multiple webkitdirectory data-upload-folder class="sr-only">
+                        </label>
+                    </form>
+                </div>
+            </div>
+
+            @if($errors->has('files') || $errors->has('files.*') || $errors->has('name'))
+                <div role="alert" class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {{ $errors->first('files') ?: ($errors->first('files.*') ?: $errors->first('name')) }}
+                </div>
+            @endif
+
+            <nav aria-label="Folder" class="mt-4 flex flex-wrap items-center gap-1 text-sm">
+                <a href="{{ route('cases.show', $case) }}#case-documents" class="font-medium text-[#16776e] hover:underline">Documents</a>
+                @foreach($currentFolder?->trail() ?? [] as $trailFolder)
+                    <span class="text-slate-400" aria-hidden="true">›</span>
+                    @if($loop->last)
+                        <span class="font-medium text-slate-700">{{ $trailFolder->name }}</span>
+                    @else
+                        <a href="{{ route('cases.show', [$case, 'folder' => $trailFolder->id]) }}#case-documents" class="font-medium text-[#16776e] hover:underline">{{ $trailFolder->name }}</a>
+                    @endif
+                @endforeach
+            </nav>
+
+            <div class="mt-3 divide-y divide-slate-100">
+                @foreach($folders as $folder)
+                    <div class="flex items-center justify-between gap-3 py-3">
+                        <a href="{{ route('cases.show', [$case, 'folder' => $folder->id]) }}#case-documents" class="flex min-w-0 items-center gap-2 font-medium text-slate-900 hover:text-[#16776e]">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="#f6c453" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h5l2 2h8A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5Z"/></svg>
+                            <span class="truncate">{{ $folder->name }}</span>
+                        </a>
+                        <form method="POST" action="{{ route('cases.folders.destroy', [$case, $folder]) }}" data-confirm="Delete this folder? Only empty folders can be deleted." class="print:hidden">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-sm text-red-700 hover:underline">Delete</button>
+                        </form>
+                    </div>
+                @endforeach
+
+                @foreach($folderDocuments as $document)
                     <div class="flex flex-wrap items-center justify-between gap-3 py-3">
                         <div class="min-w-0">
                             <p class="truncate font-medium text-slate-900">{{ $document->original_name }}</p>
-                            <p class="mt-1 text-xs text-slate-500">{{ number_format($document->size / 1024, 0) }} KB Â· {{ $document->created_at->format('d M Y') }}</p>
+                            <p class="mt-1 text-xs text-slate-500">{{ number_format($document->size / 1024, 0) }} KB · {{ $document->created_at->format('d M Y') }}</p>
                         </div>
-                        <a href="{{ route('cases.documents.download', [$case, $document]) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-slate-50">Download</a>
+                        <div class="flex items-center gap-3 print:hidden">
+                            <a href="{{ route('cases.documents.download', [$case, $document]) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-[#16776e] hover:bg-slate-50">Download</a>
+                            <form method="POST" action="{{ route('cases.documents.destroy', [$case, $document]) }}" data-confirm="Delete this document permanently?">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-sm text-red-700 hover:underline">Delete</button>
+                            </form>
+                        </div>
                     </div>
-                @empty
-                    <p class="py-4 text-sm text-slate-500">No files have been uploaded to this case.</p>
-                @endforelse
+                @endforeach
+
+                @if($folders->isEmpty() && $folderDocuments->isEmpty())
+                    <p class="py-4 text-sm text-slate-500">{{ $currentFolder ? 'This folder is empty.' : 'No files have been uploaded to this case.' }}</p>
+                @endif
             </div>
         </section>
 
@@ -426,7 +644,7 @@
                     <p class="mt-1 text-sm text-slate-500">Track out-of-pocket costs against this case.</p>
                 </div>
                 <p class="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
-                    Total: â‚¹{{ number_format($case->expenses->sum('amount'), 2) }}
+                    Total: @money($case->expenses->sum('amount'))
                 </p>
             </div>
 
@@ -438,7 +656,7 @@
                     @error('expense_description') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
-                    Amount (â‚¹)
+                    Amount (@currency)
                     <input type="number" name="expense_amount" value="{{ old('expense_amount') }}" min="0.01" step="0.01" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
                     @error('expense_amount') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
@@ -454,7 +672,7 @@
                 @forelse($case->expenses as $expense)
                     <div class="flex flex-wrap justify-between gap-3 py-3">
                         <div><p class="font-medium text-slate-900">{{ $expense->description }}</p><p class="mt-1 text-xs text-slate-500">{{ $expense->expense_date->format('d M Y') }}</p></div>
-                        <p class="font-semibold text-slate-800">â‚¹{{ number_format((float) $expense->amount, 2) }}</p>
+                        <p class="font-semibold text-slate-800">@money((float) $expense->amount)</p>
                     </div>
                 @empty
                     <p class="py-4 text-sm text-slate-500">No expenses have been recorded for this case.</p>
@@ -497,7 +715,7 @@
                     @error('time_minutes') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
-                    Hourly rate (â‚¹, optional)
+                    Hourly rate (@currency, optional)
                     <input type="number" name="hourly_rate" value="{{ old('hourly_rate') }}" min="0" step="0.01" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
                     @error('hourly_rate') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
@@ -510,7 +728,7 @@
                         <div><p class="font-medium text-slate-900">{{ $entry->description }}</p><p class="mt-1 text-xs text-slate-500">{{ $entry->entry_date->format('d M Y') }}</p></div>
                         <p class="font-semibold text-slate-800">
                             {{ $entry->hours }}h {{ $entry->minutes }}m
-                            @if($entry->hourly_rate !== null)<span class="ml-2 text-xs font-normal text-slate-500">â‚¹{{ number_format((float) $entry->hourly_rate, 2) }}/hr</span>@endif
+                            @if($entry->hourly_rate !== null)<span class="ml-2 text-xs font-normal text-slate-500">@money((float) $entry->hourly_rate)/hr</span>@endif
                         </p>
                     </div>
                 @empty
@@ -523,21 +741,9 @@
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Official Orders and Court Documents</h3>
 
-            <p class="mt-2 text-sm text-slate-500">
-                Official orders, judgments and court documents will appear here
-                when they are retrieved from an authorised court source or added to this case.
-                No live document connection is currently represented by this section.
-            </p>
+            <p class="mt-2 text-sm text-slate-500">Orders and judgments appear here once added to this case.</p>
         </section>
 
-        <p class="text-xs text-slate-400">
-            Case information displayed here is limited to records currently stored in VakilNeeti.
-            Verify official case status and hearing information with the relevant court portal.
-        </p>
-
-    </main>
+        <p class="text-xs text-slate-400">Verify case status and hearings with the court portal.</p>
 </div>
-
-</body>
-</html>
-
+@endsection

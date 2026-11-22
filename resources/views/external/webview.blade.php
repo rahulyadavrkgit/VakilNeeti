@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'External Website')
 @section('page-heading', 'External Website')
@@ -7,13 +7,13 @@
 <div class="mx-auto max-w-[1600px] space-y-4">
     <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-9 w-auto max-w-[160px] rounded bg-white px-2 py-1 object-contain"><span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Webview</span></div>
+            <div class="flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Webview</span></div>
             <p class="mt-1 max-w-3xl truncate text-sm font-medium text-slate-700" title="{{ $url }}">
                 {{ $host }}
             </p>
         </div>
         <div class="flex gap-2">
-            <button type="button" onclick="vnCloseWebview()"
+            <button type="button" data-vn-close-webview
                     class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 Close
             </button>
@@ -35,13 +35,11 @@
         ></iframe>
     </section>
 
-    <p class="text-xs text-slate-500">
-        The website controls whether it can be displayed inside a webview. If it does not load, use â€œOpen in browserâ€.
-    </p>
+    <p class="text-xs text-slate-500">Some websites can’t be shown here. If it doesn’t load, use “Open in browser”.</p>
 </div>
 
 @push('scripts')
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     function vnCloseWebview() {
         if (window.history.length > 1) {
             window.history.back();

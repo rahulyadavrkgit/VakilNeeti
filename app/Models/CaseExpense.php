@@ -14,6 +14,9 @@ class CaseExpense extends Model
         'description',
         'amount',
         'expense_date',
+        'payment_method',
+        'receipt_path',
+        'receipt_name',
     ];
 
     protected function casts(): array

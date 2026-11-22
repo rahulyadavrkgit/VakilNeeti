@@ -242,14 +242,29 @@
         <thead>
             <tr>
                 <th>Description</th>
+                @if($invoice->items->isNotEmpty())
+                    <th class="right">Qty</th>
+                    <th class="right">Rate</th>
+                    <th class="right">GST</th>
+                @endif
                 <th class="right">Amount</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>{{ $invoice->description ?: 'Professional services' }}</td>
-                <td class="right">{{ $currency }}{{ number_format((float) $invoice->subtotal, 2) }}</td>
-            </tr>
+            @forelse($invoice->items as $item)
+                <tr>
+                    <td>{{ $item->description }}</td>
+                    <td class="right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
+                    <td class="right">{{ $currency }}{{ number_format((float) $item->rate, 2) }}</td>
+                    <td class="right">{{ rtrim(rtrim(number_format((float) $item->tax_rate, 2), '0'), '.') }}%</td>
+                    <td class="right">{{ $currency }}{{ number_format((float) $item->line_total, 2) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td>{{ $invoice->description ?: 'Professional services' }}</td>
+                    <td class="right">{{ $currency }}{{ number_format((float) $invoice->subtotal, 2) }}</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 
@@ -262,10 +277,14 @@
             <td>Discount</td>
             <td class="right">{{ $currency }}{{ number_format((float) $invoice->discount, 2) }}</td>
         </tr>
-        <tr>
-            <td>Tax</td>
-            <td class="right">{{ $currency }}{{ number_format((float) $invoice->tax_amount, 2) }}</td>
-        </tr>
+        @if(($gst['cgst'] ?? 0) > 0 || ($gst['sgst'] ?? 0) > 0)
+            <tr><td>CGST</td><td class="right">{{ $currency }}{{ number_format((float) $gst['cgst'], 2) }}</td></tr>
+            <tr><td>SGST</td><td class="right">{{ $currency }}{{ number_format((float) $gst['sgst'], 2) }}</td></tr>
+        @elseif(($gst['igst'] ?? 0) > 0)
+            <tr><td>IGST</td><td class="right">{{ $currency }}{{ number_format((float) $gst['igst'], 2) }}</td></tr>
+        @else
+            <tr><td>Tax</td><td class="right">{{ $currency }}{{ number_format((float) $invoice->tax_amount, 2) }}</td></tr>
+        @endif
         <tr class="grand-total">
             <td>Total Amount</td>
             <td class="right">{{ $currency }}{{ number_format((float) $invoice->total_amount, 2) }}</td>
@@ -313,7 +332,7 @@
     <div class="declaration">
         This is a computer-generated invoice and does not require a physical signature.
     </div>
-    Generated through VakilNeeti.
+    Generated through VakilNiti.
 </div>
 
 </body>

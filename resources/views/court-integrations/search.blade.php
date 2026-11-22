@@ -8,10 +8,7 @@
 
     <div class="bg-white border rounded-xl p-5">
         <h2 class="text-xl font-bold text-gray-900">Search Official Court Records</h2>
-        <p class="text-sm text-gray-600 mt-2">
-            Select the appropriate court on the official government portal,
-            search for the case, and then add the retrieved record to your VakilNeeti case diary.
-        </p>
+        <p class="text-sm text-gray-600 mt-2">Find the case on the official portal, then add it to your diary.</p>
 
         <div class="flex flex-wrap gap-3 mt-5">
             <a href="https://services.ecourts.gov.in/ecourtindia_v6/"
@@ -26,10 +23,7 @@
             </a>
         </div>
 
-        <p class="text-xs text-gray-500 mt-3">
-            Official portal searches, including CAPTCHA verification, are completed on the government website.
-            VakilNeeti does not claim live access to court records where an authorised interface is unavailable.
-        </p>
+        <p class="text-xs text-gray-500 mt-3">Searches and CAPTCHA are completed on the government website.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -96,7 +90,7 @@
         <ol class="list-decimal pl-5 mt-3 space-y-2 text-sm text-gray-700">
             <li>Open the case details on the official court portal.</li>
             <li>Copy the available case information and retain its official source URL.</li>
-            <li>Return to VakilNeeti and open the assisted import page.</li>
+            <li>Return to VakilNiti and open the assisted import page.</li>
             <li>Review the parsed information and correct any extraction errors.</li>
             <li>Save the verified record to your case diary.</li>
         </ol>
@@ -116,17 +110,9 @@
 
     <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
         <h3 class="font-semibold text-amber-900">Integration status</h3>
-        <p class="text-sm text-amber-900 mt-2">
-            This workflow currently uses official-portal-assisted search and import.
-            Live API retrieval and automatic synchronisation are not enabled or verified.
-            CAPTCHA and other official access controls must be completed on the government portal.
-        </p>
     </div>
 
-    <p class="text-xs text-gray-500">
-        Source: eCourts Services, Government of India. Availability of search fields and case information
-        depends on the selected court and the services provided by its official portal.
-    </p>
+    <p class="text-xs text-gray-500">Source: eCourts Services, Government of India.</p>
 
 </div>
 @endsection

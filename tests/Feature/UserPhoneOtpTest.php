@@ -64,7 +64,9 @@ class UserPhoneOtpTest extends TestCase
             'languages_spoken' => 'Hindi, English',
             'specializations' => ['Civil', 'Family Law'],
             'practice_areas' => 'Civil disputes and family matters',
-            'bar_council_registration_number' => 'UP/1234/2017',
+            'bar_state' => 'Uttar Pradesh',
+            'bar_state_code' => 'up',
+            'bar_number' => '1234',
             'bar_registration_year' => 2017,
             'city' => 'Lucknow',
             'district' => 'Lucknow',
@@ -72,7 +74,7 @@ class UserPhoneOtpTest extends TestCase
             'state_code' => 'UP',
             'pincode' => '226001',
             'court' => 'Lucknow Bench',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('cases.find'));
 
         $user = User::where('mobile', '+919876543210')->firstOrFail();
 
@@ -82,6 +84,8 @@ class UserPhoneOtpTest extends TestCase
         $this->assertDatabaseHas('advocate_profiles', [
             'user_id' => $user->id,
             'bar_council_registration_number' => 'UP/1234/2017',
+            'bar_state_code' => 'UP',
+            'bar_number' => '1234',
             'city' => 'Lucknow',
         ]);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdvocateProfile;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,25 +13,11 @@ use Illuminate\Validation\Rule;
 
 class AdvocateProfileController extends Controller
 {
-    private const SPECIALIZATIONS = [
-        'Civil',
-        'Criminal',
-        'Family Law',
-        'Corporate Law',
-        'Labour Law',
-        'Intellectual Property Law',
-        'Divorce Law',
-        'Property Law',
-        'Consumer Service Law',
-        'Tax Law',
-        'Real Estate',
-    ];
-
     public function index(Request $request)
     {
         $user = $request->user();
 
-        if ($user->account_type === 'company' && !$user->is_admin) {
+        if ($user->account_type === 'company' && ! $user->is_admin) {
             return redirect()->route('firm-profile.index');
         }
 
@@ -39,7 +26,8 @@ class AdvocateProfileController extends Controller
         return view('profile.advocate', [
             'user' => $user,
             'profile' => $profile,
-            'specializations' => self::SPECIALIZATIONS,
+            'specializations' => AdvocateProfile::SPECIALIZATIONS,
+            'stateGroups' => State::dropdownGroups(),
         ]);
     }
 
@@ -47,13 +35,16 @@ class AdvocateProfileController extends Controller
     {
         $user = $request->user();
 
-        if ($user->account_type === 'company' && !$user->is_admin) {
+        if ($user->account_type === 'company' && ! $user->is_admin) {
             return redirect()->route('firm-profile.index');
         }
 
         $profile = $user->advocateProfile()->firstOrNew();
+        $isStudent = $user->account_role === 'student_intern';
+        $statesWithCodes = State::indianStatesAndUnionTerritories();
         $languages = $request->input('languages_spoken', '');
 
+        $request->merge(AdvocateProfile::normaliseBarInput($request->all()));
         $request->merge([
             'languages_spoken' => is_string($languages)
                 ? array_values(array_filter(array_map('trim', preg_split('/[,;\n]+/', $languages) ?: [])))
@@ -76,7 +67,7 @@ class AdvocateProfileController extends Controller
                 'max:10240',
             ],
             'years_experience' => ['required', 'integer', 'min:0', 'max:80'],
-            'graduation_year' => ['required', 'integer', 'between:1950,'.now()->year],
+            'graduation_year' => ['required', 'integer', 'between:1950,2030'],
             'languages_spoken' => ['required', 'array', 'min:1', 'max:20'],
             'languages_spoken.*' => ['required', 'string', 'max:60'],
             'specializations' => ['required', 'array', 'min:1'],
@@ -84,15 +75,17 @@ class AdvocateProfileController extends Controller
                 'required',
                 'string',
                 'distinct',
-                Rule::in(self::SPECIALIZATIONS),
+                Rule::in(AdvocateProfile::SPECIALIZATIONS),
             ],
             'practice_areas' => ['nullable', 'string', 'max:2000'],
- ['required', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:100'],
             'district' => ['required', 'string', 'max:100'],
-            'region' => ['required', 'string', 'max:120'],
-            'state_code' => ['nullable', 'string', 'max:15'],
+            'region' => ['required', 'string', Rule::in(array_keys($statesWithCodes))],
             'pincode' => ['required', 'regex:/^[0-9]{6}$/'],
             'court' => ['required', 'string', 'max:200'],
+            ...AdvocateProfile::barRegistrationRules(! $isStudent),
+        ], AdvocateProfile::barRegistrationMessages() + [
+            'region.in' => 'Select a State or Union Territory from the list.',
         ]);
 
         $oldPhotoPath = $profile->photo_path;
@@ -101,7 +94,7 @@ class AdvocateProfileController extends Controller
         if ($request->hasFile('photo')) {
             $newPhotoPath = $request->file('photo')->store('advocate-photos', 'public');
 
-            if (!$newPhotoPath) {
+            if (! $newPhotoPath) {
                 throw new \RuntimeException('The advocate photo could not be saved.');
             }
         }
@@ -116,9 +109,18 @@ class AdvocateProfileController extends Controller
             'city' => $validated['city'],
             'district' => $validated['district'],
             'region' => $validated['region'],
-            'state_code' => $validated['state_code'] ?? null,
+            'state_code' => $statesWithCodes[$validated['region']],
             'pincode' => $validated['pincode'],
             'court' => $validated['court'],
+            'bar_state' => $validated['bar_state'] ?? null,
+            'bar_state_code' => $validated['bar_state_code'] ?? null,
+            'bar_number' => $validated['bar_number'] ?? null,
+            'bar_registration_year' => $validated['bar_registration_year'] ?? null,
+            'bar_council_registration_number' => AdvocateProfile::composeBarRegistration(
+                $validated['bar_state_code'] ?? null,
+                $validated['bar_number'] ?? null,
+                isset($validated['bar_registration_year']) ? (int) $validated['bar_registration_year'] : null,
+            ) ?? $profile->bar_council_registration_number,
         ]);
 
         if ($newPhotoPath) {
@@ -135,7 +137,7 @@ class AdvocateProfileController extends Controller
                 $profile->save();
             });
         } catch (\Throwable $exception) {
-            if ($newPhotoPath && !Storage::disk('public')->delete($newPhotoPath)) {
+            if ($newPhotoPath && ! Storage::disk('public')->delete($newPhotoPath)) {
                 Log::warning('Failed to remove an unused advocate photo after profile update failed.', [
                     'user_id' => $user->id,
                     'path' => $newPhotoPath,
@@ -150,7 +152,7 @@ class AdvocateProfileController extends Controller
             $oldPhotoPath &&
             $oldPhotoPath !== $newPhotoPath &&
             Storage::disk('public')->exists($oldPhotoPath) &&
-            !Storage::disk('public')->delete($oldPhotoPath)
+            ! Storage::disk('public')->delete($oldPhotoPath)
         ) {
             Log::warning('Failed to remove the previous advocate photo.', [
                 'user_id' => $user->id,

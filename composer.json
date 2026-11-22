@@ -47,7 +47,8 @@
             "@php artisan dev"
         ],
         "test": [
-            "@php run-tests.php"
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

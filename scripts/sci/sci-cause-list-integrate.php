@@ -1,6 +1,6 @@
 ﻿<?php
 
-$base = __DIR__ . '/storage/app';
+$base = dirname(__DIR__, 2) . '/storage/app';
 
 $documentsFile = $base . '/sci-cause-list-parsed.json';
 $casesFile = $base . '/sci-cause-list-cases-with-advocates.json';

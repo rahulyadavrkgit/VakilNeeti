@@ -6,12 +6,16 @@
     <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Import Official Court Record</h1>
-            <p class="text-slate-500 mt-2">Bring information from an official court record into VakilNeeti.</p>
+            <p class="text-slate-500 mt-2">Bring information from an official court record into VakilNiti.</p>
         </div>
-        <a href="{{ route('cases.import.history') }}" class="text-blue-700 hover:underline">
+        <a href="{{ route('cases.import.history') }}" class="text-[#16776e] hover:underline">
             View Import History
         </a>
     </div>
+
+    <p class="mb-5 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+        Adding many cases at once? Use <a href="{{ route('cases.find') }}" class="font-semibold underline">Find my cases</a> to bring in your whole eCourts list by bar code.
+    </p>
 
     @if ($errors->any())
         <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-5">
@@ -22,11 +26,7 @@
     @endif
 
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-        <p class="text-sm text-slate-600 mb-5">
-            Open the relevant official court portal, search for the case, and copy the
-            displayed case information. Paste the copied record below. VakilNeeti will
-            identify recognised fields and show you a preview before creating a case.
-        </p>
+        <p class="text-sm text-slate-600 mb-5">Find the case on the official court portal, copy its details and paste them below. You’ll see a preview before anything is saved.</p>
 
         <form method="POST" action="{{ route('cases.import.preview') }}">
             @csrf
@@ -46,7 +46,7 @@
                 <label class="block text-sm font-medium text-slate-700 mb-2">Copied Official Case Record</label>
                 <textarea name="official_record" rows="14" required maxlength="100000"
                     placeholder="Paste the case information copied from the official court website..."
-                    class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">{{ old('official_record') }}</textarea>
+                    class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">{{ old('official_record') }}</textarea>
             </div>
 
             <div class="mb-6">
@@ -56,7 +56,7 @@
                     class="w-full rounded-lg border-slate-300">
             </div>
 
-            <button type="submit" class="px-5 py-3 rounded-lg bg-blue-700 text-white hover:bg-blue-800">
+            <button type="submit" class="px-5 py-3 rounded-lg bg-[#16776e] text-white hover:bg-[#125f58]">
                 Extract and Review Case Information
             </button>
         </form>

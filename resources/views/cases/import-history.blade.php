@@ -9,7 +9,7 @@
             <p class="text-slate-500 mt-2">Original records and their import status.</p>
         </div>
         <a href="{{ route('cases.import') }}"
-           class="px-5 py-2.5 rounded-lg bg-blue-700 text-white hover:bg-blue-800">
+           class="px-5 py-2.5 rounded-lg bg-[#16776e] text-white hover:bg-[#125f58]">
             New Import
         </a>
     </div>
@@ -55,7 +55,7 @@
                                 @elseif ($import->import_status === 'duplicate')
                                     <span class="text-amber-700 font-medium">Duplicate</span>
                                 @else
-                                    <span class="text-blue-700 font-medium">Preview</span>
+                                    <span class="text-[#16776e] font-medium">Preview</span>
                                 @endif
                             </td>
                             <td class="p-4">{{ $import->legal_case_id ?? '—' }}</td>
@@ -63,11 +63,11 @@
                         <tr>
                             <td colspan="6" class="px-4 pb-4">
                                 <details>
-                                    <summary class="cursor-pointer text-blue-700">View original court record</summary>
+                                    <summary class="cursor-pointer text-[#16776e]">View original court record</summary>
                                     <pre class="mt-3 whitespace-pre-wrap break-words bg-slate-50 border rounded-lg p-3 text-xs">{{ $import->raw_content }}</pre>
                                     @if ($import->source_url)
                                         <a href="{{ $import->source_url }}" target="_blank" rel="noopener noreferrer"
-                                           class="inline-block mt-2 text-blue-700 hover:underline">Open source URL</a>
+                                           class="inline-block mt-2 text-[#16776e] hover:underline">Open source URL</a>
                                     @endif
                                 </details>
                             </td>

@@ -37,7 +37,7 @@
                     Search another State
                 </label>
                 <select id="explore_state_id" name="explore_state_id"
-                        onchange="this.form.submit()"
+                        data-autosubmit
                         class="w-full rounded-lg border-slate-300 text-sm">
                     <option value="">Use saved practice locations</option>
                     @foreach($availableStates as $state)

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $base = __DIR__;
 
@@ -6,7 +6,7 @@ $scripts = [
     'sci-cause-list-extract.php',
     'sci-cause-list-case-parse.php',
     'sci-cause-list-structure-fields.php',
-    'sci-cause-list-advocates.php'
+    'sci-cause-list-advocates.php',
 ];
 
 echo "====================================\n";
@@ -15,16 +15,16 @@ echo "====================================\n\n";
 
 foreach ($scripts as $script) {
 
-    $path = $base . '/' . $script;
+    $path = $base.'/'.$script;
 
-    if (!file_exists($path)) {
+    if (! file_exists($path)) {
         exit("ERROR: Script not found: {$script}\n");
     }
 
     echo "Running: {$script}\n";
 
     passthru(
-        escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($path),
+        escapeshellarg(PHP_BINARY).' '.escapeshellarg($path),
         $exitCode
     );
 

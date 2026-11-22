@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CaseAppointment;
 use App\Models\CaseDocument;
-use App\Models\CaseExpense;
-use App\Models\CaseNote;
-use App\Models\CaseTimeEntry;
+use App\Models\CaseDocumentFolder;
 use App\Models\LegalCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -93,32 +90,137 @@ class CaseWorkspaceController extends Controller
         return $this->backToCase($case, 'Time entry recorded.', 'case-time');
     }
 
+    /**
+     * Upload one or more files into the case (or into a folder of it). For a folder upload the
+     * browser sends each file's relative path, and the sub-folders are recreated.
+     */
     public function storeDocument(Request $request, LegalCase $case)
     {
         $validated = $request->validate([
-            'file' => [
-                'required',
-                'file',
-                'max:20480',
-                'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
-            ],
+            'files' => ['required', 'array', 'min:1', 'max:50'],
+            'files.*' => ['required', 'file', 'max:20480', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png'],
+            'paths' => ['sometimes', 'array'],
+            'paths.*' => ['nullable', 'string', 'max:500'],
+            'folder_id' => ['nullable', 'integer'],
+        ], [
+            'files.*.mimes' => 'Only PDF, Word, Excel, JPG and PNG files can be uploaded.',
+            'files.*.max' => 'Each file must be 20 MB or smaller.',
         ]);
 
-        $file = $validated['file'];
-        $path = $file->store('case-documents/'.$case->id, 'local');
+        $baseFolder = isset($validated['folder_id'])
+            ? $case->documentFolders()->findOrFail($validated['folder_id'])
+            : null;
 
-        if (!$path) {
-            throw new \RuntimeException('The case document could not be saved.');
+        foreach ($validated['files'] as $index => $file) {
+            $folder = $this->folderForPath($case, $baseFolder, $validated['paths'][$index] ?? null);
+            $path = $file->store('case-documents/'.$case->id, 'local');
+
+            if (! $path) {
+                throw new \RuntimeException('The case document could not be saved.');
+            }
+
+            $case->documents()->create([
+                'folder_id' => $folder?->id,
+                'original_name' => Str::limit($file->getClientOriginalName(), 255, ''),
+                'storage_path' => $path,
+                'mime_type' => $file->getMimeType() ?: $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ]);
         }
 
-        $case->documents()->create([
-            'original_name' => Str::limit($file->getClientOriginalName(), 255, ''),
-            'storage_path' => $path,
-            'mime_type' => $file->getMimeType() ?: $file->getClientMimeType(),
-            'size' => $file->getSize(),
+        $count = count($validated['files']);
+
+        return $this->backToFolder($case, $baseFolder, $count === 1 ? 'Document uploaded.' : "{$count} documents uploaded.");
+    }
+
+    public function storeFolder(Request $request, LegalCase $case)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120', 'not_regex:/[\\\\\/]/'],
+            'parent_id' => ['nullable', 'integer'],
+        ], [
+            'name.not_regex' => 'A folder name cannot contain / or \\.',
         ]);
 
-        return $this->backToCase($case, 'Document uploaded.', 'case-documents');
+        $parent = isset($validated['parent_id'])
+            ? $case->documentFolders()->findOrFail($validated['parent_id'])
+            : null;
+
+        $name = $this->cleanFolderName($validated['name']);
+
+        if ($name === '') {
+            throw ValidationException::withMessages(['name' => 'Enter a folder name.']);
+        }
+
+        $case->documentFolders()->firstOrCreate(['parent_id' => $parent?->id, 'name' => $name]);
+
+        return $this->backToFolder($case, $parent, "Folder “{$name}” created.");
+    }
+
+    public function destroyFolder(LegalCase $case, CaseDocumentFolder $folder)
+    {
+        abort_unless($folder->case_id === $case->id, 404);
+
+        if ($folder->children()->exists() || $folder->documents()->exists()) {
+            return $this->backToFolder($case, $folder, 'Only empty folders can be deleted.');
+        }
+
+        $parent = $folder->parent;
+        $folder->delete();
+
+        return $this->backToFolder($case, $parent, 'Folder deleted.');
+    }
+
+    public function destroyDocument(LegalCase $case, CaseDocument $document)
+    {
+        abort_unless($document->case_id === $case->id, 404);
+
+        $folder = $document->folder_id ? $case->documentFolders()->find($document->folder_id) : null;
+        Storage::disk('local')->delete($document->storage_path);
+        $document->delete();
+
+        return $this->backToFolder($case, $folder, 'Document deleted.');
+    }
+
+    /**
+     * The folder a file belongs in, creating sub-folders from its relative path ("A/B/file.pdf").
+     */
+    private function folderForPath(LegalCase $case, ?CaseDocumentFolder $base, ?string $relativePath): ?CaseDocumentFolder
+    {
+        if ($relativePath === null || ! str_contains($relativePath, '/')) {
+            return $base;
+        }
+
+        $segments = array_slice(explode('/', str_replace('\\', '/', $relativePath)), 0, -1);
+        $folder = $base;
+
+        foreach (array_slice($segments, 0, 10) as $segment) {
+            $name = $this->cleanFolderName($segment);
+
+            if ($name === '' || $name === '.' || $name === '..') {
+                continue;
+            }
+
+            $folder = $case->documentFolders()->firstOrCreate(['parent_id' => $folder?->id, 'name' => $name]);
+        }
+
+        return $folder;
+    }
+
+    private function cleanFolderName(string $name): string
+    {
+        $name = preg_replace('/[\x00-\x1F\x7F\\\\\/]+/u', ' ', $name) ?? '';
+
+        return Str::limit(trim(preg_replace('/\s+/u', ' ', $name) ?? ''), 120, '');
+    }
+
+    private function backToFolder(LegalCase $case, ?CaseDocumentFolder $folder, string $message)
+    {
+        $parameters = $folder ? [$case, 'folder' => $folder->id] : [$case];
+
+        return redirect()
+            ->to(route('cases.show', $parameters).'#case-documents')
+            ->with('success', $message);
     }
 
     public function downloadDocument(LegalCase $case, CaseDocument $document)

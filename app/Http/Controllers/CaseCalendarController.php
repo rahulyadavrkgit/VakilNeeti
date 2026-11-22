@@ -2,232 +2,124 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CalendarEventService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class CaseCalendarController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Calendar layouts people can switch between.
+     *
+     * @var array<string, string>
+     */
+    public const VIEWS = ['day' => 'Day', 'week' => 'Week', 'month' => 'Month', 'list' => 'List'];
+
+    public function index(Request $request, CalendarEventService $calendar): View
     {
-        $requestedMonth = $request->query('month', now()->format('Y-m'));
+        $viewMode = $request->query('view') === 'agenda' ? 'list' : $request->query('view', 'month');
+        $viewMode = array_key_exists($viewMode, self::VIEWS) ? $viewMode : 'month';
+        $date = $this->anchorDate($request);
 
-        try {
-            $month = Carbon::createFromFormat('!Y-m', $requestedMonth);
+        [$start, $end] = match ($viewMode) {
+            'day' => [$date->copy(), $date->copy()],
+            'week' => [$date->copy()->startOfWeek(Carbon::SUNDAY), $date->copy()->endOfWeek(Carbon::SATURDAY)],
+            'month' => [$date->copy()->startOfMonth()->startOfWeek(Carbon::SUNDAY), $date->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY)],
+            default => [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()],
+        };
 
-            if (!$month || $month->format('Y-m') !== $requestedMonth) {
-                $month = now()->startOfMonth();
+        $step = match ($viewMode) {
+            'day' => 'addDay',
+            'week' => 'addWeek',
+            default => 'addMonthNoOverflow',
+        };
+        $previousDate = $date->copy()->{str_replace('add', 'sub', $step)}();
+        $nextDate = $date->copy()->{$step}();
+
+        $groups = array_values(array_intersect((array) $request->query('types', []), array_keys(CalendarEventService::GROUPS)));
+        $filters = [
+            'court' => is_string($request->query('court')) ? $request->query('court') : null,
+            'case_type' => is_string($request->query('case_type')) ? $request->query('case_type') : null,
+            'groups' => $groups ?: array_keys(CalendarEventService::GROUPS),
+        ];
+
+        // Fetch the shown period and the small month picker in one go.
+        $miniStart = $date->copy()->startOfMonth()->startOfWeek(Carbon::SUNDAY);
+        $miniEnd = $date->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY);
+        $allEvents = $calendar->between($start->min($miniStart), $end->max($miniEnd), $filters);
+
+        $events = $allEvents->filter(fn (array $event): bool => $event['date'] >= $start->toDateString() && $event['date'] <= $end->toDateString())->values();
+        $eventsByDate = $events->groupBy('date');
+        $miniEventDates = $allEvents->pluck('date')->unique()->flip();
+
+        $days = [];
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $days[] = $day->copy();
+        }
+
+        $miniDays = [];
+        for ($day = $miniStart->copy(); $day->lte($miniEnd); $day->addDay()) {
+            $miniDays[] = $day->copy();
+        }
+
+        $periodLabel = match ($viewMode) {
+            'day' => $date->format('l, d F Y'),
+            'week' => $start->format('d M').' – '.$end->format('d M Y'),
+            default => $date->format('F Y'),
+        };
+
+        return view('case-calendar.index', [
+            'viewMode' => $viewMode,
+            'date' => $date,
+            'start' => $start,
+            'end' => $end,
+            'previousDate' => $previousDate->toDateString(),
+            'nextDate' => $nextDate->toDateString(),
+            'periodLabel' => $periodLabel,
+            'events' => $events,
+            'eventsByDate' => $eventsByDate,
+            'days' => $days,
+            'miniDays' => $miniDays,
+            'miniEventDates' => $miniEventDates,
+            'filters' => $filters,
+            'selectedGroups' => $groups,
+            'filterOptions' => $calendar->filterOptions(),
+            'counts' => $events->countBy('group')->all(),
+            'printList' => $request->boolean('print'),
+            'query' => array_filter([
+                'court' => $filters['court'],
+                'case_type' => $filters['case_type'],
+                'types' => $groups ?: null,
+            ]),
+        ]);
+    }
+
+    /**
+     * The day the calendar is centred on: ?date=YYYY-MM-DD, the older ?month=YYYY-MM, or today.
+     */
+    private function anchorDate(Request $request): Carbon
+    {
+        foreach (['date' => '!Y-m-d', 'month' => '!Y-m'] as $parameter => $format) {
+            $value = $request->query($parameter);
+
+            if (! is_string($value)) {
+                continue;
             }
-        } catch (\Throwable $exception) {
-            $month = now()->startOfMonth();
-        }
 
-        $start = $month->copy()->startOfMonth();
-        $end = $month->copy()->endOfMonth();
-
-        $previousMonth = $month->copy()->subMonth()->format('Y-m');
-        $nextMonth = $month->copy()->addMonth()->format('Y-m');
-
-        $events = [];
-
-        // Court hearing records
-        $hearingRows = DB::table('court_hearings as h')
-            ->leftJoin('legal_cases as lc', function ($join) {
-                $join->on('lc.id', '=', 'h.case_id');
-                if (!auth()->user()->is_admin) {
-                    $join->where('lc.user_id', auth()->id());
-                }
-            })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('h.user_id', auth()->id()))
-            ->where(function ($query) use ($start, $end) {
-                $query->whereBetween('h.hearing_date', [
-                    $start->toDateString(),
-                    $end->toDateString()
-                ])->orWhereBetween('h.next_hearing_date', [
-                    $start->toDateString(),
-                    $end->toDateString()
-                ]);
-            })
-            ->select(
-                'h.id',
-                'h.case_id',
-                'h.hearing_date',
-                'h.hearing_time',
-                'h.hearing_stage',
-                'h.proceedings',
-                'h.next_hearing_date',
-                'h.next_action',
-                'lc.case_title',
-                'lc.case_number'
-            )
-            ->get();
-
-        foreach ($hearingRows as $hearing) {
-            $caseTitle = $hearing->case_title ?: 'Court hearing';
-
-            if (
-                $hearing->hearing_date &&
-                $hearing->hearing_date >= $start->toDateString() &&
-                $hearing->hearing_date <= $end->toDateString()
-            ) {
-                $events[] = [
-                    'type' => 'hearing',
-                    'label' => 'Hearing',
-                    'title' => $caseTitle,
-                    'date' => $hearing->hearing_date,
-                    'time' => $hearing->hearing_time,
-                    'case_id' => $hearing->case_id,
-                    'case_number' => $hearing->case_number,
-                    'details' => $hearing->hearing_stage ?: $hearing->proceedings,
-                    'id' => $hearing->id,
-                ];
+            try {
+                $parsed = Carbon::createFromFormat($format, $value);
+            } catch (\Throwable) {
+                continue;
             }
 
-            if (
-                $hearing->next_hearing_date &&
-                $hearing->next_hearing_date >= $start->toDateString() &&
-                $hearing->next_hearing_date <= $end->toDateString() &&
-                $hearing->next_hearing_date !== $hearing->hearing_date
-            ) {
-                $events[] = [
-                    'type' => 'next_hearing',
-                    'label' => 'Next Hearing',
-                    'title' => $caseTitle,
-                    'date' => $hearing->next_hearing_date,
-                    'time' => null,
-                    'case_id' => $hearing->case_id,
-                    'case_number' => $hearing->case_number,
-                    'details' => $hearing->next_action,
-                    'id' => $hearing->id,
-                ];
+            if ($parsed && $parsed->format(ltrim($format, '!')) === $value && $parsed->year >= 1950 && $parsed->year <= 2100) {
+                return $parsed;
             }
         }
 
-        // Task deadlines
-        $taskRows = DB::table('tasks as t')
-            ->leftJoin('clients as c', function ($join) {
-                $join->on('c.id', '=', 't.client_id');
-                if (!auth()->user()->is_admin) {
-                    $join->where('c.user_id', auth()->id());
-                }
-            })
-            ->leftJoin('legal_cases as lc', function ($join) {
-                $join->on('lc.id', '=', 't.case_id');
-                if (!auth()->user()->is_admin) {
-                    $join->where('lc.user_id', auth()->id());
-                }
-            })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('t.user_id', auth()->id()))
-            ->whereBetween('t.due_at', [
-                $start->startOfDay()->toDateTimeString(),
-                $end->endOfDay()->toDateTimeString()
-            ])
-            ->select(
-                't.id',
-                't.title',
-                't.due_at',
-                't.priority',
-                't.status',
-                't.case_id',
-                't.client_id',
-                'c.display_name',
-                'c.first_name',
-                'c.last_name',
-                'lc.case_title',
-                'lc.case_number'
-            )
-            ->get();
-
-        foreach ($taskRows as $task) {
-            $clientName = $task->display_name
-                ?: trim(($task->first_name ?? '') . ' ' . ($task->last_name ?? ''));
-
-            $events[] = [
-                'type' => 'task',
-                'label' => 'Task',
-                'title' => $task->title,
-                'date' => Carbon::parse($task->due_at)->toDateString(),
-                'time' => Carbon::parse($task->due_at)->format('H:i'),
-                'case_id' => $task->case_id,
-                'case_number' => $task->case_number,
-                'case_title' => $task->case_title,
-                'client_name' => $clientName,
-                'details' => 'Priority: ' . ucfirst($task->priority)
-                    . ' | Status: ' . ucfirst(str_replace('_', ' ', $task->status)),
-                'id' => $task->id,
-                'status' => $task->status,
-            ];
-        }
-
-        $appointmentRows = DB::table('case_appointments as a')
-            ->leftJoin('legal_cases as lc', function ($join) {
-                $join->on('lc.id', '=', 'a.case_id');
-                if (!auth()->user()->is_admin) {
-                    $join->where('lc.user_id', auth()->id());
-                }
-            })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('a.user_id', auth()->id()))
-            ->whereBetween('a.starts_at', [
-                $start->copy()->startOfDay()->toDateTimeString(),
-                $end->copy()->endOfDay()->toDateTimeString(),
-            ])
-            ->select(
-                'a.id',
-                'a.title',
-                'a.starts_at',
-                'a.location',
-                'a.notes',
-                'a.case_id',
-                'lc.case_title',
-                'lc.case_number'
-            )
-            ->get();
-
-        foreach ($appointmentRows as $appointment) {
-            $events[] = [
-                'type' => 'appointment',
-                'label' => 'Appointment',
-                'title' => $appointment->title,
-                'date' => Carbon::parse($appointment->starts_at)->toDateString(),
-                'time' => Carbon::parse($appointment->starts_at)->format('H:i'),
-                'case_id' => $appointment->case_id,
-                'case_number' => $appointment->case_number,
-                'case_title' => $appointment->case_title,
-                'details' => $appointment->location ?: $appointment->notes,
-                'id' => $appointment->id,
-            ];
-        }
-
-        $eventsByDate = collect($events)
-            ->sortBy(function ($event) {
-                return $event['date'] . ' ' . ($event['time'] ?: '00:00');
-            })
-            ->groupBy('date');
-
-        // Build complete Sunday-to-Saturday calendar grid.
-        $calendarStart = $start->copy()->startOfWeek(Carbon::SUNDAY);
-        $calendarEnd = $end->copy()->endOfWeek(Carbon::SATURDAY);
-
-        $calendarDays = [];
-
-        for ($day = $calendarStart->copy(); $day->lte($calendarEnd); $day->addDay()) {
-            $calendarDays[] = $day->copy();
-        }
-
-        $viewMode = $request->query('view', 'month');
-
-        if (!in_array($viewMode, ['month', 'agenda'], true)) {
-            $viewMode = 'month';
-        }
-
-        return view('case-calendar.index', compact(
-            'month',
-            'previousMonth',
-            'nextMonth',
-            'eventsByDate',
-            'calendarDays',
-            'viewMode'
-        ));
+        return today();
     }
 
     public function history(Request $request)
@@ -235,11 +127,11 @@ class CaseCalendarController extends Controller
         $query = DB::table('court_hearings as h')
             ->leftJoin('legal_cases as lc', function ($join) {
                 $join->on('lc.id', '=', 'h.case_id');
-                if (!auth()->user()->is_admin) {
+                if (! auth()->user()->is_admin) {
                     $join->where('lc.user_id', auth()->id());
                 }
             })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('h.user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('h.user_id', auth()->id()))
             ->select(
                 'h.id',
                 'h.case_id',
@@ -276,4 +168,5 @@ class CaseCalendarController extends Controller
             ->withQueryString();
 
         return view('hearing-history.index', compact('hearings'));
-    }}
+    }
+}

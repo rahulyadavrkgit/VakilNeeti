@@ -14,7 +14,7 @@
     <section class="rounded-xl border border-slate-200 bg-white p-5">
         <div class="mb-4">
             <h2 class="text-lg font-bold text-slate-800">1. Profile Information</h2>
-            <p class="mt-1 text-sm text-slate-600">Manage the account-specific profile and contact information used in VakilNeeti.</p>
+            <p class="mt-1 text-sm text-slate-600">Manage the account-specific profile and contact information used in VakilNiti.</p>
         </div>
 
         @if(($isCompany || $showAllProfileTypes) && $firm)
@@ -147,7 +147,18 @@
                 @error('onboarding_other') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
             </label>
 
-            <button type="submit" class="rounded-lg bg-amber-400 px-5 py-2.5 font-semibold text-slate-950 hover:bg-amber-300">
+            <label class="block max-w-xs text-sm font-medium text-slate-700">
+                Currency
+                <select name="currency" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+                    @foreach(\App\Enums\Currency::cases() as $currencyOption)
+                        <option value="{{ $currencyOption->value }}" @selected(old('currency', $user->currency ?? 'INR') === $currencyOption->value)>{{ $currencyOption->label() }}</option>
+                    @endforeach
+                </select>
+                <span class="mt-1 block text-xs font-normal text-slate-500">Changes the symbol shown on amounts. Amounts are not converted.</span>
+                @error('currency') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+            </label>
+
+            <button type="submit" class="rounded-lg bg-[#238b80] px-5 py-2.5 font-semibold text-white hover:bg-[#16776e]">
                 Save preferences
             </button>
         </form>
@@ -156,10 +167,7 @@
     {{-- PRACTICE STATES --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">
         <h2 class="text-lg font-bold text-slate-800">2. Practice States &amp; Jurisdictions</h2>
-        <p class="mt-1 text-sm text-slate-600">
-            Select multiple States and Union Territories to customise your High Court
-            and District Court navigation.
-        </p>
+        <p class="mt-1 text-sm text-slate-600">Choose the States/UTs where you practise.</p>
 
         <a href="{{ route('profile.practice-states.index') }}"
            class="mt-4 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
@@ -181,20 +189,14 @@
             <a href="{{ route('profile.invoice-settings.index') }}"
                class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
                 <h3 class="font-semibold text-slate-800">Invoice &amp; GST Settings</h3>
-                <p class="mt-2 text-sm text-slate-600">
-                    GST configuration, invoice numbering, tax settings, payment instructions,
-                    bank details and invoice terms.
-                </p>
+                <p class="mt-2 text-sm text-slate-600">GST, numbering, bank details and terms.</p>
                 <p class="mt-4 text-sm font-semibold text-blue-600">Manage Invoice &amp; GST Settings &rarr;</p>
             </a>
 
             <a href="{{ route('profile.tax-compliance') }}"
                class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
                 <h3 class="font-semibold text-slate-800">Tax &amp; Compliance</h3>
-                <p class="mt-2 text-sm text-slate-600">
-                    TDS deductions, certificate follow-ups, tax-credit reconciliation
-                    and Professional Tax records.
-                </p>
+                <p class="mt-2 text-sm text-slate-600">TDS, certificates and Professional Tax.</p>
                 <p class="mt-4 text-sm font-semibold text-blue-600">Open Tax &amp; Compliance &rarr;</p>
             </a>
 
@@ -218,7 +220,7 @@
 
 </div>
 
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     document.addEventListener('DOMContentLoaded', function () {
         const preferencesForm = document.querySelector('#workspace-preferences-form');
         if (!preferencesForm) return;

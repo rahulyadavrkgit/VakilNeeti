@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Bare Acts')
 @section('page-heading', 'Bare Acts')
@@ -6,11 +6,9 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <section id="overview" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <div class="mb-3 flex flex-wrap items-center gap-3"><img src="{{ asset('images/vakilneeti-logo.png') }}" alt="VakilNeeti" class="h-10 w-auto max-w-[180px] rounded bg-white px-2 py-1 object-contain"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
+        <div class="mb-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
         <h1 class="mt-2 text-2xl font-bold">Bare Acts Library</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-300">
-            Browse a starter index of commonly used Central statutes and open the official India Code portal to locate the current text.
-        </p>
+        <p class="mt-2 max-w-3xl text-sm text-slate-300">Common Central Acts, with links to the official India Code.</p>
     </section>
 
     <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -51,7 +49,7 @@
                         </div>
                         <p class="mt-2 text-sm text-slate-600">{{ $act['topic'] }}</p>
                         @if($legacy)
-                            <p class="mt-3 text-xs font-medium text-amber-800">Legacy reference â€” check applicable transition and savings provisions.</p>
+                            <p class="mt-3 text-xs font-medium text-amber-800">Legacy reference — check applicable transition and savings provisions.</p>
                         @else
                             <p class="mt-3 text-xs text-slate-500">Check the official text for amendments and commencement.</p>
                         @endif
@@ -71,9 +69,7 @@
 
     <section id="sources" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Official source</h2>
-        <p class="mt-1 text-sm text-slate-600">
-            India Code is the Government of India's repository for Central Acts. Search there for the official text and confirm its current status.
-        </p>
+        <p class="mt-1 text-sm text-slate-600">Check the official text and current status on India Code.</p>
         <a href="https://www.indiacode.nic.in/" target="_blank" rel="noopener noreferrer"
            class="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
             Open India Code
@@ -83,7 +79,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     const actSearch = document.getElementById('act-search');
     const actCards = Array.from(document.querySelectorAll('[data-act-card]'));
     const noActMatches = document.getElementById('act-search-empty');

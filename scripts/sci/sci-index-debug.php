@@ -8,7 +8,7 @@ if ($html === false) {
     exit("Download failed\n");
 }
 
-$file = __DIR__ . '/storage/app/sci-index-debug.html';
+$file = dirname(__DIR__, 2) . '/storage/app/sci-index-debug.html';
 
 file_put_contents($file, $html);
 

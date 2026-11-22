@@ -1,11 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <title>@yield('title', 'VakilNeeti') | VakilNeeti</title>
+    <title>@yield('title', 'VakilNiti') | VakilNiti</title>
+    <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
+        try {
+            if (localStorage.getItem('vn-sidebar-collapsed') === '1') {
+                document.documentElement.classList.add('vn-sidebar-collapsed');
+            }
+        } catch (error) {}
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 
     <style>
         body {
@@ -24,8 +32,7 @@
         .vn-content h1,
         .vn-content h2,
         .vn-content h3,
-        #vn-auth-dialog h2,
-        #vn-share-dialog h2 {
+        #vn-auth-dialog h2 {
             font-family: var(--font-serif), serif;
             letter-spacing: -0.02em;
         }
@@ -118,10 +125,64 @@
             outline-offset: 2px;
         }
 
+        /* VakilNiti workspace system: responsive shell and accessible navigation. */
+        :root {
+            --vn-ink: #142235;
+            --vn-ink-soft: #20334a;
+            --vn-accent: #167c73;
+            --vn-accent-dark: #11645d;
+            --vn-canvas: #f4f6f8;
+            --vn-line: #e2e8ef;
+        }
+        body { background: var(--vn-canvas); color: #172536; }
+        .vn-sidebar { background: var(--vn-ink); border-right-color: #2b3b50; }
+        .vn-sidebar .vn-nav-heading { color: #91c9c1; }
+        .vn-nav-section { border-bottom-color: #2a3b50; }
+        .vn-nav-link { min-height: 42px; border-radius: 9px; color: #e4ebf3 !important; }
+        .vn-nav-link:hover { background: #263950; }
+        .vn-nav-link.vn-active { background: #176f68; box-shadow: inset 3px 0 0 #8ed2c8; }
+        .vn-nav-child { border-left-color: #43556a; }
+        .vn-main-header { position: sticky; top: 0; z-index: 25; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); }
+        .vn-content { min-width: 0; }
+        .vn-main-content { width: 100%; max-width: 1800px; margin-inline: auto; }
+        .vn-mobile-nav { display: none; }
+        .vn-sidebar-backdrop { display: none; }
+        .vn-menu-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px; border: 1px solid #dbe3eb; border-radius: 12px; background: #fff; color: #172536; }
+        .vn-profile-menu summary::-webkit-details-marker { display: none; }
+        @media (min-width: 768px) {
+            html.vn-sidebar-collapsed .vn-sidebar { display: none; }
+        }
+        .vn-nav-link, .vn-main-header button, .vn-main-header a { -webkit-tap-highlight-color: transparent; }
+        .vn-sidebar a:focus-visible, .vn-content a:focus-visible, button:focus-visible { outline: 3px solid #55b9ad; outline-offset: 2px; }
         @media (max-width: 767px) {
-            .vn-sidebar { width: 230px; }
-            .vn-main-content { padding: 14px; }
-            .vn-main-header { padding-left: 14px; padding-right: 14px; }
+            body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+            .vn-sidebar { position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(88vw, 330px); height: 100dvh; transform: translateX(-105%); transition: transform .24s ease; box-shadow: 20px 0 50px rgba(10,25,40,.22); }
+            body.vn-menu-open .vn-sidebar { transform: translateX(0); }
+            .vn-sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 55; padding: 0; border: 0; background: rgba(8,20,34,.52); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+            body.vn-menu-open .vn-sidebar-backdrop { opacity: 1; pointer-events: auto; }
+            .vn-menu-toggle { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex: 0 0 42px; border: 1px solid #dbe3eb; border-radius: 12px; background: #fff; color: #172536; }
+            .vn-main-header { min-height: 62px; padding: 10px 14px; gap: 10px; }
+            .vn-main-header h2 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+            .vn-main-header .vn-header-date { display: none; }
+            .vn-main-header form button { min-height: 40px; padding: 8px 11px; }
+            .vn-main-content { padding: 16px 14px 22px; }
+            .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
+            .vn-mobile-nav a, .vn-mobile-nav button { display: flex; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 10px; background: transparent; color: #657386; font-size: 10px; font-weight: 650; text-decoration: none; }
+            .vn-mobile-nav .vn-mobile-icon { font-size: 18px; line-height: 1; }
+            .vn-mobile-nav .is-current { color: #126c64; background: #e8f4f2; }
+            footer { padding: 14px !important; text-align: center; }
+        }
+        @media (min-width: 768px) and (max-width: 1100px) {
+            .vn-sidebar { width: 250px; }
+            .vn-main-content { padding: 22px; }
+        }
+        @media print {
+            .vn-sidebar, .vn-main-header, .vn-mobile-nav, .vn-sidebar-backdrop { display: none !important; }
+            body { padding-bottom: 0 !important; background: #fff !important; }
+            .vn-main-content { padding: 0 !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .vn-sidebar, .vn-sidebar-backdrop { transition: none !important; }
         }
     </style>
 </head>
@@ -130,90 +191,81 @@
     $currentUser = auth()->user();
     $isCompanyAccount = $currentUser?->account_type === 'company';
     $showAllProfileTypes = (bool) ($currentUser?->is_admin ?? false);
-    $activeFirm = $currentUser
-        ? \Illuminate\Support\Facades\DB::table('firm_profiles')
-            ->where('is_active', true)
-            ->when(!$currentUser->is_admin, fn ($query) => $query->where('user_id', $currentUser->id))
-            ->first()
-        : null;
+
 
     $practiceStates = [];
-$districtPracticeStates = [];
+    $districtPracticeStates = [];
 
-if ($activeFirm) {
-    $practiceRows = \Illuminate\Support\Facades\DB::table('firm_practice_states')
-        ->where('firm_profile_id', $activeFirm->id)
-        ->when(!$currentUser->is_admin, fn ($query) => $query->where('user_id', $currentUser->id))
-        ->where('is_active', true)
-        ->orderBy('state_name')
-        ->get();
+    // Sidebar practice jurisdictions: four batched queries, however many states are saved.
+    if ($currentUser) {
+        $practiceRows = \Illuminate\Support\Facades\DB::table('firm_practice_states')
+            ->where('user_id', $currentUser->id)
+            ->where('is_active', true)
+            ->orderBy('state_name')
+            ->get();
 
-    $practiceStates = $practiceRows->pluck('state_name')->all();
-
-    foreach ($practiceRows as $practiceRow) {
-        $state = \Illuminate\Support\Facades\DB::table('states')
-            ->where('name', $practiceRow->state_name)
-            ->first();
-
-        if (!$state) {
-            continue;
-        }
-
-        $mode = $practiceRow->district_selection_mode ?: 'all';
+        $practiceStates = $practiceRows->pluck('state_name')->all();
 
         // High Court-only states do not appear in District Courts.
-        if ($mode === 'none') {
-            continue;
-        }
+        $districtRows = $practiceRows->reject(fn ($row) => ($row->district_selection_mode ?: 'all') === 'none');
 
-        $districtQuery = \Illuminate\Support\Facades\DB::table('judicial_districts')
-            ->where('state_id', $state->id)
-            ->where('is_active', true)
-            ->whereNull('deleted_at');
+        if ($districtRows->isNotEmpty()) {
+            $statesByName = \Illuminate\Support\Facades\DB::table('states')
+                ->whereIn('name', $districtRows->pluck('state_name'))
+                ->get(['id', 'name'])
+                ->keyBy('name');
 
-        if ($mode === 'selected') {
-            $selectedIds = \Illuminate\Support\Facades\DB::table('firm_practice_districts')
-                ->where('firm_practice_state_id', $practiceRow->id)
-                ->when(!$currentUser->is_admin, fn ($query) => $query->where('user_id', $currentUser->id))
+            $selectedIdsByRow = \Illuminate\Support\Facades\DB::table('firm_practice_districts')
+                ->whereIn('firm_practice_state_id', $districtRows->pluck('id'))
+                ->where('user_id', $currentUser->id)
                 ->where('is_active', true)
-                ->pluck('judicial_district_id')
-                ->all();
+                ->get(['firm_practice_state_id', 'judicial_district_id'])
+                ->groupBy('firm_practice_state_id')
+                ->map(fn ($rows) => $rows->pluck('judicial_district_id')->map(fn ($id) => (int) $id)->all());
 
-            if (empty($selectedIds)) {
-                continue;
+            $districtsByState = \Illuminate\Support\Facades\DB::table('judicial_districts')
+                ->whereIn('state_id', $statesByName->pluck('id'))
+                ->where('is_active', true)
+                ->whereNull('deleted_at')
+                ->orderBy('district_name')
+                ->get(['id', 'state_id', 'district_name', 'district_code'])
+                ->groupBy('state_id');
+
+            foreach ($districtRows as $practiceRow) {
+                $state = $statesByName->get($practiceRow->state_name);
+                $districts = $state ? ($districtsByState->get($state->id) ?? collect()) : collect();
+
+                if (($practiceRow->district_selection_mode ?: 'all') === 'selected') {
+                    $selectedIds = $selectedIdsByRow->get($practiceRow->id, []);
+                    $districts = $districts->filter(fn ($district) => in_array((int) $district->id, $selectedIds, true))->values();
+                }
+
+                if ($districts->isNotEmpty()) {
+                    $districtPracticeStates[] = [
+                        'state_name' => $practiceRow->state_name,
+                        'districts' => $districts,
+                    ];
+                }
             }
-
-            $districtQuery->whereIn('id', $selectedIds);
-        }
-
-        $districts = $districtQuery
-            ->orderBy('district_name')
-            ->get(['id', 'district_name', 'district_code']);
-
-        if ($districts->isNotEmpty()) {
-            $districtPracticeStates[] = [
-                'state_name' => $practiceRow->state_name,
-                'districts' => $districts,
-            ];
         }
     }
-}@endphp
+@endphp
 
 <body class="min-h-screen">
 
+<button type="button" class="vn-sidebar-backdrop" id="vn-sidebar-backdrop" aria-label="Close navigation"></button>
 <div class="min-h-screen flex">
 
-    <aside class="vn-sidebar w-72 shrink-0 flex flex-col">
+    <aside id="vn-sidebar" class="vn-sidebar w-72 shrink-0 flex flex-col" aria-label="Main navigation">
 
         <div class="px-6 py-6 border-b border-slate-700">
             <a href="{{ route('dashboard') }}" class="inline-flex rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">
                 <span class="inline-flex items-center rounded-lg bg-white px-3 py-2">
-                    <img src="{{ asset('images/vakilneeti-logo.png') }}"
-                         alt="VakilNeeti"
+                    <img src="{{ asset('images/VakilNiti-logo.png') }}"
+                         alt="VakilNiti"
                          class="h-12 w-auto max-w-[210px] object-contain">
                 </span>
             </a>
-            <p class="text-xs text-slate-300 mt-1">Legal Practice Management</p>
         </div>
 
         @php
@@ -287,7 +339,7 @@ if ($activeFirm) {
         <button type="button"
             data-vn-toggle="courts"
             aria-expanded="{{ $vnActiveSection === 'courts' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('courts', '/court-management')"
+            data-vn-open-section="courts" data-vn-open-url="/court-management"
             class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
             <span>Courts</span>
             <span class="text-xs">&#9662;</span>
@@ -297,9 +349,14 @@ if ($activeFirm) {
             class="mt-2 space-y-1"
             @if($vnActiveSection !== 'courts') hidden @endif>
 
-            <a href="{{ url('/court-directory') }}?level=supreme"
-               class="vn-nav-link {{ request('level') === 'supreme' ? 'vn-active' : '' }}">
+            <a href="{{ route('court-directory.supreme-court') }}"
+               class="vn-nav-link {{ request('level') === 'supreme' || request()->is('court-directory/supreme-court') ? 'vn-active' : '' }}">
                 Supreme Court of India
+            </a>
+
+            <a href="{{ route('court-directory.display-boards') }}"
+               class="vn-nav-link {{ request()->is('court-directory/display-boards') ? 'vn-active' : '' }}">
+                Display boards
             </a>
 
             <details class="mt-2"
@@ -379,7 +436,7 @@ if ($activeFirm) {
         <button type="button"
             data-vn-toggle="cases"
             aria-expanded="{{ $vnActiveSection === 'cases' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('cases', '/case-dashboard')"
+            data-vn-open-section="cases" data-vn-open-url="/case-dashboard"
             class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
             <span>Case Management System</span>
             <span class="text-xs">&#9662;</span>
@@ -421,7 +478,7 @@ if ($activeFirm) {
         <button type="button"
             data-vn-toggle="clients"
             aria-expanded="{{ $vnActiveSection === 'clients' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('clients', '/client-management')"
+            data-vn-open-section="clients" data-vn-open-url="/client-management"
             class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
             <span>Client Management System</span>
             <span class="text-xs">&#9662;</span>
@@ -448,7 +505,7 @@ if ($activeFirm) {
     <button type="button"
         data-vn-toggle="police"
         aria-expanded="{{ $vnActiveSection === 'police' ? 'true' : 'false' }}"
-        onclick="vnOpenSection('police', '/police-administration')"
+        data-vn-open-section="police" data-vn-open-url="/police-administration"
         class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
         <span>Police Administration</span>
         <span class="text-xs">&#9662;</span>
@@ -467,7 +524,7 @@ if ($activeFirm) {
     <button type="button"
         data-vn-toggle="bars"
         aria-expanded="{{ $vnActiveSection === 'bars' ? 'true' : 'false' }}"
-        onclick="vnOpenSection('bars', '/bar-associations')"
+        data-vn-open-section="bars" data-vn-open-url="/bar-associations"
         class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
         <span>Bar Associations</span>
         <span class="text-xs">&#9662;</span>
@@ -486,7 +543,7 @@ if ($activeFirm) {
     <button type="button"
         data-vn-toggle="court-fee"
         aria-expanded="{{ $vnActiveSection === 'court-fee' ? 'true' : 'false' }}"
-        onclick="vnOpenSection('court-fee', '/court-fee')"
+        data-vn-open-section="court-fee" data-vn-open-url="/court-fee"
         class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
         <span>Court Fee</span>
         <span class="text-xs">&#9662;</span>
@@ -504,7 +561,7 @@ if ($activeFirm) {
         <button type="button"
             data-vn-toggle="bare-acts"
             aria-expanded="{{ $vnActiveSection === 'bare-acts' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('bare-acts', '/bare-acts')"
+            data-vn-open-section="bare-acts" data-vn-open-url="/bare-acts"
             class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
             <span>Bare Acts</span>
             <span class="text-xs">&#9662;</span>
@@ -541,7 +598,7 @@ if ($activeFirm) {
     <button type="button"
         data-vn-toggle="forms"
         aria-expanded="{{ $vnActiveSection === 'forms' ? 'true' : 'false' }}"
-        onclick="vnOpenSection('forms', '/miscellaneous-forms')"
+        data-vn-open-section="forms" data-vn-open-url="/miscellaneous-forms"
         class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
         <span>Miscellaneous Forms</span>
         <span class="text-xs">&#9662;</span>
@@ -567,7 +624,7 @@ if ($activeFirm) {
         <button type="button"
             data-vn-toggle="dashboards"
             aria-expanded="{{ $vnActiveSection === 'dashboards' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('dashboards', '/dashboard-studio')"
+            data-vn-open-section="dashboards" data-vn-open-url="/dashboard-studio"
             class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
             <span>India Law &amp; Justice Data</span>
             <span class="text-xs">&#9662;</span>
@@ -588,7 +645,7 @@ if ($activeFirm) {
         <button type="button"
             data-vn-toggle="profile"
             aria-expanded="{{ $vnActiveSection === 'profile' ? 'true' : 'false' }}"
-            onclick="vnOpenSection('profile', '/profile')"
+            data-vn-open-section="profile" data-vn-open-url="/profile"
             class="vn-nav-heading w-full cursor-pointer flex items-center justify-between text-left">
             <span>Profile Settings</span>
             <span class="text-xs">&#9662;</span>
@@ -698,7 +755,7 @@ if ($activeFirm) {
 
 </nav>
 
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     function vnOpenSection(section, dashboardPath) {
         const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
         const targetPath = dashboardPath.replace(/\/+$/, '') || '/';
@@ -816,53 +873,83 @@ if ($activeFirm) {
     });
 </script>
 
-        <div class="border-t border-slate-700 px-6 py-4">
-            <img src="{{ asset('images/vakilneeti-logo.png') }}"
-                 alt="VakilNeeti"
-                 class="h-8 w-auto max-w-[150px] rounded bg-white px-2 py-1 object-contain">
-            <p class="text-xs text-slate-400 mt-2">Legal Practice Workspace</p>
-        </div>
 
     </aside>
 
     <div class="flex-1 min-w-0 flex flex-col">
 
         <header class="vn-main-header min-h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 py-3">
-            <h2 class="text-lg font-bold text-slate-900">
-                @yield('page-heading', 'VakilNeeti')
-            </h2>
+            <button type="button" class="vn-menu-toggle" id="vn-menu-toggle" aria-label="Toggle sidebar" title="Show / hide menu" aria-controls="vn-sidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+                @unless(request()->routeIs('dashboard'))
+                    <x-back-link class="shrink-0" />
+                @endunless
+                <h2 class="min-w-0 truncate text-lg font-bold text-slate-900">
+                    @yield('page-heading', 'VakilNiti')
+                </h2>
+            </div>
 
-            <div class="flex items-center gap-4">
-                <div class="text-sm font-medium text-slate-600">
+            <div class="flex items-center gap-3">
+                <div class="vn-header-date text-sm font-medium text-slate-500">
                     {{ now()->format('d M Y') }}
                 </div>
 
-                @guest
-                    <a href="{{ route('login') }}" data-vn-auth-open="login" aria-haspopup="dialog" aria-controls="vn-auth-dialog"
-                       class="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
-                        Log in
-                    </a>
-                    <a href="{{ route('register') }}" data-vn-auth-open="register" aria-haspopup="dialog" aria-controls="vn-auth-dialog"
-                       class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                        Create account
-                    </a>
-                @else
-                    <span class="hidden text-sm font-medium text-slate-600 sm:inline">
-                        {{ auth()->user()->name }}
-                    </span>
-                    <form method="POST" action="{{ auth()->user()->is_admin ? route('admin.logout') : route('user.logout') }}">
-                        @csrf
-                        <button type="submit"
-                            class="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
-                            Logout
-                        </button>
-                    </form>
-                @endguest
+                @auth
+                    <details class="vn-profile-menu relative">
+                        <summary aria-label="Notifications{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' unread' : '' }}"
+                                 class="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            @if($bellUnreadCount ?? 0)
+                                <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white">{{ $bellUnreadCount > 9 ? '9+' : $bellUnreadCount }}</span>
+                            @endif
+                        </summary>
+                        <div class="absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-lg">
+                            <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
+                                <p class="font-semibold text-slate-900">Notifications</p>
+                                @if($bellUnreadCount ?? 0)
+                                    <form method="POST" action="{{ route('notifications.read-all') }}">
+                                        @csrf
+                                        <button type="submit" class="text-xs font-semibold text-[#16776e] hover:underline">Mark all read</button>
+                                    </form>
+                                @endif
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                @forelse($bellNotifications ?? [] as $notification)
+                                    @include('notifications.partials.item', ['notification' => $notification])
+                                @empty
+                                    <p class="px-4 py-6 text-center text-slate-500">You're all caught up.</p>
+                                @endforelse
+                            </div>
+                            <a href="{{ route('notifications.index') }}" class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-[#16776e] hover:bg-slate-50">View all</a>
+                        </div>
+                    </details>
+                @endauth
 
-                <button type="button" id="vn-share-open" aria-haspopup="dialog" aria-controls="vn-share-dialog"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    Share
-                </button>
+                <details class="vn-profile-menu relative">
+                    <summary aria-label="{{ auth()->check() ? 'Account menu' : 'Log in or create account' }}"
+                             class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        @auth
+                            {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->name, 0, 1)) }}
+                        @else
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                        @endauth
+                    </summary>
+                    <div class="absolute right-0 z-40 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg">
+                        @auth
+                            <p class="truncate px-4 py-2 font-semibold text-slate-900">{{ auth()->user()->name }}</p>
+                            <a href="{{ route('profile.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Profile</a>
+                            <form method="POST" action="{{ auth()->user()->is_admin ? route('admin.logout') : route('user.logout') }}">
+                                @csrf
+                                <button type="submit" class="block w-full px-4 py-2 text-left text-red-700 hover:bg-red-50">Log out</button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" data-vn-auth-open="login" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Log in</a>
+                            <a href="{{ route('register') }}" data-vn-auth-open="register" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Create account</a>
+                        @endauth
+                    </div>
+                </details>
             </div>
         </header>
 
@@ -872,15 +959,69 @@ if ($activeFirm) {
                     {{ session('auth_login_success') }}
                 </div>
             @endif
+            @if(request()->boolean('upload_too_large'))
+                <div role="alert" class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    That file is larger than this server accepts (up to {{ \App\Http\Controllers\CaseFileImportController::uploadLimitMegabytes(1024) }} MB), so nothing was uploaded. Upload a smaller file, such as one calendar's .ics file instead of the whole .zip.
+                </div>
+            @endif
             @yield('content')
         </main>
 
         <footer class="border-t border-slate-200 bg-white px-6 py-4 text-xs text-slate-600">
-            &copy; {{ date('Y') }} VakilNeeti. All rights reserved.
+            &copy; {{ date('Y') }} VakilNiti. All rights reserved.
         </footer>
 
     </div>
 </div>
+
+<nav class="vn-mobile-nav" aria-label="Quick navigation">
+    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-current' : '' }}"><span class="vn-mobile-icon">⌂</span><span>Home</span></a>
+    <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*') || request()->is('case-dashboard*') ? 'is-current' : '' }}"><span class="vn-mobile-icon">▤</span><span>Cases</span></a>
+    <a href="{{ route('cases.calendar') }}" class="{{ request()->is('case-calendar*') ? 'is-current' : '' }}"><span class="vn-mobile-icon">▦</span><span>Calendar</span></a>
+    <a href="{{ route('clients.index') }}" class="{{ request()->is('clients*') ? 'is-current' : '' }}"><span class="vn-mobile-icon">♙</span><span>Clients</span></a>
+    <button type="button" id="vn-mobile-more" aria-label="Open all modules"><span class="vn-mobile-icon">☷</span><span>More</span></button>
+</nav>
+
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
+    (function () {
+        const body = document.body;
+        const toggle = document.getElementById('vn-menu-toggle');
+        const backdrop = document.getElementById('vn-sidebar-backdrop');
+        const more = document.getElementById('vn-mobile-more');
+        const sidebar = document.getElementById('vn-sidebar');
+        function setMenu(open) {
+            body.classList.toggle('vn-menu-open', open);
+            if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (toggle) toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+        }
+        if (toggle) toggle.addEventListener('click', () => {
+            if (window.innerWidth >= 768) {
+                const collapsed = document.documentElement.classList.toggle('vn-sidebar-collapsed');
+                toggle.setAttribute('aria-label', collapsed ? 'Show sidebar' : 'Hide sidebar');
+                try { localStorage.setItem('vn-sidebar-collapsed', collapsed ? '1' : '0'); } catch (error) {}
+
+                return;
+            }
+
+            setMenu(!body.classList.contains('vn-menu-open'));
+        });
+
+        // Close the profile menu on outside click or Escape.
+        document.addEventListener('click', (event) => {
+            document.querySelectorAll('.vn-profile-menu[open]').forEach((menu) => {
+                if (!menu.contains(event.target)) menu.removeAttribute('open');
+            });
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') document.querySelectorAll('.vn-profile-menu[open]').forEach((menu) => menu.removeAttribute('open'));
+        });
+        if (backdrop) backdrop.addEventListener('click', () => setMenu(false));
+        if (more) more.addEventListener('click', () => setMenu(true));
+        if (sidebar) sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setMenu(false)));
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') setMenu(false); });
+        window.addEventListener('resize', () => { if (window.innerWidth >= 768) setMenu(false); });
+    }());
+</script>
 
 @stack('scripts')
 
@@ -889,7 +1030,7 @@ if ($activeFirm) {
     <div class="p-6 sm:p-8">
         <div class="mb-5 flex items-start justify-between gap-4">
             <div>
-                <h2 id="vn-auth-title" class="text-xl font-bold text-slate-900">Log in to VakilNeeti</h2>
+                <h2 id="vn-auth-title" class="text-xl font-bold text-slate-900">Log in to VakilNiti</h2>
                 <p id="vn-auth-description" class="mt-1 text-sm text-slate-600">Access your private workspace and work records.</p>
             </div>
             <button type="button" id="vn-auth-close" aria-label="Close account dialog"
@@ -943,7 +1084,7 @@ if ($activeFirm) {
                 </form>
             @endif
             <p class="mt-5 text-center text-sm text-slate-600">
-                New to VakilNeeti?
+                New to VakilNiti?
                 <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-blue-700 underline">Create an account</a>
             </p>
         </section>
@@ -1009,31 +1150,7 @@ if ($activeFirm) {
     </div>
 </dialog>
 
-<dialog id="vn-share-dialog" aria-labelledby="vn-share-title"
-        class="vn-centered-dialog w-[94vw] max-w-md overflow-y-auto rounded-2xl border border-slate-200 p-0 shadow-2xl backdrop:bg-slate-900/60">
-    <div class="p-6">
-        <div class="mb-3 flex items-start justify-between gap-4">
-            <h2 id="vn-share-title" class="text-xl font-bold text-slate-900">Share this page</h2>
-            <button type="button" id="vn-share-close" aria-label="Close share dialog"
-                    class="rounded-lg px-3 py-1 text-xl text-slate-500 hover:bg-slate-100">&times;</button>
-        </div>
-        <p class="mb-5 text-sm text-slate-600">
-            Share selected text and this page link, or just the page title and link. Private pages still require an account.
-        </p>
-        <div class="grid gap-3 sm:grid-cols-2">
-            <a id="vn-share-whatsapp" href="#" target="_blank" rel="noopener noreferrer" data-direct-share
-               class="rounded-lg bg-green-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-green-700">
-                WhatsApp
-            </a>
-            <a id="vn-share-sms" href="#"
-               class="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                Text message
-            </a>
-        </div>
-    </div>
-</dialog>
-
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
         const authDialog = document.getElementById('vn-auth-dialog');
         const authClose = document.getElementById('vn-auth-close');
@@ -1042,11 +1159,11 @@ if ($activeFirm) {
         const authDescription = document.getElementById('vn-auth-description');
         const authModes = {
             login: {
-                title: 'Log in to VakilNeeti',
+                title: 'Log in to VakilNiti',
                 description: 'Sign in securely with a phone OTP.'
             },
             register: {
-                title: 'Create your VakilNeeti account',
+                title: 'Create your VakilNiti account',
                 description: 'Set up your individual workspace.'
             },
             verify: {
@@ -1054,11 +1171,6 @@ if ($activeFirm) {
                 description: 'Confirm your phone number to continue registration.'
             }
         };
-        const shareDialog = document.getElementById('vn-share-dialog');
-        const shareOpen = document.getElementById('vn-share-open');
-        const shareClose = document.getElementById('vn-share-close');
-        const whatsappLink = document.getElementById('vn-share-whatsapp');
-        const smsLink = document.getElementById('vn-share-sms');
 
         function showAuth(mode) {
             authPanels.forEach(function (panel) {
@@ -1098,26 +1210,6 @@ if ($activeFirm) {
             }
         });
 
-        shareOpen.addEventListener('click', function () {
-            const selection = window.getSelection ? window.getSelection() : null;
-            const selectedText = selection ? selection.toString().trim() : '';
-            const sharedText = (selectedText || document.title) + '\n' + window.location.href;
-            const encodedText = encodeURIComponent(sharedText);
-            whatsappLink.href = 'https://wa.me/?text=' + encodedText;
-            smsLink.href = 'sms:?body=' + encodedText;
-            shareDialog.showModal();
-        });
-
-        shareClose.addEventListener('click', function () {
-            shareDialog.close();
-        });
-
-        shareDialog.addEventListener('click', function (event) {
-            if (event.target === shareDialog) {
-                shareDialog.close();
-            }
-        });
-
         @if(request()->routeIs('login') || session('show_login_modal') || $errors->login->any())
             showAuth('login');
         @elseif(request()->routeIs('register.verify') || session('show_verify_modal') || $errors->verification->any())
@@ -1152,7 +1244,7 @@ if ($activeFirm) {
     </div>
 </dialog>
 
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
         const dialog = document.getElementById('vn-webview-dialog');
         const frame = document.getElementById('vn-webview-frame');

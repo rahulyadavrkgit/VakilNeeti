@@ -162,7 +162,7 @@
                         <td class="p-3">{{ $deduction->deduction_date?->format('d-m-Y') }}</td>
                         <td class="p-3">{{ $deduction->client?->display_name ?? 'Unavailable' }}</td>
                         <td class="p-3">{{ $deduction->invoice?->invoice_number ?? 'Unavailable' }}</td>
-                        <td class="p-3">{{ $deduction->tds_section ?: 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â' }}</td>
+                        <td class="p-3">{{ $deduction->tds_section ?: '—' }}</td>
                         <td class="p-3">&#8377;{{ number_format((float) $deduction->amount, 2) }}</td>
                         <td class="p-3">{{ ucfirst($deduction->certificate_status) }}</td>
                         <td class="p-3">
@@ -194,8 +194,6 @@
 
     {{ $deductions->links() }}
 
-    <p class="text-xs text-slate-500">
-        Report totals reflect the selected filters. Matched, not reflected and mismatch statuses are internal reconciliation records and are not independently verified by the Income Tax Department.
-    </p>
+    <p class="text-xs text-slate-500">Totals follow the filters. Statuses are your own records, not verified by the Income Tax Department.</p>
 </div>
 @endsection

@@ -4,12 +4,6 @@
 <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
 
     <!-- Back Navigation -->
-    <div class="mb-4">
-        <a href="{{ route('police-administration.index', ['state_id' => $station->state_id]) }}"
-           class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800">
-            &larr; Back to Police Directory
-        </a>
-    </div>
 
     <!-- Administrative Hierarchy Breadcrumb -->
     <nav class="mb-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
@@ -151,7 +145,7 @@
                 <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-2">
                     <span>⚖️ Judicial & Remand Jurisdiction Cross-Link</span>
                 </h2>
-                <p class="mt-1 text-xs text-indigo-700">Official court complex exercising remand and trial jurisdiction over this police station's FIRs.</p>
+                <p class="mt-1 text-xs text-indigo-700">The court complex with jurisdiction over this station’s FIRs.</p>
 
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>

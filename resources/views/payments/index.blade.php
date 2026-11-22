@@ -1,18 +1,19 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Payments')
 @section('page-heading', 'Payments')
 @section('content')
 <div class="space-y-6">
 
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-3xl font-bold">Payments</h2>
-                <p class="mt-2 text-slate-600">Track client payments and receipts.</p>
-            </div>
+        @include('billing.partials.tabs')
 
+        <div class="flex justify-end gap-2">
+            <a href="{{ route('billing.payments.export') }}"
+               class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Export CSV
+            </a>
             <a href="{{ route('payments.create') }}"
-               class="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
-                + Record Payment
+               class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">
+                + Record payment
             </a>
         </div>
 
@@ -60,7 +61,7 @@
                             </td>
 
                             <td class="p-4 font-semibold">
-                                â‚¹{{ number_format($payment->amount, 2) }}
+                                @money($payment->amount)
                             </td>
 
                             <td class="p-4">

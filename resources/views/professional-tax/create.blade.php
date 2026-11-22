@@ -20,10 +20,11 @@
         @csrf
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <div>
-        <label class="mb-1 block text-sm font-medium">State</label>
-        <input name="state" required maxlength="120"
-               value="{{ old('state', $record->state ?? '') }}"
-               class="w-full rounded-lg border p-2">
+        <label class="mb-1 block text-sm font-medium">State / UT</label>
+        <select name="state" required class="w-full rounded-lg border bg-white p-2">
+            <x-state-options :groups="\App\Models\State::dropdownGroups()" :selected="old('state', $record->state ?? null)" />
+        </select>
+        @error('state') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
     </div>
 
     <div>
@@ -76,7 +77,7 @@
     </div>
 
     <div>
-        <label class="mb-1 block text-sm font-medium">Amount (₹)</label>
+        <label class="mb-1 block text-sm font-medium">Amount (@currency)</label>
         <input type="number" name="amount" min="0" step="0.01" required
                value="{{ old('amount', $record->amount ?? '0.00') }}"
                class="w-full rounded-lg border p-2">

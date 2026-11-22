@@ -31,7 +31,7 @@
                     @endphp
                     <option value="{{ $invoice->id }}" @selected(old('invoice_id') == $invoice->id)>
                         {{ $invoice->invoice_number }} — {{ $invoice->client->display_name }}
-                        — Balance ₹{{ number_format($balance, 2) }}
+                        — Balance @money($balance)
                     </option>
                 @endforeach
             </select>
@@ -45,7 +45,7 @@
                        class="w-full rounded-lg border p-2">
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium">TDS Amount (₹)</label>
+                <label class="mb-1 block text-sm font-medium">TDS Amount (@currency)</label>
                 <input type="number" name="amount" min="0.01" step="0.01" required
                        value="{{ old('amount') }}" class="w-full rounded-lg border p-2">
             </div>
@@ -62,7 +62,7 @@
                        class="w-full rounded-lg border p-2">
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium">Deduction Base Amount (₹)</label>
+                <label class="mb-1 block text-sm font-medium">Deduction Base Amount (@currency)</label>
                 <input type="number" name="deduction_base_amount" min="0" step="0.01"
                        value="{{ old('deduction_base_amount') }}"
                        class="w-full rounded-lg border p-2">

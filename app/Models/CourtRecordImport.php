@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CourtRecordImport extends Model
 {
+    use Concerns\BelongsToUser;
+
     protected $fillable = [
         'source_name',
         'source_url',

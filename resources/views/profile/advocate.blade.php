@@ -8,15 +8,18 @@
     $languageInput = old('languages_spoken', $profile->languages_spoken ?? []);
     $languageValue = is_array($languageInput) ? implode(', ', $languageInput) : $languageInput;
     $selectedSpecializations = (array) old('specializations', $profile->specializations ?? []);
+    $allStates = \App\Models\State::indianStatesAndUnionTerritories();
+    $selectedRegion = old('region', $profile->region);
+    $selectedStateCode = $allStates[$selectedRegion] ?? '';
+    $selectedGstCode = \App\Models\State::GST_STATE_CODES[$selectedRegion] ?? '';
+    $hasUnlistedRegion = filled($profile->region) && ! array_key_exists($profile->region, $allStates);
 @endphp
 
 <div class="mx-auto max-w-5xl space-y-6">
-    <header class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm sm:p-8">
-        <p class="text-xs font-bold uppercase tracking-widest text-amber-300">Profile Settings</p>
-        <h1 class="mt-2 text-2xl font-bold sm:text-3xl">Advocate Profile</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-200">
-            Review and update the professional information you provided during registration.
-        </p>
+    <header class="relative overflow-hidden rounded-3xl bg-[#142235] p-6 text-white shadow-lg sm:p-8">
+        <div class="pointer-events-none absolute -right-12 -top-24 h-64 w-64 rounded-full border border-white/10"></div>
+        <p class="relative text-xs font-bold uppercase tracking-[.18em] text-[#91c9c1]">Profile Settings</p>
+        <h1 class="relative mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Advocate Profile</h1>
     </header>
 
     @if(session('success'))
@@ -81,7 +84,7 @@
                                @required(!$profile->photo_path && auth()->user()->account_role !== 'student_intern')
                                class="mt-1 block w-full cursor-pointer rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-blue-950 file:px-4 file:py-2 file:font-semibold file:text-white">
                     </label>
-                    <p class="mt-1 text-xs text-slate-500">JPG, PNG or WebP; maximum size 10 MB.</p>
+                    <p class="mt-1 text-xs text-slate-500">JPG, PNG or WebP · max 10 MB</p>
                     @error('photo') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -99,8 +102,12 @@
 
                 <label class="text-sm font-medium text-slate-700">
                     Graduation year <span class="text-red-600">*</span>
-                    <input type="number" name="graduation_year" value="{{ old('graduation_year', $profile->graduation_year) }}" required min="1950" max="{{ now()->year }}"
-                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                    <select name="graduation_year" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+                        <option value="">Select year</option>
+                        @foreach(range(2030, 1950) as $year)
+                            <option value="{{ $year }}" @selected((int) old('graduation_year', $profile->graduation_year) === $year)>{{ $year }}</option>
+                        @endforeach
+                    </select>
                     @error('graduation_year') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
 
@@ -139,36 +146,66 @@
             </div>
         </section>
 
+        <section id="bar-registration" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 class="text-lg font-bold text-slate-900">Bar Council enrolment</h2>
+            @if($profile->bar_council_registration_number && ! $profile->bar_number)
+                <p class="mt-1 text-sm text-slate-500">Saved as: <span class="font-semibold text-slate-700">{{ $profile->bar_council_registration_number }}</span>. Enter it in the three parts below.</p>
+            @endif
+            <div class="mt-4">
+                <x-bar-registration-fields :profile="$profile" :state-groups="$stateGroups" :required="$user->account_role !== 'student_intern'" />
+            </div>
+        </section>
+
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-lg font-bold text-slate-900">Practice location</h2>
-            <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                <label class="text-sm font-medium text-slate-700">
-                    City <span class="text-red-600">*</span>
-                    <input name="city" value="{{ old('city', $profile->city) }}" required maxlength="100"
+            <div class="mt-5 grid gap-4 sm:grid-cols-2" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
+                <div class="text-sm font-medium text-slate-700">
+                    <label for="advocate-region">State / Union Territory <span class="text-red-600">*</span></label>
+                    <select id="advocate-region" name="region" required data-location-state
+                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+                        <x-state-options :groups="$stateGroups" :selected="$selectedRegion" />
+                    </select>
+                    @if($hasUnlistedRegion)
+                        <span class="mt-1 block text-xs font-normal text-amber-700">
+                            Your saved value "{{ $profile->region }}" is not in the official list. Select your State / Union Territory again.
+                        </span>
+                    @endif
+                    @error('region') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="text-sm font-medium text-slate-700">
+                    <label for="advocate-district">District <span class="text-red-600">*</span></label>
+                    <select data-location-district-select aria-label="District" hidden
+                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"></select>
+                    <input id="advocate-district" name="district" value="{{ old('district', $profile->district) }}" required maxlength="100"
+                           data-location-district-input placeholder="Type your district"
+                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                    <span data-location-district-hint class="mt-1 block text-xs font-normal text-slate-500" hidden></span>
+                    @error('district') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="text-sm font-medium text-slate-700">
+                    <label for="advocate-city">City / Town <span class="text-red-600">*</span></label>
+                    <select data-location-city-select aria-label="City or town" hidden
+                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"></select>
+                    <input id="advocate-city" name="city" value="{{ old('city', $profile->city) }}" required maxlength="100" autocomplete="address-level2"
+                           data-location-city-input placeholder="Type the city or town"
                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
                     @error('city') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                </label>
+                </div>
 
-                <label class="text-sm font-medium text-slate-700">
-                    District <span class="text-red-600">*</span>
-                    <input name="district" value="{{ old('district', $profile->district) }}" required maxlength="100"
-                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                    @error('district') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="text-sm font-medium text-slate-700">
-                    Region / State <span class="text-red-600">*</span>
-                    <input name="region" value="{{ old('region', $profile->region) }}" required maxlength="120"
-                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                    @error('region') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                </label>
-
-                <label class="text-sm font-medium text-slate-700">
-                    State code
-                    <input name="state_code" value="{{ old('state_code', $profile->state_code) }}" maxlength="15"
-                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                    @error('state_code') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                </label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-sm font-medium text-slate-700">
+                        State code
+                        <input value="{{ $selectedStateCode }}" readonly data-location-state-code
+                               class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-600">
+                    </label>
+                    <label class="text-sm font-medium text-slate-700">
+                        GST state code
+                        <input value="{{ $selectedGstCode }}" readonly data-location-gst-code
+                               class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-600">
+                    </label>
+                </div>
 
                 <label class="text-sm font-medium text-slate-700">
                     PIN code <span class="text-red-600">*</span>
@@ -177,17 +214,20 @@
                     @error('pincode') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
 
-                <label class="text-sm font-medium text-slate-700">
-                    Court <span class="text-red-600">*</span>
-                    <input name="court" value="{{ old('court', $profile->court) }}" required maxlength="200" placeholder="Primary court or forum"
+                <div class="text-sm font-medium text-slate-700">
+                    <label for="advocate-court">Primary court <span class="text-red-600">*</span></label>
+                    <select data-location-court-select aria-label="Primary court" hidden
+                            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"></select>
+                    <input id="advocate-court" name="court" value="{{ old('court', $profile->court) }}" required maxlength="200"
+                           data-location-court-input placeholder="Type the court or tribunal"
                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
                     @error('court') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-                </label>
+                </div>
             </div>
         </section>
 
         <div class="flex justify-end">
-            <button type="submit" class="rounded-lg bg-amber-400 px-7 py-3 font-semibold text-slate-950 hover:bg-amber-300">
+            <button type="submit" class="inline-flex min-h-11 items-center rounded-xl bg-[#238b80] px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-[#16776e]">
                 Save Advocate Profile
             </button>
         </div>

@@ -1,6 +1,6 @@
 ﻿<?php
 
-$base = __DIR__ . '/storage/app';
+$base = dirname(__DIR__, 2) . '/storage/app';
 
 $manifestFile = $base . '/sci-cause-list-download-manifest.json';
 $downloadDirectory = $base . '/sci-cause-lists';

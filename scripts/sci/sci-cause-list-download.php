@@ -1,6 +1,6 @@
 ﻿<?php
 
-$base = __DIR__ . '/storage/app';
+$base = dirname(__DIR__, 2) . '/storage/app';
 
 $inputFile = $base . '/sci-cause-list-parsed.json';
 $downloadDirectory = $base . '/sci-cause-lists';

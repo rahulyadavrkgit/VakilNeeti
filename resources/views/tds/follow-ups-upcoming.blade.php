@@ -55,15 +55,15 @@
                         </td>
 
                         <td class="px-4 py-3">
-                            {{ $deduction?->client?->display_name ?? 'Ã¢â‚¬â€' }}
+                            {{ $deduction?->client?->display_name ?? '—' }}
                         </td>
 
                         <td class="px-4 py-3">
-                            {{ $deduction?->invoice?->invoice_number ?? 'Ã¢â‚¬â€' }}
+                            {{ $deduction?->invoice?->invoice_number ?? '—' }}
                         </td>
 
                         <td class="px-4 py-3">
-                            {{ $deduction?->deduction_reference ?? 'Ã¢â‚¬â€' }}
+                            {{ $deduction?->deduction_reference ?? '—' }}
                         </td>
 
                         <td class="px-4 py-3">
@@ -87,7 +87,7 @@
 
                                     <form method="POST"
                                           action="{{ route('tds.follow-ups.complete', $followUp) }}"
-                                          onsubmit="return confirm('Mark this follow-up as completed?')">
+                                          data-confirm="Mark this follow-up as completed?">
                                         @csrf
                                         @method('PUT')
                                         <button type="submit"
@@ -97,7 +97,7 @@
                                     </form>
                                 </div>
                             @else
-                                Ã¢â‚¬â€
+                                —
                             @endif
                         </td>
                     </tr>

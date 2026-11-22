@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\State;
 use App\Models\JudicialDistrict;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -11,68 +11,29 @@ use Illuminate\Validation\ValidationException;
 
 class PracticeStateController extends Controller
 {
+    /**
+     * @return list<string>
+     */
     private function stateList(): array
     {
-        return [
-            'Andhra Pradesh',
-            'Arunachal Pradesh',
-            'Assam',
-            'Bihar',
-            'Chhattisgarh',
-            'Goa',
-            'Gujarat',
-            'Haryana',
-            'Himachal Pradesh',
-            'Jharkhand',
-            'Karnataka',
-            'Kerala',
-            'Madhya Pradesh',
-            'Maharashtra',
-            'Manipur',
-            'Meghalaya',
-            'Mizoram',
-            'Nagaland',
-            'Odisha',
-            'Punjab',
-            'Rajasthan',
-            'Sikkim',
-            'Tamil Nadu',
-            'Telangana',
-            'Tripura',
-            'Uttar Pradesh',
-            'Uttarakhand',
-            'West Bengal',
-            'Andaman and Nicobar Islands',
-            'Chandigarh',
-            'Dadra and Nagar Haveli and Daman and Diu',
-            'Delhi',
-            'Jammu and Kashmir',
-            'Ladakh',
-            'Lakshadweep',
-            'Puducherry',
-        ];
+        return array_keys(State::indianStatesAndUnionTerritories());
     }
 
     public function index()
     {
-        $firm = DB::table('firm_profiles')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
-            ->where('is_active', true)
-            ->first();
-
         $selectedStates = [];
         $courtCounts = [];
         $stateRecordsByName = [];
         $districtSelectionModes = [];
         $selectedDistrictIds = [];
 
-        if ($firm) {
-            $practiceRows = DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
-                ->where('firm_profile_id', $firm->id)
-                ->where('is_active', true)
-                ->orderBy('state_name')
-                ->get();
+        $practiceRows = DB::table('firm_practice_states')
+            ->where('user_id', auth()->id())
+            ->where('is_active', true)
+            ->orderBy('state_name')
+            ->get();
+
+        if ($practiceRows->isNotEmpty()) {
 
             $selectedStates = $practiceRows->pluck('state_name')->all();
 
@@ -83,7 +44,7 @@ class PracticeStateController extends Controller
             foreach ($practiceRows as $practiceRow) {
                 $stateRecord = $stateRecords->get($practiceRow->state_name);
 
-                if (!$stateRecord) {
+                if (! $stateRecord) {
                     continue;
                 }
 
@@ -94,7 +55,7 @@ class PracticeStateController extends Controller
 
                 $selectedDistrictIds[$stateRecord->id] =
                     DB::table('firm_practice_districts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                        ->where('user_id', auth()->id())
                         ->where('firm_practice_state_id', $practiceRow->id)
                         ->where('is_active', true)
                         ->pluck('judicial_district_id')
@@ -102,7 +63,8 @@ class PracticeStateController extends Controller
                         ->all();
             }
 
-            if (!empty($selectedStates)) {
+            // Catalogue coverage is shown to admins only.
+            if (! empty($selectedStates) && auth()->user()->is_admin) {
                 $courtCounts = DB::table('courts')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
@@ -115,7 +77,6 @@ class PracticeStateController extends Controller
         }
 
         return view('profile.practice-states', [
-            'firm' => $firm,
             'states' => $this->stateList(),
             'selectedStates' => $selectedStates,
             'courtCounts' => $courtCounts,
@@ -128,22 +89,9 @@ class PracticeStateController extends Controller
     public function store(Request $request)
     {
         $firm = DB::table('firm_profiles')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('is_active', true)
             ->first();
-
-        if (!$firm) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Please create an active Firm Profile first.',
-                ], 422);
-            }
-
-            return redirect()
-                ->route('firm-profile.index')
-                ->with('error', 'Please create an active Firm Profile first.');
-        }
 
         $validator = Validator::make($request->all(), [
             'states' => ['sometimes', 'array'],
@@ -151,7 +99,7 @@ class PracticeStateController extends Controller
                 'required',
                 'string',
                 'distinct',
-                'in:' . implode(',', $this->stateList()),
+                'in:'.implode(',', $this->stateList()),
             ],
             'district_selection_mode' => ['sometimes', 'array'],
             'district_selection_mode.*' => ['required', 'in:none,all,selected'],
@@ -203,7 +151,7 @@ class PracticeStateController extends Controller
         foreach ($modes as $stateId => $mode) {
             $stateRecord = $stateRecords->get((int) $stateId);
 
-            if (!$stateRecord || !in_array($stateRecord->name, $selectedStates, true)) {
+            if (! $stateRecord || ! in_array($stateRecord->name, $selectedStates, true)) {
                 $message = 'A district setting was submitted for an unselected state.';
 
                 if ($request->expectsJson()) {
@@ -222,7 +170,7 @@ class PracticeStateController extends Controller
         foreach ($districtSelections as $stateId => $districtIds) {
             $stateRecord = $stateRecords->get((int) $stateId);
 
-            if (!$stateRecord || !in_array($stateRecord->name, $selectedStates, true)) {
+            if (! $stateRecord || ! in_array($stateRecord->name, $selectedStates, true)) {
                 $message = 'A district was submitted for an unselected state.';
 
                 if ($request->expectsJson()) {
@@ -260,7 +208,7 @@ class PracticeStateController extends Controller
             $districtIds = $districtSelections[$stateId] ?? [];
 
             if ($mode === 'selected' && count($districtIds) === 0) {
-                $message = 'Select a district, choose Select All, or use High Court-only practice for ' . $stateRecord->name . '.';
+                $message = 'Select a district, choose Select All, or use High Court-only practice for '.$stateRecord->name.'.';
 
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -298,14 +246,13 @@ class PracticeStateController extends Controller
         ) {
             foreach ($selectedStates as $stateName) {
                 $existing = DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
-                    ->where('firm_profile_id', $firm->id)
+                    ->where('user_id', auth()->id())
                     ->where('state_name', $stateName)
                     ->first();
 
                 if ($existing) {
                     DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                        ->where('user_id', auth()->id())
                         ->where('id', $existing->id)
                         ->update([
                             'is_active' => true,
@@ -313,22 +260,21 @@ class PracticeStateController extends Controller
                         ]);
                 } else {
                     DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->insert([
-                        'user_id' => auth()->id(),
-                        'firm_profile_id' => $firm->id,
-                        'state_name' => $stateName,
-                        'is_active' => true,
-                        'district_selection_mode' => 'none',
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]);
+                        ->where('user_id', auth()->id())->insert([
+                            'user_id' => auth()->id(),
+                            'firm_profile_id' => $firm?->id,
+                            'state_name' => $stateName,
+                            'is_active' => true,
+                            'district_selection_mode' => 'none',
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]);
                 }
             }
 
             // Deactivate deselected states without deleting their records.
             DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
-                ->where('firm_profile_id', $firm->id)
+                ->where('user_id', auth()->id())
                 ->whereNotIn('state_name', $selectedStates)
                 ->update([
                     'is_active' => false,
@@ -337,19 +283,18 @@ class PracticeStateController extends Controller
 
             foreach ($stateRecords as $stateId => $stateRecord) {
                 $practiceState = DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
-                    ->where('firm_profile_id', $firm->id)
+                    ->where('user_id', auth()->id())
                     ->where('state_name', $stateRecord->name)
                     ->first();
 
-                if (!$practiceState) {
+                if (! $practiceState) {
                     continue;
                 }
 
                 $mode = $modes[$stateId] ?? 'none';
 
                 DB::table('firm_practice_states')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                    ->where('user_id', auth()->id())
                     ->where('id', $practiceState->id)
                     ->update([
                         'district_selection_mode' => $mode,
@@ -358,7 +303,7 @@ class PracticeStateController extends Controller
 
                 // Keep historical associations but deactivate them first.
                 DB::table('firm_practice_districts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                    ->where('user_id', auth()->id())
                     ->where('firm_practice_state_id', $practiceState->id)
                     ->update([
                         'is_active' => false,
@@ -371,14 +316,14 @@ class PracticeStateController extends Controller
 
                 foreach ($districtSelections[$stateId] ?? [] as $districtId) {
                     $existingDistrictSelection = DB::table('firm_practice_districts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                        ->where('user_id', auth()->id())
                         ->where('firm_practice_state_id', $practiceState->id)
                         ->where('judicial_district_id', $districtId)
                         ->first();
 
                     if ($existingDistrictSelection) {
                         DB::table('firm_practice_districts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                            ->where('user_id', auth()->id())
                             ->where('id', $existingDistrictSelection->id)
                             ->update([
                                 'is_active' => true,
@@ -386,14 +331,14 @@ class PracticeStateController extends Controller
                             ]);
                     } else {
                         DB::table('firm_practice_districts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->insert([
-                            'user_id' => auth()->id(),
-                            'firm_practice_state_id' => $practiceState->id,
-                            'judicial_district_id' => $districtId,
-                            'is_active' => true,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ]);
+                            ->where('user_id', auth()->id())->insert([
+                                'user_id' => auth()->id(),
+                                'firm_practice_state_id' => $practiceState->id,
+                                'judicial_district_id' => $districtId,
+                                'is_active' => true,
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ]);
                     }
                 }
             }

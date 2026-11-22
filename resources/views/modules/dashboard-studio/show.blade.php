@@ -137,10 +137,10 @@
                         </div>
                         @if(!($readOnly ?? false))
                             <div class="ds-actions" style="margin-left:auto;flex-direction:column;align-items:flex-end;gap:6px">
-                                <button type="button" class="ds-button" style="padding:7px 10px;font-size:12px" onclick="document.getElementById('widget-edit-{{ $widget->id }}').style.display = document.getElementById('widget-edit-{{ $widget->id }}').style.display === 'none' ? 'block' : 'none';">
+                                <button type="button" class="ds-button" style="padding:7px 10px;font-size:12px" data-toggle-display="widget-edit-{{ $widget->id }}">
                                     Edit
                                 </button>
-                                <form method="POST" action="{{ route('dashboard-studio.widgets.destroy', [$dashboard->id, $widget->id]) }}" onsubmit="return confirm('Delete this widget?')">
+                                <form method="POST" action="{{ route('dashboard-studio.widgets.destroy', [$dashboard->id, $widget->id]) }}" data-confirm="Delete this widget?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="ds-button ds-button-danger" style="padding:7px 10px;font-size:12px">Delete</button>
@@ -350,7 +350,7 @@
                             @csrf
                             <button class="ds-button" type="submit">Test / Refresh API</button>
                         </form>
-                        <form method="POST" action="{{ route('dashboard-studio.sources.destroy', [$dashboard->id, $source->id]) }}" onsubmit="return confirm('Delete this data source and its saved snapshots?')">
+                        <form method="POST" action="{{ route('dashboard-studio.sources.destroy', [$dashboard->id, $source->id]) }}" data-confirm="Delete this data source and its saved snapshots?">
                             @csrf
                             @method('DELETE')
                             <button class="ds-button ds-button-danger" type="submit">Delete source</button>
@@ -404,7 +404,7 @@
 
                     <div class="ds-card" style="margin-top:18px">
                         <h3 style="font-size:18px;font-weight:700;margin:0 0 12px">State / UT wise pending cases</h3>
-                        <input type="search" id="ds-table-search-{{ $source->id }}" class="ds-input" placeholder="Search State / UT..." oninput="filterDashboardTable({{ $source->id }})" style="max-width:380px;margin-bottom:13px">
+                        <input type="search" id="ds-table-search-{{ $source->id }}" class="ds-input" placeholder="Search State / UT..." data-filter-dashboard-table="{{ $source->id }}" style="max-width:380px;margin-bottom:13px">
                         <div class="ds-table-wrap">
                             <table class="ds-table" id="ds-table-{{ $source->id }}">
                                 <thead>
@@ -480,21 +480,20 @@
 
     <div class="ds-card">
         <h2 style="font-size:18px;font-weight:700;margin:0 0 8px">Dashboard configuration</h2>
-        <p class="ds-muted" style="margin:0">The dashboard currently displays visualizations generated from the discovered API fields. The underlying database also supports configurable widgets, chart settings, snapshots and refresh logs. Additional datasets can be connected independently.</p>
     </div>
 
     @if(!($readOnly ?? false))
-        <form method="POST" action="{{ route('dashboard-studio.destroy', $dashboard->id) }}" onsubmit="return confirm('Permanently delete this dashboard and its registered data sources?')">
+        <form method="POST" action="{{ route('dashboard-studio.destroy', $dashboard->id) }}" data-confirm="Permanently delete this dashboard and its registered data sources?">
             @csrf
             @method('DELETE')
             <button class="ds-button ds-button-danger" type="submit">Delete this dashboard</button>
         </form>
     @endif
 
-    <footer class="ds-muted" style="font-size:12px;text-align:center;margin:30px 0">© {{ date('Y') }} VakilNeeti. All rights reserved.</footer>
+    <footer class="ds-muted" style="font-size:12px;text-align:center;margin:30px 0">© {{ date('Y') }} VakilNiti. All rights reserved.</footer>
 </div>
 
-<script>
+<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 function filterDashboardTable(sourceId) {
     const input = document.getElementById('ds-table-search-' + sourceId);
     const table = document.getElementById('ds-table-' + sourceId);

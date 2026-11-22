@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FirmProfile;
 use App\Models\ProfessionalTaxRecord;
+use App\Models\State;
 use Illuminate\Http\Request;
 
 class ProfessionalTaxController extends Controller
@@ -48,7 +49,7 @@ class ProfessionalTaxController extends Controller
         $firm = $this->activeFirm();
 
         $validated = $request->validate([
-            'state' => 'required|string|max:120',
+            'state' => ['required', 'string', State::nameRule()],
             'registration_type' => 'required|in:PTEC,PTRC,Both,Other',
             'registration_number' => 'nullable|string|max:100',
             'enrolment_number' => 'nullable|string|max:100',
@@ -126,7 +127,7 @@ class ProfessionalTaxController extends Controller
         );
 
         $validated = $request->validate([
-            'state' => 'required|string|max:120',
+            'state' => ['required', 'string', State::nameRule()],
             'registration_type' => 'required|in:PTEC,PTRC,Both,Other',
             'registration_number' => 'nullable|string|max:100',
             'enrolment_number' => 'nullable|string|max:100',

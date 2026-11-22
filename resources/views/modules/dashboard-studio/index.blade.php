@@ -8,7 +8,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
         <div>
             <h1 style="font-size:28px;font-weight:700;">India Law &amp; Justice Data Dashboards</h1>
-            <p style="color:#64748b;">Build public-data dashboards to understand case pendency and disposal across India. These dashboards are separate from your private case-management records.</p>
+            <p style="color:#64748b;">Public-data dashboards on case pendency and disposal. Separate from your private cases.</p>
         </div>
         <span style="font-size:12px;background:#e0f2fe;color:#075985;padding:7px 12px;border-radius:20px;">
             Administrator workspace
@@ -31,10 +31,6 @@
 
     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin:20px 0;">
         <h2 style="font-size:19px;font-weight:650;margin-bottom:8px;color:#1e3a8a;">Suggested India case-statistics dashboards</h2>
-        <p style="color:#475569;font-size:14px;margin-bottom:15px;">
-            Create dashboards for court-level pendency and disposal, state-wise High Court comparisons,
-            or district and subordinate court trends. Add verified official datasets as sources before displaying figures.
-        </p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
             <div style="background:white;border:1px solid #dbeafe;border-radius:8px;padding:13px;">
                 <strong>Court-level overview</strong>
@@ -49,9 +45,7 @@
                 <p style="color:#64748b;font-size:13px;margin-top:5px;">Review district-level and year-wise case trends.</p>
             </div>
         </div>
-        <p style="color:#64748b;font-size:12px;margin-top:12px;">
-            Figures are not prefilled; they appear only after you connect and test an official data.gov.in resource.
-        </p>
+        <p style="color:#64748b;font-size:12px;margin-top:12px;">Figures appear after you connect an official data.gov.in source.</p>
     </div>
 
     <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:25px 0;">

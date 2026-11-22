@@ -11,10 +11,6 @@
             </p>
         </div>
 
-        <a href="{{ route('profile.index') }}"
-           class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-            Back to Profile
-        </a>
     </div>
 
     @if(session('success'))
@@ -141,12 +137,7 @@
                     </span>
                 </label>
 
-                <p class="text-xs text-slate-500">
-                    These are configurable defaults, not a determination of GST liability.
-                    Confirm the applicable classification, rate, place of supply and tax treatment
-                    before issuing an invoice. Composition and unregistered settings disable GST
-                    collection through this default configuration.
-                </p>
+                <p class="text-xs text-slate-500">Defaults only. Confirm the GST rate and treatment before invoicing.</p>
             </div>
         </div>
 
@@ -182,10 +173,7 @@
                 </div>
             </div>
 
-            <p class="mt-3 text-xs text-slate-500">
-                The numbering format is stored as a preference. It will be connected to invoice
-                number generation in a later integration step.
-            </p>
+            <p class="mt-3 text-xs text-slate-500">Saved as a preference; not yet used for invoice numbers.</p>
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -319,12 +307,7 @@
                     </div>
                 </div>
 
-                <p class="text-xs text-slate-500">
-                    TDS is generally deducted and deposited by the client/deductor where applicable.
-                    Record actual deductions against the relevant client invoice or payment and
-                    reconcile them with TDS certificates. The configured rate is only a default;
-                    actual treatment depends on the applicable provision and circumstances.
-                </p>
+                <p class="text-xs text-slate-500">TDS is deducted by the client. Record actual deductions and reconcile with certificates.</p>
             </div>
         </div>
 
@@ -392,12 +375,7 @@
                               class="w-full rounded-lg border border-slate-300 px-3 py-2">{{ old('professional_tax_notes', $settings->professional_tax_notes ?? '') }}</textarea>
                 </div>
 
-                <p class="text-xs text-slate-500">
-                    Professional Tax is a separate state-level compliance matter. Applicability,
-                    registration, rates, exemptions and filing frequency depend on the relevant
-                    State law and the firm's circumstances. This setting does not calculate or
-                    add Professional Tax to client invoices.
-                </p>
+                <p class="text-xs text-slate-500">A State-level tax. It is not added to invoices.</p>
             </div>
         </div>
     </form>
