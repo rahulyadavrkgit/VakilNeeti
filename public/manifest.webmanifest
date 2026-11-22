@@ -1,0 +1,21 @@
+{
+    "name": "VakilNiti",
+    "short_name": "VakilNiti",
+    "description": "Case diary, hearings, clients, billing and court services for Indian advocates.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#f4f6f8",
+    "theme_color": "#142235",
+    "lang": "en-IN",
+    "icons": [
+        { "src": "/images/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/images/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ],
+    "shortcuts": [
+        { "name": "My cases", "url": "/cases" },
+        { "name": "Calendar", "url": "/case-calendar" },
+        { "name": "Display boards", "url": "/courts/display-boards" }
+    ]
+}

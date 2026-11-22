@@ -80,11 +80,12 @@
                     <label class="text-sm font-medium text-slate-700">
                         {{ $profile->photo_path ? 'Change photo (optional)' : 'Upload your photo' }}
                         @if(!$profile->photo_path)<span class="text-red-600">*</span>@endif
-                        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" data-resize-image="1200" data-image-preview="advocate-photo-preview"
                                @required(!$profile->photo_path && auth()->user()->account_role !== 'student_intern')
-                               class="mt-1 block w-full cursor-pointer rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-blue-950 file:px-4 file:py-2 file:font-semibold file:text-white">
+                               class="mt-1 block w-full cursor-pointer rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#16776e] file:px-4 file:py-2 file:font-semibold file:text-white">
                     </label>
-                    <p class="mt-1 text-xs text-slate-500">JPG, PNG or WebP · max 10 MB</p>
+                    <img id="advocate-photo-preview" alt="New photo preview" hidden class="mt-3 h-24 w-24 rounded-full object-cover">
+                    <p class="mt-1 text-xs text-slate-500">JPG, PNG or WebP. Large phone photos are made smaller automatically before upload.</p>
                     @error('photo') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </div>
             </div>

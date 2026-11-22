@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CourtBoardEmbedCheck;
 use Illuminate\View\View;
 
 /**
@@ -122,8 +123,8 @@ class CourtLinksController extends Controller
             'court' => 'High Court of Delhi',
             'level' => 'High Court',
             'boards' => [
+                ['title' => 'Display board', 'url' => 'https://delhihighcourt.nic.in/app/display-board'],
                 ['title' => 'Physical display board', 'url' => 'https://delhihighcourt.nic.in/app/physical-display-board'],
-                ['title' => 'Display board page', 'url' => 'https://delhihighcourt.nic.in/web/display-board'],
             ],
         ],
         [
@@ -133,14 +134,32 @@ class CourtLinksController extends Controller
                 ['title' => 'Court View display board', 'url' => 'https://courtview2.allahabadhighcourt.in/courtview/CourtViewAllahabad.do'],
             ],
         ],
-        [
-            'court' => 'High Court for the State of Telangana',
-            'level' => 'High Court',
-            'boards' => [
-                ['title' => 'Display board', 'url' => 'https://tshc.gov.in/Hcdbs/displayboard.jsp'],
-            ],
-        ],
     ];
+
+    /**
+     * Every display board as one flat list for the Home picker, with whether its court lets it be embedded.
+     *
+     * @return list<array{court: string, level: string, title: string, url: string, embeddable: bool}>
+     */
+    public static function boardOptions(): array
+    {
+        $check = app(CourtBoardEmbedCheck::class);
+        $options = [];
+
+        foreach (self::DISPLAY_BOARDS as $court) {
+            foreach ($court['boards'] as $board) {
+                $options[] = [
+                    'court' => $court['court'],
+                    'level' => $court['level'],
+                    'title' => $board['title'],
+                    'url' => $board['url'],
+                    'embeddable' => $check->isEmbeddable($board['url']),
+                ];
+            }
+        }
+
+        return $options;
+    }
 
     public function index(): View
     {

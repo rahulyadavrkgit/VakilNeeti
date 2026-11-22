@@ -2,7 +2,7 @@
 
 @section('title', 'Court display boards')
 @section('page-heading', 'Display boards')
-@section('meta_description', 'Live court display boards in one place: Supreme Court of India, Delhi High Court, Allahabad High Court and Telangana High Court. See which item is running in each courtroom.')
+@section('meta_description', 'Live court display boards in one place: Supreme Court of India, Delhi High Court and Allahabad High Court. See which item is running in each courtroom.')
 
 @section('content')
 <div class="mx-auto max-w-5xl space-y-5">

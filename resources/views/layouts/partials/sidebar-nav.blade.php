@@ -2,7 +2,7 @@
     $isActive = fn (string ...$patterns): bool => request()->is(...$patterns);
 
     $groups = [
-        'workspace' => $isActive('/', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*'),
+        'workspace' => $isActive('/', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*'),
         'courts' => $isActive('courts*', 'court-directory*', 'court-catalogue*', 'court-integrations*', 'court-management*'),
         'reference' => $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*', 'police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'),
         'settings' => $isActive('profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
@@ -33,6 +33,7 @@
         <div class="vn-nav-items">
             <a href="{{ route('dashboard') }}" class="{{ $link($isActive('/')) }}"><x-icon name="home" :size="18" />Home</a>
             @auth
+                <a href="{{ route('search') }}" class="{{ $link($isActive('search')) }}"><x-icon name="search" :size="18" />Search</a>
                 <a href="{{ route('case-dashboard.index') }}" class="{{ $link($isActive('case-dashboard*')) }}"><x-icon name="dashboard" :size="18" />Case dashboard</a>
                 <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases', 'cases/*') && ! $isActive('cases/find*', 'cases/import*', 'cases/create')) }}"><x-icon name="briefcase" :size="18" />My cases</a>
                 <a href="{{ route('cases.find') }}" class="{{ $link($isActive('cases/find*', 'cases/import*', 'cases/create')) }}"><x-icon name="download" :size="18" />Find &amp; import cases</a>

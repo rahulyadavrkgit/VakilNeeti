@@ -17,25 +17,25 @@
 
 <div class="mx-auto max-w-5xl">
 
-    <div class="mb-6 flex justify-between">
-
-        <div class="flex flex-wrap gap-2">
-    <a href="{{ route('invoices.pdf', $invoice) }}"
-       class="rounded-lg bg-blue-700 px-5 py-2 text-white hover:bg-blue-800">
-        Download PDF
-    </a>
-
-    <button type="button"
-            id="shareInvoiceButton"
-            class="rounded-lg bg-green-600 px-5 py-2 text-white hover:bg-green-700">
-        Share Invoice
-    </button>
-
-    <button data-print
-            class="rounded-lg bg-slate-800 px-5 py-2 text-white">
-        Print Invoice
-    </button>
-</div>
+    <div class="mb-6 flex flex-wrap items-center gap-2">
+        <button type="button" id="shareInvoiceButton"
+                data-pdf-url="{{ route('invoices.pdf', $invoice) }}"
+                data-share-url="{{ $shareUrl }}"
+                data-invoice-number="{{ $invoice->invoice_number }}"
+                data-client-name="{{ $invoice->client?->displayName() }}"
+                data-whatsapp-number="{{ $invoice->client?->whatsappNumber() }}"
+                class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#1f9d55] px-5 text-sm font-semibold text-white hover:bg-[#178246] disabled:opacity-60">
+            <x-icon name="upload" :size="18" /> <span data-share-label>Share PDF on WhatsApp</span>
+        </button>
+        <a href="{{ route('invoices.pdf', $invoice) }}"
+           class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#16776e] px-5 text-sm font-semibold text-white hover:bg-[#125f58]">
+            <x-icon name="download" :size="18" /> Download PDF
+        </a>
+        <button type="button" data-copy="{{ $shareUrl }}"
+                class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Copy link</button>
+        <button type="button" data-print
+                class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print</button>
+        <p class="w-full text-xs text-slate-500 print:hidden">On a phone, Share sends the PDF file itself. On a computer, WhatsApp gets a secure link to the PDF that works for 30 days.</p>
     </div>
 
     @if(session('success'))
@@ -244,107 +244,60 @@
 @push('scripts')
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 document.addEventListener('DOMContentLoaded', function () {
-    const shareButton = document.getElementById('shareInvoiceButton');
+    const button = document.getElementById('shareInvoiceButton');
 
-    if (!shareButton) return;
+    if (!button) return;
 
-    const pdfUrl = @json(route('invoices.pdf', $invoice));
-    const invoiceNumber = @json($invoice->invoice_number);
+    const label = button.querySelector('[data-share-label]');
+    const { pdfUrl, shareUrl, invoiceNumber, clientName, whatsappNumber } = button.dataset;
+    const message = 'Dear ' + (clientName || 'Sir/Madam') + ', please find invoice ' + invoiceNumber + ' attached.';
+    let pdfFile = null;
 
-    shareButton.addEventListener('click', async function () {
-        const originalText = shareButton.textContent;
+    // Prepare the PDF as soon as the page opens. Phones only attach a file when sharing starts
+    // straight from the tap, so the file must be ready before the button is pressed.
+    const filePromise = fetch(pdfUrl, { credentials: 'same-origin' })
+        .then(function (response) {
+            if (!response.ok) throw new Error('PDF ' + response.status);
+            return response.blob();
+        })
+        .then(function (blob) {
+            pdfFile = new File([blob], 'Invoice-' + invoiceNumber.replace(/[\\/]/g, '-') + '.pdf', { type: 'application/pdf' });
+            return pdfFile;
+        })
+        .catch(function () { return null; });
 
-        // Open the WhatsApp tab immediately to avoid popup blocking.
-        const whatsappTab = window.open('about:blank', '_blank');
+    function canShareFile(file) {
+        return Boolean(file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] }));
+    }
 
-        shareButton.disabled = true;
-        shareButton.textContent = 'Preparing PDF...';
+    function shareLinkOnWhatsApp() {
+        const text = message + '\n\nInvoice PDF: ' + shareUrl;
+        const target = whatsappNumber ? 'https://wa.me/' + whatsappNumber : 'https://wa.me/';
+        window.open(target + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    }
 
-        try {
-            const response = await fetch(pdfUrl, {
-                credentials: 'same-origin'
-            });
-
-            if (!response.ok) {
-                throw new Error('Unable to generate invoice PDF.');
-            }
-
-            const blob = await response.blob();
-
-            if (blob.type !== 'application/pdf') {
-                throw new Error('The server did not return a valid PDF.');
-            }
-
-            const file = new File(
-                [blob],
-                'Invoice-' + invoiceNumber + '.pdf',
-                { type: 'application/pdf' }
-            );
-
-            const message = 'Please find invoice ' + invoiceNumber + ' attached.';
-
-            if (
-                navigator.share &&
-                navigator.canShare &&
-                navigator.canShare({ files: [file] })
-            ) {
-                try {
-                    await navigator.share({
-                        title: 'Invoice ' + invoiceNumber,
-                        text: message,
-                        files: [file]
-                    });
-
-                    if (whatsappTab) whatsappTab.close();
-                    return;
-
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        if (whatsappTab) whatsappTab.close();
-                        return;
-                    }
-                }
-            }
-
-            // Fallback: download the PDF.
-            const objectUrl = URL.createObjectURL(blob);
-            const downloadLink = document.createElement('a');
-
-            downloadLink.href = objectUrl;
-            downloadLink.download = 'Invoice-' + invoiceNumber + '.pdf';
-
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            downloadLink.remove();
-
-            setTimeout(function () {
-                URL.revokeObjectURL(objectUrl);
-            }, 60000);
-
-            // Redirect the already-opened tab to WhatsApp.
-            const whatsappUrl =
-                'https://wa.me/?text=' + encodeURIComponent(message);
-
-            if (whatsappTab) {
-                whatsappTab.location.href = whatsappUrl;
-            }
-
-            alert(
-                'The invoice PDF has been downloaded. ' +
-                'Attach the downloaded PDF in WhatsApp before sending.'
-            );
-
-        } catch (error) {
-            console.error(error);
-
-            if (whatsappTab) whatsappTab.close();
-
-            alert('Unable to prepare the invoice PDF. Please try Download PDF.');
-
-        } finally {
-            shareButton.disabled = false;
-            shareButton.textContent = originalText;
+    button.addEventListener('click', function () {
+        if (canShareFile(pdfFile)) {
+            navigator.share({ title: 'Invoice ' + invoiceNumber, text: message, files: [pdfFile] })
+                .catch(function (error) {
+                    if (error.name !== 'AbortError') shareLinkOnWhatsApp();
+                });
+            return;
         }
+
+        if (!pdfFile && navigator.canShare) {
+            // Still preparing: wait, then ask for one more tap so the phone allows the file.
+            button.disabled = true;
+            label.textContent = 'Preparing PDF…';
+            filePromise.then(function (file) {
+                button.disabled = false;
+                label.textContent = canShareFile(file) ? 'Tap again to share the PDF' : 'Share PDF on WhatsApp';
+                if (!canShareFile(file)) shareLinkOnWhatsApp();
+            });
+            return;
+        }
+
+        shareLinkOnWhatsApp();
     });
 });
 </script>

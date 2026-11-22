@@ -42,7 +42,7 @@ class SeoController extends Controller
     private const DISALLOWED = [
         '/admin', '/cases', '/case-calendar', '/case-dashboard', '/hearings', '/hearing-history', '/tasks',
         '/clients', '/client-management', '/billing', '/invoices', '/payments', '/profile', '/firm-profile',
-        '/notifications', '/tds', '/professional-tax', '/dashboard-studio', '/webview', '/api', '/register', '/login',
+        '/notifications', '/search', '/tds', '/professional-tax', '/dashboard-studio', '/webview', '/shared', '/api', '/register', '/login',
     ];
 
     public function robots(): Response

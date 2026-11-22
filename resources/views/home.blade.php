@@ -50,7 +50,7 @@
             </section>
         @endunless
 
-        <div class="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div class="grid items-start gap-5 lg:grid-cols-2">
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="upcoming-hearings-heading">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="upcoming-hearings-heading" class="text-lg font-semibold text-slate-900">Upcoming hearings</h2>
@@ -93,6 +93,9 @@
                 </ul>
             </section>
 
+            <div class="space-y-5">
+            @include('courts.partials.board-picker')
+
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="agenda-heading">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="agenda-heading" class="text-lg font-semibold text-slate-900">Tasks &amp; appointments</h2>
@@ -125,12 +128,18 @@
                     @endforelse
                 </ul>
             </section>
+            </div>
         </div>
     @endauth
 
+    @guest
+        @include('courts.partials.board-picker')
+    @endguest
+
     <section aria-labelledby="explore-heading">
+        <x-collection-toolbar target="home-modules" placeholder="Search modules" label="Explore" class="mb-3" />
         <h2 id="explore-heading" class="sr-only">Explore VakilNiti</h2>
-        <nav class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" aria-label="Modules">
+        <nav id="home-modules" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" aria-label="Modules">
             <x-module-tile :href="route('case-dashboard.index')" icon="briefcase" title="Case Management" description="Cases, hearings, tasks" badge="New" />
             <x-module-tile :href="url('/pdf-annotator')" icon="pdf" title="PDF Annotator" description="Highlight, search, draw" badge="New" />
             <x-module-tile :href="route('courts.supreme-court')" icon="pillars" title="Supreme Court" description="Court list, boards, e-pass" />
@@ -149,6 +158,7 @@
             <x-module-tile :href="route('courts.index')" icon="map" title="All Courts" description="High Courts, districts, tribunals" />
             <x-module-tile :href="route('dashboard-studio.index')" icon="chart" title="Law Data" description="Build data dashboards" />
             <x-module-tile :href="route('profile.index')" icon="settings" title="Profile" description="Practice and invoice settings" />
+            <p data-filter-empty hidden class="col-span-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">No module matches your search.</p>
         </nav>
     </section>
     @php

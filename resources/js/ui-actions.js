@@ -7,6 +7,7 @@
  * - data-print                     on a button: opens the print dialog.
  * - data-autoprint                 on any element: opens the print dialog after the page loads.
  * - data-copy="text"               on a button: copies the text to the clipboard.
+ * - data-resize-image="1200"       on an image file input: shrinks the photo before upload.
  * - data-switch="group" (radio) with data-switch-panel="group:value"  shows the matching panel.
  * - data-filter-list="id" on an input: live-filters [data-filter-item] (and data-filter-also="selector") inside #id.
  * - data-toggle-open="id"          toggles the `open` state of a <details>/<dialog> by id.
@@ -265,4 +266,286 @@ document.addEventListener('input', (event) => {
     });
 
     list.querySelector('[data-filter-empty]')?.toggleAttribute('hidden', shown > 0);
+});
+
+// Image uploads: data-resize-image="1200" shrinks a chosen photo in the browser (longest side 1200 px, JPEG)
+// so large phone photos stay under the server's upload limit. data-image-preview="id" shows it in an <img>.
+document.addEventListener('change', async (event) => {
+    const input = event.target.closest('input[type="file"][data-resize-image]');
+    const file = input?.files?.[0];
+
+    if (!file || !file.type.startsWith('image/')) {
+        return;
+    }
+
+    const maxSide = Number(input.dataset.resizeImage) || 1200;
+    const preview = input.dataset.imagePreview ? document.getElementById(input.dataset.imagePreview) : null;
+
+    try {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+
+        if (scale < 1 || file.size > 1024 * 1024) {
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(bitmap.width * scale);
+            canvas.height = Math.round(bitmap.height * scale);
+            canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86));
+
+            if (blob && blob.size < file.size) {
+                const resized = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+                const transfer = new DataTransfer();
+                transfer.items.add(resized);
+                input.files = transfer.files;
+            }
+        }
+
+        bitmap.close?.();
+    } catch {
+        // The browser could not read this image; upload it as chosen and let the server check it.
+    }
+
+    if (preview && input.files[0]) {
+        preview.src = URL.createObjectURL(input.files[0]);
+        preview.hidden = false;
+    }
+});
+
+// Home: live court display boards. Shows a board inside VakilNiti when its court allows framing;
+// otherwise opens it in one small reusable window beside VakilNiti. The person can hide the panel
+// and choose which boards to list; both choices and the last court are saved on this device.
+const boardStore = {
+    get(key, fallback) {
+        try {
+            const value = localStorage.getItem(key);
+
+            return value === null ? fallback : JSON.parse(value);
+        } catch {
+            return fallback;
+        }
+    },
+    set(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch {}
+    },
+};
+
+document.querySelectorAll('[data-board-picker]').forEach((picker) => {
+    const select = picker.querySelector('[data-board-select]');
+    const search = picker.querySelector('[data-board-search]');
+    const frameWrap = picker.querySelector('[data-board-frame-wrap]');
+    const frame = picker.querySelector('[data-board-frame]');
+    const blocked = picker.querySelector('[data-board-blocked]');
+    const name = picker.querySelector('[data-board-name]');
+    const manage = picker.querySelector('[data-board-manage]');
+    const manageToggle = picker.querySelector('[data-board-manage-toggle]');
+    const hideButton = picker.querySelector('[data-board-hide]');
+    const choices = [...picker.querySelectorAll('[data-board-choice]')];
+
+    if (!select) {
+        return;
+    }
+
+    // Every board, kept aside so the list can be rebuilt (iPhone Safari ignores hidden options).
+    const allBoards = [...select.querySelectorAll('optgroup')].flatMap((group) => [...group.children].map((option) => ({
+        group: group.label,
+        option,
+    })));
+    const options = allBoards.map((board) => board.option);
+    let chosen = boardStore.get('vn-board-choices', null);
+
+    choices.forEach((box) => {
+        box.checked = !Array.isArray(chosen) || chosen.includes(box.value);
+    });
+
+    const show = () => {
+        const option = select.selectedOptions[0];
+
+        if (!option) {
+            name.textContent = 'No board chosen. Use Manage to pick your courts.';
+            frameWrap.hidden = true;
+            blocked.hidden = false;
+            picker.querySelector('[data-board-open-actions]').hidden = true;
+
+            return;
+        }
+
+        picker.querySelector('[data-board-open-actions]').hidden = false;
+        name.textContent = option.dataset.label;
+        const embeddable = option.dataset.embeddable === '1';
+        frameWrap.hidden = !embeddable;
+        blocked.hidden = embeddable;
+
+        if (embeddable && frame.src !== option.value) {
+            frame.src = option.value;
+        }
+
+        boardStore.set('vn-display-board', option.value);
+    };
+
+    // An option shows when it is one of the chosen boards and matches the search.
+    const applyFilters = () => {
+        const query = (search?.value || '').trim().toLowerCase();
+        const picked = choices.filter((box) => box.checked).map((box) => box.value);
+
+        const current = select.value;
+        const groups = new Map();
+
+        allBoards.forEach(({ group, option }) => {
+            const visible = picked.includes(option.value) && (query === '' || option.textContent.toLowerCase().includes(query));
+
+            if (visible) {
+                if (!groups.has(group)) {
+                    const element = document.createElement('optgroup');
+                    element.label = group;
+                    groups.set(group, element);
+                }
+
+                groups.get(group).append(option);
+            }
+        });
+
+        select.replaceChildren(...groups.values());
+
+        if ([...select.options].some((option) => option.value === current)) {
+            select.value = current;
+        }
+
+        show();
+    };
+
+    const saved = boardStore.get('vn-display-board', null);
+
+    if (saved && options.some((option) => option.value === saved)) {
+        select.value = saved;
+    }
+
+    const setHidden = (hidden) => {
+        picker.querySelectorAll('[data-board-body]').forEach((element) => {
+            element.hidden = hidden;
+        });
+        picker.querySelector('[data-board-collapsed]').hidden = !hidden;
+        hideButton.textContent = hidden ? 'Show' : 'Hide';
+        hideButton.setAttribute('aria-expanded', String(!hidden));
+        boardStore.set('vn-boards-hidden', hidden);
+    };
+
+    const openBoard = (fullScreen) => {
+        const width = fullScreen ? window.screen.availWidth : Math.min(1100, window.screen.availWidth - 40);
+        const height = fullScreen ? window.screen.availHeight : Math.min(760, window.screen.availHeight - 60);
+        const left = fullScreen ? 0 : Math.max(0, window.screen.availWidth - width - 20);
+        window.open(select.value, 'vn-display-board', `popup=yes,width=${width},height=${height},left=${left},top=${fullScreen ? 0 : 40}`)?.focus();
+    };
+
+    select.addEventListener('change', () => {
+        show();
+
+        if (select.selectedOptions[0]?.dataset.embeddable !== '1') {
+            openBoard(false);
+        }
+    });
+
+    // Embedded boards: three heights, drag to resize, and full screen.
+    const box = picker.querySelector('[data-board-frame-box]');
+    const exitButton = picker.querySelector('[data-board-exit]');
+    const heights = { s: 320, m: 480, l: 720 };
+    const setSize = (size) => {
+        box.style.height = Math.min(heights[size] || heights.m, Math.round(window.innerHeight * 0.85)) + 'px';
+        picker.querySelectorAll('[data-board-size]').forEach((button) => {
+            button.setAttribute('aria-pressed', String(button.dataset.boardSize === size));
+        });
+        boardStore.set('vn-board-size', size);
+    };
+
+    picker.querySelectorAll('[data-board-size]').forEach((button) => {
+        button.addEventListener('click', () => setSize(button.dataset.boardSize));
+    });
+    setSize(boardStore.get('vn-board-size', 'm'));
+
+    const leaveFullScreen = () => {
+        box.classList.remove('vn-board-fullscreen');
+        exitButton.hidden = true;
+
+        if (document.fullscreenElement === box) {
+            document.exitFullscreen?.();
+        }
+    };
+
+    picker.querySelector('[data-board-fullscreen]').addEventListener('click', () => {
+        exitButton.hidden = false;
+
+        if (box.requestFullscreen) {
+            box.requestFullscreen().catch(() => box.classList.add('vn-board-fullscreen'));
+        } else {
+            box.classList.add('vn-board-fullscreen');
+        }
+    });
+
+    exitButton.addEventListener('click', leaveFullScreen);
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            exitButton.hidden = !box.classList.contains('vn-board-fullscreen');
+        }
+    });
+    search?.addEventListener('input', applyFilters);
+    hideButton.addEventListener('click', () => setHidden(hideButton.textContent === 'Hide'));
+
+    manageToggle.addEventListener('click', () => {
+        manage.hidden = !manage.hidden;
+        manageToggle.setAttribute('aria-expanded', String(!manage.hidden));
+    });
+
+    choices.forEach((box) => box.addEventListener('change', () => {
+        boardStore.set('vn-board-choices', choices.filter((item) => item.checked).map((item) => item.value));
+        applyFilters();
+    }));
+
+    picker.querySelector('[data-board-choose-all]').addEventListener('click', () => {
+        choices.forEach((box) => {
+            box.checked = true;
+        });
+        boardStore.set('vn-board-choices', null);
+        applyFilters();
+    });
+
+    picker.querySelector('[data-board-manage-done]').addEventListener('click', () => {
+        manage.hidden = true;
+        manageToggle.setAttribute('aria-expanded', 'false');
+    });
+
+    picker.querySelectorAll('[data-board-open]').forEach((button) => {
+        button.addEventListener('click', () => openBoard(button.dataset.boardOpen === 'full'));
+    });
+
+    applyFilters();
+    setHidden(boardStore.get('vn-boards-hidden', false) === true);
+});
+
+// Collections with many similar items: data-view-toggle="id" data-view="grid|list" switches #id
+// between a tile grid and a compact list, remembered per collection on this device.
+document.querySelectorAll('[data-view-toggle]').forEach((button) => {
+    const target = document.getElementById(button.dataset.viewToggle);
+
+    if (!target) {
+        return;
+    }
+
+    const key = 'vn-view:' + button.dataset.viewToggle;
+    const apply = (view) => {
+        target.classList.toggle('vn-list-view', view === 'list');
+        document.querySelectorAll(`[data-view-toggle="${button.dataset.viewToggle}"]`).forEach((other) => {
+            other.setAttribute('aria-pressed', String(other.dataset.view === view));
+        });
+    };
+
+    button.addEventListener('click', () => {
+        apply(button.dataset.view);
+        boardStore.set(key, button.dataset.view);
+    });
+
+    if (button.dataset.view === 'grid') {
+        apply(boardStore.get(key, 'grid'));
+    }
 });

@@ -85,6 +85,10 @@ class AdvocateProfileController extends Controller
             'court' => ['required', 'string', 'max:200'],
             ...AdvocateProfile::barRegistrationRules(! $isStudent),
         ], AdvocateProfile::barRegistrationMessages() + [
+            'photo.uploaded' => 'This photo is larger than the '.CaseFileImportController::uploadLimitMegabytes(10).' MB this server accepts. Choose a smaller photo or take a screenshot of it.',
+            'photo.max' => 'The photo must be smaller than 10 MB.',
+            'photo.image' => 'Choose a JPG, PNG or WebP image.',
+            'photo.mimes' => 'Choose a JPG, PNG or WebP image.',
             'region.in' => 'Select a State or Union Territory from the list.',
         ]);
 

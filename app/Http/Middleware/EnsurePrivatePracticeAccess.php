@@ -39,6 +39,7 @@ class EnsurePrivatePracticeAccess
         'courts/*',
         'sitemap.xml',
         'robots.txt',
+        'shared/invoices/*',
         'court-directory',
         'court-directory/*',
         'api/court-directory/*',

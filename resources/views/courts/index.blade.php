@@ -11,7 +11,9 @@
         <p class="mt-1 text-sm text-slate-600">Official court services, display boards and directories.</p>
     </div>
 
-    <nav class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label="Courts">
+    <x-collection-toolbar target="courts-list" placeholder="Search courts and services" />
+
+    <nav id="courts-list" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label="Courts">
         <x-module-tile :href="route('courts.supreme-court')" icon="pillars" title="Supreme Court" description="Court list, display boards, e-pass, calendar" />
         <x-module-tile :href="route('courts.delhi-high-court')" icon="building" title="Delhi High Court" description="Display board, roster, cause list, judgements" />
         <x-module-tile :href="route('courts.delhi-district-courts')" icon="gavel" title="Delhi District Courts" description="All seven court complexes" />
@@ -22,6 +24,7 @@
         <x-module-tile :href="route('court-catalogue.index')" icon="scale" title="Tribunals" description="Appellate courts and tribunals" />
         <x-module-tile :href="route('court-integrations.ecourts.search')" icon="search" title="Official court search" description="Search official portals" />
         <x-module-tile :href="route('court-directory.index')" icon="list" title="Court directory" description="Every court we list" />
+        <p data-filter-empty hidden class="col-span-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Nothing matches your search.</p>
     </nav>
 </div>
 @endsection

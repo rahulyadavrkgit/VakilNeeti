@@ -36,7 +36,11 @@
     <meta name="twitter:description" content="{{ $seoDescription }}">
     <meta name="theme-color" content="#142235">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" href="{{ $seoImage }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="VakilNiti">
     @if($seoIsHome)
         <script type="application/ld+json" nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
             {!! json_encode([
@@ -188,7 +192,7 @@
         .vn-nav-child { border-left-color: #43556a; }
         .vn-main-header { position: sticky; top: 0; z-index: 25; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); }
         .vn-content { min-width: 0; }
-        .vn-main-content { width: 100%; max-width: 1800px; margin-inline: auto; }
+        .vn-main-content { width: 100%; max-width: 1800px; margin-inline: auto; overflow-x: clip; overflow-wrap: break-word; }
         .vn-mobile-nav { display: none; }
         .vn-sidebar-backdrop { display: none; }
         .vn-menu-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px; border: 1px solid #dbe3eb; border-radius: 12px; background: #fff; color: #172536; }
@@ -210,6 +214,10 @@
             .vn-main-header .vn-header-date { display: none; }
             .vn-main-header form button { min-height: 40px; padding: 8px 11px; }
             .vn-main-content { padding: 16px 14px 22px; }
+            /* 16px fields stop iPhones zooming in when a field is tapped. */
+            .vn-main-content input:not([type=checkbox]):not([type=radio]):not([type=file]), .vn-main-content select, .vn-main-content textarea { font-size: 16px; }
+            .vn-main-header { gap: 6px; }
+            .vn-main-header .vn-profile-menu > summary { width: 38px; height: 38px; }
             .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
             .vn-mobile-nav a, .vn-mobile-nav button { display: flex; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 10px; background: transparent; color: #657386; font-size: 10px; font-weight: 650; text-decoration: none; }
             .vn-mobile-nav .vn-mobile-icon { font-size: 18px; line-height: 1; }
@@ -241,6 +249,19 @@
         .vn-sidebar .vn-nav-child { margin: 2px 0 4px 21px; padding-left: 10px; border-left: 1px solid #34485f; }
         .vn-sidebar .vn-nav-child .vn-nav-link { min-height: 34px; font-size: 12.5px; }
         .vn-sidebar [hidden] { display: none !important; }
+        /* Collections switched to list view with the grid/list toggle (components/collection-toolbar). */
+        .vn-list-view { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; gap: 8px !important; }
+        @media (min-width: 640px) { .vn-list-view { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+        @media (min-width: 1280px) { .vn-list-view { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+        .vn-list-view > a { flex-direction: row !important; justify-content: flex-start !important; gap: 12px !important; padding: 10px 14px !important; text-align: left !important; }
+        .vn-list-view [data-tile-icon] { width: 40px; height: 40px; border-radius: 12px; }
+        .vn-list-view [data-tile-text] { flex: 1; gap: 2px; }
+        .vn-list-view [data-tile-description] { display: block !important; }
+        .vn-list-view [data-tile-badge] { position: static !important; order: 9; }
+        [data-filter-item][hidden] { display: none !important; }
+        /* Embedded display boards: drag the bottom edge to resize; full screen fallback for phones. */
+        .vn-board-box { resize: vertical; min-height: 240px; }
+        .vn-board-fullscreen { position: fixed !important; inset: 0; z-index: 80; height: 100dvh !important; border-radius: 0 !important; resize: none; }
         @media (prefers-reduced-motion: reduce) {
             .vn-sidebar, .vn-sidebar-backdrop { transition: none !important; }
         }
@@ -353,6 +374,31 @@
                 </div>
 
                 @auth
+                    <form method="GET" action="{{ route('search') }}" role="search" class="hidden lg:block">
+                        <label class="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 focus-within:border-[#16776e] focus-within:bg-white">
+                            <x-icon name="search" :size="16" class="text-slate-400" />
+                            <span class="sr-only">Search cases, clients and invoices</span>
+                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search cases, clients, CNR…"
+                                   class="h-10 w-56 border-0 bg-transparent px-0 text-sm focus:ring-0 xl:w-72">
+                        </label>
+                    </form>
+                    <a href="{{ route('search') }}" aria-label="Search" class="hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 sm:flex lg:hidden">
+                        <x-icon name="search" :size="19" />
+                    </a>
+
+                    <details class="vn-profile-menu relative">
+                        <summary aria-label="Add new" class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full bg-[#16776e] text-2xl font-light leading-none text-white hover:bg-[#125f58]">+</summary>
+                        <div class="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg">
+                            <p class="px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-400">Add new</p>
+                            <a href="{{ route('hearings.create') }}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50"><x-icon name="calendar" :size="18" class="text-[#16776e]" />Hearing</a>
+                            <a href="{{ route('tasks.create') }}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50"><x-icon name="check" :size="18" class="text-[#16776e]" />Task</a>
+                            <a href="{{ route('cases.manual') }}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />Case</a>
+                            <a href="{{ route('cases.find') }}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50"><x-icon name="download" :size="18" class="text-[#16776e]" />Import cases</a>
+                            <a href="{{ route('clients.create') }}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50"><x-icon name="people" :size="18" class="text-[#16776e]" />Client</a>
+                            <a href="{{ route('invoices.create') }}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50"><x-icon name="receipt" :size="18" class="text-[#16776e]" />Invoice</a>
+                        </div>
+                    </details>
+
                     <details class="vn-profile-menu relative">
                         <summary aria-label="Notifications{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' unread' : '' }}"
                                  class="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100">
@@ -423,8 +469,22 @@
             @yield('content')
         </main>
 
-        <footer class="border-t border-slate-200 bg-white px-6 py-4 text-xs text-slate-600">
-            &copy; {{ date('Y') }} VakilNiti. All rights reserved.
+        <footer class="border-t border-slate-200 bg-white px-6 py-5 text-xs leading-relaxed text-slate-600">
+            <div class="mx-auto max-w-5xl space-y-2">
+                <p>
+                    <strong class="font-semibold text-slate-700">Disclaimer:</strong>
+                    Information on VakilNiti is for general information and educational purposes only and is not legal advice.
+                    We keep it accurate and up to date to the best of our knowledge, but laws, court lists and links change often,
+                    so please check the official court or government source before relying on it. Court and government websites
+                    linked here belong to their respective owners; VakilNiti is not affiliated with or endorsed by them.
+                </p>
+                <p class="flex flex-wrap gap-x-4 gap-y-1">
+                    <span>&copy; {{ date('Y') }} VakilNiti. All rights reserved.</span>
+                    <a href="{{ route('courts.index') }}" class="hover:text-[#16776e] hover:underline">Courts</a>
+                    <a href="{{ route('courts.display-boards') }}" class="hover:text-[#16776e] hover:underline">Display boards</a>
+                    <a href="{{ route('bare-acts.index') }}" class="hover:text-[#16776e] hover:underline">Bare Acts</a>
+                </p>
+            </div>
         </footer>
 
     </div>

@@ -41,6 +41,7 @@ use App\Http\Controllers\ProfessionalProfileController;
 use App\Http\Controllers\ProfessionalTaxController;
 use App\Http\Controllers\ProfileContactController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxComplianceController;
@@ -73,6 +74,12 @@ Route::resource('clients', ClientController::class);
 Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])
     ->name('invoices.pdf');
 
+// Signed, expiring link so a client can open the invoice PDF from WhatsApp or email without logging in.
+Route::get('/shared/invoices/{invoice}', [InvoiceController::class, 'sharedPdf'])
+    ->whereNumber('invoice')
+    ->middleware(['signed', 'throttle:60,1'])
+    ->name('invoices.shared-pdf');
+
 Route::resource('invoices', InvoiceController::class);
 
 Route::get('/cases/{case}/billables', [InvoiceController::class, 'billables'])
@@ -97,6 +104,7 @@ Route::get('/hearings/{hearing}/edit', [HearingController::class, 'edit'])->wher
 Route::put('/hearings/{hearing}', [HearingController::class, 'update'])->whereNumber('hearing')->name('hearings.update');
 Route::delete('/hearings/{hearing}', [HearingController::class, 'destroy'])->whereNumber('hearing')->name('hearings.destroy');
 
+Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->whereUuid('notification')->name('notifications.open');
 Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');

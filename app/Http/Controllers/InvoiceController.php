@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -72,21 +73,41 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'firm' => $firm,
             'gst' => $this->gstSplit($invoice, $firm),
+            // A link the client can open without logging in, for sharing on WhatsApp or email.
+            'shareUrl' => URL::temporarySignedRoute('invoices.shared-pdf', now()->addDays(30), ['invoice' => $invoice->id]),
         ]);
     }
 
     public function pdf(Invoice $invoice)
     {
         $invoice->load(['client', 'payments', 'items', 'legalCase']);
-        $firm = FirmProfile::first();
+
+        return $this->renderPdf($invoice, FirmProfile::first())->download($this->pdfFileName($invoice));
+    }
+
+    /**
+     * The invoice PDF behind a signed, expiring link, so a client can open it from WhatsApp or email.
+     */
+    public function sharedPdf(int $invoice)
+    {
+        $invoice = Invoice::withoutGlobalScopes()->findOrFail($invoice);
+        $owned = fn ($query) => $query->withoutGlobalScopes();
+        $invoice->load(['client' => $owned, 'payments' => $owned, 'items' => $owned, 'legalCase' => $owned]);
+        $firm = FirmProfile::withoutGlobalScopes()->where('user_id', $invoice->user_id)->first();
+
+        return $this->renderPdf($invoice, $firm)->stream($this->pdfFileName($invoice));
+    }
+
+    private function renderPdf(Invoice $invoice, ?FirmProfile $firm): \Barryvdh\DomPDF\PDF
+    {
         $gst = $this->gstSplit($invoice, $firm);
 
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'firm', 'gst'))
-            ->setPaper('a4', 'portrait');
+        return Pdf::loadView('invoices.pdf', compact('invoice', 'firm', 'gst'))->setPaper('a4', 'portrait');
+    }
 
-        return $pdf->download(
-            'invoice-'.str_replace(['/', '\\'], '-', $invoice->invoice_number).'.pdf'
-        );
+    private function pdfFileName(Invoice $invoice): string
+    {
+        return 'invoice-'.str_replace(['/', '\\'], '-', $invoice->invoice_number).'.pdf';
     }
 
     public function edit(Invoice $invoice): View
