@@ -31,7 +31,7 @@ class CalendarEventService
      * Events between two dates (inclusive), sorted by date and time.
      *
      * @param  array{court?: ?string, case_type?: ?string, groups?: list<string>, search?: ?string, user_id?: ?int}  $filters
-     * @return Collection<int, array{type: string, group: string, label: string, title: string, date: string, time: ?string, case_id: ?int, case_title: ?string, case_number: ?string, court: ?string, appearing_for?: ?string, appearing_for_parties?: ?string, court_room?: ?string, vc_link?: ?string, details: ?string, client_name: ?string, url: string, is_done: bool, id: int}>
+     * @return Collection<int, array{type: string, group: string, label: string, title: string, date: string, time: ?string, case_id: ?int, case_title: ?string, case_number: ?string, court: ?string, appearing_for?: ?string, appearing_for_parties?: ?string, court_room?: ?string, judge_name?: ?string, vc_link?: ?string, details: ?string, client_name: ?string, url: string, is_done: bool, id: int}>
      */
     public function between(CarbonInterface $start, CarbonInterface $end, array $filters = []): Collection
     {
@@ -112,6 +112,7 @@ class CalendarEventService
                 'appearing_for' => $case?->appearing_for,
                 'appearing_for_parties' => $case?->appearing_for_parties,
                 'court_room' => $hearing->court_room ?: $case?->court_room,
+                'judge_name' => $hearing->judge_name ?: $case?->judge_name,
                 'vc_link' => $hearing->vc_link ?: $case?->vc_link,
                 'client_name' => null,
                 'url' => $case ? route('cases.show', $case) : route('hearings.history'),

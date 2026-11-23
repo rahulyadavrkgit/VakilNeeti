@@ -44,6 +44,26 @@ class HomeDashboardTest extends TestCase
             ->assertDontSee('Asha vs State');
     }
 
+    public function test_upcoming_hearings_show_court_room_judge_and_our_side(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $case = LegalCase::create([
+            'case_title' => 'Prahlad vs Sanjay',
+            'court_name' => 'Saket Courts',
+            'court_room' => '304, Main court building',
+            'judge_name' => 'Ms. Niti Phutela',
+            'appearing_for' => 'petitioner',
+            'case_status' => 'pending',
+        ]);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-12']);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-13', 'judge_name' => 'Sh. Dheeraj Mor', 'court_room' => '505']);
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSeeInOrder(['Prahlad vs Sanjay', 'Petitioner', 'Saket Courts', 'Room 304, Main court building', 'Ms. Niti Phutela'])
+            ->assertSeeInOrder(['Room 505', 'Sh. Dheeraj Mor']);
+    }
+
     public function test_profile_banner_shows_what_is_missing_and_can_be_hidden(): void
     {
         $user = User::factory()->create(['account_type' => 'individual']);

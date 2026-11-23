@@ -44,35 +44,53 @@ class CourtLinksController extends Controller
     /**
      * Delhi's court complexes and the district courts that sit in each, with each district's official website.
      *
-     * @var array<string, list<array{district: string, url: string}>>
+     * @var array<string, list<array{district: string, url: string, vc_links: string}>>
      */
     public const DELHI_DISTRICT_COMPLEXES = [
         'Rohini' => [
-            ['district' => 'North', 'url' => 'https://northdelhi.dcourts.gov.in/'],
-            ['district' => 'North West', 'url' => 'https://rohini.dcourts.gov.in/'],
+            ['district' => 'North', 'url' => 'https://northdelhi.dcourts.gov.in/', 'vc_links' => 'https://northdelhi.dcourts.gov.in/document-category/vc-links/'],
+            ['district' => 'North West', 'url' => 'https://rohini.dcourts.gov.in/', 'vc_links' => 'https://rohini.dcourts.gov.in/document-category/vc-links/'],
         ],
         'Karkardooma' => [
-            ['district' => 'East', 'url' => 'https://eastdelhi.dcourts.gov.in/'],
-            ['district' => 'North East', 'url' => 'https://northeast.dcourts.gov.in/'],
-            ['district' => 'Shahdara', 'url' => 'https://shahdara.dcourts.gov.in/'],
+            ['district' => 'East', 'url' => 'https://eastdelhi.dcourts.gov.in/', 'vc_links' => 'https://eastdelhi.dcourts.gov.in/document-category/vc-links/'],
+            ['district' => 'North East', 'url' => 'https://northeast.dcourts.gov.in/', 'vc_links' => 'https://northeast.dcourts.gov.in/document-category/vc-links/'],
+            ['district' => 'Shahdara', 'url' => 'https://shahdara.dcourts.gov.in/', 'vc_links' => 'https://shahdara.dcourts.gov.in/document-category/vc-links/'],
         ],
         'Tis Hazari' => [
-            ['district' => 'Central', 'url' => 'https://centraldelhi.dcourts.gov.in/'],
-            ['district' => 'West', 'url' => 'https://westdelhi.dcourts.gov.in/'],
+            ['district' => 'Central', 'url' => 'https://centraldelhi.dcourts.gov.in/', 'vc_links' => 'https://centraldelhi.dcourts.gov.in/document-category/central-district-vc-links/'],
+            ['district' => 'West', 'url' => 'https://westdelhi.dcourts.gov.in/', 'vc_links' => 'https://westdelhi.dcourts.gov.in/document-category/vc-links/'],
         ],
         'Dwarka' => [
-            ['district' => 'South West', 'url' => 'https://southwestdelhi.dcourts.gov.in/'],
+            ['district' => 'South West', 'url' => 'https://southwestdelhi.dcourts.gov.in/', 'vc_links' => 'https://southwestdelhi.dcourts.gov.in/document-category/vc-links/'],
         ],
         'Saket' => [
-            ['district' => 'South', 'url' => 'https://southdelhi.dcourts.gov.in/'],
-            ['district' => 'South East', 'url' => 'https://southeastdelhi.dcourts.gov.in/'],
+            ['district' => 'South', 'url' => 'https://southdelhi.dcourts.gov.in/', 'vc_links' => 'https://southdelhi.dcourts.gov.in/document-category/vc-links/'],
+            ['district' => 'South East', 'url' => 'https://southeastdelhi.dcourts.gov.in/', 'vc_links' => 'https://southeastdelhi.dcourts.gov.in/document-category/vc-links/'],
         ],
         'Patiala House' => [
-            ['district' => 'New Delhi', 'url' => 'https://newdelhi.dcourts.gov.in/'],
+            ['district' => 'New Delhi', 'url' => 'https://newdelhi.dcourts.gov.in/', 'vc_links' => 'https://newdelhi.dcourts.gov.in/document-category/vc-links/'],
         ],
         'Rouse Avenue' => [
-            ['district' => 'Central (Rouse Avenue courts)', 'url' => 'https://centraldelhi.dcourts.gov.in/'],
+            ['district' => 'Central (Rouse Avenue courts)', 'url' => 'https://centraldelhi.dcourts.gov.in/', 'vc_links' => 'https://centraldelhi.dcourts.gov.in/document-category/rouse-avenue-district-court-vc-links/'],
         ],
+    ];
+
+    /**
+     * Case status searches on every Delhi district website (same paths on each district's own site),
+     * as listed on delhidistrictcourts.nic.in/casestatus. Each search is on the court's site, behind its CAPTCHA.
+     *
+     * @var array<string, string>
+     */
+    public const DELHI_DISTRICT_CASE_SEARCHES = [
+        'Case number' => 'case-status-search-by-case-number/',
+        'FIR' => 'case-status-search-by-fir-number/',
+        'Party name' => 'case-status-search-by-petitioner-respondent/',
+        'Advocate' => 'case-status-search-by-advocate/',
+        'Filing number' => 'case-status-search-by-filing-number/',
+        'Act' => 'case-status-search-by-act-type/',
+        'Case type' => 'case-status-search-by-case-type/',
+        'Orders' => 'court-orders-search-by-order-date/',
+        'Judges on leave' => 'judges-on-leave/',
     ];
 
     /**

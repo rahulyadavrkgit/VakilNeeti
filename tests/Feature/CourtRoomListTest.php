@@ -54,6 +54,7 @@ class CourtRoomListTest extends TestCase
         $this->get(route('courts.delhi-district-courts.judges', 'west'))
             ->assertOk()
             ->assertSee('West District, Delhi (Tis Hazari)')
+            ->assertSee(CourtBench::SOURCES['delhi-district-west'])
             ->assertSee('Sh. Pitamber Dutt')
             ->assertDontSee('Ms. Someone Else');
 

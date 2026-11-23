@@ -33,15 +33,15 @@
             </div>
         </div>
 
-        <div class="mt-3 grid gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-            <label class="flex items-center gap-2 rounded-lg border border-slate-300 px-3 focus-within:border-[#16776e]">
+        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <label class="flex min-w-0 items-center gap-2 rounded-lg border border-slate-300 px-3 focus-within:border-[#16776e]">
                 <x-icon name="search" :size="16" class="text-slate-400" />
                 <span class="sr-only">Search courts</span>
                 <input type="search" data-board-search placeholder="Search court" class="min-h-11 w-full border-0 bg-transparent px-0 text-sm focus:ring-0">
             </label>
-            <label>
+            <label class="min-w-0">
                 <span class="sr-only">Choose a court display board</span>
-                <select data-board-select class="min-h-11 w-full rounded-lg border border-slate-300 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
+                <select data-board-select class="min-h-11 w-full min-w-0 rounded-lg border border-slate-300 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @foreach($boards->groupBy('level') as $level => $levelBoards)
                         <optgroup label="{{ $level }}">
                             @foreach($levelBoards as $board)

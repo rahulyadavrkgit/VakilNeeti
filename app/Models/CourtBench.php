@@ -18,6 +18,18 @@ class CourtBench extends Model
      */
     public const SOURCES = [
         'delhi-high-court' => 'As per the Roster of Sitting effective 07.10.2026, as amended on 09.10.2026 and 19.11.2026.',
+        'delhi-district-central' => 'As per the Central District VC links list dated 21.11.2026.',
+        'delhi-district-central-rouse-avenue-courts' => 'As per the Rouse Avenue Court Complex VC links list as on 21.09.2026 (published 09.10.2026).',
+        'delhi-district-west' => 'As per the West District VC links list as on 17.11.2026.',
+        'delhi-district-east' => 'As per the East District VC links list dated 19.09.2026.',
+        'delhi-district-north-east' => 'As per the North-East District VC links list dated 06.10.2026.',
+        'delhi-district-shahdara' => 'As per the Shahdara District VC links list dated 06.10.2026.',
+        'delhi-district-new-delhi' => 'As per the New Delhi District VC links list w.e.f. 17.11.2026.',
+        'delhi-district-north-west' => 'As per the North-West District VC links list dated 12.10.2026.',
+        'delhi-district-north' => 'As per the North District VC links list dated 12.10.2026.',
+        'delhi-district-south-west' => 'As per the South-West District VC links list as on 17.11.2026.',
+        'delhi-district-south-east' => 'As per the South-East District VC links list dated 14.11.2026.',
+        'delhi-district-south' => 'As per the South District VC links list dated 28.10.2026.',
     ];
 
     /**
@@ -85,6 +97,32 @@ class CourtBench extends Model
     public static function districtKey(string $district): string
     {
         return 'delhi-district-'.Str::slug($district);
+    }
+
+    /**
+     * The court room split into a short number for the badge and the place it is in:
+     * "111, Main court building (3rd floor)" → 111 + "Main court building (3rd floor)", "G-08-NCB" → G-08-NCB.
+     *
+     * @return array{number: ?string, place: ?string}
+     */
+    public function roomParts(): array
+    {
+        $room = trim((string) Str::of((string) $this->court_room)->after('Court No. ')->replaceMatches('/^Room\s+/i', ''));
+        $code = '(?:[A-Z]{1,3}-)?\d+(?:-?[A-Z]+)?(?:-[A-Z]+)*';
+
+        if ($room === '') {
+            return ['number' => null, 'place' => null];
+        }
+
+        if (preg_match('/^'.$code.'$/i', $room)) {
+            return ['number' => $room, 'place' => null];
+        }
+
+        if (preg_match('/^('.$code.')(?:\s*,\s*|\s+)(.+)$/i', $room, $parts) && ! preg_match('/^\d+(st|nd|rd|th)$/i', $parts[1])) {
+            return ['number' => $parts[1], 'place' => Str::ucfirst(trim($parts[2]))];
+        }
+
+        return mb_strlen($room) <= 9 ? ['number' => $room, 'place' => null] : ['number' => null, 'place' => $room];
     }
 
     /**

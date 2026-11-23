@@ -145,6 +145,22 @@ class CaseSideAndTabsTest extends TestCase
             ->assertSee('We appear for the accused', false);
     }
 
+    public function test_case_list_shows_room_judge_and_vc_link_with_the_court(): void
+    {
+        $this->actingAs(User::factory()->create());
+        LegalCase::create($this->payload([
+            'court_name' => 'Saket Courts',
+            'court_room' => '012, Block-I',
+            'judge_name' => 'Sh. Rakesh Pandit',
+            'vc_link' => 'https://districtcourtdelhi.webex.com/meet/ddc.vc.south11',
+        ]));
+
+        $this->get(route('cases.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['Saket Courts', 'Room 012, Block-I', 'Sh. Rakesh Pandit', 'Join VC'])
+            ->assertSee('href="https://districtcourtdelhi.webex.com/meet/ddc.vc.south11"', false);
+    }
+
     public function test_client_page_uses_tabs_and_offers_call_and_whatsapp(): void
     {
         $this->actingAs(User::factory()->create());

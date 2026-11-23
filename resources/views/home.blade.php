@@ -70,7 +70,7 @@
             </section>
         @endunless
 
-        <div class="grid items-start gap-5 lg:grid-cols-2">
+        <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="upcoming-hearings-heading">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="upcoming-hearings-heading" class="text-lg font-semibold text-slate-900">Upcoming hearings</h2>
@@ -101,7 +101,8 @@
                                         <span class="truncate text-sm font-semibold text-slate-900">{{ $event['title'] }}</span>
                                         <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" />
                                     </span>
-                                    <span class="block truncate text-xs text-slate-500">{{ collect([$event['time'], ($event['court_room'] ?? null) ? 'Room '.$event['court_room'] : null, $event['case_number'], $event['court']])->filter()->implode(' · ') ?: $event['label'] }}</span>
+                                    <span class="block truncate text-xs text-slate-500">{{ collect([$event['time'], $event['case_number']])->filter()->implode(' · ') ?: $event['label'] }}</span>
+                                    <x-court-info class="mt-1" :court="$event['court']" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
                                     @if($event['details'])
                                         <span class="block truncate text-xs text-slate-600">{{ $event['details'] }}</span>
                                     @endif

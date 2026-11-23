@@ -52,10 +52,11 @@
                     <div class="grid gap-3 md:grid-cols-2">
                         @foreach($benches as $bench)
                             <article data-filter-item class="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                @php $room = $bench->roomParts(); @endphp
                                 <div class="flex items-start gap-3">
-                                    <div class="flex h-14 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#142235] text-white">
+                                    <div class="flex h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#142235] px-2 text-white">
                                         <span class="text-[10px] font-semibold uppercase tracking-wide text-white/70">Court</span>
-                                        <span class="text-lg font-extrabold leading-none">{{ \Illuminate\Support\Str::of($bench->court_room ?: '—')->after('Court No. ') }}</span>
+                                        <span class="whitespace-nowrap font-extrabold leading-none {{ mb_strlen((string) $room['number']) > 4 ? 'text-sm' : 'text-lg' }}">{{ $room['number'] ?? '—' }}</span>
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         @if($bench->bench || $bench->location)
@@ -74,6 +75,11 @@
                                         @empty
                                             <p class="font-semibold text-slate-900">{{ $bench->court_room }}</p>
                                         @endforelse
+                                        @if($room['place'])
+                                            <p class="mt-1 flex items-center gap-1 text-xs font-medium text-slate-600">
+                                                <x-icon name="map" :size="12" class="shrink-0 text-slate-400" /> {{ $room['place'] }}
+                                            </p>
+                                        @endif
                                     </div>
                                 </div>
 

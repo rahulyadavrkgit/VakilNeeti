@@ -93,13 +93,9 @@
                             {{ $hearing->case_title }}
                         </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-@if($hearing->court_room ?? $hearing->case_court_room ?? null)<span class="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-slate-700">Room {{ $hearing->court_room ?? $hearing->case_court_room }}</span>
-@endif
-@if(($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null))<a href="{{ ($hearing->hearing_vc_link ?? null) ?: $hearing->case_vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="ml-1 inline-flex rounded-full bg-[#142235] px-2 py-0.5 align-middle text-[11px] font-semibold text-white hover:bg-[#20334a]">Join VC</a>
-@endif
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $hearing->case_number ?: 'Case number unavailable' }}
-                            · {{ $hearing->court_name ?: 'Court not specified' }}
                         </p>
                         @if($hearing->hearing_time || $hearing->hearing_stage)
                             <p class="mt-1 text-xs text-slate-500">
@@ -128,10 +124,7 @@
                                 {{ $hearing->case_title }}
                             </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-@if($hearing->court_room ?? $hearing->case_court_room ?? null)<span class="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-slate-700">Room {{ $hearing->court_room ?? $hearing->case_court_room }}</span>
-@endif
-@if(($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null))<a href="{{ ($hearing->hearing_vc_link ?? null) ?: $hearing->case_vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="ml-1 inline-flex rounded-full bg-[#142235] px-2 py-0.5 align-middle text-[11px] font-semibold text-white hover:bg-[#20334a]">Join VC</a>
-@endif
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                             <p class="mt-1 text-sm text-slate-600">{{ $hearing->case_number ?: 'Case number unavailable' }}</p>
                         </div>
                         <p class="text-sm font-semibold text-amber-800">
@@ -165,20 +158,11 @@
                             {{ $hearing->case_title }}
                         </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-@if($hearing->court_room ?? $hearing->case_court_room ?? null)<span class="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-slate-700">Room {{ $hearing->court_room ?? $hearing->case_court_room }}</span>
-@endif
-@if(($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null))<a href="{{ ($hearing->hearing_vc_link ?? null) ?: $hearing->case_vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="ml-1 inline-flex rounded-full bg-[#142235] px-2 py-0.5 align-middle text-[11px] font-semibold text-white hover:bg-[#20334a]">Join VC</a>
-@endif
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $hearing->case_number ?: 'Case number unavailable' }}
                             @if($hearing->cnr_number)
                                 · CNR: {{ $hearing->cnr_number }}
-                            @endif
-                        </p>
-                        <p class="mt-1 text-xs text-slate-500">
-                            {{ $hearing->court_name ?: 'Court not specified' }}
-                            @if($hearing->court_room)
-                                · Court Room: {{ $hearing->court_room }}
                             @endif
                         </p>
                         @if($hearing->hearing_stage)
@@ -264,14 +248,10 @@
                         {{ $hearing->case_title }}
                     </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-@if($hearing->court_room ?? $hearing->case_court_room ?? null)<span class="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-slate-700">Room {{ $hearing->court_room ?? $hearing->case_court_room }}</span>
-@endif
-@if(($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null))<a href="{{ ($hearing->hearing_vc_link ?? null) ?: $hearing->case_vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="ml-1 inline-flex rounded-full bg-[#142235] px-2 py-0.5 align-middle text-[11px] font-semibold text-white hover:bg-[#20334a]">Join VC</a>
-@endif
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                     <p class="mt-1 text-sm text-slate-600">
                         {{ $hearing->case_number ?: 'Case number unavailable' }}
                         · {{ $hearing->hearing_date ? \Carbon\Carbon::parse($hearing->hearing_date)->format('d M Y') : 'Date unavailable' }}
-                        · {{ $hearing->court_name ?: 'Court not specified' }}
                     </p>
                     @if($hearing->hearing_stage)
                         <p class="mt-1 text-xs text-slate-500">Stage: {{ $hearing->hearing_stage }}</p>

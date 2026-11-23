@@ -172,6 +172,7 @@
 
                             <td class="p-4">
                                 {{ $case->court_name ?: 'Not available' }}
+                                <x-court-info class="mt-1.5" :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link" />
                             </td>
 
                             <td class="p-4">

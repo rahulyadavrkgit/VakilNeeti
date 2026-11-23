@@ -151,6 +151,7 @@ class CaseCalendarController extends Controller
                 'lc.appearing_for',
                 'lc.appearing_for_parties',
                 'lc.court_room as case_court_room',
+                'lc.judge_name as case_judge_name',
                 'lc.vc_link'
             );
 

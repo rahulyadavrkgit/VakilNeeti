@@ -47,6 +47,8 @@ class CaseDashboardController extends Controller
             'court_hearings.hearing_stage',
             'court_hearings.court_room',
             'court_hearings.vc_link as hearing_vc_link',
+            'court_hearings.judge_name',
+            'legal_cases.judge_name as case_judge_name',
             'legal_cases.case_title',
             'legal_cases.case_number',
             'legal_cases.cnr_number',
@@ -96,6 +98,7 @@ class CaseDashboardController extends Controller
                 'legal_cases.appearing_for_parties',
                 'legal_cases.court_room as case_court_room',
                 'legal_cases.vc_link as case_vc_link',
+                'legal_cases.judge_name as case_judge_name',
                 'court_hearings.vc_link as hearing_vc_link'
             )
             ->orderBy('court_hearings.next_hearing_date')
@@ -134,9 +137,17 @@ class CaseDashboardController extends Controller
                 'court_hearings.case_id',
                 'court_hearings.hearing_date',
                 'court_hearings.hearing_stage',
+                'court_hearings.court_room',
+                'court_hearings.judge_name',
+                'court_hearings.vc_link as hearing_vc_link',
                 'legal_cases.case_title',
                 'legal_cases.case_number',
-                'legal_cases.court_name'
+                'legal_cases.court_name',
+                'legal_cases.appearing_for',
+                'legal_cases.appearing_for_parties',
+                'legal_cases.court_room as case_court_room',
+                'legal_cases.judge_name as case_judge_name',
+                'legal_cases.vc_link as case_vc_link'
             )
             ->get();
 

@@ -45,6 +45,26 @@ class CaseCalendarControllerTest extends TestCase
         $this->assertSame(['next_hearing'], $response->viewData('eventsByDate')->get('2026-03-20')->pluck('type')->all());
     }
 
+    public function test_month_events_carry_a_hover_card_with_side_court_room_judge_and_vc_link(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $case = $this->makeCase([
+            'appearing_for' => 'respondent',
+            'court_room' => '304, Main court building',
+            'judge_name' => 'Ms. Niti Phutela',
+            'vc_link' => 'https://districtcourtdelhi.webex.com/meet/ddc.vc.south02',
+        ]);
+        $this->hearing($case, '2026-03-12', ['hearing_stage' => 'Final arguments']);
+
+        $html = $this->get(route('cases.calendar', ['view' => 'month', 'date' => '2026-03-10']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-event-peek', $html);
+        $card = substr($html, (int) strpos($html, '<template data-event-card>'), (int) strpos($html, '</template>') - (int) strpos($html, '<template data-event-card>'));
+        foreach (['Thu, 12 Mar 2026', 'Asha vs State', 'Respondent', 'Room 304, Main court building', 'Ms. Niti Phutela', 'href="https://districtcourtdelhi.webex.com/meet/ddc.vc.south02"', 'Final arguments', 'Open case'] as $detail) {
+            $this->assertStringContainsString($detail, $card);
+        }
+    }
+
     public function test_day_and_week_views_only_cover_their_own_dates(): void
     {
         $this->actingAs(User::factory()->create());

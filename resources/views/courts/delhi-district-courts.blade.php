@@ -44,18 +44,29 @@
                                    class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-[#16776e] px-4 text-center text-sm font-semibold text-white hover:bg-[#125f58]">
                                     Judges list &amp; VC
                                 </a>
-                                <a href="{{ $district['url'] }}" rel="noopener noreferrer"
+                                <a href="{{ $district['vc_links'] }}" rel="noopener noreferrer"
                                    class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
-                                    Leave &amp; rosters <x-icon name="external" :size="14" />
-                                </a>
-                                <a href="{{ $services['case_status'] }}" rel="noopener noreferrer"
-                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
-                                    Case status / order <x-icon name="external" :size="14" />
+                                    Official VC list <x-icon name="external" :size="14" />
                                 </a>
                                 <a href="{{ $services['cause_list'] }}" rel="noopener noreferrer"
                                    class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
                                     Cause list <x-icon name="external" :size="14" />
                                 </a>
+                                <a href="{{ $district['url'] }}" rel="noopener noreferrer"
+                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
+                                    District website <x-icon name="external" :size="14" />
+                                </a>
+                            </div>
+                            <div class="mt-2 rounded-xl bg-slate-50 px-3 py-2.5">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Case status, orders &amp; leave</p>
+                                <div class="mt-1.5 flex flex-wrap gap-1.5">
+                                    @foreach(\App\Http\Controllers\CourtLinksController::DELHI_DISTRICT_CASE_SEARCHES as $label => $path)
+                                        <a href="{{ $district['url'].$path }}" rel="noopener noreferrer"
+                                           class="inline-flex min-h-9 items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
+                                            {{ $label }} <x-icon name="external" :size="12" />
+                                        </a>
+                                    @endforeach
+                                </div>
                             </div>
                         </section>
                     @endforeach
@@ -69,6 +80,7 @@
         <h2 class="text-lg font-semibold text-slate-900">More for all Delhi district courts</h2>
         <div class="mt-3 flex flex-wrap gap-2">
             @foreach([
+                'case_status' => 'Case status (all districts)',
                 'virtual_court' => 'Virtual courts',
                 'vc_links' => 'VC hearing links',
                 'evening_court' => 'Evening (traffic) court',

@@ -96,3 +96,23 @@
         padding: 0.5rem 0.75rem;
     }
 }
+
+/* Calendar hover card (resources/js/event-peek.js). */
+@layer components {
+    .vn-event-peek {
+        position: fixed;
+        z-index: 60;
+        width: min(20rem, calc(100vw - 1rem));
+        max-height: calc(100vh - 1rem);
+        overflow-y: auto;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--color-slate-200);
+        background: var(--color-white);
+        padding: 0.875rem 1rem;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .vn-event-peek[hidden] {
+        display: none;
+    }
+}

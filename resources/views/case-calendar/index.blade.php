@@ -222,10 +222,16 @@
                                             <td class="w-16 py-1.5 pr-2 font-semibold text-slate-600">{{ $event['time'] ?? '—' }}</td>
                                             <td class="w-28 py-1.5 pr-2 text-xs font-bold uppercase text-slate-500">{{ $event['label'] }}</td>
                                             <td class="py-1.5">
-                                                <a href="{{ $event['url'] }}" class="font-semibold text-slate-900 hover:text-[#16776e] {{ $event['type'] === 'task' && $event['is_done'] ? 'line-through' : '' }}">{{ $event['title'] }}</a>
-                                                @if($event['case_number'] || $event['court'])
-                                                    <span class="block text-xs text-slate-500">{{ collect([$event['case_number'], $event['court']])->filter()->implode(' · ') }}</span>
+                                                <span data-event-peek class="inline-flex flex-wrap items-center gap-1.5">
+                                                    <a href="{{ $event['url'] }}" class="font-semibold text-slate-900 hover:text-[#16776e] {{ $event['type'] === 'task' && $event['is_done'] ? 'line-through' : '' }}">{{ $event['title'] }}</a>
+                                                    <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" />
+                                                    <template data-event-card>@include('case-calendar.partials.event-card', ['event' => $event])</template>
+                                                </span>
+                                                @if($event['case_number'])
+                                                    <span class="block text-xs text-slate-500">{{ $event['case_number'] }}</span>
                                                 @endif
+                                                <x-court-info class="mt-1" :court="$event['court']" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
+
                                                 @if($event['details'])
                                                     <span class="block text-xs text-slate-600">{{ \Illuminate\Support\Str::limit($event['details'], 160) }}</span>
                                                 @endif

@@ -9,3 +9,7 @@ if (document.getElementById('vn-pdf-annotator')) {
 if (document.querySelector('[data-invoice-editor]')) {
     import('./invoice-editor.js');
 }
+
+if (document.querySelector('[data-event-peek]')) {
+    import('./event-peek.js');
+}

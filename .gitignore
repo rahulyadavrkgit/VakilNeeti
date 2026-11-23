@@ -34,6 +34,8 @@
 .phpunit.result.cache
 **/coverage/
 **/build/
+# The production CSS/JS build is committed so the server needs no Node.js.
+!/public/build/
 
 # Tooling and IDE
 .phpactor.json

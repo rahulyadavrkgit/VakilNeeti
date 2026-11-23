@@ -32,7 +32,7 @@
     "src": "node_modules/pdfjs-dist/build/pdf.worker.min.mjs"
   },
   "resources/css/app.css": {
-    "file": "assets/app-5J5Xxxrk.css",
+    "file": "assets/app-BJcjipIM.css",
     "name": "app",
     "names": [
       "app.css"
@@ -41,14 +41,21 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DBni48k9.js",
+    "file": "assets/app-JluWkW6d.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
       "resources/js/pdf-annotator.js",
-      "resources/js/invoice-editor.js"
+      "resources/js/invoice-editor.js",
+      "resources/js/event-peek.js"
     ]
+  },
+  "resources/js/event-peek.js": {
+    "file": "assets/event-peek-BB14PpS5.js",
+    "name": "event-peek",
+    "src": "resources/js/event-peek.js",
+    "isDynamicEntry": true
   },
   "resources/js/invoice-editor.js": {
     "file": "assets/invoice-editor-W_ZB8BnH.js",

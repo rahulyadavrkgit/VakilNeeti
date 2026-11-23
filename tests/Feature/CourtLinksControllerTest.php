@@ -55,9 +55,21 @@ class CourtLinksControllerTest extends TestCase
             $response->assertSee($complex);
 
             foreach ($districts as $district) {
-                $response->assertSee($district['district'])->assertSee('href="'.$district['url'].'"', false);
+                $response->assertSee($district['district'])
+                    ->assertSee('href="'.$district['url'].'"', false)
+                    ->assertSee('href="'.$district['vc_links'].'"', false);
             }
         }
+    }
+
+    public function test_each_delhi_district_links_to_its_own_case_status_searches(): void
+    {
+        $this->get(route('courts.delhi-district-courts'))
+            ->assertOk()
+            ->assertSee('href="https://westdelhi.dcourts.gov.in/case-status-search-by-case-number/"', false)
+            ->assertSee('href="https://rohini.dcourts.gov.in/case-status-search-by-advocate/"', false)
+            ->assertSee('href="https://southdelhi.dcourts.gov.in/court-orders-search-by-order-date/"', false)
+            ->assertSee('href="https://shahdara.dcourts.gov.in/judges-on-leave/"', false);
     }
 
     public function test_display_boards_and_courts_hub_are_public(): void
