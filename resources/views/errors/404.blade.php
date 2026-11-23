@@ -177,7 +177,7 @@
                 <a href="{{ route('cases.index') }}">My cases</a>
                 <a href="{{ route('cases.calendar') }}">Calendar</a>
                 <a href="{{ route('clients.index') }}">Clients</a>
-                <a href="{{ route('court-directory.index') }}">Courts</a>
+                <a href="{{ route('courts.index') }}">Courts</a>
                 <a href="{{ route('profile.index') }}">Profile</a>
             </nav>
         </section>

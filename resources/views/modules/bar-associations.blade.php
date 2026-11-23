@@ -6,15 +6,9 @@
 
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
-    <section id="national" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <div class="mb-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Directory</span></div>
-        <h1 class="mt-2 text-2xl font-bold">Bar Councils &amp; Associations</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-300">Bar Councils and court bar associations.</p>
-        <a href="{{ route('bar-directory.index') }}"
-           class="mt-5 inline-flex rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-            Open full directory
-        </a>
-    </section>
+    <x-page-header id="national" title="Bar Councils & Associations" subtitle="Bar Councils and court bar associations.">
+        <a href="{{ route('bar-directory.index') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Open full directory</a>
+    </x-page-header>
 
     <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
         Directory entries may change. Confirm current office holders, contact details, membership requirements and official status directly with the relevant organization.

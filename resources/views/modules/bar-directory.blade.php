@@ -5,19 +5,9 @@
 @section('meta_description', 'Directory of Bar Councils and Bar Associations across India, with official contact links.')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+<div class="mx-auto max-w-7xl">
 
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Bar Councils & Bar Associations Directory</h1>
-            <p class="mt-1 text-sm text-gray-600">State Bar Councils, the Bar Council of India and court bar associations.</p>
-        </div>
-        <div class="mt-3 sm:mt-0">
-            <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800">
-                Statutory & Professional Bodies
-            </span>
-        </div>
-    </div>
+    <x-page-header class="mb-5" title="Bar Councils & Associations" subtitle="State Bar Councils, the Bar Council of India and court bar associations." />
 
     <!-- Filter Form -->
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">

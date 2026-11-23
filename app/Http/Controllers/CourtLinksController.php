@@ -3,7 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourtBench;
+use App\Models\LegalCase;
+use App\Services\CalendarEventService;
+use App\Services\CourtBenchMatcher;
 use App\Services\CourtBoardEmbedCheck;
+use App\Services\LiveCourtBoard;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -127,12 +135,14 @@ class CourtLinksController extends Controller
 
     /**
      * Official live display boards, by court. Only links published by the courts themselves.
+     * `live` names the court's board in VakilNiti (App\Services\LiveCourtBoard), offered first.
      *
-     * @var list<array{court: string, level: string, boards: list<array{title: string, url: string}>}>
+     * @var list<array{court: string, live?: string, level: string, boards: list<array{title: string, url: string}>}>
      */
     public const DISPLAY_BOARDS = [
         [
             'court' => 'Supreme Court of India',
+            'live' => 'supreme-court',
             'level' => 'Supreme Court',
             'boards' => [
                 ['title' => 'Physical display board', 'url' => 'https://cdb.sci.gov.in/'],
@@ -141,6 +151,7 @@ class CourtLinksController extends Controller
         ],
         [
             'court' => 'High Court of Delhi',
+            'live' => 'delhi-high-court',
             'level' => 'High Court',
             'boards' => [
                 ['title' => 'Display board', 'url' => 'https://delhihighcourt.nic.in/app/display-board'],
@@ -167,6 +178,17 @@ class CourtLinksController extends Controller
         $options = [];
 
         foreach (self::DISPLAY_BOARDS as $court) {
+            // Our own board for this court can always be shown inside VakilNiti.
+            if (isset($court['live'])) {
+                $options[] = [
+                    'court' => $court['court'],
+                    'level' => $court['level'],
+                    'title' => 'Live board in VakilNiti',
+                    'url' => route('courts.live-board', $court['live']),
+                    'embeddable' => true,
+                ];
+            }
+
             foreach ($court['boards'] as $board) {
                 $options[] = [
                     'court' => $court['court'],
@@ -181,9 +203,84 @@ class CourtLinksController extends Controller
         return $options;
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('courts.index');
+        return view('courts.index', [
+            'myCourts' => $request->user() ? $this->myCourts() : collect(),
+        ]);
+    }
+
+    /**
+     * The courts the signed-in person's open cases are in, soonest hearing first: how many cases, how many
+     * are listed today, the next date with its room, judge and VC link, and where to find the court's services.
+     *
+     * @return Collection<int, array{court: string, complex: ?string, cases: int, today: int, next_date: ?Carbon, next_count: int, room: ?string, judge: ?string, vc_link: ?string, cases_url: string, official_url: ?string}>
+     */
+    private function myCourts(): Collection
+    {
+        $today = today();
+
+        $cases = LegalCase::query()
+            ->whereNull('closed_at')
+            ->where(fn ($status) => $status->whereNull('case_status')->orWhereNotIn('case_status', ['closed', 'disposed']))
+            ->whereNotNull('court_name')
+            ->where('court_name', '!=', '')
+            ->with(['hearings' => fn ($hearings) => $hearings->where(fn ($dates) => $dates
+                ->whereDate('hearing_date', '>=', $today)
+                ->orWhereDate('next_hearing_date', '>=', $today))])
+            ->get();
+
+        return $cases
+            ->groupBy(fn (LegalCase $case): string => Str::lower(trim($case->court_name)).'|'.Str::lower(trim((string) $case->court_complex)))
+            ->map(function (Collection $courtCases) use ($today): array {
+                // Each case's next date, with the hearing that set it (its room, judge and VC link come first).
+                $upcoming = $courtCases->map(function (LegalCase $case) use ($today): ?array {
+                    $next = $case->hearings
+                        ->flatMap(fn ($hearing) => collect([$hearing->hearing_date, $hearing->next_hearing_date])
+                            ->filter(fn (?Carbon $date): bool => $date !== null && $date->gte($today))
+                            ->map(fn (Carbon $date): array => ['date' => $date, 'hearing' => $hearing]))
+                        ->sortBy(fn (array $item): string => $item['date']->toDateString())
+                        ->first();
+
+                    return $next ? $next + ['case' => $case] : null;
+                })->filter()->sortBy(fn (array $item): string => $item['date']->toDateString())->values();
+
+                $first = $courtCases->first();
+                $nearest = $upcoming->first();
+                $nextDate = $nearest['date'] ?? null;
+                $source = $nearest['case'] ?? $courtCases->first(fn (LegalCase $case): bool => (bool) ($case->court_room || $case->judge_name || $case->vc_link)) ?? $first;
+
+                return [
+                    'court' => trim($first->court_name),
+                    'complex' => trim((string) $first->court_complex) ?: null,
+                    'cases' => $courtCases->count(),
+                    'today' => $upcoming->filter(fn (array $item): bool => $item['date']->isSameDay($today))->count(),
+                    'next_date' => $nextDate,
+                    'next_count' => $nextDate ? $upcoming->filter(fn (array $item): bool => $item['date']->isSameDay($nextDate))->count() : 0,
+                    'room' => ($nearest['hearing'] ?? null)?->court_room ?: $source->court_room,
+                    'judge' => ($nearest['hearing'] ?? null)?->judge_name ?: $source->judge_name,
+                    'vc_link' => ($nearest['hearing'] ?? null)?->vc_link ?: $source->vc_link,
+                    'cases_url' => route('cases.index', ['search' => trim($first->court_name), 'search_type' => 'court']),
+                    'official_url' => $this->officialPageFor($first->court_name.' '.$first->court_complex),
+                ];
+            })
+            ->sortBy(fn (array $court): string => ($court['next_date']?->toDateString() ?? '9999-12-31').sprintf('%06d', 999999 - $court['cases']))
+            ->values();
+    }
+
+    /**
+     * Our page of official services for a court, when we have one.
+     */
+    private function officialPageFor(string $court): ?string
+    {
+        $court = Str::lower($court);
+
+        return match (true) {
+            str_contains($court, 'supreme court') => route('courts.supreme-court'),
+            str_contains($court, 'high court') && str_contains($court, 'delhi') => route('courts.delhi-high-court'),
+            Str::contains($court, ['tis hazari', 'saket', 'karkardooma', 'rohini', 'dwarka', 'patiala house', 'rouse avenue']) => route('courts.delhi-district-courts'),
+            default => null,
+        };
     }
 
     public function supremeCourt(): View
@@ -284,5 +381,67 @@ class CourtLinksController extends Controller
     public function displayBoards(): View
     {
         return view('courts.display-boards', ['courts' => self::DISPLAY_BOARDS]);
+    }
+
+    /**
+     * Our own live board for a court, built from the data the court publishes for its public board.
+     * It is a page of its own so the board viewer can show it inside VakilNiti (the courts' pages refuse that).
+     * With ?room=12 that court is highlighted.
+     */
+    public function liveBoard(Request $request, string $court, LiveCourtBoard $boards): View
+    {
+        $myRooms = $request->user() ? $this->myRoomsToday($court) : [];
+        $askedRoom = LiveCourtBoard::roomKey($court, $request->string('room')->toString());
+
+        if ($askedRoom !== null && ! isset($myRooms[$askedRoom])) {
+            $myRooms[$askedRoom] = [];
+        }
+
+        return view('courts.live-board', [
+            'board' => $boards->board($court),
+            'myRooms' => $myRooms,
+        ]);
+    }
+
+    /**
+     * The signed-in person's hearings today on this court's board, by board room: case title, number and time.
+     * A room missing from the case is taken from the official court list, as on the hearing cards.
+     *
+     * @return array<string, list<array{title: string, case_number: ?string, time: ?string}>>
+     */
+    private function myRoomsToday(string $court): array
+    {
+        $matcher = app(CourtBenchMatcher::class);
+        $rooms = [];
+
+        $hearings = app(CalendarEventService::class)->between(today(), today(), ['groups' => ['hearing'], 'user_id' => auth()->id()]);
+
+        foreach ($hearings as $hearing) {
+            if (LiveCourtBoard::boardFor($hearing['court'] ?? null) !== $court) {
+                continue;
+            }
+
+            $room = $hearing['court_room'] ?? null;
+
+            if (! trim((string) $room)) {
+                $room = $matcher->find($hearing['court'] ?? null, $hearing['court_complex'] ?? null, $hearing['judge_name'] ?? null)?->court_room;
+            }
+
+            $key = LiveCourtBoard::roomKey($court, $room);
+
+            if ($key !== null) {
+                $rooms[$key][] = ['title' => $hearing['title'], 'case_number' => $hearing['case_number'] ?? null, 'time' => $hearing['time'] ?? null];
+            }
+        }
+
+        return $rooms;
+    }
+
+    /**
+     * The live board as JSON, for the board page and the "now running" chips beside today's hearings.
+     */
+    public function liveBoardData(string $court, LiveCourtBoard $boards): JsonResponse
+    {
+        return response()->json($boards->board($court))->header('Cache-Control', 'public, max-age=20');
     }
 }

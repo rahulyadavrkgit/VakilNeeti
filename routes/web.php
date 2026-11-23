@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdvocateProfileController;
+use App\Http\Controllers\Api\CourtDirectoryController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Auth\UserRegistrationController;
 use App\Http\Controllers\BarDirectoryController;
@@ -16,15 +17,14 @@ use App\Http\Controllers\CaseWorkspaceController;
 use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientManagementController;
+use App\Http\Controllers\ClientsFromCasesController;
 use App\Http\Controllers\CourtCatalogueController;
-use App\Http\Controllers\CourtDirectoryController;
 use App\Http\Controllers\CourtIntegrationController;
 use App\Http\Controllers\CourtLinksController;
 use App\Http\Controllers\CourtStandSideController;
 use App\Http\Controllers\CriminalLawComparisonController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardStudioController;
-use App\Http\Controllers\DistrictDirectoryController;
 use App\Http\Controllers\ExternalWebviewController;
 use App\Http\Controllers\FirmProfileController;
 use App\Http\Controllers\HearingController;
@@ -49,9 +49,8 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxComplianceController;
 use App\Http\Controllers\TdsDeductionController;
-use Illuminate\Support\Facades\DB;
+use App\Services\LiveCourtBoard;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,7 +64,8 @@ Route::get('/', [DashboardController::class, 'index'])
 Route::view('/app', 'app-download')->name('app.download');
 
 Route::get('/court-integrations/ecourts', [CourtIntegrationController::class, 'index'])->name('court-integrations.ecourts');
-Route::get('/court-integrations/ecourts/search', [CourtIntegrationController::class, 'search'])->name('court-integrations.ecourts.search');
+// Repeated eCourts services (which has the CNR search too).
+Route::permanentRedirect('/court-integrations/ecourts/search', '/courts/ecourts-services')->name('court-integrations.ecourts.search');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +74,8 @@ Route::get('/court-integrations/ecourts/search', [CourtIntegrationController::cl
 */
 
 Route::post('/clients/bulk-delete', [ClientController::class, 'bulkDestroy'])->name('clients.bulk-destroy');
+Route::get('/clients/from-cases', [ClientsFromCasesController::class, 'index'])->name('clients.from-cases');
+Route::post('/clients/from-cases', [ClientsFromCasesController::class, 'store'])->name('clients.from-cases.store');
 Route::resource('clients', ClientController::class);
 
 Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])
@@ -288,17 +290,17 @@ Route::prefix('api/court-directory')
     ->group(function () {
         Route::get(
             '/states',
-            [App\Http\Controllers\Api\CourtDirectoryController::class, 'states']
+            [CourtDirectoryController::class, 'states']
         )->name('states');
 
         Route::get(
             '/states/{stateId}/districts',
-            [App\Http\Controllers\Api\CourtDirectoryController::class, 'districts']
+            [CourtDirectoryController::class, 'districts']
         )->whereNumber('stateId')->name('districts');
 
         Route::get(
             '/districts/{districtId}/establishments',
-            [App\Http\Controllers\Api\CourtDirectoryController::class, 'establishments']
+            [CourtDirectoryController::class, 'establishments']
         )->whereNumber('districtId')->name('establishments');
     });
 
@@ -308,14 +310,11 @@ Route::get(
     [LocationController::class, 'cities']
 )->whereNumber('districtId')->name('api.locations.cities');
 
-// VAKILNITI COURT DIRECTORY PAGE
-Route::get('/court-directory/districts/{districtId}', [DistrictDirectoryController::class, 'show'])
+// The old court directory held no courts; its addresses now open the Courts page.
+Route::permanentRedirect('/court-directory', '/courts')->name('court-directory.index');
+Route::get('/court-directory/districts/{districtId}', fn () => redirect()->route('courts.index', [], 301))
     ->whereNumber('districtId')
     ->name('court-directory.districts.show');
-Route::view(
-    '/court-directory',
-    'court-directory.index'
-)->name('court-directory.index');
 
 Route::get('/case-management/hearing-history', [HearingHistoryController::class, 'index'])->name('cases.hearing-history');
 
@@ -344,6 +343,8 @@ Route::get('/profile', [ProfileController::class, 'index'])
     ->name('profile.index');
 Route::post('/profile/preferences', [ProfileController::class, 'updatePreferences'])
     ->name('profile.preferences.update');
+Route::post('/profile/system-preferences', [ProfileController::class, 'updateSystemPreferences'])
+    ->name('profile.system-preferences.update');
 Route::get('/profile/setup', [ProfileSetupController::class, 'start'])->name('profile.setup.start');
 Route::get('/profile/setup/next', [ProfileSetupController::class, 'next'])->name('profile.setup.next');
 Route::get('/profile/setup/skip/{step}', [ProfileSetupController::class, 'skip'])->name('profile.setup.skip');
@@ -457,20 +458,8 @@ Route::get('/webview', [ExternalWebviewController::class, 'show'])
 Route::get('/embed-check', [ExternalWebviewController::class, 'embedCheck'])
     ->middleware('throttle:30,1')
     ->name('embed-check');
-Route::get('/court-management', function () {
-    $countTable = function ($table) {
-        return Schema::hasTable($table)
-            ? DB::table($table)->count()
-            : 0;
-    };
-
-    return view('court-management.index', [
-        'courtCount' => $countTable('courts'),
-        'districtCount' => $countTable('judicial_districts'),
-        'establishmentCount' => $countTable('court_establishments'),
-        'stateCount' => $countTable('states'),
-    ]);
-})->name('court-management.index');
+// The old court management page repeated the Courts page.
+Route::permanentRedirect('/court-management', '/courts')->name('court-management.index');
 
 // Administrator authentication
 Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])
@@ -496,9 +485,6 @@ Route::post('/admin/initial-setup', [InitialAdminSetupController::class, 'store'
 // Bar Councils and Associations Directory
 
 Route::get('/bar-directory', [BarDirectoryController::class, 'index'])->name('bar-directory.index');
-// Judicial Architecture & Court Complexes Directory
-
-Route::get('/court-directory', [CourtDirectoryController::class, 'index'])->name('court-directory.index');
 
 // Search engines.
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
@@ -516,6 +502,9 @@ Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class
     Route::get('/delhi-high-court', 'delhiHighCourt')->name('delhi-high-court');
     Route::get('/delhi-district-courts', 'delhiDistrictCourts')->name('delhi-district-courts');
     Route::get('/display-boards', 'displayBoards')->name('display-boards');
+    Route::get('/live-board/{court}', 'liveBoard')->whereIn('court', array_keys(LiveCourtBoard::COURTS))->name('live-board');
+    Route::get('/live-board/{court}/data', 'liveBoardData')->whereIn('court', array_keys(LiveCourtBoard::COURTS))
+        ->middleware('throttle:120,1')->name('live-board.data');
     Route::get('/ecourts-services', 'ecourtsServices')->name('ecourts-services');
 });
 // Criminal Laws: old and new statutory section comparison.

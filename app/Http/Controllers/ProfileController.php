@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Currency;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,35 @@ class ProfileController extends Controller
             'onboardingFeatures' => self::ONBOARDING_FEATURES,
             'user' => $user,
         ]);
+    }
+
+    /**
+     * Save System Preferences: calendar view and week start, Home display boards, and which reminders to get.
+     */
+    public function updateSystemPreferences(Request $request)
+    {
+        $rules = [];
+
+        foreach (User::PREFERENCES as $key => $definition) {
+            $rules[$key] = is_bool($definition['default'])
+                ? ['nullable', 'boolean']
+                : ['required', Rule::in(array_keys($definition['options']))];
+        }
+
+        $validated = $request->validate($rules);
+        $preferences = [];
+
+        foreach (User::PREFERENCES as $key => $definition) {
+            $preferences[$key] = is_bool($definition['default']) ? $request->boolean($key) : $validated[$key];
+        }
+
+        $user = $request->user();
+        $user->preferences = $preferences;
+        $user->save();
+
+        return redirect()
+            ->to(route('profile.index').'#system-preferences')
+            ->with('system_preferences_success', 'System preferences saved.');
     }
 
     public function updatePreferences(Request $request)

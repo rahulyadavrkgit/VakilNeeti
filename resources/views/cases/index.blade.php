@@ -104,9 +104,23 @@
                         @endforeach
                     </select>
                 @endif
-                @if($hasFilters)
-                    <a href="{{ route('cases.index') }}" class="ml-auto text-sm font-semibold text-[#16776e] hover:underline">Clear all</a>
-                @endif
+                <span class="ml-auto flex flex-wrap items-center gap-2">
+                    @if($hasFilters)
+                        <a href="{{ route('cases.index') }}" class="text-sm font-semibold text-[#16776e] hover:underline">Clear all</a>
+                    @endif
+                    @if($shareText)
+                        {{-- Send exactly the cases shown: each with its next date, our side, court, room, judge and VC link. --}}
+                        <button type="button" data-copy="{{ $shareText }}" title="Copy this list" aria-label="Copy this list of {{ $cases->total() }} cases"
+                                class="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
+                            <x-icon name="copy" :size="16" /><span data-copy-label>Copy list</span>
+                        </button>
+                        <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                           data-share-text="{{ $shareText }}" data-share-title="Cases"
+                           class="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-[#16776e] px-3 text-sm font-semibold text-white hover:bg-[#125f58]">
+                            <x-icon name="share" :size="16" /> Share {{ min($cases->total(), 100) }} {{ \Illuminate\Support\Str::plural('case', min($cases->total(), 100)) }}
+                        </a>
+                    @endif
+                </span>
             </div>
         </form>
     </section>
@@ -159,10 +173,10 @@
 
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                            <a href="{{ route('cases.show', $case) }}" class="flex min-w-0 flex-wrap items-center gap-1.5 text-base font-semibold leading-snug text-slate-900 hover:text-[#16776e]">
-                                <span class="min-w-0 break-words">{{ $case->case_title ?: 'Untitled case' }}</span>
-                                <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" />
-                            </a>
+                            <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                                <a href="{{ route('cases.show', $case) }}" class="min-w-0 break-words text-base font-semibold leading-snug text-slate-900 hover:text-[#16776e]">{{ $case->case_title ?: 'Untitled case' }}</a>
+                                <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" :edit-url="route('cases.edit', $case)" />
+                            </div>
                             <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
                         </div>
 
@@ -177,7 +191,8 @@
                         </p>
 
                         <x-court-info class="mt-2" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
-                                      :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link" />
+                                      :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link"
+                                      :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $nextHearing ? $tileDate->toDateString() : null, 'time' => $upcomingDate['time'] ?? null, 'details' => $nextHearing?->hearing_stage]" />
 
                         <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
                             @foreach($case->tags as $caseTag)
@@ -193,6 +208,10 @@
                                 </form>
                             </span>
                         </div>
+                        @unless($nextHearing)
+                            {{-- No date ahead (passed or never set): add it here without leaving the list. --}}
+                            <x-quick-next-date class="mt-2" :case-id="$case->id" />
+                        @endunless
                     </div>
                 </div>
             </li>

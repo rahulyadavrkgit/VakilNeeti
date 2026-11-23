@@ -34,9 +34,16 @@ class SeoTest extends TestCase
 
     public function test_canonical_keeps_only_meaningful_query_values(): void
     {
-        $this->get(route('court-directory.index', ['level' => 'high-court', 'utm_source' => 'x']))
+        $this->get(route('courts.index', ['level' => 'high-court', 'utm_source' => 'x']))
             ->assertOk()
-            ->assertSee('<link rel="canonical" href="'.route('court-directory.index').'?level=high-court">', false);
+            ->assertSee('<link rel="canonical" href="'.route('courts.index').'?level=high-court">', false);
+    }
+
+    public function test_the_old_empty_court_directory_sends_people_to_the_courts_page(): void
+    {
+        $this->get('/court-directory?level=district')->assertStatus(301)->assertRedirect(route('courts.index'));
+        $this->get('/court-directory/districts/12')->assertStatus(301)->assertRedirect(route('courts.index'));
+        $this->get(route('courts.index'))->assertOk()->assertDontSee('/court-directory', false);
     }
 
     public function test_private_and_login_pages_are_not_indexed(): void

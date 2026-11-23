@@ -40,12 +40,13 @@
                 </div>
                 <p class="mt-1 flex flex-wrap items-center gap-1.5 font-semibold leading-snug">
                     <a href="{{ $nextHearing['url'] }}" class="hover:text-[#16776e]">{{ $nextHearing['title'] }}</a>
-                    <x-case-side :side="$nextHearing['appearing_for'] ?? null" :parties="$nextHearing['appearing_for_parties'] ?? null" />
+                    <x-case-side :side="$nextHearing['appearing_for'] ?? null" :parties="$nextHearing['appearing_for_parties'] ?? null" :edit-url="$nextHearing['case_id'] ? route('cases.edit', $nextHearing['case_id']) : null" />
                 </p>
                 @if($nextHearing['case_number'] || $nextHearing['details'])
                     <p class="mt-0.5 truncate text-xs text-slate-500">{{ collect([$nextHearing['case_number'], $nextHearing['details']])->filter()->implode(' · ') }}</p>
                 @endif
-                <x-court-info class="mt-2" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextHearing['court_room'] ?? null" :judge="$nextHearing['judge_name'] ?? null" :vc-link="$nextHearing['vc_link'] ?? null" />
+                <x-court-info class="mt-2" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextHearing['court_room'] ?? null" :judge="$nextHearing['judge_name'] ?? null" :vc-link="$nextHearing['vc_link'] ?? null"
+                              :share="['title' => $nextHearing['title'], 'case_number' => $nextHearing['case_number'], 'side' => $nextHearing['appearing_for'] ?? null, 'parties' => $nextHearing['appearing_for_parties'] ?? null, 'date' => $nextHearing['date'], 'time' => $nextHearing['time'], 'details' => $nextHearing['details']]" />
             </section>
         @endif
         <nav aria-label="Quick actions" class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -112,24 +113,21 @@
                 <ul class="mt-3 divide-y divide-slate-100">
                     @forelse($upcomingHearings as $event)
                         @php $eventDate = \Illuminate\Support\Carbon::parse($event['date']); @endphp
-                        <li>
-                            <a href="{{ $event['url'] }}" class="flex items-center gap-3 py-2.5 hover:bg-slate-50">
-                                <span class="flex w-14 shrink-0 flex-col items-center rounded-lg py-1 {{ $eventDate->isToday() ? 'bg-[#16776e] text-white' : 'bg-teal-50 text-teal-900' }}">
-                                    <span class="text-[11px] font-bold uppercase">{{ $eventDate->isToday() ? 'Today' : ($eventDate->isTomorrow() ? 'Tmrw' : $eventDate->format('M')) }}</span>
-                                    <span class="text-lg font-bold leading-tight">{{ $eventDate->format('d') }}</span>
-                                </span>
-                                <span class="min-w-0 flex-1">
-                                    <span class="flex min-w-0 items-center gap-1.5">
-                                        <span class="truncate text-sm font-semibold text-slate-900">{{ $event['title'] }}</span>
-                                        <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" />
-                                    </span>
-                                    <span class="block truncate text-xs text-slate-500">{{ collect([$event['time'], $event['case_number']])->filter()->implode(' · ') ?: $event['label'] }}</span>
-                                    <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
-                                    @if($event['details'])
-                                        <span class="block truncate text-xs text-slate-600">{{ $event['details'] }}</span>
-                                    @endif
-                                </span>
+                        <li class="flex items-start gap-3 py-3">
+                            <a href="{{ $event['url'] }}" class="flex w-14 shrink-0 flex-col items-center rounded-lg py-1 {{ $eventDate->isToday() ? 'bg-[#16776e] text-white' : 'bg-teal-50 text-teal-900' }}">
+                                <span class="text-[11px] font-bold uppercase">{{ $eventDate->isToday() ? 'Today' : ($eventDate->isTomorrow() ? 'Tmrw' : $eventDate->format('M')) }}</span>
+                                <span class="text-lg font-bold leading-tight">{{ $eventDate->format('d') }}</span>
+                                @if($event['time'])<span class="text-[10px] font-semibold">{{ $event['time'] }}</span>@endif
                             </a>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <a href="{{ $event['url'] }}" class="min-w-0 break-words text-sm font-semibold text-slate-900 hover:text-[#16776e]">{{ $event['title'] }}</a>
+                                    <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" :edit-url="$event['case_id'] ? route('cases.edit', $event['case_id']) : null" />
+                                </div>
+                                <p class="truncate text-xs text-slate-500">{{ collect([$event['case_number'], $event['details']])->filter()->implode(' · ') ?: $event['label'] }}</p>
+                                <x-court-info class="mt-1.5" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null"
+                                              :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
+                            </div>
                         </li>
                     @empty
                         <li class="py-6 text-center text-sm text-slate-500">
@@ -140,7 +138,9 @@
             </section>
 
             <div class="space-y-5">
-            @include('courts.partials.board-picker')
+            @if(auth()->user()->preference('home_display_boards'))
+                @include('courts.partials.board-picker')
+            @endif
 
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="agenda-heading">
                 <div class="flex flex-wrap items-center justify-between gap-3">

@@ -236,6 +236,22 @@ class LegalCase extends Model
     }
 
     /**
+     * The two sides named in the case title, "Prahlad Yadav vs Sanjay Kumar & Ors" → [Prahlad Yadav, Sanjay Kumar].
+     * The first is the side that brought the matter (petitioner, appellant…).
+     *
+     * @return array{moving: ?string, answering: ?string}
+     */
+    public function titleSides(): array
+    {
+        $parts = preg_split('/\s+(?:vs\.?|v\/s\.?|v\.|versus)\s+/i', trim((string) $this->case_title), 2);
+        $clean = fn (?string $name): ?string => ($name = trim((string) preg_replace('/\s*(?:&|and)\s*(?:ors?|others)\.?\s*$/i', '', (string) $name), ' .,-')) !== '' ? $name : null;
+
+        return count($parts) === 2
+            ? ['moving' => $clean($parts[0]), 'answering' => $clean($parts[1])]
+            : ['moving' => null, 'answering' => null];
+    }
+
+    /**
      * What a case search can look in. "all" covers every field below.
      *
      * @var array<string, string>

@@ -109,6 +109,11 @@ class HearingController extends Controller
             return redirect()->route('cases.show', $hearing->case_id)->with('success', $message);
         }
 
+        // Quick "Add next date" forms on lists go back to the same list.
+        if ($request->input('return') === 'back') {
+            return redirect()->back()->with('success', $message);
+        }
+
         return redirect()->route('cases.calendar', ['view' => 'day', 'date' => ($hearing->next_hearing_date ?? $hearing->hearing_date)->toDateString()])
             ->with('success', $message);
     }

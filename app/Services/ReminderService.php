@@ -62,12 +62,23 @@ class ReminderService
         $today = today();
         $reminders = collect();
 
-        $events = $this->calendar->between($today, $today->copy()->addDay(), [
-            'groups' => ['hearing', 'appointment'],
+        // System Preferences: which reminders the person wants, and how early for hearings.
+        $hearingReminders = $user->preference('remind_hearings');
+        $groups = array_values(array_filter([
+            $hearingReminders !== 'off' ? 'hearing' : null,
+            $user->preference('remind_appointments') ? 'appointment' : null,
+        ]));
+
+        $events = $groups === [] ? collect() : $this->calendar->between($today, $today->copy()->addDay(), [
+            'groups' => $groups,
             'user_id' => $user->id,
         ]);
 
         foreach ($events as $event) {
+            if ($event['group'] === 'hearing' && $hearingReminders === 'today' && $event['date'] !== $today->toDateString()) {
+                continue;
+            }
+
             $when = $event['date'] === $today->toDateString() ? 'today' : 'tomorrow';
             $kind = $event['group'];
 
@@ -80,7 +91,7 @@ class ReminderService
             ));
         }
 
-        $tasks = Task::query()
+        $tasks = ! $user->preference('remind_tasks') ? collect() : Task::query()
             ->withoutGlobalScope('user_ownership')
             ->where('user_id', $user->id)
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -101,7 +112,7 @@ class ReminderService
             ));
         }
 
-        $invoices = Invoice::query()
+        $invoices = ! $user->preference('remind_invoices') ? collect() : Invoice::query()
             ->withoutGlobalScope('user_ownership')
             ->with(['client', 'payments'])
             ->where('user_id', $user->id)

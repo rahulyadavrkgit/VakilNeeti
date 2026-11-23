@@ -6,13 +6,7 @@
 
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
-    <section id="court-forms" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <div class="mb-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
-        <h1 class="mt-2 text-2xl font-bold">Forms &amp; Filing Resources</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-300">
-            Find official filing portals and common practice-workspace forms from one place.
-        </p>
-    </section>
+    <x-page-header id="court-forms" title="Forms & Filing Resources" subtitle="Official filing portals and common practice forms in one place." />
 
     <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
         Forms and filing requirements vary by court, State, case type and date. This page links to resources and internal workflows; it does not provide legal advice or guarantee that a form is current or suitable for a filing.
@@ -54,7 +48,7 @@
     <section id="affidavits" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Affidavits &amp; applications</h2>
         <p class="mt-2 text-sm text-slate-600">Use the court’s current prescribed form; check filing requirements with the registry.</p>
-        <a href="{{ route('court-directory.index') }}"
+        <a href="{{ route('courts.index') }}"
            class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
             Find an official court directory entry &rarr;
         </a>

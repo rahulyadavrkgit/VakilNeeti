@@ -45,13 +45,6 @@ class PracticeStateControllerTest extends TestCase
             ->assertOk()
             ->assertSee('Court Catalogue Coverage');
 
-        $this->actingAs($user)->get(route('court-management.index'))
-            ->assertOk()
-            ->assertDontSee('Courts in Catalogue');
-
-        $this->actingAs($admin)->get(route('court-management.index'))
-            ->assertOk()
-            ->assertSee('Courts in Catalogue');
     }
 
     public function test_independent_practitioner_without_a_firm_can_save_practice_states(): void
@@ -113,7 +106,6 @@ class PracticeStateControllerTest extends TestCase
         $this->actingAs($user)
             ->get(route('profile.practice-states.index'))
             ->assertOk()
-            ->assertSee(route('court-directory.districts.show', $lucknow), false)
             ->assertDontSee('>Agra<', false)
             ->assertDontSee('Ernakulam');
     }

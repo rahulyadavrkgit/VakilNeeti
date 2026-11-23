@@ -6,6 +6,7 @@ use App\Models\CaseTag;
 use App\Models\Client;
 use App\Models\CourtStandSide;
 use App\Models\LegalCase;
+use App\Services\HearingShareText;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,6 +60,7 @@ class LegalCaseController extends Controller
             'cases' => $cases,
             'hearingCounts' => $hearingCounts,
             'hearingChips' => self::HEARING_CHIPS,
+            'shareText' => $cases->total() > 0 ? $this->shareText($request) : null,
             'hearingFilter' => $request->input('hearing_filter', 'all'),
             'tags' => CaseTag::query()->orderBy('name')->get(),
         ]);
@@ -251,6 +253,65 @@ class LegalCaseController extends Controller
             'respondent_advocate' => ['nullable', 'string', 'max:255'],
             'case_description' => ['nullable', 'string'],
         ];
+    }
+
+    /**
+     * The shown cases (up to 100) as a message to send: each with its nearest date, our side,
+     * court, room, judge and VC link, earliest first.
+     */
+    private function shareText(Request $request): string
+    {
+        $filter = $request->input('hearing_filter', 'all');
+        $heading = match ($filter) {
+            'today' => 'Cases · Today, '.today()->format('D d M Y'),
+            'tomorrow' => 'Cases · Tomorrow, '.today()->addDay()->format('D d M Y'),
+            'next7' => 'Cases · '.today()->format('d M').' – '.today()->addDays(6)->format('d M Y'),
+            'next30' => 'Cases · '.today()->format('d M').' – '.today()->addDays(29)->format('d M Y'),
+            'past' => 'Cases needing the next date',
+            'no_upcoming' => 'Cases without a hearing date',
+            default => 'My cases',
+        };
+
+        if ($request->filled('search')) {
+            $heading .= ' · "'.trim((string) $request->input('search')).'"';
+        }
+
+        $today = today()->toDateString();
+        $items = $this->filteredCases($request)
+            ->with('hearings')
+            ->limit(100)
+            ->get()
+            ->map(function (LegalCase $case) use ($today): array {
+                // The nearest date on or after today, from either date on a hearing.
+                $nearest = $case->hearings
+                    ->flatMap(fn ($hearing) => [
+                        ['date' => $hearing->hearing_date?->toDateString(), 'time' => $hearing->hearing_time, 'hearing' => $hearing],
+                        ['date' => $hearing->next_hearing_date?->toDateString(), 'time' => null, 'hearing' => $hearing],
+                    ])
+                    ->filter(fn (array $entry): bool => $entry['date'] !== null && $entry['date'] >= $today)
+                    ->sortBy(fn (array $entry): string => $entry['date'].' '.($entry['time'] ?? '99'))
+                    ->first();
+                $hearing = $nearest['hearing'] ?? null;
+
+                return HearingShareText::fromEvent([
+                    'title' => $case->case_title,
+                    'case_number' => $case->case_number,
+                    'appearing_for' => $case->appearing_for,
+                    'appearing_for_parties' => $case->appearing_for_parties,
+                    'date' => $nearest['date'] ?? null,
+                    'time' => isset($nearest['time']) ? substr((string) $nearest['time'], 0, 5) : null,
+                    'court' => $case->court_name,
+                    'court_complex' => $case->court_complex,
+                    'court_room' => $hearing?->court_room ?: $case->court_room,
+                    'judge_name' => $hearing?->judge_name ?: $case->judge_name,
+                    'vc_link' => $hearing?->vc_link ?: $case->vc_link,
+                    'details' => $hearing?->hearing_stage ?: $case->stage,
+                ]);
+            })
+            ->sortBy(fn (array $item): string => ($item['date'] ?? '9999').' '.($item['time'] ?? '99'))
+            ->values();
+
+        return HearingShareText::list($heading, $items);
     }
 
     /**

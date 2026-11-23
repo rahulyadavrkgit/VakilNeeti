@@ -156,7 +156,7 @@
                         <span class="font-semibold text-gray-900">Trial / Remand Court Complex:</span>
                         @if($station->courtComplex)
                             <div class="mt-1">
-                                <a href="{{ route('court-directory.index') }}?q={{ urlencode($station->courtComplex->complex_name) }}" class="font-bold text-indigo-600 hover:underline">
+                                <a href="{{ route('courts.index') }}" class="font-bold text-indigo-600 hover:underline">
                                     {{ $station->courtComplex->complex_name }} &nearr;
                                 </a>
                                 <p class="text-xs text-gray-600 mt-0.5">{{ $station->courtComplex->address }}</p>

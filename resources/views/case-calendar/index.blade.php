@@ -47,6 +47,37 @@
                 @endforeach
             </nav>
 
+            {{-- Send a day's (or the shown period's) hearings with their details: WhatsApp / share sheet, or copy. --}}
+            <details class="vn-profile-menu relative">
+                <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-1.5 rounded-lg border border-[#16776e] bg-white px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">
+                    <x-icon name="share" :size="16" /> Share list ▾
+                </summary>
+                <div class="z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-xl max-md:fixed max-md:inset-x-3 max-md:bottom-24 md:absolute md:right-0 md:w-80">
+                    <p class="border-b border-slate-100 px-4 py-2.5 text-xs text-slate-500">Each hearing with our side, time, court, room, judge and VC link.</p>
+                    @foreach($shareLists as $shareKey => $shareList)
+                        <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5 last:border-0">
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate font-semibold text-slate-800">{{ $shareList['label'] }}</span>
+                                <span class="text-xs text-slate-500">{{ $shareList['count'] }} {{ \Illuminate\Support\Str::plural('hearing', $shareList['count']) }}</span>
+                            </span>
+                            @if($shareList['count'] > 0)
+                                <button type="button" data-copy="{{ $shareList['text'] }}" title="Copy the list" aria-label="Copy the {{ strtolower($shareList['label']) }} list"
+                                        class="inline-flex h-9 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
+                                    <x-icon name="copy" :size="14" /><span data-copy-label>Copy</span>
+                                </button>
+                                <a href="https://wa.me/?text={{ rawurlencode($shareList['text']) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                                   data-share-text="{{ $shareList['text'] }}" data-share-title="{{ $shareList['label'] }} hearings"
+                                   class="inline-flex h-9 items-center gap-1 rounded-lg bg-[#16776e] px-2.5 text-xs font-semibold text-white hover:bg-[#125f58]">
+                                    <x-icon name="share" :size="14" /> Share
+                                </a>
+                            @else
+                                <span class="text-xs text-slate-400">Nothing to send</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </details>
+
             <details class="relative">
                 <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print ▾</summary>
                 <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg">
@@ -71,7 +102,7 @@
                     <a href="{{ route('cases.calendar', array_merge($query, ['view' => $viewMode, 'date' => $date->copy()->addMonthNoOverflow()->toDateString()])) }}" class="rounded px-2 py-1 text-slate-600 hover:bg-slate-100" aria-label="Next month">&rsaquo;</a>
                 </div>
                 <div class="mt-3 grid grid-cols-7 text-center text-[11px] font-semibold uppercase text-slate-400">
-                    @foreach(['S', 'M', 'T', 'W', 'T', 'F', 'S'] as $weekday)
+                    @foreach(array_map(fn ($label) => $label[0], $weekdayLabels) as $weekday)
                         <span>{{ $weekday }}</span>
                     @endforeach
                 </div>
@@ -147,7 +178,7 @@
             @if($viewMode === 'month')
                 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div class="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold uppercase text-slate-500">
-                        @foreach(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $weekday)
+                        @foreach($weekdayLabels as $weekday)
                             <div class="py-2">{{ $weekday }}</div>
                         @endforeach
                     </div>
@@ -177,22 +208,74 @@
                     </div>
                 </div>
             @elseif($viewMode === 'week')
-                <div class="grid gap-3 md:grid-cols-7 md:gap-0 md:overflow-hidden md:rounded-2xl md:border md:border-slate-200 md:bg-white md:shadow-sm">
+                {{-- Computers: seven columns; each hearing as a small card (time, title, side, room); point at one for all details. --}}
+                <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:grid md:grid-cols-7">
                     @foreach($days as $day)
-                        @php $dayEvents = $eventsByDate->get($day->toDateString(), collect()); @endphp
-                        <div class="rounded-2xl border border-slate-200 bg-white p-3 md:min-h-96 md:rounded-none md:border-0 md:border-r md:border-slate-100 md:p-2 {{ $day->isToday() ? 'md:bg-teal-50/40' : '' }}">
-                            <a href="{{ $calendarUrl(['view' => 'day', 'date' => $day->toDateString()]) }}" class="flex items-baseline gap-2 md:flex-col md:items-center md:gap-0">
-                                <span class="text-xs font-bold uppercase text-slate-500">{{ $day->format('D') }}</span>
-                                <span class="text-lg font-bold {{ $day->isToday() ? 'text-[#16776e]' : 'text-slate-900' }}">{{ $day->format('d') }}</span>
-                            </a>
-                            <div class="mt-2 space-y-1.5">
+                        @php
+                            $dayEvents = $eventsByDate->get($day->toDateString(), collect());
+                            $dayHearings = $dayEvents->where('group', 'hearing');
+                        @endphp
+                        <div class="flex min-h-[28rem] min-w-0 flex-col border-r border-slate-100 last:border-r-0 {{ $day->isToday() ? 'bg-teal-50/50' : '' }}">
+                            <div class="flex items-center justify-between gap-1 border-b border-slate-100 px-2 py-2">
+                                <a href="{{ $calendarUrl(['view' => 'day', 'date' => $day->toDateString()]) }}" class="flex items-baseline gap-1.5 rounded-md px-1 hover:bg-slate-100">
+                                    <span class="text-[11px] font-bold uppercase text-slate-500">{{ $day->format('D') }}</span>
+                                    <span class="flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-base font-bold {{ $day->isToday() ? 'bg-[#16776e] text-white' : 'text-slate-900' }}">{{ $day->format('d') }}</span>
+                                </a>
+                                @if($dayHearings->isNotEmpty())
+                                    @php $dayText = \App\Services\HearingShareText::forEvents('Hearings · '.$day->format('D d M Y'), $dayHearings); @endphp
+                                    <a href="https://wa.me/?text={{ rawurlencode($dayText) }}" target="_blank" rel="noopener noreferrer" data-direct-share data-share-text="{{ $dayText }}"
+                                       title="Share this day's {{ $dayHearings->count() }} {{ \Illuminate\Support\Str::plural('hearing', $dayHearings->count()) }}" aria-label="Share {{ $day->format('D d M') }} hearings"
+                                       class="inline-flex h-7 items-center gap-1 rounded-full bg-white px-2 text-[11px] font-semibold text-[#16776e] ring-1 ring-inset ring-teal-200 hover:bg-teal-50">
+                                        <x-icon name="share" :size="12" /> {{ $dayHearings->count() }}
+                                    </a>
+                                @endif
+                            </div>
+                            <div class="flex-1 space-y-1.5 p-1.5">
                                 @forelse($dayEvents as $event)
-                                    @include('case-calendar.partials.event', ['event' => $event, 'compact' => true])
+                                    @include('case-calendar.partials.event', ['event' => $event, 'variant' => 'week'])
                                 @empty
-                                    <p class="text-xs text-slate-400 md:text-center">—</p>
+                                    <a href="{{ route('hearings.create', ['date' => $day->toDateString()]) }}" class="block rounded-lg px-2 py-3 text-center text-xs text-slate-300 hover:bg-slate-50 hover:text-[#16776e]">+ Add</a>
                                 @endforelse
                             </div>
                         </div>
+                    @endforeach
+                </div>
+
+                {{-- Phones: the days as a list; busy days show each hearing in full, quiet days take one line. --}}
+                <div class="space-y-2.5 md:hidden">
+                    @foreach($days as $day)
+                        @php
+                            $dayEvents = $eventsByDate->get($day->toDateString(), collect());
+                            $dayHearings = $dayEvents->where('group', 'hearing');
+                            $dayName = $day->isToday() ? 'Today' : ($day->isTomorrow() ? 'Tomorrow' : $day->format('l'));
+                        @endphp
+                        @if($dayEvents->isEmpty())
+                            <div class="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-white/60 px-3 py-2 text-sm">
+                                <span class="text-slate-500"><span class="font-semibold {{ $day->isToday() ? 'text-[#16776e]' : 'text-slate-700' }}">{{ $dayName }}</span> · {{ $day->format('d M') }} · nothing scheduled</span>
+                                <a href="{{ route('hearings.create', ['date' => $day->toDateString()]) }}" class="inline-flex min-h-9 items-center px-2 text-xs font-semibold text-[#16776e]">+ Add</a>
+                            </div>
+                        @else
+                            <section class="rounded-2xl border bg-white p-3 shadow-sm {{ $day->isToday() ? 'border-[#16776e] ring-1 ring-[#16776e]/30' : 'border-slate-200' }}">
+                                <div class="mb-2 flex items-center justify-between gap-2">
+                                    <a href="{{ $calendarUrl(['view' => 'day', 'date' => $day->toDateString()]) }}" class="min-w-0">
+                                        <span class="font-bold {{ $day->isToday() ? 'text-[#16776e]' : 'text-slate-900' }}">{{ $dayName }}</span>
+                                        <span class="text-sm text-slate-500">· {{ $day->format('d M') }} · {{ $dayEvents->count() }} {{ \Illuminate\Support\Str::plural('item', $dayEvents->count()) }}</span>
+                                    </a>
+                                    @if($dayHearings->isNotEmpty())
+                                        @php $dayText = \App\Services\HearingShareText::forEvents('Hearings · '.$day->format('D d M Y'), $dayHearings); @endphp
+                                        <a href="https://wa.me/?text={{ rawurlencode($dayText) }}" target="_blank" rel="noopener noreferrer" data-direct-share data-share-text="{{ $dayText }}"
+                                           class="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-[#16776e] px-2.5 text-xs font-semibold text-[#16776e]">
+                                            <x-icon name="share" :size="14" /> Share day
+                                        </a>
+                                    @endif
+                                </div>
+                                <div class="space-y-2">
+                                    @foreach($dayEvents as $event)
+                                        @include('case-calendar.partials.event', ['event' => $event])
+                                    @endforeach
+                                </div>
+                            </section>
+                        @endif
                     @endforeach
                 </div>
             @elseif($viewMode === 'day')
@@ -230,7 +313,7 @@
                                                 @if($event['case_number'])
                                                     <span class="block text-xs text-slate-500">{{ $event['case_number'] }}</span>
                                                 @endif
-                                                <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
+                                                <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
 
                                                 @if($event['details'])
                                                     <span class="block text-xs text-slate-600">{{ \Illuminate\Support\Str::limit($event['details'], 160) }}</span>

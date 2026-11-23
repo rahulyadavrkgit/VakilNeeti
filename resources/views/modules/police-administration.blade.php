@@ -5,19 +5,9 @@
 @section('meta_description', 'Police stations, State police departments, police districts and ranges, and official police portals across India.')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+<div class="mx-auto max-w-7xl">
 
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Police Administration</h1>
-            <p class="mt-1 text-sm text-gray-600">Police ranges, districts, sub-divisions and stations across India.</p>
-        </div>
-        <div class="mt-3 sm:mt-0">
-            <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
-                Public Read-Only Directory
-            </span>
-        </div>
-    </div>
+    <x-page-header class="mb-5" title="Police Administration" subtitle="Police ranges, districts, sub-divisions and stations across India." />
 
     @if(!empty($profileStateIds) && count($profileStateIds))
         <div class="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">

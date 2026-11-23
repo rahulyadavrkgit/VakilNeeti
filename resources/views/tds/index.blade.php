@@ -6,36 +6,12 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h1 class="text-2xl font-bold text-slate-800">TDS Reconciliation Register</h1>
-        <p class="mt-1 text-sm text-slate-500">
-            Track deductions, certificates and tax-credit reconciliation.
-        </p>
-    </div>
-
-    <div class="flex flex-wrap gap-2">
-        <a href="{{ route('tds.follow-up-dashboard') }}"
-           class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-            Follow-up Dashboard
-        </a>
-
-        <a href="{{ route('tds.follow-ups.due') }}"
-           class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Due Follow-ups
-        </a>
-
-        <a href="{{ route('tds.follow-ups.upcoming') }}"
-           class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Upcoming Follow-ups
-        </a>
-
-        <a href="{{ route('tds.create') }}"
-           class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white">
-            Record TDS Deduction
-        </a>
-    </div>
-</div>
+    <x-page-header title="TDS Reconciliation Register" subtitle="Track deductions, certificates and tax-credit reconciliation.">
+        <a href="{{ route('tds.follow-up-dashboard') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Follow-ups</a>
+        <a href="{{ route('tds.follow-ups.due') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Due</a>
+        <a href="{{ route('tds.follow-ups.upcoming') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Upcoming</a>
+        <a href="{{ route('tds.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Record TDS deduction</a>
+    </x-page-header>
 
     @if(session('success'))
         <div class="rounded-lg bg-green-50 p-3 text-sm text-green-800">
@@ -140,7 +116,7 @@
     </section>
 
     <section class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table class="min-w-full text-sm">
+        <table class="vn-stack-table min-w-full text-sm">
             <thead class="bg-slate-50 text-left text-slate-600">
                 <tr>
                     <th class="p-3">Reference</th>

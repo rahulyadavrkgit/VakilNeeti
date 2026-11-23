@@ -16,8 +16,9 @@
     @include('courts.partials.board-picker', ['pageMode' => true])
 
     <p class="text-xs leading-relaxed text-slate-500">
-        Boards are the courts' own live pages. A court that allows it shows inside VakilNiti; the others open in a window beside it,
-        because those courts do not let other websites show their board. Use <strong>Manage</strong> to keep only the courts you follow in the list.
+        The Supreme Court and Delhi High Court boards marked <strong>Live board in VakilNiti</strong> show right here, refreshed every 30 seconds
+        from the data the courts publish for their own boards, with your courts today outlined. The courts' own board pages open in a window beside VakilNiti,
+        because those courts do not let other websites show them. Use <strong>Manage</strong> to keep only the courts you follow in the list.
     </p>
 </div>
 @endsection

@@ -90,6 +90,20 @@ class CourtBenchMatcher
     private array $benches = [];
 
     /**
+     * Each bench's designation tokens, worked out once per request.
+     *
+     * @var array<int, array{words: list<string>, numbers: list<string>}>
+     */
+    private array $benchTokens = [];
+
+    /**
+     * Answers already found this request: pages show the same court on many rows.
+     *
+     * @var array<string, CourtBench|null>
+     */
+    private array $found = [];
+
+    /**
      * The official court list a case's court belongs to, or null outside the Delhi district courts.
      */
     public function courtKeyFor(?string $courtName, ?string $courtComplex): ?string
@@ -121,9 +135,15 @@ class CourtBenchMatcher
             return null;
         }
 
+        $answerKey = $courtKey."\0".$courtName."\0".$judgeName;
+
+        if (array_key_exists($answerKey, $this->found)) {
+            return $this->found[$answerKey];
+        }
+
         $benches = $this->benches[$courtKey] ??= CourtBench::query()->where('court_key', $courtKey)->orderBy('sort_order')->get();
 
-        return $this->byDesignation($benches, (string) $courtName) ?? $this->byJudge($benches, (string) $judgeName);
+        return $this->found[$answerKey] = $this->byDesignation($benches, (string) $courtName) ?? $this->byJudge($benches, (string) $judgeName);
     }
 
     /**
@@ -208,8 +228,7 @@ class CourtBenchMatcher
         }
 
         $scored = $benches->map(function (CourtBench $bench) use ($case): ?array {
-            $designation = collect($bench->judgeList())->pluck('designation')->filter()->implode(' ');
-            $room = $this->tokens($designation);
+            $room = $this->benchTokens[$bench->id] ??= $this->tokens(collect($bench->judgeList())->pluck('designation')->filter()->implode(' '));
 
             // Numbers must agree exactly (DJ-04 is not DJ-05), and one set of words must hold the other.
             sort($room['numbers']);

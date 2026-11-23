@@ -64,7 +64,7 @@
         </a>
 
         <a
-            href="{{ route('court-integrations.ecourts.search') }}"
+            href="{{ route('courts.ecourts-services') }}"
             class="inline-block mt-4 ml-2 px-4 py-2 rounded bg-gray-700 text-white"
         >
             Search Official Court Records
@@ -142,7 +142,7 @@
 </div>
 
 <div class="mt-5">
-    <a href="{{ route('court-integrations.ecourts.search') }}"
+    <a href="{{ route('courts.ecourts-services') }}"
        class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-700 text-white text-sm font-medium hover:bg-blue-800">
         Open eCourts Case Search
     </a>

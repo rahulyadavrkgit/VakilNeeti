@@ -6,14 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Tax & Compliance Dashboard</h1>
-            <p class="mt-1 text-sm text-slate-500">
-                Financial Year {{ $financialYear }} | {{ $financialYearStart->format('d M Y') }} to {{ $financialYearEnd->format('d M Y') }}
-            </p>
-        </div>
-    </div>
+    <x-page-header title="Tax & Compliance" subtitle="Financial Year {{ $financialYear }} · {{ $financialYearStart->format('d M Y') }} to {{ $financialYearEnd->format('d M Y') }}" />
 
     @if($firm)
         <section class="rounded-xl border border-slate-200 bg-white p-5">
@@ -179,7 +172,7 @@
 
         @if($professionalTaxByState->isNotEmpty())
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
+                <table class="vn-stack-table w-full text-left text-sm">
                     <thead>
                         <tr class="border-b text-slate-500">
                             <th class="px-3 py-3">State</th>

@@ -6,12 +6,9 @@
 
         @include('billing.partials.tabs')
 
-        <div class="flex justify-end">
-            <a href="{{ route('invoices.create') }}"
-               class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">
-                + New invoice
-            </a>
-        </div>
+        <x-page-header class="mt-4" title="Invoices" subtitle="Bills sent to clients, with GST and payments.">
+            <a href="{{ route('invoices.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ New invoice</a>
+        </x-page-header>
 
         @if(session('success'))
             <div class="mt-6 rounded-lg bg-green-100 p-4 text-green-800">

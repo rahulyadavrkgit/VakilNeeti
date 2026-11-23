@@ -72,8 +72,10 @@ class CaseCalendarControllerTest extends TestCase
         $this->hearing($case, '2026-03-10', ['hearing_stage' => 'Arguments today']);
         $this->hearing($case, '2026-03-16', ['hearing_stage' => 'Evidence next week']);
 
-        $this->get(route('cases.calendar', ['view' => 'day', 'date' => '2026-03-10']))
-            ->assertOk()->assertSee('Tuesday, 10 March 2026')->assertSee('Arguments today')->assertDontSee('Evidence next week');
+        // The day shows only its own hearings (the "Share list" menu may still offer the next 7 days).
+        $day = $this->get(route('cases.calendar', ['view' => 'day', 'date' => '2026-03-10']))
+            ->assertOk()->assertSee('Tuesday, 10 March 2026')->assertSee('Arguments today');
+        $this->assertSame(['Arguments today'], $day->viewData('events')->pluck('details')->all());
 
         $week = $this->get(route('cases.calendar', ['view' => 'week', 'date' => '2026-03-10']))->assertOk();
         $this->assertSame('2026-03-08', $week->viewData('start')->toDateString());

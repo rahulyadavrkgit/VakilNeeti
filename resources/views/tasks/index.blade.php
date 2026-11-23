@@ -12,17 +12,9 @@
         </div>
     @endif
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-900">Tasks & Reminders</h2>
-            <p class="text-sm text-slate-500">Your work, deadlines and reminders.</p>
-        </div>
-
-        <a href="{{ route('tasks.create') }}"
-           class="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700">
-            + Create Task
-        </a>
-    </div>
+    <x-page-header title="Tasks & Reminders" subtitle="Your work, deadlines and reminders.">
+        <a href="{{ route('tasks.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Create task</a>
+    </x-page-header>
 
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-xl border border-slate-200 bg-white p-5">
@@ -112,7 +104,7 @@
     </form>
 
     <div class="overflow-x-auto rounded-xl border bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
+        <table class="vn-stack-table w-full text-left text-sm">
             <thead class="bg-slate-100 text-slate-700">
                 <tr>
                     <th class="p-4">Task</th>

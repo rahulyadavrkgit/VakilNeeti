@@ -6,15 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Invoice & GST Settings</h1>
-            <p class="mt-1 text-sm text-slate-500">
-                Configure invoice preferences, tax defaults and payment instructions.
-            </p>
-        </div>
-
-    </div>
+    <x-page-header title="Invoice & GST Settings" subtitle="GST, invoice numbering, and the bank or UPI details printed on your invoices." />
 
     @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
@@ -263,12 +255,6 @@
             </div>
         </div>
 
-        <div class="flex justify-end">
-            <button type="submit"
-                    class="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-                Save Invoice & GST Settings
-            </button>
-        </div>
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="mb-4 font-semibold text-slate-800">TDS / Tax Deducted at Source</h2>
 
@@ -385,6 +371,14 @@
 
                 <p class="text-xs text-slate-500">A State-level tax. It is not added to invoices.</p>
             </div>
+        </div>
+
+        <div class="sticky bottom-2 z-10 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg shadow-slate-900/10 backdrop-blur">
+            <p class="hidden text-xs text-slate-500 sm:block">Saves invoice, GST, TDS and Professional Tax details together.</p>
+            <button type="submit"
+                    class="min-h-11 w-full rounded-xl bg-[#16776e] px-6 text-sm font-semibold text-white hover:bg-[#125f58] sm:w-auto">
+                Save Invoice, GST &amp; TDS Settings
+            </button>
         </div>
     </form>
 </div>

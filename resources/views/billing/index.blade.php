@@ -5,6 +5,7 @@
 
 @section('content')
 <div class="space-y-6">
+    <x-page-header title="Billing" subtitle="What you have billed, received and are still owed." />
     @include('billing.partials.tabs')
 
     <div class="flex flex-wrap items-end justify-between gap-3">
@@ -54,7 +55,7 @@
     <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <h2 class="border-b border-slate-200 px-5 py-4 text-lg font-semibold text-slate-900">By client</h2>
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="vn-stack-table w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr><th class="p-3">Client</th><th class="p-3 text-right">Cases</th><th class="p-3 text-right">Invoiced</th><th class="p-3 text-right">Received</th></tr>
                 </thead>

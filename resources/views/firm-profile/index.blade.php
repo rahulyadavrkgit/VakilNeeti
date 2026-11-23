@@ -7,13 +7,10 @@
 
 <div class="max-w-5xl mx-auto space-y-6">
 
-    <div>
-        <h2 class="text-2xl font-bold text-slate-800">{{ $isAdvocate ? 'Your office' : 'Firm Information' }}</h2>
-        <p class="mt-1 text-sm text-slate-500">
-            {{ $isAdvocate ? 'Your chamber or office address and GST details, printed on your invoices.' : 'Manage the business details displayed on your invoices.' }}
-            <a href="{{ route('profile.invoice-settings.index') }}" class="font-semibold text-[#16776e] hover:underline">Bank &amp; UPI details are under Invoice &amp; GST &rarr;</a>
-        </p>
-    </div>
+    <x-page-header :title="$isAdvocate ? 'Office & billing details' : 'Firm Profile'"
+                   :subtitle="$isAdvocate ? 'Your chamber or office address and GST details, printed on your invoices.' : 'The business details printed on your invoices.'">
+        <a href="{{ route('profile.invoice-settings.index') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Bank &amp; UPI details &rarr;</a>
+    </x-page-header>
 
     @if(session('success'))
         <div class="rounded-lg bg-green-100 border border-green-200 px-4 py-3 text-green-800">

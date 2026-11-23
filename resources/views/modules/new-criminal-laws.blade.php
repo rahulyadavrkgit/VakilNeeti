@@ -7,14 +7,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 
-    <header>
-        <h1 class="text-2xl font-bold text-slate-900">
-            New Criminal Laws
-        </h1>
-        <p class="mt-1 text-sm text-slate-600">
-            Compare old and new criminal law sections.
-        </p>
-    </header>
+    <x-page-header title="New Criminal Laws" subtitle="BNS, BNSS and BSA: compare the old and new sections." />
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 

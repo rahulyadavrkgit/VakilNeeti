@@ -5,16 +5,16 @@
 @section('meta_description', 'Compare sections of the IPC, CrPC and Evidence Act with the new BNS, BNSS and BSA, side by side.')
 
 @section('content')
-<div class="mx-auto max-w-7xl space-y-6 px-4 py-5">
+<div class="mx-auto max-w-7xl space-y-6">
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <a href="{{ route('new-criminal-laws.index') }}"
-               class="text-sm text-indigo-700 hover:underline">
+               class="text-sm font-semibold text-[#16776e] hover:underline">
                 &larr; New Criminal Laws
             </a>
 
-            <h1 class="mt-2 text-2xl font-bold text-gray-900">
+            <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
                 {{ $comparison['title'] }}
             </h1>
 

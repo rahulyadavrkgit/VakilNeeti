@@ -6,12 +6,9 @@
 @section('content')
 <div class="space-y-6">
 
-    <div class="rounded-2xl bg-slate-900 p-6 text-white">
-        <h1 class="text-2xl font-bold">Profile Settings</h1>
-        <p class="mt-2 text-sm text-slate-300">
-            Manage the profile and practice settings for your {{ $isCompany ? 'company' : 'individual advocate' }} account.
-        </p>
-    </div>
+    <x-page-header title="Settings" subtitle="Profile and practice settings for your {{ $isCompany ? 'company' : 'advocate' }} account.">
+        <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Complete my profile</a>
+    </x-page-header>
 
     {{-- PROFILE INFORMATION --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">
@@ -213,18 +210,95 @@
     </section>
 
     {{-- SYSTEM PREFERENCES --}}
-    <section class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h2 class="text-lg font-bold text-slate-800">4. System Preferences</h2>
-                <p class="mt-1 text-sm text-slate-600">
-                    Application display, calendar preferences, notifications and other user settings.
-                </p>
+    @php
+        $choice = 'flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] has-[:checked]:border-[#16776e] has-[:checked]:bg-teal-50 has-[:checked]:text-[#16776e] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#16776e]/40';
+        $switchRow = 'flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm hover:border-[#16776e]';
+        $switch = 'relative h-6 w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition before:absolute before:left-0.5 before:top-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition checked:bg-[#16776e] checked:before:translate-x-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16776e]/40';
+    @endphp
+    <section id="system-preferences" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5">
+        <h2 class="text-lg font-bold text-slate-800">4. System Preferences</h2>
+        <p class="mt-1 text-sm text-slate-600">How the calendar opens, what Home shows, and which reminders reach your bell.</p>
+
+        @if(session('system_preferences_success'))
+            <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('system_preferences_success') }}</p>
+        @endif
+
+        <form method="POST" action="{{ route('profile.system-preferences.update') }}" class="mt-4 space-y-6">
+            @csrf
+
+            <fieldset>
+                <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Calendar</legend>
+                <div class="mt-2 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <p class="mb-1.5 text-sm font-semibold text-slate-800">Opens on</p>
+                        <div class="grid grid-cols-4 gap-2">
+                            @foreach(\App\Models\User::PREFERENCES['calendar_view']['options'] as $value => $label)
+                                <label class="{{ $choice }}">
+                                    <input type="radio" name="calendar_view" value="{{ $value }}" class="sr-only" @checked($user->preference('calendar_view') === $value)>
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-1.5 text-sm font-semibold text-slate-800">Week starts on</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            @foreach(\App\Models\User::PREFERENCES['week_starts_on']['options'] as $value => $label)
+                                <label class="{{ $choice }}">
+                                    <input type="radio" name="week_starts_on" value="{{ $value }}" class="sr-only" @checked($user->preference('week_starts_on') === $value)>
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Home page</legend>
+                <label class="{{ $switchRow }} mt-2">
+                    <span>
+                        <span class="block font-semibold text-slate-800">Live display boards</span>
+                        <span class="block text-xs text-slate-500">The court display board panel on Home.</span>
+                    </span>
+                    <input type="checkbox" name="home_display_boards" value="1" class="{{ $switch }}" @checked($user->preference('home_display_boards'))>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Reminders in the bell</legend>
+                <div class="mt-2 space-y-2">
+                    <div>
+                        <p class="mb-1.5 text-sm font-semibold text-slate-800">Hearings</p>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                            @foreach(\App\Models\User::PREFERENCES['remind_hearings']['options'] as $value => $label)
+                                <label class="{{ $choice }}">
+                                    <input type="radio" name="remind_hearings" value="{{ $value }}" class="sr-only" @checked($user->preference('remind_hearings') === $value)>
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @foreach([
+                        'remind_appointments' => ['Appointments', 'Client meetings today and tomorrow.'],
+                        'remind_tasks' => ['Tasks', 'Tasks due today, and overdue ones.'],
+                        'remind_invoices' => ['Overdue invoices', 'Invoices past their due date with money still owed.'],
+                    ] as $key => [$label, $hint])
+                        <label class="{{ $switchRow }}">
+                            <span>
+                                <span class="block font-semibold text-slate-800">{{ $label }}</span>
+                                <span class="block text-xs text-slate-500">{{ $hint }}</span>
+                            </span>
+                            <input type="checkbox" name="{{ $key }}" value="1" class="{{ $switch }}" @checked($user->preference($key))>
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
+
+            <div class="flex justify-end border-t border-slate-100 pt-4">
+                <button type="submit" class="min-h-11 rounded-xl bg-[#16776e] px-6 text-sm font-semibold text-white hover:bg-[#125f58]">Save system preferences</button>
             </div>
-            <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
-                Planned
-            </span>
-        </div>
+        </form>
     </section>
 
 </div>

@@ -6,19 +6,9 @@
 @section('content')
 <div class="space-y-6">
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-900">Hearing History</h2>
-            <p class="text-sm text-slate-500">
-                Chronological record of hearings linked to your cases.
-            </p>
-        </div>
-
-        <a href="{{ route('cases.calendar') }}"
-           class="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-            Open Calendar
-        </a>
-    </div>
+    <x-page-header title="Hearing History" subtitle="Every hearing in your cases, newest first.">
+        <a href="{{ route('cases.calendar') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Open calendar</a>
+    </x-page-header>
 
     <form method="GET" action="{{ route('hearings.history') }}"
           class="flex flex-wrap gap-3 rounded-xl border bg-white p-4">
@@ -41,7 +31,7 @@
     </form>
 
     <div class="overflow-x-auto rounded-xl border bg-white shadow-sm">
-        <table class="w-full text-left text-sm">
+        <table class="vn-stack-table w-full text-left text-sm">
             <thead class="bg-slate-100 text-slate-700">
                 <tr>
                     <th class="p-4">Hearing Date</th>

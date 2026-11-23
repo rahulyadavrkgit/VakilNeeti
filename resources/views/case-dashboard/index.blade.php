@@ -6,27 +6,10 @@
 @section('content')
 <div class="space-y-6">
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">My Case &amp; Hearing Dashboard</h1>
-            <p class="mt-1 text-sm text-slate-500">Your private cases and hearings.</p>
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('dashboard-studio.index') }}" class="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-[#16776e] hover:bg-teal-100">
-                India Law Data
-            </a>
-            <a href="{{ route('cases.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                My Cases
-            </a>
-            <a href="{{ route('cases.calendar', ['view' => 'week']) }}" class="rounded-lg bg-[#16776e] px-4 py-2 text-sm font-medium text-white hover:bg-[#125f58]">
-                Open Calendar
-            </a>
-            <a href="{{ route('tasks.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                Tasks
-            </a>
-        </div>
-    </div>
+    <x-page-header title="My Case & Hearing Dashboard" subtitle="Today, the days ahead and the dates that need checking.">
+        <a href="{{ route('cases.index') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">My cases</a>
+        <a href="{{ route('cases.calendar', ['view' => 'week']) }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Open calendar</a>
+    </x-page-header>
 
     {{-- Hearing counters --}}
     <section>
@@ -92,8 +75,8 @@
                         <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-[#16776e] hover:underline">
                             {{ $hearing->case_title }}
                         </a>
-<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" :edit-url="route('cases.edit', $hearing->case_id)" class="ml-1 align-middle" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" :share="['title' => $hearing->case_title, 'case_number' => $hearing->case_number, 'side' => $hearing->appearing_for ?? null, 'parties' => $hearing->appearing_for_parties ?? null, 'date' => $hearing->next_hearing_date ?? ($hearing->hearing_date ?? null), 'time' => $hearing->hearing_time ?? null, 'details' => $hearing->hearing_stage ?? null]" />
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $hearing->case_number ?: 'Case number unavailable' }}
                         </p>
@@ -123,12 +106,13 @@
                             <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-[#16776e] hover:underline">
                                 {{ $hearing->case_title }}
                             </a>
-<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" :edit-url="route('cases.edit', $hearing->case_id)" class="ml-1 align-middle" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" :share="['title' => $hearing->case_title, 'case_number' => $hearing->case_number, 'side' => $hearing->appearing_for ?? null, 'parties' => $hearing->appearing_for_parties ?? null, 'date' => $hearing->next_hearing_date ?? ($hearing->hearing_date ?? null), 'time' => $hearing->hearing_time ?? null, 'details' => $hearing->hearing_stage ?? null]" />
                             <p class="mt-1 text-sm text-slate-600">{{ $hearing->case_number ?: 'Case number unavailable' }}</p>
+                            <x-quick-next-date class="mt-2" :case-id="$hearing->case_id" />
                         </div>
                         <p class="text-sm font-semibold text-amber-800">
-                            {{ \Carbon\Carbon::parse($hearing->next_hearing_date)->format('d M Y') }}
+                            Last date {{ \Carbon\Carbon::parse($hearing->next_hearing_date)->format('d M Y') }}
                         </p>
                     </div>
                 @empty
@@ -157,8 +141,8 @@
                         <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-[#16776e] hover:underline">
                             {{ $hearing->case_title }}
                         </a>
-<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" :edit-url="route('cases.edit', $hearing->case_id)" class="ml-1 align-middle" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" :share="['title' => $hearing->case_title, 'case_number' => $hearing->case_number, 'side' => $hearing->appearing_for ?? null, 'parties' => $hearing->appearing_for_parties ?? null, 'date' => $hearing->next_hearing_date ?? ($hearing->hearing_date ?? null), 'time' => $hearing->hearing_time ?? null, 'details' => $hearing->hearing_stage ?? null]" />
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $hearing->case_number ?: 'Case number unavailable' }}
                             @if($hearing->cnr_number)
@@ -247,8 +231,8 @@
                     <a href="{{ route('cases.show', $hearing->case_id) }}" class="font-medium text-[#16776e] hover:underline">
                         {{ $hearing->case_title }}
                     </a>
-<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" :edit-url="route('cases.edit', $hearing->case_id)" class="ml-1 align-middle" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" :share="['title' => $hearing->case_title, 'case_number' => $hearing->case_number, 'side' => $hearing->appearing_for ?? null, 'parties' => $hearing->appearing_for_parties ?? null, 'date' => $hearing->next_hearing_date ?? ($hearing->hearing_date ?? null), 'time' => $hearing->hearing_time ?? null, 'details' => $hearing->hearing_stage ?? null]" />
                     <p class="mt-1 text-sm text-slate-600">
                         {{ $hearing->case_number ?: 'Case number unavailable' }}
                         · {{ $hearing->hearing_date ? \Carbon\Carbon::parse($hearing->hearing_date)->format('d M Y') : 'Date unavailable' }}

@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Built CSS/JS/fonts carry a content hash in their file names (a new build gets new names),
+# so browsers may keep them for a year without asking again.
+<IfModule mod_headers.c>
+    SetEnvIf Request_URI "^/build/assets/" VN_HASHED_ASSET
+    Header set Cache-Control "public, max-age=31536000, immutable" env=VN_HASHED_ASSET
+    Header unset Expires env=VN_HASHED_ASSET
+</IfModule>

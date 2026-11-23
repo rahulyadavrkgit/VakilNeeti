@@ -16,7 +16,7 @@ class CourtIntegrationController extends Controller
 
         // Until the eCourts source is set up, send people to the official court search instead of a 404.
         if (! $source) {
-            return redirect()->route('court-integrations.ecourts.search');
+            return redirect()->route('courts.ecourts-services');
         }
 
         $syncRuns = $source->syncRuns()->latest()->limit(10)->get();
@@ -29,16 +29,6 @@ class CourtIntegrationController extends Controller
             'source' => $source,
             'syncRuns' => $syncRuns,
             'recordCount' => $recordCount,
-        ]);
-    }
-
-    /**
-     * Links to the official court search portals. Works even before the eCourts data source is seeded.
-     */
-    public function search()
-    {
-        return view('court-integrations.search', [
-            'source' => CourtDataSource::where('provider_key', 'ecourts_district_services')->first(),
         ]);
     }
 }

@@ -203,62 +203,6 @@
     $showAllProfileTypes = (bool) ($currentUser?->is_admin ?? false);
 
 
-    $practiceStates = [];
-    $districtPracticeStates = [];
-
-    // Sidebar practice jurisdictions: four batched queries, however many states are saved.
-    if ($currentUser) {
-        $practiceRows = \Illuminate\Support\Facades\DB::table('firm_practice_states')
-            ->where('user_id', $currentUser->id)
-            ->where('is_active', true)
-            ->orderBy('state_name')
-            ->get();
-
-        $practiceStates = $practiceRows->pluck('state_name')->all();
-
-        // High Court-only states do not appear in District Courts.
-        $districtRows = $practiceRows->reject(fn ($row) => ($row->district_selection_mode ?: 'all') === 'none');
-
-        if ($districtRows->isNotEmpty()) {
-            $statesByName = \Illuminate\Support\Facades\DB::table('states')
-                ->whereIn('name', $districtRows->pluck('state_name'))
-                ->get(['id', 'name'])
-                ->keyBy('name');
-
-            $selectedIdsByRow = \Illuminate\Support\Facades\DB::table('firm_practice_districts')
-                ->whereIn('firm_practice_state_id', $districtRows->pluck('id'))
-                ->where('user_id', $currentUser->id)
-                ->where('is_active', true)
-                ->get(['firm_practice_state_id', 'judicial_district_id'])
-                ->groupBy('firm_practice_state_id')
-                ->map(fn ($rows) => $rows->pluck('judicial_district_id')->map(fn ($id) => (int) $id)->all());
-
-            $districtsByState = \Illuminate\Support\Facades\DB::table('judicial_districts')
-                ->whereIn('state_id', $statesByName->pluck('id'))
-                ->where('is_active', true)
-                ->whereNull('deleted_at')
-                ->orderBy('district_name')
-                ->get(['id', 'state_id', 'district_name', 'district_code'])
-                ->groupBy('state_id');
-
-            foreach ($districtRows as $practiceRow) {
-                $state = $statesByName->get($practiceRow->state_name);
-                $districts = $state ? ($districtsByState->get($state->id) ?? collect()) : collect();
-
-                if (($practiceRow->district_selection_mode ?: 'all') === 'selected') {
-                    $selectedIds = $selectedIdsByRow->get($practiceRow->id, []);
-                    $districts = $districts->filter(fn ($district) => in_array((int) $district->id, $selectedIds, true))->values();
-                }
-
-                if ($districts->isNotEmpty()) {
-                    $districtPracticeStates[] = [
-                        'state_name' => $practiceRow->state_name,
-                        'districts' => $districts,
-                    ];
-                }
-            }
-        }
-    }
 @endphp
 
 <body class="min-h-screen">
@@ -502,7 +446,7 @@
     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-current' : '' }}"><x-icon name="home" :size="21" class="vn-mobile-icon" /><span>Home</span></a>
     <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*') || request()->is('case-dashboard*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>Cases</span></a>
     <a href="{{ route('cases.calendar') }}" class="{{ request()->is('case-calendar*') ? 'is-current' : '' }}"><x-icon name="calendar" :size="21" class="vn-mobile-icon" /><span>Calendar</span></a>
-    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*', 'court-directory*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>Courts</span></a>
+    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>Courts</span></a>
     <button type="button" id="vn-mobile-more" aria-label="Open the full menu" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>Menu</span></button>
 </nav>
 

@@ -3,7 +3,7 @@
 
     $groups = [
         'workspace' => $isActive('/', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
-        'courts' => $isActive('courts*', 'court-directory*', 'court-catalogue*', 'court-integrations*', 'court-management*'),
+        'courts' => $isActive('courts*', 'court-catalogue*', 'court-integrations*'),
         'reference' => $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*', 'police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'),
     ];
 
@@ -61,43 +61,8 @@
             <a href="{{ route('courts.display-boards') }}" class="{{ $link($isActive('courts/display-boards')) }}"><x-icon name="board" :size="18" />Display boards</a>
             <a href="{{ route('courts.ecourts-services') }}" class="{{ $link($isActive('courts/ecourts-services')) }}"><x-icon name="screen" :size="18" />eCourts services &amp; CNR search</a>
 
-            <details class="vn-nav-sub" @if(request('level') === 'high-court') open @endif>
-                <summary class="vn-nav-link"><x-icon name="building" :size="18" /><span class="flex-1">High Courts</span><x-icon name="chevron" :size="14" class="vn-nav-chevron" /></summary>
-                <div class="vn-nav-child">
-                    <a href="{{ route('court-directory.index', ['level' => 'high-court']) }}" class="{{ $link(request('level') === 'high-court' && ! request('state')) }}">All High Courts</a>
-                    @foreach($practiceStates as $practiceState)
-                        <a href="{{ route('court-directory.index', ['level' => 'high-court', 'state' => $practiceState]) }}"
-                           class="{{ $link(request('level') === 'high-court' && request('state') === $practiceState) }}">{{ $practiceState }}</a>
-                    @endforeach
-                </div>
-            </details>
-
-            <details class="vn-nav-sub" @if(request('level') === 'district' || $isActive('court-directory/districts/*')) open @endif>
-                <summary class="vn-nav-link"><x-icon name="map" :size="18" /><span class="flex-1">District courts</span><x-icon name="chevron" :size="14" class="vn-nav-chevron" /></summary>
-                <div class="vn-nav-child">
-                    <a href="{{ route('court-directory.index', ['level' => 'district']) }}" class="{{ $link(request('level') === 'district' && ! request('state')) }}">All districts</a>
-                    @foreach($districtPracticeStates as $districtState)
-                        <details class="vn-nav-sub"
-                            @if((request('level') === 'district' && request('state') === $districtState['state_name']) || ($isActive('court-directory/districts/*') && $districtState['districts']->contains('id', (int) request()->segment(3)))) open @endif>
-                            <summary class="vn-nav-link"><span class="flex-1">{{ $districtState['state_name'] }}</span><x-icon name="chevron" :size="14" class="vn-nav-chevron" /></summary>
-                            <div class="vn-nav-child">
-                                @foreach($districtState['districts'] as $district)
-                                    <a href="{{ route('court-directory.districts.show', $district->id) }}"
-                                       class="{{ $link($isActive('court-directory/districts/'.$district->id)) }}">{{ $district->district_name }}</a>
-                                @endforeach
-                            </div>
-                        </details>
-                    @endforeach
-                    @auth
-                        @if($districtPracticeStates === [])
-                            <a href="{{ route('profile.practice-states.index') }}" class="vn-nav-link text-xs">Choose your practice districts &rarr;</a>
-                        @endif
-                    @endauth
-                </div>
-            </details>
-
             <a href="{{ route('court-catalogue.index') }}" class="{{ $link($isActive('court-catalogue*')) }}"><x-icon name="scale" :size="18" />Tribunals &amp; appellate courts</a>
-            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts') || ($isActive('court-directory') && ! request('level'))) }}"><x-icon name="list" :size="18" />All courts</a>
+            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts')) }}"><x-icon name="list" :size="18" />All courts</a>
         </div>
     </details>
 

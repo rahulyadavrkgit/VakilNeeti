@@ -6,14 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-6xl space-y-6">
 
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Practice States & Jurisdictions</h1>
-            <p class="mt-1 text-sm text-slate-500">
-                Where you practise.
-            </p>
-        </div>
-    </div>
+    <x-page-header title="Practice States & Jurisdictions" subtitle="The States, High Courts and districts where you practise." />
 
     @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">

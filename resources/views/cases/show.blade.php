@@ -59,7 +59,7 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-2xl font-bold text-slate-900">{{ $case->case_title ?: 'Untitled case' }}</h2>
                         <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
-                        <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" size="lg" />
+                        <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" size="lg" :edit-url="route('cases.edit', $case)" />
                     </div>
                     <p class="mt-1 text-sm text-slate-600">
                         {{ collect([$case->case_number, $case->cnr_number ? 'CNR '.$case->cnr_number : null, $case->stage ? 'Stage: '.$case->stage : null])->filter()->implode(' · ') ?: 'No case number yet' }}
@@ -129,6 +129,64 @@
             </div>
         @endif
 
+        {{-- Next hearing, at the top: when, our side, court, room, judge, VC; copy, share, or add the next date. --}}
+        @php
+            $todayDate = today()->toDateString();
+            $panelDates = $case->hearings->flatMap(fn ($hearing) => collect([
+                $hearing->hearing_date ? ['date' => $hearing->hearing_date, 'time' => $hearing->hearing_time, 'hearing' => $hearing] : null,
+                $hearing->next_hearing_date ? ['date' => $hearing->next_hearing_date, 'time' => null, 'hearing' => $hearing] : null,
+            ])->filter());
+            $panelNext = $panelDates->filter(fn ($entry) => $entry['date']->toDateString() >= $todayDate)
+                ->sortBy(fn ($entry) => $entry['date']->toDateString().' '.($entry['time'] ?? '99'))->first();
+            $panelLast = $panelNext ? null : $panelDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
+            $nextHearing = $panelNext['hearing'] ?? null;
+            $panelTime = $panelNext && $panelNext['time'] ? substr((string) $panelNext['time'], 0, 5) : null;
+        @endphp
+        <section aria-label="Next hearing" class="rounded-2xl border p-4 shadow-sm sm:p-5 print:hidden {{ $panelNext ? 'border-teal-200 bg-white' : 'border-red-200 bg-red-50/40' }}">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div class="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:gap-0">
+                    @if($panelNext)
+                        <span class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl text-center {{ $panelNext['date']->isToday() ? 'bg-[#16776e] text-white' : 'bg-teal-50 text-teal-900' }}">
+                            <span class="text-[11px] font-bold uppercase">{{ $panelNext['date']->isToday() ? 'Today' : ($panelNext['date']->isTomorrow() ? 'Tomorrow' : $panelNext['date']->format('M Y')) }}</span>
+                            <span class="text-3xl font-extrabold leading-none">{{ $panelNext['date']->format('d') }}</span>
+                            <span class="text-xs font-semibold">{{ $panelTime ?? $panelNext['date']->format('D') }}</span>
+                        </span>
+                    @else
+                        <span class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl bg-red-100 text-center text-red-800">
+                            <x-icon name="calendar" :size="22" />
+                            <span class="mt-1 text-[11px] font-bold uppercase">{{ $panelLast ? 'Date passed' : 'No date' }}</span>
+                        </span>
+                    @endif
+                    <p class="text-sm font-bold text-slate-900 sm:mt-2 sm:text-center sm:text-xs sm:uppercase sm:tracking-wide sm:text-slate-500">Next hearing</p>
+                </div>
+
+                <div class="min-w-0 flex-1 space-y-2">
+                    @if($panelNext)
+                        <p class="text-lg font-semibold text-slate-900">
+                            {{ $panelNext['date']->format('l, d F Y') }}@if($panelTime), {{ $panelTime }}@endif
+                        </p>
+                    @elseif($panelLast)
+                        <p class="font-semibold text-red-800">The last date ({{ $panelLast['date']->format('d M Y') }}) has passed. Check the case status and add the next date.</p>
+                    @else
+                        <p class="font-semibold text-slate-800">No hearing date yet. Add the first date below.</p>
+                    @endif
+                    <div class="flex flex-wrap items-center gap-2">
+                        <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" :edit-url="route('cases.edit', $case)" />
+                        @if($nextHearing?->hearing_stage)
+                            <span class="text-sm text-slate-600">Purpose: {{ $nextHearing->hearing_stage }}</span>
+                        @endif
+                    </div>
+                    <x-court-info :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
+                                  :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link"
+                                  :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $panelNext ? $panelNext['date']->toDateString() : null, 'time' => $panelTime, 'details' => $nextHearing?->hearing_stage]" />
+                    <div class="flex flex-wrap items-start gap-2 pt-1">
+                        <x-quick-next-date :case-id="$case->id" return="case" :open="! $panelNext" :label="$panelNext ? 'Add another date' : 'Add next date'" />
+                        <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="inline-flex min-h-9 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 hover:bg-slate-100">Full hearing form &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <x-tabs label="Case workspace" :tabs="[
             'case-overview' => 'Overview',
             'case-history' => 'Case history',
@@ -141,60 +199,6 @@
         ]" :counts="$tabCounts" />
 
         <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
-        <!-- Next Hearing -->
-        @php
-            $nextHearing = $case->hearings
-                ->filter(function ($hearing) {
-                    return $hearing->next_hearing_date
-                        && $hearing->next_hearing_date->greaterThanOrEqualTo(now()->startOfDay());
-                })
-                ->sortBy('next_hearing_date')
-                ->first();
-        @endphp
-
-        <section class="rounded-xl border border-blue-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h3 class="text-lg font-semibold text-slate-900">Next Hearing</h3>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2">
-                    @if($nextHearing)
-                        <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                            Upcoming
-                        </span>
-                    @endif
-                    <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="rounded-lg bg-[#16776e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#125f58]">+ Add hearing</a>
-                </div>
-            </div>
-
-            @if($nextHearing)
-                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div>
-                        <p class="text-xs font-medium uppercase text-slate-500">Date</p>
-                        <p class="mt-1 text-2xl font-bold text-blue-800">
-                            {{ $nextHearing->next_hearing_date->format('d M Y') }}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium uppercase text-slate-500">Courtroom</p>
-                        <p class="mt-1 font-semibold">
-                            {{ $nextHearing->court_room ?: ($case->court_room ?: ($listBench?->court_room ?: 'Not available')) }}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium uppercase text-slate-500">Judge</p>
-                        <p class="mt-1 font-semibold">
-                            {{ $nextHearing->judge_name ?: ($case->judge_name ?: ($listJudge ?: 'Not available')) }}
-                        </p>
-                    </div>
-                </div>
-            @else
-                <p class="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
-                    No upcoming hearing date is currently recorded for this case.
-                </p>
-            @endif
-        </section>
 
         @include('cases.partials.journey')
 
@@ -323,7 +327,7 @@
             <h3 class="text-lg font-semibold text-slate-900">Parties</h3>
 
             <div class="mt-4 overflow-x-auto">
-                <table class="w-full text-left text-sm">
+                <table class="vn-stack-table w-full text-left text-sm">
                     <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                         <tr>
                             <th class="p-3">Party Name</th>
@@ -335,13 +339,13 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse($case->parties as $party)
                             <tr>
-                                <td class="p-3 font-medium text-slate-900">
+                                <td class="p-3 font-medium text-slate-900" data-stack="title">
                                     {{ $party->party_name }}
                                 </td>
-                                <td class="p-3">
+                                <td class="p-3" data-label="Party type">
                                     {{ $party->party_type ?: 'Not specified' }}
                                 </td>
-                                <td class="p-3">
+                                <td class="p-3" data-label="Our client">
                                     {{ $party->is_client ? 'Yes' : 'No' }}
                                 </td>
                             </tr>

@@ -9,6 +9,12 @@
     $keep = fn (array $extra = []) => array_filter(array_merge(request()->only('search', 'status', 'type', 'view'), $extra), fn ($value) => $value !== null && $value !== '' && $value !== 'all');
 @endphp
 <div class="space-y-6">
+    <x-page-header title="Clients" subtitle="People and companies you act for, linked to their cases.">
+        <a href="{{ route('clients.from-cases') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Add from my cases</a>
+        <a href="{{ route('clients.create', ['type' => 'company']) }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Company</a>
+        <a href="{{ route('clients.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Person</a>
+    </x-page-header>
+
     <nav aria-label="Client type" class="-mx-1 flex gap-1 overflow-x-auto border-b border-slate-200 pb-px">
         @foreach($tabs as $key => $label)
             <a href="{{ route('clients.index', $keep(['type' => $key, 'page' => null])) }}" @if($type === $key) aria-current="page" @endif
@@ -23,7 +29,7 @@
             @if($type !== 'all')<input type="hidden" name="type" value="{{ $type }}">@endif
             @if($view === 'grid')<input type="hidden" name="view" value="grid">@endif
             <input type="search" name="search" value="{{ $search }}" placeholder="Search name, mobile or email" aria-label="Search clients"
-                   class="w-64 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-64">
             <select name="status" data-autosubmit aria-label="Status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
                 <option value="">All statuses</option>
                 <option value="active" @selected($status === 'active')>Active</option>
@@ -39,8 +45,6 @@
                 <a href="{{ route('clients.index', $keep(['view' => 'grid'])) }}" @if($view === 'grid') aria-current="true" @endif
                    class="border-l border-slate-300 px-3 py-2 text-sm font-semibold {{ $view === 'grid' ? 'bg-[#e8f4f2] text-[#16776e]' : 'bg-white text-slate-600 hover:bg-slate-50' }}">Grid</a>
             </div>
-            <a href="{{ route('clients.create', ['type' => 'company']) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Add company</a>
-            <a href="{{ route('clients.create') }}" class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">+ Add person</a>
         </div>
     </div>
 

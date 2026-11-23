@@ -273,7 +273,7 @@
         </div>
 
         <div class="mt-4 overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="vn-stack-table w-full text-left text-sm">
                 <thead class="bg-slate-100">
                     <tr>
                         <th class="p-3">Invoice</th>
@@ -319,7 +319,7 @@
         </p>
 
         <div class="mt-4 overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="vn-stack-table w-full text-left text-sm">
                 <thead class="bg-slate-100">
                     <tr>
                         <th class="p-3">Receipt</th>

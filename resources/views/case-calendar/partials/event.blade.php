@@ -8,7 +8,26 @@
     $struck = $event['is_done'] && $event['type'] === 'task';
 @endphp
 
-@if($compact ?? false)
+@if(($variant ?? null) === 'week')
+    {{-- Week columns: time, two lines of title, our side and the room; pointing at it shows everything. --}}
+    @php
+        $weekRoom = trim((string) ($event['court_room'] ?? ''));
+        $weekSide = \App\Models\LegalCase::sideLabel($event['appearing_for'] ?? null, $event['appearing_for_parties'] ?? null);
+    @endphp
+    <span data-event-peek class="block">
+        <a href="{{ $event['url'] }}" class="block rounded-lg border-l-4 px-2 py-1.5 text-xs transition hover:shadow-sm {{ $eventClass }} {{ $struck ? 'line-through opacity-70' : '' }}">
+            <span class="flex items-center justify-between gap-1 font-bold">
+                <span>{{ $event['time'] ?: $event['label'] }}</span>
+                @if($weekRoom !== '')<span class="truncate rounded bg-white/70 px-1 text-[10px] font-semibold">{{ preg_match('/^(court|room)\b/i', $weekRoom) ? $weekRoom : 'R '.$weekRoom }}</span>@endif
+            </span>
+            <span class="mt-0.5 line-clamp-2 font-semibold leading-snug">{{ $event['title'] }}</span>
+            @if($weekSide)
+                <span class="mt-1 inline-block rounded-full px-1.5 text-[10px] font-bold {{ \App\Models\LegalCase::isMovingSide($event['appearing_for'] ?? null) ? 'bg-teal-100 text-teal-900' : 'bg-amber-100 text-amber-900' }}">For {{ $weekSide }}</span>
+            @endif
+        </a>
+        <template data-event-card>@include('case-calendar.partials.event-card', ['event' => $event])</template>
+    </span>
+@elseif($compact ?? false)
     {{-- Pointing at the event shows the hover card (resources/js/event-peek.js); tapping opens it. --}}
     <span data-event-peek class="block">
         <a href="{{ $event['url'] }}"
@@ -32,7 +51,7 @@
         @if($event['case_number'])
             <span class="block text-xs opacity-80">{{ $event['case_number'] }}</span>
         @endif
-        <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" />
+        <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
         @if($event['client_name'])
             <span class="block text-xs opacity-80">Client: {{ $event['client_name'] }}</span>
         @endif

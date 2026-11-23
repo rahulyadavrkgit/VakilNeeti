@@ -217,9 +217,13 @@ document.addEventListener('click', async (event) => {
 
     try {
         await navigator.clipboard.writeText(button.dataset.copy);
-        const original = button.textContent;
-        button.textContent = 'Copied';
-        setTimeout(() => { button.textContent = original; }, 1500);
+        // Icon buttons keep their icon: the label inside changes, or the whole button shows "Copied" briefly.
+        const label = button.querySelector('[data-copy-label]');
+        const target = label || button;
+        const original = target.innerHTML;
+        target.textContent = 'Copied';
+        button.classList.add('is-copied');
+        setTimeout(() => { target.innerHTML = original; button.classList.remove('is-copied'); }, 1500);
     } catch {
         window.prompt('Copy this:', button.dataset.copy);
     }
@@ -525,6 +529,63 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
     setHidden(!isBoardPage && boardStore.get('vn-boards-hidden', false) === true);
 });
 
+// Today's hearings in courts with a live board (x-court-info): "Court 12 · now item 27". Each board is
+// fetched once per page and refreshed every minute while the page is open; the server caches it for everyone.
+const liveChips = [...document.querySelectorAll('[data-live-chip]')];
+
+if (liveChips.length) {
+    const caseKey = (text) => {
+        const match = String(text || '').match(/(\d+)\s*(?:\/|of)\s*(\d{4})/i);
+
+        return match ? match[1] + '/' + match[2] : null;
+    };
+
+    const fill = (chip, board) => {
+        const room = board.rooms.find((item) => item.room === chip.dataset.room);
+        const text = chip.querySelector('[data-live-chip-text]');
+        const isMineNow = room?.status === 'running' && caseKey(chip.dataset.caseNumber) !== null
+            && caseKey(chip.dataset.caseNumber) === caseKey(room.case_number);
+
+        if (!room) {
+            text.textContent = 'Live board';
+        } else if (isMineNow) {
+            text.textContent = 'Your case is on now · item ' + room.item;
+        } else if (room.status === 'running') {
+            text.textContent = 'Now item ' + room.item;
+        } else if (room.status === 'exhausted') {
+            text.textContent = 'Board over';
+        } else {
+            text.textContent = 'Not sitting yet';
+        }
+
+        chip.toggleAttribute('data-mine-now', isMineNow);
+        chip.title = (room ? room.label + ': ' + text.textContent : 'Live display board')
+            + (board.ok ? '' : ' (court site not answering, last known board)');
+    };
+
+    const sources = [...new Set(liveChips.map((chip) => chip.dataset.source))];
+    const refreshChips = () => {
+        if (document.hidden) {
+            return;
+        }
+
+        sources.forEach((source) => {
+            fetch(source, { headers: { Accept: 'application/json' } })
+                .then((response) => (response.ok ? response.json() : null))
+                .then((board) => {
+                    if (board) {
+                        liveChips.filter((chip) => chip.dataset.source === source).forEach((chip) => fill(chip, board));
+                    }
+                })
+                .catch(() => {});
+        });
+    };
+
+    refreshChips();
+    setInterval(refreshChips, 60000);
+    document.addEventListener('visibilitychange', refreshChips);
+}
+
 // Collections with many similar items: data-view-toggle="id" data-view="grid|list" switches #id
 // between a tile grid and a compact list, remembered per collection on this device.
 document.querySelectorAll('[data-view-toggle]').forEach((button) => {
@@ -696,18 +757,47 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
 
 // Share buttons: data-share-text opens the phone's share sheet (WhatsApp, email, SMS…);
 // where that isn't available the link's own address (a WhatsApp message) opens instead.
-document.querySelectorAll('[data-share-text]').forEach((link) => {
-    link.addEventListener('click', async (event) => {
-        if (!navigator.share) {
+// Listens on the whole page, so share buttons added later (calendar cards) work too.
+document.addEventListener('click', async (event) => {
+    const link = event.target.closest('[data-share-text]');
+
+    if (!link || !navigator.share) {
+        return;
+    }
+
+    event.preventDefault();
+
+    try {
+        await navigator.share({ title: link.dataset.shareTitle || document.title, text: link.dataset.shareText });
+    } catch {
+        // The person closed the share sheet.
+    }
+});
+
+// Phone cards for tables (.vn-stack-table): cells take their column heading as a label, and the
+// first cell becomes the card title, unless the Blade view already set data-label / data-stack.
+document.querySelectorAll('table.vn-stack-table').forEach((table) => {
+    const headings = [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+
+    table.querySelectorAll('tbody tr').forEach((row) => {
+        const cells = [...row.children].filter((cell) => cell.tagName === 'TD');
+
+        if (cells.length === 1 && cells[0].hasAttribute('colspan')) {
             return;
         }
 
-        event.preventDefault();
+        const hasTitle = cells.some((cell) => cell.dataset.stack === 'title');
 
-        try {
-            await navigator.share({ title: link.dataset.shareTitle || document.title, text: link.dataset.shareText });
-        } catch {
-            // The person closed the share sheet.
-        }
+        cells.forEach((cell, index) => {
+            if (index === 0 && !hasTitle && !cell.dataset.stack) {
+                cell.dataset.stack = 'title';
+
+                return;
+            }
+
+            if (!cell.dataset.label && !cell.dataset.stack && headings[index]) {
+                cell.dataset.label = headings[index];
+            }
+        });
     });
 });
