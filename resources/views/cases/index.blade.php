@@ -3,14 +3,12 @@
 @section('page-heading', 'My cases')
 
 @php
-    $hearingChips = [
-        'all' => 'All',
-        'today' => 'Today',
-        'tomorrow' => 'Tomorrow',
-        'next7' => 'Next 7 days',
-        'next30' => 'Next 30 days',
-        'past' => 'Needs review',
-        'no_upcoming' => 'No date',
+    $chipHints = [
+        'today' => 'Cases with a hearing today',
+        'tomorrow' => 'Cases with a hearing tomorrow',
+        'next7' => 'Cases with a hearing from today to '.now()->addDays(6)->format('d M'),
+        'past' => 'Every date has passed: check the case status and add the next date',
+        'no_upcoming' => 'No hearing date recorded yet',
     ];
     $activeHearing = $hearingFilter ?? 'all';
     $chipUrl = fn (string $key) => route('cases.index', array_filter(array_merge(request()->except('page', 'hearing_filter'), ['hearing_filter' => $key === 'all' ? null : $key])));
@@ -80,8 +78,12 @@
 
             <nav aria-label="Hearing date" class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
                 @foreach($hearingChips as $chipKey => $chipLabel)
-                    <a href="{{ $chipUrl($chipKey) }}" @if($activeHearing === $chipKey) aria-current="page" @endif
-                       class="inline-flex min-h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold transition {{ $activeHearing === $chipKey ? ($chipKey === 'past' ? 'bg-red-600 text-white' : 'bg-[#16776e] text-white') : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }}">{{ $chipLabel }}</a>
+                    @php $chipCount = $hearingCounts[$chipKey] ?? 0; @endphp
+                    <a href="{{ $chipUrl($chipKey) }}" @if($activeHearing === $chipKey) aria-current="page" @endif @isset($chipHints[$chipKey]) title="{{ $chipHints[$chipKey] }}" @endisset
+                       class="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition {{ $activeHearing === $chipKey ? ($chipKey === 'past' ? 'bg-red-600 text-white' : 'bg-[#16776e] text-white') : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }} {{ $chipCount === 0 && $activeHearing !== $chipKey ? 'opacity-60' : '' }}">
+                        {{ $chipLabel }}
+                        <span class="rounded-full px-1.5 text-xs {{ $activeHearing === $chipKey ? 'bg-white/20' : ($chipKey === 'past' && $chipCount ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600') }}">{{ $chipCount }}</span>
+                    </a>
                 @endforeach
             </nav>
 
@@ -114,15 +116,19 @@
         @forelse($cases as $case)
             @php
                 $today = now()->toDateString();
-                $datedHearings = $case->hearings->filter(fn ($hearing) => ! empty($hearing->next_hearing_date));
-                $nextHearing = $datedHearings
-                    ->filter(fn ($hearing) => \Carbon\Carbon::parse($hearing->next_hearing_date)->toDateString() >= $today)
-                    ->sortBy(fn ($hearing) => \Carbon\Carbon::parse($hearing->next_hearing_date)->toDateString())
+                // Every date on the case's hearings: a hearing's own date (with its time) and the next date fixed at it.
+                $caseDates = $case->hearings->flatMap(fn ($hearing) => collect([
+                    $hearing->hearing_date ? ['date' => \Carbon\Carbon::parse($hearing->hearing_date), 'hearing' => $hearing, 'time' => $hearing->hearing_time] : null,
+                    $hearing->next_hearing_date ? ['date' => \Carbon\Carbon::parse($hearing->next_hearing_date), 'hearing' => $hearing, 'time' => null] : null,
+                ])->filter());
+                $upcomingDate = $caseDates
+                    ->filter(fn ($entry) => $entry['date']->toDateString() >= $today)
+                    ->sortBy(fn ($entry) => $entry['date']->toDateString().' '.($entry['time'] ?? '99'))
                     ->first();
-                $lastPastHearing = $nextHearing ? null : $datedHearings
-                    ->sortByDesc(fn ($hearing) => \Carbon\Carbon::parse($hearing->next_hearing_date)->toDateString())
-                    ->first();
-                $tileDate = $nextHearing ? \Carbon\Carbon::parse($nextHearing->next_hearing_date) : ($lastPastHearing ? \Carbon\Carbon::parse($lastPastHearing->next_hearing_date) : null);
+                $pastDate = $upcomingDate ? null : $caseDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
+                $nextHearing = $upcomingDate['hearing'] ?? null;
+                $lastPastHearing = $pastDate['hearing'] ?? null;
+                $tileDate = $upcomingDate['date'] ?? $pastDate['date'] ?? null;
                 $tileClass = match (true) {
                     $nextHearing && $tileDate->isToday() => 'bg-[#16776e] text-white',
                     $nextHearing && $tileDate->isTomorrow() => 'bg-amber-100 text-amber-900',
@@ -144,7 +150,7 @@
                         @if($tileDate)
                             <span class="text-[11px] font-bold uppercase">{{ $nextHearing && $tileDate->isToday() ? 'Today' : ($nextHearing && $tileDate->isTomorrow() ? 'Tmrw' : $tileDate->format('M')) }}</span>
                             <span class="text-xl font-extrabold leading-tight">{{ $tileDate->format('d') }}</span>
-                            <span class="text-[10px] font-semibold">{{ $nextHearing ? ($nextHearing->hearing_time ? substr((string) $nextHearing->hearing_time, 0, 5) : $tileDate->format('Y')) : 'Review' }}</span>
+                            <span class="text-[10px] font-semibold">{{ $nextHearing ? ($upcomingDate['time'] ? substr((string) $upcomingDate['time'], 0, 5) : $tileDate->format('Y')) : 'Review' }}</span>
                         @else
                             <x-icon name="calendar" :size="20" />
                             <span class="mt-0.5 text-[10px] font-semibold">No date</span>

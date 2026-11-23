@@ -17,6 +17,21 @@ class LegalCaseController extends Controller
 {
     private const HEARING_FILTERS = ['all', 'today', 'tomorrow', 'next7', 'next30', 'past', 'no_upcoming'];
 
+    /**
+     * The hearing-date chips on the case list. "next30" still works in links but has no chip:
+     * the calendar covers the month, and the chip only repeated "All" for most diaries.
+     *
+     * @var array<string, string>
+     */
+    private const HEARING_CHIPS = [
+        'all' => 'All',
+        'today' => 'Today',
+        'tomorrow' => 'Tomorrow',
+        'next7' => 'Next 7 days',
+        'past' => 'Needs review',
+        'no_upcoming' => 'No date yet',
+    ];
+
     public function index(Request $request): View
     {
         $request->validate([
@@ -35,8 +50,15 @@ class LegalCaseController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        // How many cases each hearing-date chip would show, with the same search, status and tag.
+        $hearingCounts = collect(self::HEARING_CHIPS)
+            ->mapWithKeys(fn (string $label, string $key): array => [$key => $this->filteredCases($request, $key)->count()])
+            ->all();
+
         return view('cases.index', [
             'cases' => $cases,
+            'hearingCounts' => $hearingCounts,
+            'hearingChips' => self::HEARING_CHIPS,
             'hearingFilter' => $request->input('hearing_filter', 'all'),
             'tags' => CaseTag::query()->orderBy('name')->get(),
         ]);
@@ -234,7 +256,7 @@ class LegalCaseController extends Controller
     /**
      * The case list query with the search, status, tag and hearing filters applied.
      */
-    private function filteredCases(Request $request): Builder
+    private function filteredCases(Request $request, ?string $hearingFilter = null): Builder
     {
         $today = now()->toDateString();
         $query = LegalCase::query();
@@ -251,15 +273,27 @@ class LegalCaseController extends Controller
             $query->whereHas('tags', fn ($tagQuery) => $tagQuery->where('case_tags.id', (int) $request->input('tag')));
         }
 
-        $upcoming = fn ($q) => $q->whereNotNull('next_hearing_date')->whereDate('next_hearing_date', '>=', $today);
+        // A hearing counts on a day when either its own date or the next date fixed at it falls on that day.
+        $onDates = fn (string $from, ?string $to = null) => fn ($hearings) => $hearings->where(function ($dates) use ($from, $to) {
+            foreach (['hearing_date', 'next_hearing_date'] as $column) {
+                $dates->orWhere(fn ($range) => $range->whereNotNull($column)
+                    ->whereDate($column, '>=', $from)
+                    ->when($to, fn ($upTo) => $upTo->whereDate($column, '<=', $to)));
+            }
+        });
+        $upcoming = $onDates($today);
+        $dated = fn ($hearings) => $hearings->where(fn ($dates) => $dates->whereNotNull('hearing_date')->orWhereNotNull('next_hearing_date'));
 
-        match ($request->input('hearing_filter', 'all')) {
-            'today' => $query->whereHas('hearings', fn ($q) => $q->whereDate('next_hearing_date', $today)),
-            'tomorrow' => $query->whereHas('hearings', fn ($q) => $q->whereDate('next_hearing_date', now()->addDay()->toDateString())),
-            'next7' => $query->whereHas('hearings', fn ($q) => $q->whereDate('next_hearing_date', '>', $today)->whereDate('next_hearing_date', '<=', now()->addDays(7)->toDateString())),
-            'next30' => $query->whereHas('hearings', fn ($q) => $q->whereDate('next_hearing_date', '>=', $today)->whereDate('next_hearing_date', '<=', now()->addDays(30)->toDateString())),
-            'past' => $query->whereHas('hearings', fn ($q) => $q->whereNotNull('next_hearing_date')->whereDate('next_hearing_date', '<', $today))->whereDoesntHave('hearings', $upcoming),
-            'no_upcoming' => $query->whereDoesntHave('hearings', $upcoming),
+        match ($hearingFilter ?? $request->input('hearing_filter', 'all')) {
+            'today' => $query->whereHas('hearings', $onDates($today, $today)),
+            'tomorrow' => $query->whereHas('hearings', $onDates(now()->addDay()->toDateString(), now()->addDay()->toDateString())),
+            // Today and the six days after it, so nothing between today and next week is missed.
+            'next7' => $query->whereHas('hearings', $onDates($today, now()->addDays(6)->toDateString())),
+            'next30' => $query->whereHas('hearings', $onDates($today, now()->addDays(29)->toDateString())),
+            // Had a date, but every date has passed: the case status needs checking.
+            'past' => $query->whereHas('hearings', $dated)->whereDoesntHave('hearings', $upcoming),
+            // Never had a hearing date.
+            'no_upcoming' => $query->whereDoesntHave('hearings', $dated),
             default => null,
         };
 
