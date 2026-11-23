@@ -88,6 +88,16 @@ Artisan::command('courts:import-benches {file : CSV with court_key, section, cou
             'vc_meeting_id' => trim($row['vc_meeting_id'] ?? '') ?: null,
             'email' => trim($row['email'] ?? '') ?: null,
         ];
+
+        // Column sizes in court_benches: a longer value is cut (with a warning) instead of failing the whole import on MySQL.
+        foreach (['section' => 60, 'court_room' => 60, 'bench' => 60, 'location' => 255, 'vc_link' => 500, 'vc_meeting_id' => 160, 'email' => 255] as $column => $maxLength) {
+            $value = $rows[array_key_last($rows)][$column];
+
+            if ($value !== null && mb_strlen($value) > $maxLength) {
+                $this->warn("Line {$line}: {$column} is longer than {$maxLength} characters, shortened.");
+                $rows[array_key_last($rows)][$column] = mb_substr($value, 0, $maxLength);
+            }
+        }
     }
 
     fclose($handle);

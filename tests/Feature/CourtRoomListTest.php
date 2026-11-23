@@ -135,4 +135,21 @@ class CourtRoomListTest extends TestCase
 
         File::delete($file);
     }
+
+    public function test_import_shortens_values_longer_than_their_column_instead_of_failing(): void
+    {
+        $file = storage_path('framework/testing/long-benches.csv');
+        File::ensureDirectoryExists(dirname($file));
+        $longSection = str_repeat('Chief Judicial Magistrate / ', 4);
+        File::put($file, "court_key,section,court_room,judges\ndelhi-district-south-west,\"{$longSection}\",8,Ms. Neha Priya\n");
+
+        $this->artisan('courts:import-benches', ['file' => $file])
+            ->expectsOutputToContain('section is longer than 60 characters, shortened')
+            ->expectsOutput('Imported 1 court rooms.')
+            ->assertSuccessful();
+
+        $this->assertSame(mb_substr(trim($longSection), 0, 60), CourtBench::where('court_key', 'delhi-district-south-west')->value('section'));
+
+        File::delete($file);
+    }
 }
