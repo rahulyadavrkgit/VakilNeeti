@@ -24,7 +24,7 @@
 # Laravel runtime files (storage/ and bootstrap/cache/ use their own nested .gitignore files)
 /storage/*.key
 /storage/pail
-/public/build/
+#/public/build/
 /public/hot
 /public/storage
 /public/fonts-manifest.dev.json
