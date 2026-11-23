@@ -60,7 +60,7 @@
         </button>
 
         <section data-onboarding-step="0" class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-9">
-            <div class="mb-3 flex justify-center"><img src="{{ asset('images/VakilNiti-logo.png') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
+            <div class="mb-3 flex justify-center"><img src="{{ asset('images/logo.svg') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] object-contain"></div>
             <h2 tabindex="-1" class="mt-3 text-xl font-bold text-slate-900">Welcome to VakilNiti</h2>
             <p class="mx-auto mt-3 max-w-xl text-slate-600">
                 Let's find out how we can help you with your cases.

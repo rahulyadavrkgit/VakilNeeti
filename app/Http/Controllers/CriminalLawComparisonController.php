@@ -21,8 +21,8 @@ class CriminalLawComparisonController extends Controller
                 'old_short' => 'IPC',
                 'subject' => 'Offences and punishments',
                 'comparison_url' => 'https://www.ncrb.mha.gov.in/uploads/SankalanPortal/SectionTableBNS.html',
-                'old_pdf' => 'https://www.indiacode.nic.in/bitstream/123456789/11091/1/the_indian_penal_code%2C_1860.pdf',
-                'new_pdf' => 'https://www.indiacode.nic.in/bitstream/123456789/20062/1/a202345.pdf',
+                'old_pdf' => 'https://indiacode.gov.in/bitstream/123456789/11091/1/the_indian_penal_code%2C_1860.pdf',
+                'new_pdf' => 'https://indiacode.gov.in/bitstream/123456789/20062/1/a202345.pdf',
             ],
             'bnss-crpc' => [
                 'key' => 'bnss-crpc',
@@ -33,8 +33,8 @@ class CriminalLawComparisonController extends Controller
                 'old_short' => 'CrPC',
                 'subject' => 'Criminal procedure',
                 'comparison_url' => 'https://www.ncrb.mha.gov.in/uploads/SankalanPortal/SectionTableBNSS.html',
-                'old_pdf' => 'https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf',
-                'new_pdf' => 'https://www.indiacode.nic.in/bitstream/123456789/21920/1/the_bharatiya_nagarik_suraksha_sanhita%2C_2023.pdf',
+                'old_pdf' => 'https://indiacode.gov.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf',
+                'new_pdf' => 'https://indiacode.gov.in/bitstream/123456789/21920/1/the_bharatiya_nagarik_suraksha_sanhita%2C_2023.pdf',
             ],
             'bsa-iea' => [
                 'key' => 'bsa-iea',
@@ -45,8 +45,8 @@ class CriminalLawComparisonController extends Controller
                 'old_short' => 'IEA',
                 'subject' => 'Law of evidence',
                 'comparison_url' => 'https://www.ncrb.mha.gov.in/uploads/SankalanPortal/SectionTableBSA.html',
-                'old_pdf' => 'https://www.indiacode.nic.in/bitstream/123456789/6819/1/indian_evidence_act_1872.pdf',
-                'new_pdf' => 'https://www.indiacode.nic.in/bitstream/123456789/20063/1/aa202347.pdf',
+                'old_pdf' => 'https://indiacode.gov.in/bitstream/123456789/6819/1/indian_evidence_act_1872.pdf',
+                'new_pdf' => 'https://indiacode.gov.in/bitstream/123456789/20063/1/aa202347.pdf',
             ],
         ];
 
@@ -55,14 +55,14 @@ class CriminalLawComparisonController extends Controller
         $comparison = $comparisons[$pair];
 
         $direction = $request->query('direction', 'new_to_old');
-        if (!in_array($direction, ['new_to_old', 'old_to_new'], true)) {
+        if (! in_array($direction, ['new_to_old', 'old_to_new'], true)) {
             $direction = 'new_to_old';
         }
 
         $status = $request->query('status', 'all');
         $allowedStatuses = ['all', 'corresponding', 'changed', 'new', 'deleted'];
 
-        if (!in_array($status, $allowedStatuses, true)) {
+        if (! in_array($status, $allowedStatuses, true)) {
             $status = 'all';
         }
 
@@ -79,8 +79,8 @@ class CriminalLawComparisonController extends Controller
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('left_text', 'like', '%' . $search . '%')
-                    ->orWhere('right_text', 'like', '%' . $search . '%');
+                $builder->where('left_text', 'like', '%'.$search.'%')
+                    ->orWhere('right_text', 'like', '%'.$search.'%');
             });
         }
 
@@ -100,9 +100,9 @@ class CriminalLawComparisonController extends Controller
                 return true;
             }
 
-            $heading = $left . ' ' . $right;
+            $heading = $left.' '.$right;
 
-            return !preg_match(
+            return ! preg_match(
                 '/^\s*(chapter\b|indian penal code\b|code of criminal procedure\b|indian evidence act\b|bharatiya nyaya sanhita\b|bharatiya nagarik suraksha sanhita\b|bharatiya sakshya adhiniyam\b)/i',
                 $heading
             );

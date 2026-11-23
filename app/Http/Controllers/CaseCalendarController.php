@@ -138,6 +138,7 @@ class CaseCalendarController extends Controller
                 'h.hearing_date',
                 'h.hearing_time',
                 'h.court_room',
+                'h.vc_link as hearing_vc_link',
                 'h.judge_name',
                 'h.hearing_stage',
                 'h.proceedings',
@@ -146,7 +147,11 @@ class CaseCalendarController extends Controller
                 'lc.case_title',
                 'lc.case_number',
                 'lc.cnr_number',
-                'lc.court_name'
+                'lc.court_name',
+                'lc.appearing_for',
+                'lc.appearing_for_parties',
+                'lc.court_room as case_court_room',
+                'lc.vc_link'
             );
 
         if ($request->filled('search')) {

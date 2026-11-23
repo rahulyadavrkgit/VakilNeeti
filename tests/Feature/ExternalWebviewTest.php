@@ -8,9 +8,9 @@ class ExternalWebviewTest extends TestCase
 {
     public function test_public_external_webview_accepts_https_url(): void
     {
-        $this->get('/webview?url='.urlencode('https://www.indiacode.nic.in/'))
+        $this->get('/webview?url='.urlencode('https://indiacode.gov.in/'))
             ->assertOk()
-            ->assertSee('indiacode.nic.in');
+            ->assertSee('indiacode.gov.in');
     }
 
     public function test_external_webview_rejects_local_and_invalid_urls(): void

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourtBench;
 use App\Services\CourtBoardEmbedCheck;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -171,9 +173,12 @@ class CourtLinksController extends Controller
         return view('courts.links', [
             'title' => 'Supreme Court of India',
             'heading' => 'Supreme Court',
-            'intro' => 'Official Supreme Court services. Each opens the court\'s own website in a new tab.',
+            'intro' => 'Official Supreme Court services.',
             'metaDescription' => 'Supreme Court of India quick links: cause list, live physical and web display boards, SuSwagatam e-gate pass and the court calendar.',
-            'links' => self::SUPREME_COURT,
+            'links' => [
+                ['title' => 'Court rooms & VC links', 'description' => 'Every court room with its VC link. Join in one tap.', 'url' => route('courts.supreme-court.court-list'), 'icon' => 'screen', 'internal' => true],
+                ...self::SUPREME_COURT,
+            ],
             'source' => 'sci.gov.in',
         ]);
     }
@@ -183,9 +188,12 @@ class CourtLinksController extends Controller
         return view('courts.links', [
             'title' => 'Delhi High Court',
             'heading' => 'Delhi High Court',
-            'intro' => 'Official High Court of Delhi services. Each opens the court\'s own website in a new tab.',
+            'intro' => 'Official High Court of Delhi services.',
             'metaDescription' => 'Delhi High Court quick links: physical display board, judges roster, daily cause list, e-filing, e-visitor pass, case status, orders, judgements and calendar.',
-            'links' => self::DELHI_HIGH_COURT,
+            'links' => [
+                ['title' => 'Judges list & VC links', 'description' => 'Judges, court rooms, VC links and meeting IDs.', 'url' => route('courts.delhi-high-court.judges'), 'icon' => 'people', 'internal' => true],
+                ...self::DELHI_HIGH_COURT,
+            ],
             'source' => 'delhihighcourt.nic.in',
         ]);
     }
@@ -195,7 +203,7 @@ class CourtLinksController extends Controller
         return view('courts.links', [
             'title' => 'eCourts services',
             'heading' => 'eCourts services',
-            'intro' => 'National eCourts services for High Courts and District Courts. Each opens the official website in a new tab.',
+            'intro' => 'National eCourts services for High Courts and District Courts.',
             'metaDescription' => 'eCourts services in one place: District and High Court case status, judgment search, ePay, eFiling, NJDG and virtual courts.',
             'links' => self::ECOURTS_SERVICES,
             'source' => 'ecourts.gov.in',
@@ -208,6 +216,50 @@ class CourtLinksController extends Controller
         return view('courts.delhi-district-courts', [
             'complexes' => self::DELHI_DISTRICT_COMPLEXES,
             'services' => self::DELHI_DISTRICT_SERVICES,
+        ]);
+    }
+
+    public function supremeCourtList(): View
+    {
+        return $this->courtRooms('supreme-court');
+    }
+
+    public function delhiHighCourtJudges(): View
+    {
+        return $this->courtRooms('delhi-high-court');
+    }
+
+    public function delhiDistrictJudges(string $district): View
+    {
+        return $this->courtRooms('delhi-district-'.$district);
+    }
+
+    /**
+     * Court rooms with judges, VC link, meeting ID and email, searchable on one page.
+     */
+    private function courtRooms(string $courtKey): View
+    {
+        $court = CourtBench::courts()[$courtKey] ?? abort(404);
+        $benches = CourtBench::query()
+            ->where('court_key', $courtKey)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        // Sections (Division Bench, Single Bench — Criminal…) as one-tap filters: ?section=slug.
+        $sections = $benches->whereNotNull('section')->countBy('section')->all();
+        $activeSection = collect(array_keys($sections))
+            ->first(fn (string $section) => Str::slug($section) === request()->query('section'));
+
+        return view('courts.court-rooms', [
+            'courtKey' => $courtKey,
+            'court' => $court,
+            'sections' => $sections,
+            'activeSection' => $activeSection,
+            'total' => $benches->count(),
+            'groups' => ($activeSection ? $benches->where('section', $activeSection) : $benches)->groupBy(fn (CourtBench $bench) => $bench->section ?? ''),
+            'causeList' => CourtBench::CAUSE_LISTS[$courtKey] ?? self::DELHI_DISTRICT_SERVICES['cause_list'],
+            'source' => CourtBench::SOURCES[$courtKey] ?? null,
         ]);
     }
 

@@ -53,6 +53,19 @@
                 </select>
             </label>
             <label class="text-sm font-medium text-slate-700">
+                We appear for
+                <select name="appearing_for" class="{{ $field }}">
+                    <option value="">Not set</option>
+                    @foreach(\App\Models\LegalCase::SIDES as $sideValue => $sideLabel)
+                        <option value="{{ $sideValue }}" @selected(old('appearing_for', $case->appearing_for) === $sideValue)>{{ $sideLabel }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+                Party no(s). or names <span class="font-normal text-slate-400">(if more than one on that side)</span>
+                <input name="appearing_for_parties" value="{{ old('appearing_for_parties', $case->appearing_for_parties) }}" maxlength="255" placeholder="e.g. 2, 3 or 1-4" class="{{ $field }}">
+            </label>
+            <label class="text-sm font-medium text-slate-700">
                 Stage
                 <input name="stage" value="{{ old('stage', $case->stage) }}" maxlength="255" placeholder="e.g. Evidence" class="{{ $field }}">
             </label>
@@ -69,6 +82,14 @@
             <label class="text-sm font-medium text-slate-700">
                 Court complex
                 <input name="court_complex" value="{{ old('court_complex', $case->court_complex) }}" maxlength="255" class="{{ $field }}">
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+                Court room
+                <input name="court_room" value="{{ old('court_room', $case->court_room) }}" maxlength="100" placeholder="e.g. Room 214, Court No. 5" class="{{ $field }}">
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+                VC link <span class="font-normal text-slate-400">(video hearing)</span>
+                <input type="url" name="vc_link" value="{{ old('vc_link', $case->vc_link) }}" maxlength="500" placeholder="https://…" inputmode="url" class="{{ $field }}">
             </label>
             <label class="text-sm font-medium text-slate-700">
                 Judge

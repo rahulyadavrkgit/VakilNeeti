@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CaseTag;
 use App\Models\Client;
+use App\Models\CourtStandSide;
 use App\Models\LegalCase;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -130,6 +131,13 @@ class LegalCaseController extends Controller
             'currentFolder' => $currentFolder,
             'folders' => $case->documentFolders()->where('parent_id', $currentFolder?->id)->orderBy('name')->get(),
             'folderDocuments' => $case->documents->where('folder_id', $currentFolder?->id)->values(),
+            'journey' => $case->journey(),
+            'standSide' => CourtStandSide::forCase($case),
+            'linkableCases' => LegalCase::query()
+                ->where('user_id', $case->user_id)
+                ->whereKeyNot($case->id)
+                ->orderBy('case_title')
+                ->get(['id', 'case_title', 'case_number', 'court_name']),
         ]);
     }
 
@@ -207,6 +215,10 @@ class LegalCaseController extends Controller
             'case_type' => ['nullable', 'string', 'max:255'],
             'court_name' => ['required', 'string', 'max:255'],
             'court_complex' => ['nullable', 'string', 'max:255'],
+            'court_room' => ['nullable', 'string', 'max:100'],
+            'vc_link' => ['nullable', 'url:http,https', 'max:500'],
+            'appearing_for' => ['nullable', Rule::in(array_keys(LegalCase::SIDES))],
+            'appearing_for_parties' => ['nullable', 'string', 'max:255'],
             'judge_name' => ['nullable', 'string', 'max:255'],
             'filing_number' => ['nullable', 'string', 'max:255'],
             'filing_date' => ['nullable', 'date'],

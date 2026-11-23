@@ -9,7 +9,7 @@
 </head>
 <body class="min-h-screen bg-slate-100 px-4 py-10">
     <main class="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-4"><img src="{{ asset('images/VakilNiti-logo.png') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
+        <div class="mb-4"><img src="{{ asset('images/logo.svg') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] object-contain"></div>
         <h1 class="text-xl font-bold text-slate-800">Initial Administrator Setup</h1>
 
         <p class="mt-2 text-sm text-slate-600">Create the first administrator. This page closes after that.</p>

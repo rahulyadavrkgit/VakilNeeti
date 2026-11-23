@@ -37,6 +37,8 @@ class EnsurePrivatePracticeAccess
         'bar-directory/*',
         'courts',
         'courts/*',
+        'app',
+        'embed-check',
         'sitemap.xml',
         'robots.txt',
         'shared/invoices/*',

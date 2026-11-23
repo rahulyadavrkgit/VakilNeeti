@@ -18,7 +18,7 @@
         {{-- Choose which boards appear in the list (saved on this device). --}}
         <div data-board-manage hidden class="mt-3 rounded-xl border border-teal-200 bg-teal-50/60 p-3">
             <p class="text-sm font-semibold text-slate-900">Choose your boards</p>
-            <p class="text-xs text-slate-600">Only ticked boards appear in the list. Saved on this device.</p>
+            <p class="text-xs text-slate-600">Saved on this device.</p>
             <div class="mt-2 grid gap-1 sm:grid-cols-2">
                 @foreach($boards as $board)
                     <label class="flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm text-slate-800">
@@ -74,7 +74,7 @@
         {{-- Shown when the court does not allow it: the board opens in a window beside VakilNiti. --}}
         <div data-board-blocked class="mt-3 rounded-xl bg-slate-50 p-4">
             <p class="text-sm font-semibold text-slate-900" data-board-name>{{ $boards->first()['court'] ?? '' }} · {{ $boards->first()['title'] ?? '' }}</p>
-            <p class="mt-1 text-xs leading-relaxed text-slate-600">This court does not allow its live board to be shown inside other websites, so choosing it opens the live board in a window beside VakilNiti. Close that window to come back.</p>
+            <p class="mt-1 text-xs leading-relaxed text-slate-600">Opens in a side window; VakilNiti stays open.</p>
             <div class="mt-3 flex flex-wrap gap-2" data-board-open-actions>
                 <button type="button" data-board-open class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58] sm:flex-none">
                     <x-icon name="board" :size="18" /> Open live board

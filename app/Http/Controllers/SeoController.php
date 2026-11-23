@@ -16,8 +16,11 @@ class SeoController extends Controller
      */
     public const SITEMAP_ROUTES = [
         'dashboard' => 'weekly',
+        'app.download' => 'monthly',
         'courts.index' => 'monthly',
         'courts.supreme-court' => 'monthly',
+        'courts.supreme-court.court-list' => 'weekly',
+        'courts.delhi-high-court.judges' => 'weekly',
         'courts.delhi-high-court' => 'monthly',
         'courts.delhi-district-courts' => 'monthly',
         'courts.display-boards' => 'monthly',

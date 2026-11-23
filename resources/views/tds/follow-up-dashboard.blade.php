@@ -137,7 +137,7 @@
                                 @method('PUT')
 
                                 <button type="submit"
-                                        class="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700">
+                                        class="rounded-lg bg-[#16776e] px-3 py-2 text-xs font-medium text-white hover:bg-[#125f58]">
                                     Complete
                                 </button>
                             </form>

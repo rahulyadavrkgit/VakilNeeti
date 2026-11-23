@@ -148,8 +148,9 @@
 
                         <tr class="hover:bg-slate-50">
                             <td class="p-4">
-                                <div class="font-semibold text-slate-900">
+                                <div class="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900">
                                     {{ $case->case_title }}
+                                    <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" />
                                 </div>
                                 <div class="mt-1 text-xs text-slate-500">
                                     Case No: {{ $case->case_number ?: 'Not available' }}

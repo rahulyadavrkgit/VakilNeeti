@@ -5,17 +5,38 @@
 
 @section('content')
 <div class="mx-auto max-w-[1500px] space-y-6">
-    <header class="relative overflow-hidden rounded-3xl bg-[#142235] p-5 text-white shadow-lg sm:p-7">
-        <div class="pointer-events-none absolute -right-12 -top-24 h-64 w-64 rounded-full border border-white/10"></div>
-        <div class="relative flex flex-wrap items-center justify-between gap-4">
-            <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">
-                @auth Welcome, {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }} @else Your legal workspace @endauth
-            </h1>
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ route('case-dashboard.index') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#238b80] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#16776e]">Case dashboard</a>
-                <a href="{{ route('cases.index') }}" class="inline-flex min-h-11 items-center rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">My cases</a>
-            </div>
-        </div>
+    {{-- One tap to the things an advocate does every day. --}}
+    @php
+        $quickActions = auth()->check()
+            ? [
+                ['Today', 'calendar', route('cases.calendar', ['view' => 'day'])],
+                ['+ Hearing', 'plus', route('hearings.create')],
+                ['+ Case', 'briefcase', route('cases.manual')],
+                ['Import cases', 'download', route('cases.find')],
+                ['Court fee', 'calculator', route('court-fee.index')],
+                ['My cases', 'list', route('cases.index')],
+            ]
+            : [
+                ['Supreme Court', 'pillars', route('courts.supreme-court')],
+                ['Delhi HC', 'building', route('courts.delhi-high-court')],
+                ['District courts', 'gavel', route('courts.delhi-district-courts')],
+                ['Display boards', 'board', route('courts.display-boards')],
+                ['Court fee', 'calculator', route('court-fee.index')],
+                ['Bare Acts', 'book', route('bare-acts.index')],
+            ];
+    @endphp
+    <header class="rounded-3xl bg-[#142235] p-4 text-white shadow-lg sm:p-5">
+        <h1 class="text-xl font-semibold tracking-tight sm:text-2xl">
+            @auth {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }}, {{ now()->format('l, d M') }} @else Your legal workspace @endauth
+        </h1>
+        <nav aria-label="Quick actions" class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+            @foreach($quickActions as [$actionLabel, $actionIcon, $actionUrl])
+                <a href="{{ $actionUrl }}" class="flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white/[0.07] px-1 text-center text-xs font-semibold text-white ring-1 ring-white/10 transition hover:bg-white/15 sm:text-sm">
+                    <x-icon :name="$actionIcon" :size="22" class="text-[#e6b84a]" />
+                    {{ $actionLabel }}
+                </a>
+            @endforeach
+        </nav>
     </header>
 
     @auth
@@ -44,7 +65,6 @@
             <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div>
                     <p class="font-semibold text-slate-900">Bring your cases in from eCourts</p>
-                    <p class="text-sm text-slate-600">Search by your bar code on the official site, paste the results and choose the cases to add.</p>
                 </div>
                 <a href="{{ route('cases.find') }}" class="inline-flex min-h-10 items-center rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">Find my cases</a>
             </section>
@@ -77,8 +97,11 @@
                                     <span class="text-lg font-bold leading-tight">{{ $eventDate->format('d') }}</span>
                                 </span>
                                 <span class="min-w-0 flex-1">
-                                    <span class="block truncate text-sm font-semibold text-slate-900">{{ $event['title'] }}</span>
-                                    <span class="block truncate text-xs text-slate-500">{{ collect([$event['time'], $event['case_number'], $event['court']])->filter()->implode(' · ') ?: $event['label'] }}</span>
+                                    <span class="flex min-w-0 items-center gap-1.5">
+                                        <span class="truncate text-sm font-semibold text-slate-900">{{ $event['title'] }}</span>
+                                        <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" />
+                                    </span>
+                                    <span class="block truncate text-xs text-slate-500">{{ collect([$event['time'], ($event['court_room'] ?? null) ? 'Room '.$event['court_room'] : null, $event['case_number'], $event['court']])->filter()->implode(' · ') ?: $event['label'] }}</span>
                                     @if($event['details'])
                                         <span class="block truncate text-xs text-slate-600">{{ $event['details'] }}</span>
                                     @endif
@@ -161,140 +184,6 @@
             <p data-filter-empty hidden class="col-span-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">No module matches your search.</p>
         </nav>
     </section>
-    @php
-        $sections = [
-            [
-                'title' => 'India Law & Justice Data',
-                'links' => [
-                    ['label' => 'Create Law Data Dashboards', 'url' => route('dashboard-studio.index')],
-                ],
-            ],
-            [
-                'title' => 'Case Management System',
-                'links' => [
-                    ['label' => 'My Case Dashboard', 'url' => route('case-dashboard.index')],
-                    ['label' => 'My Cases', 'url' => route('cases.index')],
-                    ['label' => 'Calendar & Hearings', 'url' => route('cases.calendar')],
-                    ['label' => 'Hearing History', 'url' => route('hearings.history')],
-                    ['label' => 'Tasks & Reminders', 'url' => route('tasks.index')],
-                ],
-            ],
-            [
-                'title' => 'Courts',
-                'links' => [
-                    ['label' => 'Court Directory', 'url' => route('court-directory.index')],
-                    ['label' => 'Supreme Court of India', 'url' => route('courts.supreme-court')],
-                    ['label' => 'Delhi High Court', 'url' => route('courts.delhi-high-court')],
-                    ['label' => 'Delhi District Courts', 'url' => route('courts.delhi-district-courts')],
-                    ['label' => 'Court Display Boards', 'url' => route('courts.display-boards')],
-                    ['label' => 'eCourts Services', 'url' => route('courts.ecourts-services')],
-                    ['label' => 'High Courts', 'url' => route('court-directory.index', ['level' => 'high-court'])],
-                    ['label' => 'District & Subordinate Courts', 'url' => route('court-directory.index', ['level' => 'district'])],
-                    ['label' => 'Appellate Courts & Tribunals', 'url' => route('court-catalogue.index')],
-                    ['label' => 'Official Court Search', 'url' => route('court-integrations.ecourts.search')],
-                ],
-            ],
-            [
-                'title' => 'Clients & Billing',
-                'links' => [
-                    ['label' => 'All Clients', 'url' => route('clients.index')],
-                    ['label' => 'Invoices & Payments', 'url' => route('billing.index')],
-                ],
-            ],
-            [
-                'title' => 'Police Administration',
-                'links' => [
-                    ['label' => 'Police Stations', 'url' => url('/police-administration#police-stations')],
-                    ['label' => 'State Police Departments', 'url' => url('/police-administration#state-police')],
-                    ['label' => 'Police Districts & Ranges', 'url' => url('/police-administration#police-districts')],
-                    ['label' => 'Official Police Portals', 'url' => url('/police-administration#official-portals')],
-                ],
-            ],
-            [
-                'title' => 'Bar Associations',
-                'links' => [
-                    ['label' => 'National Associations', 'url' => route('bar-associations.index') . '#national'],
-                    ['label' => 'State & High Court Associations', 'url' => route('bar-associations.index') . '#state-high-court'],
-                    ['label' => 'District Associations', 'url' => route('bar-associations.index') . '#district'],
-                    ['label' => 'Bar Councils', 'url' => route('bar-associations.index') . '#bar-councils'],
-                ],
-            ],
-            [
-                'title' => 'Court Fee',
-                'links' => [
-                    ['label' => 'Court Fee Calculator', 'url' => url('/court-fee#calculator')],
-                    ['label' => 'Court Fee Schedules', 'url' => url('/court-fee#fee-schedules')],
-                    ['label' => 'Rules & Exemptions', 'url' => url('/court-fee#rules')],
-                ],
-            ],
-            [
-                'title' => 'Bare Acts',
-                'links' => [
-                    ['label' => 'Overview', 'url' => route('bare-acts.index') . '#overview'],
-                    ['label' => 'Central Acts', 'url' => route('bare-acts.index') . '#central-acts'],
-                    ['label' => 'Criminal Law Codes', 'url' => route('bare-acts.index') . '#criminal-laws'],
-                    ['label' => 'Official Sources', 'url' => route('bare-acts.index') . '#sources'],
-                ],
-            ],
-            [
-                'title' => 'New Criminal Laws',
-                'links' => [
-                    ['label' => 'Open New Criminal Laws', 'url' => url('/new-criminal-laws')],
-                ],
-            ],
-            [
-                'title' => 'Miscellaneous Forms',
-                'links' => [
-                    ['label' => 'Court Forms', 'url' => route('miscellaneous-forms.index') . '#court-forms'],
-                    ['label' => 'Civil & Criminal Forms', 'url' => route('miscellaneous-forms.index') . '#civil-criminal'],
-                    ['label' => 'Affidavits & Applications', 'url' => route('miscellaneous-forms.index') . '#affidavits'],
-                    ['label' => 'Police & RTI Forms', 'url' => route('miscellaneous-forms.index') . '#police-rti'],
-                ],
-            ],
-            [
-                'title' => 'PDF Annotator',
-                'links' => [
-                    ['label' => 'Open PDF Annotator', 'url' => url('/pdf-annotator')],
-                ],
-            ],
-            [
-                'title' => 'Profile Settings',
-                'links' => [
-                    ['label' => 'Open Profile Settings', 'url' => route('profile.index')],
-                    ['label' => 'Personal Profile', 'url' => route('profile.personal.index')],
-                    ['label' => 'Professional Profile', 'url' => route('profile.professional.index')],
-                    ['label' => 'Firm Profile', 'url' => route('firm-profile.index')],
-                    ['label' => 'Contact Information', 'url' => route('profile.contacts.index')],
-                    ['label' => 'Practice States & Jurisdictions', 'url' => route('profile.practice-states.index')],
-                    ['label' => 'Invoice & GST Settings', 'url' => route('profile.invoice-settings.index')],
-                    ['label' => 'Tax & Compliance', 'url' => route('profile.tax-compliance')],
-                ],
-            ],
-        ];
-    @endphp
-
-    <details class="group rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <summary class="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-lg font-semibold text-slate-900">
-            All links
-            <x-icon name="chevron" class="text-slate-400 transition group-open:rotate-180" />
-        </summary>
-    <section class="grid gap-4 border-t border-slate-100 p-4 sm:grid-cols-2 xl:grid-cols-3">
-        @foreach($sections as $section)
-            <article class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#b8dfd9] hover:shadow-md">
-                <h2 class="text-lg font-semibold text-slate-900">{{ $section['title'] }}</h2>
-                <ul class="mt-3 space-y-1 border-t border-slate-100 pt-3">
-                    @foreach($section['links'] as $link)
-                        <li>
-                            <a href="{{ $link['url'] }}" class="inline-flex min-h-9 items-center text-sm font-semibold text-blue-700 hover:underline">
-                                {{ $link['label'] }} &rarr;
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </article>
-        @endforeach
-    </section>
-    </details>
 </div>
 @endsection
 

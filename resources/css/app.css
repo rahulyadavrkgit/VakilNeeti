@@ -20,29 +20,29 @@
     --color-blue-900: #0c3b37;
     --color-blue-950: #082724;
 
-    --color-slate-50: #fcfbf8;
-    --color-slate-100: #f4f2ed;
-    --color-slate-200: #e7e3d8;
-    --color-slate-300: #d2ccbd;
-    --color-slate-400: #a69e8c;
-    --color-slate-500: #756e60;
-    --color-slate-600: #575144;
-    --color-slate-700: #3f3a31;
-    --color-slate-800: #29261f;
-    --color-slate-900: #161510;
-    --color-slate-950: #090908;
+    --color-slate-50: #f7f9fb;
+    --color-slate-100: #eef2f6;
+    --color-slate-200: #e2e8ef;
+    --color-slate-300: #cdd6e0;
+    --color-slate-400: #8592a3;
+    --color-slate-500: #667385;
+    --color-slate-600: #4b5768;
+    --color-slate-700: #354153;
+    --color-slate-800: #232e3d;
+    --color-slate-900: #142235;
+    --color-slate-950: #0b1522;
 
-    --color-gray-50: #fcfbf8;
-    --color-gray-100: #f4f2ed;
-    --color-gray-200: #e7e3d8;
-    --color-gray-300: #d2ccbd;
-    --color-gray-400: #a69e8c;
-    --color-gray-500: #756e60;
-    --color-gray-600: #575144;
-    --color-gray-700: #3f3a31;
-    --color-gray-800: #29261f;
-    --color-gray-900: #161510;
-    --color-gray-950: #090908;
+    --color-gray-50: #f7f9fb;
+    --color-gray-100: #eef2f6;
+    --color-gray-200: #e2e8ef;
+    --color-gray-300: #cdd6e0;
+    --color-gray-400: #8592a3;
+    --color-gray-500: #667385;
+    --color-gray-600: #4b5768;
+    --color-gray-700: #354153;
+    --color-gray-800: #232e3d;
+    --color-gray-900: #142235;
+    --color-gray-950: #0b1522;
 
     --color-amber-50: #fcf8ed;
     --color-amber-100: #f5ebcf;
@@ -55,4 +55,44 @@
     --color-amber-800: #503b0c;
     --color-amber-900: #342609;
     --color-amber-950: #1b1508;
+
+    /* Brand: off-palette families map onto navy (indigo) and teal (emerald). */
+    --color-indigo-50: #eef2f7;
+    --color-indigo-100: #dde5ef;
+    --color-indigo-200: #bccbdc;
+    --color-indigo-300: #93a8c0;
+    --color-indigo-400: #5f7a99;
+    --color-indigo-500: #3b5674;
+    --color-indigo-600: #20334a;
+    --color-indigo-700: #142235;
+    --color-indigo-800: #0f1b2b;
+    --color-indigo-900: #0b1522;
+    --color-indigo-950: #070e17;
+
+    --color-emerald-50: #edf8f6;
+    --color-emerald-100: #d9efeb;
+    --color-emerald-200: #b8dfd9;
+    --color-emerald-300: #8fc9c0;
+    --color-emerald-400: #4da99e;
+    --color-emerald-500: #238b80;
+    --color-emerald-600: #16776e;
+    --color-emerald-700: #12645d;
+    --color-emerald-800: #104e49;
+    --color-emerald-900: #0c3b37;
+    --color-emerald-950: #082724;
+}
+/*
+ * Form fields: Tailwind's reset removes every border, so fields written as
+ * "rounded-lg border-slate-300" showed no box at all. Give fields a visible
+ * border and padding by default; a field's own classes (border-0, px-0…) still win.
+ */
+@layer base {
+    input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='range'], [type='color'], [type='hidden'], [type='submit'], [type='button'])),
+    select,
+    textarea {
+        border-width: 1px;
+        border-style: solid;
+        border-color: var(--color-slate-300);
+        padding: 0.5rem 0.75rem;
+    }
 }

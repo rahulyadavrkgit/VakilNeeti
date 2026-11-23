@@ -24,14 +24,15 @@ class CourtLinksControllerTest extends TestCase
      * @param  list<array<string, string>>  $links
      */
     #[DataProvider('linkPages')]
-    public function test_link_pages_are_public_and_open_every_official_link_in_a_new_tab(string $route, array $links): void
+    public function test_link_pages_are_public_and_open_official_links_through_the_in_site_viewer(string $route, array $links): void
     {
         $response = $this->get(route($route))->assertOk();
 
         foreach ($links as $link) {
             $this->assertStringStartsWith('https://', $link['url']);
             $response->assertSee($link['title'])
-                ->assertSee('href="'.$link['url'].'" target="_blank" rel="noopener noreferrer" data-direct-share', false);
+                ->assertSee('href="'.$link['url'].'" rel="noopener noreferrer"', false)
+                ->assertDontSee('href="'.$link['url'].'" target="_blank"', false);
         }
 
         $response->assertSee('<meta name="description"', false)

@@ -11,7 +11,7 @@
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
             <h1 class="text-2xl font-semibold text-slate-900">Court display boards</h1>
-            <p class="mt-1 text-sm text-slate-600">See which item is running in each courtroom, live from the court's official board. Each opens in a new tab.</p>
+            <p class="mt-1 text-sm text-slate-600">See which item is running in each courtroom, live from the court's official board.</p>
         </div>
         <label class="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-[#16776e] sm:w-72">
             <x-icon name="search" class="text-slate-400" />
@@ -29,7 +29,7 @@
                 </div>
                 <div class="mt-4 flex flex-wrap gap-2">
                     @foreach($court['boards'] as $board)
-                        <a href="{{ $board['url'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                        <a href="{{ $board['url'] }}" rel="noopener noreferrer"
                            class="inline-flex min-h-11 items-center gap-2 rounded-lg {{ $loop->first ? 'bg-[#16776e] text-white hover:bg-[#125f58]' : 'border border-[#16776e] text-[#16776e] hover:bg-teal-50' }} px-4 text-sm font-semibold">
                             {{ $board['title'] }} <x-icon name="external" :size="16" />
                         </a>

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -43,6 +44,56 @@ class CourtBoardEmbedCheck
         return $allowed;
     }
 
+    /**
+     * Whether each website (by host) allows being framed, checking its home page once and
+     * asking all unknown hosts at the same time.
+     *
+     * @param  list<string>  $hosts
+     * @return array<string, bool>
+     */
+    public function embeddableHosts(array $hosts): array
+    {
+        $answers = [];
+        $unknown = [];
+
+        foreach ($hosts as $host) {
+            $cached = Cache::get($this->hostCacheKey($host));
+
+            if ($cached === null) {
+                $unknown[] = $host;
+            } else {
+                $answers[$host] = (bool) $cached;
+            }
+        }
+
+        if ($unknown !== []) {
+            try {
+                $responses = Http::pool(fn ($pool) => array_map(
+                    fn (string $host) => $pool->as($host)->timeout(6)->withUserAgent('VakilNiti website check')->head('https://'.$host.'/'),
+                    $unknown,
+                ));
+            } catch (\Throwable) {
+                $responses = [];
+            }
+
+            foreach ($unknown as $host) {
+                $response = $responses[$host] ?? null;
+                $allowed = $response instanceof Response
+                    && $response->status() < 400
+                    && $this->headersAllowFraming(
+                        (string) $response->header('X-Frame-Options'),
+                        (string) $response->header('Content-Security-Policy'),
+                    );
+
+                // A site that did not answer is asked again sooner.
+                Cache::put($this->hostCacheKey($host), $allowed, $response instanceof Response ? now()->addHours(self::CACHE_HOURS) : now()->addHour());
+                $answers[$host] = $allowed;
+            }
+        }
+
+        return $answers;
+    }
+
     public function headersAllowFraming(string $frameOptions, string $contentSecurityPolicy): bool
     {
         if (in_array(strtoupper(trim($frameOptions)), ['DENY', 'SAMEORIGIN'], true)) {
@@ -58,6 +109,11 @@ class CourtBoardEmbedCheck
         }
 
         return true;
+    }
+
+    private function hostCacheKey(string $host): string
+    {
+        return 'site-embeddable:'.$host;
     }
 
     private function cacheKey(string $url): string

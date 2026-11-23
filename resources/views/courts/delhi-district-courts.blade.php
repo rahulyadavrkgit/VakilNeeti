@@ -10,11 +10,11 @@
 
     <div>
         <h1 class="text-2xl font-semibold text-slate-900">Delhi District Courts</h1>
-        <p class="mt-1 text-sm text-slate-600">Eleven district courts in seven court complexes. Open a complex to see its districts. Each link opens the official website in a new tab.</p>
+        <p class="mt-1 text-sm text-slate-600">Eleven district courts in seven court complexes.</p>
     </div>
 
     <div class="grid gap-3 sm:grid-cols-2">
-        <a href="{{ $services['efiling'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+        <a href="{{ $services['efiling'] }}" rel="noopener noreferrer"
            class="flex items-center justify-center gap-2 rounded-2xl bg-[#16776e] px-5 py-4 text-base font-bold text-white shadow-sm hover:bg-[#125f58]">
             <x-icon name="upload" /> E-Courts filing portal <x-icon name="external" :size="16" />
         </a>
@@ -39,23 +39,26 @@
                     @foreach($districts as $district)
                         <section>
                             <h2 class="rounded-lg bg-teal-50 px-3 py-2 text-center text-sm font-bold uppercase tracking-wide text-teal-900">{{ $district['district'] }}</h2>
-                            <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                <a href="{{ $district['url'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
-                                    Judges, leave &amp; rosters <x-icon name="external" :size="14" />
+                            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                <a href="{{ route('courts.delhi-district-courts.judges', \Illuminate\Support\Str::slug($district['district'])) }}"
+                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-[#16776e] px-4 text-center text-sm font-semibold text-white hover:bg-[#125f58]">
+                                    Judges list &amp; VC
                                 </a>
-                                <a href="{{ $services['case_status'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                                <a href="{{ $district['url'] }}" rel="noopener noreferrer"
+                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
+                                    Leave &amp; rosters <x-icon name="external" :size="14" />
+                                </a>
+                                <a href="{{ $services['case_status'] }}" rel="noopener noreferrer"
                                    class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
                                     Case status / order <x-icon name="external" :size="14" />
                                 </a>
-                                <a href="{{ $services['cause_list'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                                <a href="{{ $services['cause_list'] }}" rel="noopener noreferrer"
                                    class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
                                     Cause list <x-icon name="external" :size="14" />
                                 </a>
                             </div>
                         </section>
                     @endforeach
-                    <p class="text-xs text-slate-500">The judges list, judges on leave, bail roster and duty magistrate roster are published on each district's own website.</p>
                 </div>
             </details>
         @endforeach
@@ -72,7 +75,7 @@
                 'statistics' => 'Case statistics (NJDG)',
                 'website' => 'Delhi District Courts website',
             ] as $key => $label)
-                <a href="{{ $services[$key] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                <a href="{{ $services[$key] }}" rel="noopener noreferrer"
                    class="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[#16776e] px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">
                     {{ $label }} <x-icon name="external" :size="14" />
                 </a>

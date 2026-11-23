@@ -155,7 +155,7 @@
 <body>
     <header>
         <a href="{{ route('dashboard') }}" aria-label="VakilNiti home">
-            <img src="{{ asset('images/VakilNiti-logo.png') }}" alt="VakilNiti">
+            <img src="{{ asset('images/logo.svg') }}" alt="VakilNiti">
         </a>
     </header>
 

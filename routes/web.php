@@ -11,6 +11,7 @@ use App\Http\Controllers\CaseClientController;
 use App\Http\Controllers\CaseDashboardController;
 use App\Http\Controllers\CaseFileImportController;
 use App\Http\Controllers\CaseFinderController;
+use App\Http\Controllers\CaseLinkController;
 use App\Http\Controllers\CaseWorkspaceController;
 use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\ClientController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\CourtCatalogueController;
 use App\Http\Controllers\CourtDirectoryController;
 use App\Http\Controllers\CourtIntegrationController;
 use App\Http\Controllers\CourtLinksController;
+use App\Http\Controllers\CourtStandSideController;
 use App\Http\Controllers\CriminalLawComparisonController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardStudioController;
@@ -58,6 +60,8 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/', [DashboardController::class, 'index'])
     ->name('dashboard');
+
+Route::view('/app', 'app-download')->name('app.download');
 
 Route::get('/court-integrations/ecourts', [CourtIntegrationController::class, 'index'])->name('court-integrations.ecourts');
 Route::get('/court-integrations/ecourts/search', [CourtIntegrationController::class, 'search'])->name('court-integrations.ecourts.search');
@@ -215,6 +219,15 @@ Route::post('/cases/{case}/tags', [LegalCaseController::class, 'attachTag'])
 
 Route::delete('/cases/{case}/tags/{tag}', [LegalCaseController::class, 'detachTag'])
     ->whereNumber('case')->whereNumber('tag')->name('cases.tags.detach');
+
+Route::post('/cases/{case}/links', [CaseLinkController::class, 'store'])
+    ->whereNumber('case')->name('cases.links.store');
+
+Route::delete('/cases/{case}/links/{link}', [CaseLinkController::class, 'destroy'])
+    ->whereNumber('case')->whereNumber('link')->name('cases.links.destroy');
+
+Route::post('/cases/{case}/stand-side', [CourtStandSideController::class, 'store'])
+    ->whereNumber('case')->name('cases.stand-side');
 
 /*
 |--------------------------------------------------------------------------
@@ -436,6 +449,10 @@ Route::get('/pdf-annotator', [ModuleDashboardController::class, 'pdfAnnotator'])
     ->name('pdf-annotator.index');
 Route::get('/webview', [ExternalWebviewController::class, 'show'])
     ->name('webview.show');
+
+Route::get('/embed-check', [ExternalWebviewController::class, 'embedCheck'])
+    ->middleware('throttle:30,1')
+    ->name('embed-check');
 Route::get('/court-management', function () {
     $countTable = function ($table) {
         return Schema::hasTable($table)
@@ -487,6 +504,11 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap
 Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/supreme-court', 'supremeCourt')->name('supreme-court');
+    Route::get('/supreme-court/court-list', 'supremeCourtList')->name('supreme-court.court-list');
+    Route::get('/delhi-high-court/judges', 'delhiHighCourtJudges')->name('delhi-high-court.judges');
+    Route::get('/delhi-district-courts/{district}/judges', 'delhiDistrictJudges')
+        ->where('district', '[a-z-]+')
+        ->name('delhi-district-courts.judges');
     Route::get('/delhi-high-court', 'delhiHighCourt')->name('delhi-high-court');
     Route::get('/delhi-district-courts', 'delhiDistrictCourts')->name('delhi-district-courts');
     Route::get('/display-boards', 'displayBoards')->name('display-boards');

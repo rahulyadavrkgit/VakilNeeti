@@ -44,7 +44,7 @@
 
                 <div class="mt-4 space-y-1 text-sm text-slate-600">
                     @if($client->mobile)
-                        <p>Mobile: {{ $client->mobile }}</p>
+                        <p>Mobile: <a href="tel:{{ $client->whatsappNumber() ? '+'.$client->whatsappNumber() : $client->mobile }}" data-direct-share class="font-semibold text-[#16776e] hover:underline">{{ $client->mobile }}</a></p>
                     @endif
                     @if($client->email)
                         <p>Email: {{ $client->email }}</p>
@@ -56,6 +56,12 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
+                @if($client->whatsappNumber())
+                    <a href="tel:+{{ $client->whatsappNumber() }}" data-direct-share
+                       class="inline-flex items-center gap-1.5 rounded-lg bg-[#16776e] px-4 py-3 text-sm font-semibold text-white hover:bg-[#125f58]">Call</a>
+                    <a href="https://wa.me/{{ $client->whatsappNumber() }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                       class="inline-flex items-center gap-1.5 rounded-lg bg-[#25d366] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1ebe5b]">WhatsApp</a>
+                @endif
                 <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
                    class="rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
                     + Create Invoice
@@ -79,26 +85,19 @@
         </div>
     </div>
 
-    {{-- PROFILE NAVIGATION --}}
-    <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3 text-sm">
-        @foreach([
-            'overview' => 'Overview',
-            'cases' => 'Cases',
-            'hearings' => 'Hearings',
-            'tasks' => 'Tasks',
-            'invoices' => 'Invoices',
-            'payments' => 'Payments',
-            'activities' => 'Activities'
-        ] as $id => $label)
-            <a href="#{{ $id }}"
-               class="rounded-lg bg-white px-4 py-2 font-medium text-slate-700 border border-slate-200 hover:bg-slate-100">
-                {{ $label }}
-            </a>
-        @endforeach
-    </div>
+    {{-- One section on screen at a time. --}}
+    <x-tabs label="Client sections" :tabs="[
+        'overview' => 'Overview',
+        'cases' => 'Cases',
+        'hearings' => 'Hearings',
+        'tasks' => 'Tasks',
+        'invoices' => 'Invoices',
+        'payments' => 'Payments',
+        'activities' => 'Activities',
+    ]" />
 
     {{-- OVERVIEW --}}
-    <section id="overview" class="space-y-4">
+    <section id="overview" data-tab-panel role="tabpanel" aria-labelledby="tab-overview" class="space-y-4">
         <h3 class="text-lg font-bold text-slate-900">Client Overview</h3>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -160,7 +159,7 @@
     </section>
 
     {{-- CASES --}}
-    <section id="cases" class="rounded-xl border bg-white p-5">
+    <section id="cases" data-tab-panel role="tabpanel" aria-labelledby="tab-cases" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-bold">Connected Cases</h3>
             <a href="{{ route('cases.index') }}" class="text-sm text-blue-600 hover:underline">All Cases</a>
@@ -173,6 +172,7 @@
                        class="font-semibold text-blue-700 hover:underline">
                         {{ $case->case_title }}
                     </a>
+                    <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" class="ml-1 align-middle" />
                     <p class="mt-1 text-sm text-slate-500">
                         {{ $case->case_number ?: 'Case number unavailable' }}
                         @if($case->cnr_number) | CNR: {{ $case->cnr_number }} @endif
@@ -189,7 +189,7 @@
     </section>
 
     {{-- HEARINGS --}}
-    <section id="hearings" class="rounded-xl border bg-white p-5">
+    <section id="hearings" data-tab-panel role="tabpanel" aria-labelledby="tab-hearings" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-bold">Hearing History & Dates</h3>
             <a href="{{ route('cases.calendar') }}" class="text-sm text-blue-600 hover:underline">Open Calendar</a>
@@ -224,7 +224,7 @@
     </section>
 
     {{-- TASKS --}}
-    <section id="tasks" class="rounded-xl border bg-white p-5">
+    <section id="tasks" data-tab-panel role="tabpanel" aria-labelledby="tab-tasks" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-bold">Client Tasks</h3>
             <a href="{{ route('tasks.create', ['client_id' => $client->id]) }}"
@@ -263,7 +263,7 @@
     </section>
 
     {{-- INVOICES --}}
-    <section id="invoices" class="rounded-xl border bg-white p-5">
+    <section id="invoices" data-tab-panel role="tabpanel" aria-labelledby="tab-invoices" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-bold">Client Invoices</h3>
             <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
@@ -303,7 +303,7 @@
     </section>
 
     {{-- PAYMENTS --}}
-    <section id="payments" class="rounded-xl border bg-white p-5">
+    <section id="payments" data-tab-panel role="tabpanel" aria-labelledby="tab-payments" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-bold">Client Payments</h3>
             <a href="{{ route('payments.create', ['client_id' => $client->id]) }}"
@@ -351,7 +351,7 @@
     </section>
 
     {{-- ACTIVITIES --}}
-    <section id="activities" class="rounded-xl border bg-white p-5">
+    <section id="activities" data-tab-panel role="tabpanel" aria-labelledby="tab-activities" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-bold">Client Activities</h3>
             <a href="{{ route('clients.activities.create', $client) }}"

@@ -14,10 +14,27 @@
             $shareText = collect([
                 'Case: '.($case->case_title ?: 'Untitled case'),
                 $case->case_number ? 'Case No: '.$case->case_number : null,
+                $case->appearingForLabel() ? 'Appearing for: '.$case->appearingForLabel() : null,
                 $case->court_name ? 'Court: '.$case->court_name : null,
+                ($upcomingHearing?->court_room ?: $case->court_room) ? 'Court room: '.($upcomingHearing?->court_room ?: $case->court_room) : null,
                 'Status: '.ucfirst($case->case_status ?: 'unknown').($case->stage ? ' ('.$case->stage.')' : ''),
                 $upcomingHearing ? 'Next hearing: '.\Carbon\Carbon::parse($upcomingHearing->next_hearing_date)->format('d M Y') : null,
+                ($upcomingHearing?->vc_link ?: $case->vc_link) ? 'VC link: '.($upcomingHearing?->vc_link ?: $case->vc_link) : null,
             ])->filter()->implode("\n");
+            $linkedClients = $case->parties->filter(fn ($party) => $party->is_client && $party->client);
+            $advocateName = auth()->user()?->name;
+            $courtRoom = $upcomingHearing?->court_room ?: $case->court_room;
+            // A link sent for the next hearing beats the case's usual link.
+            $vcLink = $upcomingHearing?->vc_link ?: $case->vc_link;
+            $tabCounts = [
+                'case-history' => $case->hearings->count(),
+                'case-clients' => $linkedClients->count(),
+                'case-notes' => $case->notes->count(),
+                'case-appointments' => $case->appointments->count(),
+                'case-documents' => $case->documents->count(),
+                'case-expenses' => $case->expenses->count(),
+                'case-time' => $case->timeEntries->count(),
+            ];
             $statusClass = match ($case->case_status) {
                 'pending' => 'bg-amber-100 text-amber-800',
                 'disposed', 'closed' => 'bg-rose-100 text-rose-700',
@@ -37,17 +54,19 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-2xl font-bold text-slate-900">{{ $case->case_title ?: 'Untitled case' }}</h2>
                         <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
+                        <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" size="lg" />
                     </div>
                     <p class="mt-1 text-sm text-slate-600">
-                        {{ collect([$case->case_number, $case->court_name, $case->cnr_number ? 'CNR '.$case->cnr_number : null, $case->stage ? 'Stage: '.$case->stage : null])->filter()->implode(' · ') ?: 'No case number yet' }}
+                        {{ collect([$case->case_number, $case->cnr_number ? 'CNR '.$case->cnr_number : null, $case->stage ? 'Stage: '.$case->stage : null])->filter()->implode(' · ') ?: 'No case number yet' }}
                     </p>
                 </div>
 
                 <div class="flex flex-wrap gap-2 print:hidden">
                     <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                       data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
                        class="inline-flex items-center gap-1.5 rounded-xl bg-[#25d366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1ebe5b]">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3Z"/></svg>
-                        Share on WhatsApp
+                        Share case
                     </a>
                     <a href="{{ route('cases.edit', $case) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</a>
                     <button type="button" data-print class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print</button>
@@ -64,6 +83,8 @@
                     @endif
                 </div>
             </div>
+
+            @include('cases.partials.key-facts')
 
             <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-slate-100 pt-4 print:hidden">
                 <form method="POST" action="{{ route('cases.file-number', $case) }}" class="flex items-center gap-2">
@@ -103,16 +124,18 @@
             </div>
         @endif
 
-        <nav aria-label="Case workspace" class="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <a href="#case-history" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Case history</a>
-            <a href="#case-clients" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Notify clients</a>
-            <a href="#case-notes" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Notes</a>
-            <a href="#case-appointments" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Appointments</a>
-            <a href="#case-documents" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Documents</a>
-            <a href="#case-expenses" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Expenses</a>
-            <a href="#case-time" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Time entries</a>
-        </nav>
+        <x-tabs label="Case workspace" :tabs="[
+            'case-overview' => 'Overview',
+            'case-history' => 'Case history',
+            'case-clients' => 'Notify clients',
+            'case-notes' => 'Notes',
+            'case-appointments' => 'Appointments',
+            'case-documents' => 'Documents',
+            'case-expenses' => 'Expenses',
+            'case-time' => 'Time entries',
+        ]" :counts="$tabCounts" />
 
+        <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
         <!-- Next Hearing -->
         @php
             $nextHearing = $case->hearings
@@ -128,7 +151,6 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">Next Hearing</h3>
-                    <p class="mt-1 text-sm text-slate-500">Upcoming date recorded in your case diary</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -152,7 +174,7 @@
                     <div>
                         <p class="text-xs font-medium uppercase text-slate-500">Courtroom</p>
                         <p class="mt-1 font-semibold">
-                            {{ $nextHearing->court_room ?: 'Not available' }}
+                            {{ $nextHearing->court_room ?: ($case->court_room ?: 'Not available') }}
                         </p>
                     </div>
                     <div>
@@ -168,6 +190,8 @@
                 </p>
             @endif
         </section>
+
+        @include('cases.partials.journey')
 
         <!-- Case Information -->
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -203,6 +227,25 @@
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Judge</p>
                     <p class="mt-1 font-medium">{{ $case->judge_name ?: 'Not available' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">We appear for</p>
+                    <p class="mt-1 font-medium">{{ $case->appearingForLabel() ?: 'Not set' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">Court room</p>
+                    <p class="mt-1 font-medium">{{ $case->court_room ?: 'Not available' }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium uppercase text-slate-500">VC link</p>
+                    @if($case->vc_link)
+                        <a href="{{ $case->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="mt-1 block truncate font-medium text-[#16776e] hover:underline">{{ $case->vc_link }}</a>
+                    @else
+                        <p class="mt-1 font-medium">Not available</p>
+                    @endif
                 </div>
 
                 <div>
@@ -305,13 +348,16 @@
             </div>
         </section>
 
-        @php
-            $linkedClients = $case->parties->filter(fn ($party) => $party->is_client && $party->client);
-            $advocateName = auth()->user()?->name;
-        @endphp
-        <section id="case-clients" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <!-- Orders and Documents -->
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-lg font-semibold text-slate-900">Official Orders and Court Documents</h3>
+
+            <p class="mt-2 text-sm text-slate-500">Orders and judgments appear here once added to this case.</p>
+        </section>
+        </div>
+
+        <section id="case-clients" data-tab-panel role="tabpanel" aria-labelledby="tab-case-clients" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Notify clients</h3>
-            <p class="mt-1 text-sm text-slate-500">Send a case update on WhatsApp or email. Messages open in your own WhatsApp or email app.</p>
 
             @if($errors->has('client_id') || $errors->has('name') || $errors->has('mobile') || $errors->has('email'))
                 <div role="alert" class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -381,13 +427,10 @@
         </section>
 
         <!-- Case Timeline / Hearing History -->
-        <section id="case-history" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="case-history" data-tab-panel role="tabpanel" aria-labelledby="tab-case-history" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">Case Timeline & Hearing History</h3>
-                    <p class="mt-1 text-sm text-slate-500">
-                        Hearing events and proceedings currently recorded in VakilNiti.
-                    </p>
                 </div>
                 <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="text-sm font-semibold text-[#16776e] hover:underline">+ Add hearing</a>
             </div>
@@ -427,6 +470,12 @@
                                     {{ $hearing->judge_name ?: 'Not available' }}
                                 </div>
 
+                                @if($hearing->vc_link)
+                                    <div>
+                                        <a href="{{ $hearing->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="font-semibold text-[#16776e] hover:underline">Join VC for this hearing</a>
+                                    </div>
+                                @endif
+
                                 <div>
                                     <span class="text-slate-500">Stage:</span>
                                     {{ $hearing->hearing_stage ?: 'Not available' }}
@@ -462,11 +511,10 @@
             </div>
         </section>
 
-        <section id="case-notes" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="case-notes" data-tab-panel role="tabpanel" aria-labelledby="tab-case-notes" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">Case Notes</h3>
-                    <p class="mt-1 text-sm text-slate-500">Keep private working notes with this case.</p>
                 </div>
                 <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{{ $case->notes->count() }} notes</span>
             </div>
@@ -475,13 +523,13 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700">
                     Title <span class="font-normal text-slate-400">(optional)</span>
-                    <input name="note_title" value="{{ old('note_title') }}" maxlength="160" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('note_title') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input name="note_title" value="{{ old('note_title') }}" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('note_title') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Note
-                    <textarea name="note_body" rows="3" required maxlength="10000" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('note_body') }}</textarea>
-                    @error('note_body') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <textarea name="note_body" rows="3" required maxlength="10000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('note_body') }}</textarea>
+                    @error('note_body') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <div><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add note</button></div>
             </form>
@@ -501,31 +549,30 @@
             </div>
         </section>
 
-        <section id="case-appointments" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="case-appointments" data-tab-panel role="tabpanel" aria-labelledby="tab-case-appointments" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Appointments</h3>
-            <p class="mt-1 text-sm text-slate-500">Schedule client meetings, calls, and other case-related appointments.</p>
 
             <form method="POST" action="{{ route('cases.appointments.store', $case) }}" class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 @csrf
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                     Appointment title
-                    <input name="appointment_title" value="{{ old('appointment_title') }}" required maxlength="160" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('appointment_title') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input name="appointment_title" value="{{ old('appointment_title') }}" required maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('appointment_title') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Date and time
-                    <input type="datetime-local" name="appointment_starts_at" value="{{ old('appointment_starts_at') }}" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('appointment_starts_at') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="datetime-local" name="appointment_starts_at" value="{{ old('appointment_starts_at') }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('appointment_starts_at') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Location
-                    <input name="appointment_location" value="{{ old('appointment_location') }}" maxlength="255" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('appointment_location') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input name="appointment_location" value="{{ old('appointment_location') }}" maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('appointment_location') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                     Notes <span class="font-normal text-slate-400">(optional)</span>
-                    <textarea name="appointment_notes" rows="2" maxlength="5000" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('appointment_notes') }}</textarea>
-                    @error('appointment_notes') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <textarea name="appointment_notes" rows="2" maxlength="5000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('appointment_notes') }}</textarea>
+                    @error('appointment_notes') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <div class="sm:col-span-2"><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Schedule appointment</button></div>
             </form>
@@ -545,7 +592,7 @@
             </div>
         </section>
 
-        <section id="case-documents" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="case-documents" data-tab-panel role="tabpanel" aria-labelledby="tab-case-documents" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">Case Documents</h3>
@@ -637,11 +684,10 @@
             </div>
         </section>
 
-        <section id="case-expenses" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="case-expenses" data-tab-panel role="tabpanel" aria-labelledby="tab-case-expenses" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">Case Expenses</h3>
-                    <p class="mt-1 text-sm text-slate-500">Track out-of-pocket costs against this case.</p>
                 </div>
                 <p class="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
                     Total: @money($case->expenses->sum('amount'))
@@ -652,18 +698,18 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700 sm:col-span-3">
                     Expense description
-                    <input name="expense_description" value="{{ old('expense_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('expense_description') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input name="expense_description" value="{{ old('expense_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('expense_description') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Amount (@currency)
-                    <input type="number" name="expense_amount" value="{{ old('expense_amount') }}" min="0.01" step="0.01" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('expense_amount') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="number" name="expense_amount" value="{{ old('expense_amount') }}" min="0.01" step="0.01" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('expense_amount') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Date
-                    <input type="date" name="expense_date" value="{{ old('expense_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('expense_date') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="date" name="expense_date" value="{{ old('expense_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('expense_date') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <div class="flex items-end"><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add expense</button></div>
             </form>
@@ -680,11 +726,10 @@
             </div>
         </section>
 
-        <section id="case-time" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section id="case-time" data-tab-panel role="tabpanel" aria-labelledby="tab-case-time" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">Time Entries</h3>
-                    <p class="mt-1 text-sm text-slate-500">Record work completed and optional hourly rates.</p>
                 </div>
                 <p class="rounded-full bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-800">
                     {{ intdiv($case->timeEntries->sum(fn ($entry) => ($entry->hours * 60) + $entry->minutes), 60) }}h
@@ -696,28 +741,28 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-4">
                     Work description
-                    <input name="time_description" value="{{ old('time_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('time_description') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input name="time_description" value="{{ old('time_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('time_description') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Date
-                    <input type="date" name="entry_date" value="{{ old('entry_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('entry_date') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="date" name="entry_date" value="{{ old('entry_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('entry_date') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Hours
-                    <input type="number" name="time_hours" value="{{ old('time_hours', 0) }}" min="0" max="23" step="1" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('time_hours') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="number" name="time_hours" value="{{ old('time_hours', 0) }}" min="0" max="23" step="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('time_hours') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Minutes
-                    <input type="number" name="time_minutes" value="{{ old('time_minutes', 0) }}" min="0" max="59" step="1" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('time_minutes') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="number" name="time_minutes" value="{{ old('time_minutes', 0) }}" min="0" max="59" step="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('time_minutes') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Hourly rate (@currency, optional)
-                    <input type="number" name="hourly_rate" value="{{ old('hourly_rate') }}" min="0" step="0.01" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('hourly_rate') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    <input type="number" name="hourly_rate" value="{{ old('hourly_rate') }}" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    @error('hourly_rate') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <div class="sm:col-span-2 lg:col-span-4"><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add time entry</button></div>
             </form>
@@ -737,12 +782,6 @@
             </div>
         </section>
 
-        <!-- Orders and Documents -->
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-lg font-semibold text-slate-900">Official Orders and Court Documents</h3>
-
-            <p class="mt-2 text-sm text-slate-500">Orders and judgments appear here once added to this case.</p>
-        </section>
 
         <p class="text-xs text-slate-400">Verify case status and hearings with the court portal.</p>
 </div>

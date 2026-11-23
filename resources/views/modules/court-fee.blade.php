@@ -1,91 +1,91 @@
 @extends('layouts.app')
 
-@section('title', 'Court Fee')
-@section('meta_description', 'Court fee calculator for Indian courts, with State court fee schedules, rules and exemptions.')
-@section('page-heading', 'Court Fee')
+@section('title', $guide ? 'Court fee: '.$guide['title'] : 'Court fee by State and court')
+@section('meta_description', 'Court fee for the Supreme Court, every High Court and District Courts in each State: the governing law, online payment and an estimator.')
+@section('page-heading', 'Court fee')
+
+@php
+    $chip = 'inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold transition';
+    $field = 'w-full rounded-lg border-slate-300 text-sm';
+@endphp
 
 @section('content')
-<div class="mx-auto max-w-7xl space-y-6">
-    <section id="overview" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
-        <div class="mb-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
-        <h1 class="mt-2 text-2xl font-bold">Court Fee Resources &amp; Estimator</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-300">Estimate a court fee, then check the official schedule.</p>
-    </section>
+<div class="mx-auto max-w-4xl space-y-4">
+    <h1 class="text-2xl font-bold text-slate-900">Court fee</h1>
 
-    <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-        Court fees depend on the State or Union Territory, court, proceeding, relief, valuation and current amendments.
-        This page does not contain official fee tables and its estimator is illustrative only. Confirm the amount with the
-        current applicable law, court registry or official e-filing service before filing.
-    </div>
+    {{-- 1. Court --}}
+    <nav aria-label="Court" class="grid grid-cols-3 gap-2">
+        @foreach(\App\Services\CourtFeeGuide::COURTS as $courtKey => $courtLabel)
+            <a href="{{ route('court-fee.index', array_filter(['court' => $courtKey, 'state' => $courtKey === 'supreme' ? null : $state])) }}"
+               aria-current="{{ $court === $courtKey ? 'page' : 'false' }}"
+               class="{{ $chip }} {{ $court === $courtKey ? 'bg-[#16776e] text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }}">{{ $courtLabel }}</a>
+        @endforeach
+    </nav>
 
-    <section id="calculator" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-5">
-            <h2 class="text-lg font-semibold text-slate-900">Illustrative flat-rate estimator</h2>
-            <p class="mt-1 text-sm text-slate-600">Enter a rate from the official schedule. Slabs, fixed fees and exemptions aren’t included.</p>
-        </div>
+    {{-- 2. State (High Court and District Court) --}}
+    @if($court !== 'supreme')
+        <form method="GET" action="{{ route('court-fee.index') }}" class="flex gap-2">
+            <input type="hidden" name="court" value="{{ $court }}">
+            <label class="flex-1">
+                <span class="sr-only">State or Union Territory</span>
+                <select name="state" data-autosubmit class="min-h-11 w-full rounded-xl border-slate-300 bg-white text-sm">
+                    <option value="">Choose State / UT</option>
+                    @foreach($states as $stateOption)
+                        <option value="{{ $stateOption }}" @selected($state === $stateOption)>{{ $stateOption }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <noscript><button type="submit" class="min-h-11 rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white">Show</button></noscript>
+        </form>
+    @endif
 
-        <form id="court-fee-estimator" class="grid items-end gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div>
-                <label for="claim-value" class="mb-1 block text-sm font-medium text-slate-700">Claim value (Rs.)</label>
-                <input id="claim-value" type="number" min="0" step="0.01" required
-                       class="w-full rounded-lg border-slate-300 text-sm" placeholder="e.g. 100000">
+    {{-- 3. Where the fee comes from and where to pay --}}
+    @if($guide)
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="fee-court">
+            <h2 id="fee-court" class="text-lg font-semibold text-slate-900">{{ $guide['title'] }}</h2>
+            <p class="mt-1 text-sm text-slate-600">Fee set by: <strong class="text-slate-900">{{ $guide['law'] }}</strong></p>
+            <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                @foreach($guide['links'] as $officialLink)
+                    <a href="{{ $officialLink['url'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                       class="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-2.5 hover:border-[#16776e] hover:bg-teal-50/50">
+                        <span>
+                            <span class="block text-sm font-semibold text-slate-900">{{ $officialLink['label'] }}</span>
+                            <span class="block text-xs text-slate-500">{{ $officialLink['hint'] }}</span>
+                        </span>
+                        <x-icon name="external" :size="16" class="text-slate-400" />
+                    </a>
+                @endforeach
             </div>
-            <div>
-                <label for="fee-rate" class="mb-1 block text-sm font-medium text-slate-700">Verified rate (%)</label>
-                <input id="fee-rate" type="number" min="0" step="0.0001" required
-                       class="w-full rounded-lg border-slate-300 text-sm" placeholder="Enter the rate">
-            </div>
-            <div>
-                <label for="minimum-fee" class="mb-1 block text-sm font-medium text-slate-700">Minimum fee (Rs., optional)</label>
-                <input id="minimum-fee" type="number" min="0" step="0.01"
-                       class="w-full rounded-lg border-slate-300 text-sm" placeholder="No minimum">
-            </div>
-            <div>
-                <label for="maximum-fee" class="mb-1 block text-sm font-medium text-slate-700">Maximum fee (Rs., optional)</label>
-                <input id="maximum-fee" type="number" min="0" step="0.01"
-                       class="w-full rounded-lg border-slate-300 text-sm" placeholder="No maximum">
-            </div>
-            <div class="md:col-span-2 xl:col-span-4">
-                <button type="submit" class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
-                    Estimate
-                </button>
-                <button type="reset" class="ml-2 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    Clear
-                </button>
+        </section>
+    @else
+        <p class="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-sm text-slate-500">Choose a State to see its court fee law and payment links.</p>
+    @endif
+
+    {{-- 4. Estimate an ad valorem fee from the rate in the schedule --}}
+    <section id="calculator" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">Estimate</h2>
+        <form id="court-fee-estimator" class="mt-3 grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="text-sm font-medium text-slate-700">Claim value (Rs.)
+                <input id="claim-value" type="number" min="0" step="0.01" required inputmode="decimal" class="mt-1 {{ $field }}" placeholder="100000">
+            </label>
+            <label class="text-sm font-medium text-slate-700">Rate from schedule (%)
+                <input id="fee-rate" type="number" min="0" step="0.0001" required inputmode="decimal" class="mt-1 {{ $field }}" placeholder="e.g. 1">
+            </label>
+            <label class="text-sm font-medium text-slate-700">Minimum (Rs.)
+                <input id="minimum-fee" type="number" min="0" step="0.01" inputmode="decimal" class="mt-1 {{ $field }}" placeholder="Optional">
+            </label>
+            <label class="text-sm font-medium text-slate-700">Maximum (Rs.)
+                <input id="maximum-fee" type="number" min="0" step="0.01" inputmode="decimal" class="mt-1 {{ $field }}" placeholder="Optional">
+            </label>
+            <div class="flex gap-2 sm:col-span-2 lg:col-span-4">
+                <button type="submit" class="min-h-11 rounded-xl bg-[#16776e] px-5 text-sm font-semibold text-white hover:bg-[#125f58]">Estimate</button>
+                <button type="reset" class="min-h-11 rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Clear</button>
             </div>
         </form>
-
-        <p id="fee-estimate" role="status" aria-live="polite" hidden
-           class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-900"></p>
+        <p id="fee-estimate" role="status" aria-live="polite" hidden class="mt-3 rounded-xl bg-teal-50 p-4 text-base font-bold text-[#12645d]"></p>
     </section>
 
-    <section id="fee-schedules" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-semibold text-slate-900">Check the applicable schedule</h2>
-        <p class="mt-1 text-sm text-slate-600">Verify these against the current official source.</p>
-        <ul class="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
-            <li class="rounded-lg bg-slate-50 p-4">State or Union Territory and the court where filing will occur.</li>
-            <li class="rounded-lg bg-slate-50 p-4">Proceeding type, relief claimed and the applicable valuation method.</li>
-            <li class="rounded-lg bg-slate-50 p-4">Current State amendments, rules, notifications and court-specific directions.</li>
-            <li class="rounded-lg bg-slate-50 p-4">Any minimums, caps, exemptions, fixed components or rounding rules.</li>
-        </ul>
-    </section>
-
-    <section id="rules" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-semibold text-slate-900">Official references</h2>
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
-            <a href="https://www.indiacode.nic.in/" target="_blank" rel="noopener noreferrer"
-               class="rounded-lg border border-slate-200 p-4 hover:border-blue-300 hover:bg-blue-50">
-                <span class="font-semibold text-blue-800">India Code</span>
-                <span class="mt-1 block text-sm text-slate-600">Search official Central Acts and check for applicable State amendments.</span>
-            </a>
-            <a href="https://efiling.ecourts.gov.in/" target="_blank" rel="noopener noreferrer"
-               class="rounded-lg border border-slate-200 p-4 hover:border-blue-300 hover:bg-blue-50">
-                <span class="font-semibold text-blue-800">eCourts e-Filing</span>
-                <span class="mt-1 block text-sm text-slate-600">Check the official filing workflow and fee details for supported courts.</span>
-            </a>
-        </div>
-        <p class="mt-4 text-xs text-slate-500">A planning aid only, not legal advice or an official fee.</p>
-    </section>
+    <p class="text-xs text-slate-500">Fees, slabs and exemptions change by State notification. Check the official law before paying.</p>
 </div>
 @endsection
 
@@ -108,7 +108,7 @@
             (maximum !== null && !Number.isFinite(maximum)) ||
             claimValue < 0 || rate < 0 || minimum < 0 ||
             (maximum !== null && (maximum < 0 || maximum < minimum))) {
-            feeEstimate.textContent = 'Enter valid non-negative amounts and ensure the maximum is not less than the minimum.';
+            feeEstimate.textContent = 'Check the amounts: none can be negative and the maximum cannot be below the minimum.';
             feeEstimate.hidden = false;
             return;
         }
@@ -118,11 +118,7 @@
             estimate = Math.min(estimate, maximum);
         }
 
-        const formattedEstimate = 'Rs. ' + new Intl.NumberFormat('en-IN', {
-            maximumFractionDigits: 2
-        }).format(estimate);
-
-        feeEstimate.textContent = 'Illustrative flat-rate estimate: ' + formattedEstimate + '. Verify against the current official schedule.';
+        feeEstimate.textContent = 'About Rs. ' + new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(estimate);
         feeEstimate.hidden = false;
     });
 
@@ -132,4 +128,3 @@
     });
 </script>
 @endpush
-

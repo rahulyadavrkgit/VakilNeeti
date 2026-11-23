@@ -54,7 +54,7 @@
                         @else
                             <p class="mt-3 text-xs text-slate-500">Check the official text for amendments and commencement.</p>
                         @endif
-                        <a href="https://www.indiacode.nic.in/" target="_blank" rel="noopener noreferrer"
+                        <a href="https://indiacode.gov.in/" target="_blank" rel="noopener noreferrer"
                            class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
                             Find official text on India Code
                         </a>
@@ -71,7 +71,7 @@
     <section id="sources" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Official source</h2>
         <p class="mt-1 text-sm text-slate-600">Check the official text and current status on India Code.</p>
-        <a href="https://www.indiacode.nic.in/" target="_blank" rel="noopener noreferrer"
+        <a href="https://indiacode.gov.in/" target="_blank" rel="noopener noreferrer"
            class="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
             Open India Code
         </a>

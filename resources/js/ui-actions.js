@@ -549,3 +549,163 @@ document.querySelectorAll('[data-view-toggle]').forEach((button) => {
         apply(boardStore.get(key, 'grid'));
     }
 });
+
+// Installing VakilNiti as an app. The layout keeps the browser's install prompt in
+// window.vnInstallPrompt; [data-install-app] buttons appear only when the browser can
+// install it, and [data-platform-hint="ios|android|desktop"] shows the steps for this device.
+(() => {
+    const userAgent = navigator.userAgent || '';
+    const isIos = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const platform = isIos ? 'ios' : (/android/i.test(userAgent) ? 'android' : 'desktop');
+    const installed = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const installButtons = document.querySelectorAll('[data-install-app]');
+
+    document.querySelectorAll('[data-platform-hint]').forEach((element) => {
+        element.toggleAttribute('data-current-platform', element.dataset.platformHint === platform);
+    });
+    document.querySelectorAll('[data-installed-note]').forEach((element) => {
+        element.hidden = !installed;
+    });
+
+    const showInstallButtons = () => {
+        installButtons.forEach((button) => {
+            button.hidden = installed || !window.vnInstallPrompt;
+        });
+    };
+
+    installButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            const prompt = window.vnInstallPrompt;
+
+            if (!prompt) {
+                window.location.assign(button.dataset.installFallback || '/app');
+
+                return;
+            }
+
+            prompt.prompt();
+            await prompt.userChoice.catch(() => null);
+            window.vnInstallPrompt = null;
+            showInstallButtons();
+        });
+    });
+
+    window.addEventListener('vn-installable', showInstallButtons);
+    window.addEventListener('appinstalled', () => {
+        window.vnInstallPrompt = null;
+        showInstallButtons();
+    });
+    showInstallButtons();
+})();
+
+// Tabs (components/tabs): one panel on screen at a time. The open tab is kept in the
+// address (#panel-id) and for this page in the session, so reloads and form redirects come
+// back to it. A panel holding an error message opens first.
+document.querySelectorAll('[data-tabs]').forEach((tabList) => {
+    const tabs = [...tabList.querySelectorAll('[data-tab]')];
+    const panels = tabs.map((tab) => document.getElementById(tab.dataset.tab)).filter(Boolean);
+
+    if (panels.length === 0) {
+        return;
+    }
+
+    const storageKey = 'vn-tab:' + window.location.pathname;
+    const panelFor = (id) => panels.find((panel) => panel.id === id || (id && panel.querySelector('#' + CSS.escape(id))));
+
+    const select = (id, { focus = false, remember = true } = {}) => {
+        const panel = panelFor(id) || panels[0];
+
+        tabs.forEach((tab) => {
+            const selected = tab.dataset.tab === panel.id;
+            tab.setAttribute('aria-selected', String(selected));
+            tab.tabIndex = selected ? 0 : -1;
+
+            if (selected) {
+                tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+                if (focus) {
+                    tab.focus();
+                }
+            }
+        });
+        panels.forEach((other) => {
+            other.hidden = other !== panel;
+        });
+
+        if (remember) {
+            history.replaceState(history.state, '', '#' + panel.id);
+
+            try {
+                sessionStorage.setItem(storageKey, panel.id);
+            } catch {
+                // Private browsing: the tab simply isn't remembered.
+            }
+        }
+    };
+
+    tabs.forEach((tab, index) => {
+        tab.addEventListener('click', (event) => {
+            event.preventDefault();
+            select(tab.dataset.tab);
+
+            // Bring the start of the panel into view when the tab bar has scrolled away.
+            if (tabList.getBoundingClientRect().top <= 80) {
+                tabList.scrollIntoView({ block: 'start' });
+            }
+        });
+        tab.addEventListener('keydown', (event) => {
+            const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+
+            if (step) {
+                event.preventDefault();
+                select(tabs[(index + step + tabs.length) % tabs.length].dataset.tab, { focus: true });
+            }
+        });
+    });
+
+    // Links elsewhere on the page to a tab (href="#case-clients" or data-tab-link="case-clients").
+    document.addEventListener('click', (event) => {
+        const link = event.target.closest('[data-tab-link], a[href^="#"]');
+        const id = link?.dataset.tabLink || link?.getAttribute('href')?.slice(1);
+
+        if (link && !link.hasAttribute('data-tab') && id && panelFor(id)) {
+            event.preventDefault();
+            select(id);
+            tabList.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
+    });
+    window.addEventListener('hashchange', () => select(window.location.hash.slice(1), { remember: false }));
+
+    const fromAddress = window.location.hash.slice(1);
+    const withError = panels.find((panel) => panel.querySelector('[role="alert"], [data-field-error]'));
+    let remembered = null;
+
+    try {
+        remembered = sessionStorage.getItem(storageKey);
+    } catch {
+        remembered = null;
+    }
+
+    select(
+        (fromAddress && panelFor(fromAddress) ? fromAddress : null) || withError?.id || remembered || panels[0].id,
+        { remember: Boolean(fromAddress || withError || remembered) },
+    );
+});
+
+// Share buttons: data-share-text opens the phone's share sheet (WhatsApp, email, SMS…);
+// where that isn't available the link's own address (a WhatsApp message) opens instead.
+document.querySelectorAll('[data-share-text]').forEach((link) => {
+    link.addEventListener('click', async (event) => {
+        if (!navigator.share) {
+            return;
+        }
+
+        event.preventDefault();
+
+        try {
+            await navigator.share({ title: link.dataset.shareTitle || document.title, text: link.dataset.shareText });
+        } catch {
+            // The person closed the share sheet.
+        }
+    });
+});

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\PoliceStation;
+use App\Services\CourtFeeGuide;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -207,9 +209,29 @@ class ModuleDashboardController extends Controller
         return view('modules.new-criminal-laws');
     }
 
-    public function courtFee(): View
+    /**
+     * Court fee by court level and State: ?court=supreme|high|district&state=Delhi.
+     * A signed-in advocate's first practice State is chosen when none is given.
+     */
+    public function courtFee(Request $request, CourtFeeGuide $guide): View
     {
-        return view('modules.court-fee');
+        $court = array_key_exists((string) $request->query('court'), CourtFeeGuide::COURTS) ? (string) $request->query('court') : 'district';
+        $state = in_array($request->query('state'), CourtFeeGuide::states(), true) ? (string) $request->query('state') : null;
+
+        if ($state === null && $request->user()) {
+            $state = DB::table('firm_practice_states')
+                ->where('user_id', $request->user()->id)
+                ->where('is_active', true)
+                ->orderBy('state_name')
+                ->value('state_name');
+        }
+
+        return view('modules.court-fee', [
+            'court' => $court,
+            'state' => $state,
+            'states' => CourtFeeGuide::states(),
+            'guide' => $guide->for($court, $state),
+        ]);
     }
 
     public function bareActs(): View

@@ -60,6 +60,11 @@
                     <input name="court_room" value="{{ old('court_room', $hearing->court_room) }}" maxlength="100" placeholder="e.g. Court No. 12" class="{{ $field }}">
                 </label>
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">
+                    VC link for this hearing <span class="font-normal text-slate-400">(if the court sent one)</span>
+                    <input type="url" name="vc_link" value="{{ old('vc_link', $hearing->vc_link) }}" maxlength="500" placeholder="https://…" inputmode="url" class="{{ $field }}">
+                    @error('vc_link') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                </label>
+                <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                     Judge
                     <input name="judge_name" value="{{ old('judge_name', $hearing->judge_name) }}" maxlength="255" class="{{ $field }}">
                 </label>

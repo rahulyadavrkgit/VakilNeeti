@@ -85,6 +85,7 @@ class HearingController extends Controller
             'hearing_time' => ['nullable', 'date_format:H:i'],
             'hearing_stage' => ['nullable', 'string', 'max:255'],
             'court_room' => ['nullable', 'string', 'max:100'],
+            'vc_link' => ['nullable', 'url:http,https', 'max:500'],
             'judge_name' => ['nullable', 'string', 'max:255'],
             'proceedings' => ['nullable', 'string', 'max:5000'],
             'next_hearing_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:hearing_date', 'before_or_equal:2100-12-31'],

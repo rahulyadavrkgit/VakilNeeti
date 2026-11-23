@@ -15,6 +15,7 @@ class CourtHearing extends Model
         'hearing_date',
         'hearing_time',
         'court_room',
+        'vc_link',
         'judge_name',
         'hearing_stage',
         'proceedings',

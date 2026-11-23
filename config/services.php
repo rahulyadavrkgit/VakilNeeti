@@ -36,6 +36,13 @@ return [
 
     'otp_bypass_enabled' => env('OTP_BYPASS_ENABLED', false),
 
+    // Store listings for the VakilNiti phone apps. Until these are set, the site offers
+    // "Add to Home Screen" installation instead of store badges.
+    'mobile_apps' => [
+        'play_store' => env('PLAY_STORE_URL'),
+        'app_store' => env('APP_STORE_URL'),
+    ],
+
     'twilio' => [
 
         // Existing ordinary SMS configuration

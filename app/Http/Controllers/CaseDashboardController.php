@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CaseDashboardController extends Controller
 {
@@ -17,11 +17,11 @@ class CaseDashboardController extends Controller
         $dayThirty = $today->copy()->addDays(30);
 
         $totalCases = DB::table('legal_cases')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
             ->count();
 
         $pendingCases = DB::table('legal_cases')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
             ->whereNotIn('case_status', [
                 'disposed', 'Disposed',
                 'closed', 'Closed',
@@ -32,11 +32,11 @@ class CaseDashboardController extends Controller
         $hearingBase = DB::table('court_hearings')
             ->join('legal_cases', function ($join) {
                 $join->on('court_hearings.case_id', '=', 'legal_cases.id');
-                if (!auth()->user()->is_admin) {
+                if (! auth()->user()->is_admin) {
                     $join->where('legal_cases.user_id', auth()->id());
                 }
             })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
             ->whereNotNull('court_hearings.next_hearing_date');
 
         $hearingColumns = [
@@ -45,10 +45,16 @@ class CaseDashboardController extends Controller
             'court_hearings.next_hearing_date',
             'court_hearings.hearing_time',
             'court_hearings.hearing_stage',
+            'court_hearings.court_room',
+            'court_hearings.vc_link as hearing_vc_link',
             'legal_cases.case_title',
             'legal_cases.case_number',
             'legal_cases.cnr_number',
             'legal_cases.court_name',
+            'legal_cases.appearing_for',
+            'legal_cases.appearing_for_parties',
+            'legal_cases.court_room as case_court_room',
+            'legal_cases.vc_link as case_vc_link',
         ];
 
         // Four non-overlapping hearing counters.
@@ -85,7 +91,12 @@ class CaseDashboardController extends Controller
                 'legal_cases.case_title',
                 'legal_cases.case_number',
                 'legal_cases.cnr_number',
-                'legal_cases.court_name'
+                'legal_cases.court_name',
+                'legal_cases.appearing_for',
+                'legal_cases.appearing_for_parties',
+                'legal_cases.court_room as case_court_room',
+                'legal_cases.vc_link as case_vc_link',
+                'court_hearings.vc_link as hearing_vc_link'
             )
             ->orderBy('court_hearings.next_hearing_date')
             ->orderBy('court_hearings.hearing_time')
@@ -109,11 +120,11 @@ class CaseDashboardController extends Controller
         $recentHearings = DB::table('court_hearings')
             ->join('legal_cases', function ($join) {
                 $join->on('court_hearings.case_id', '=', 'legal_cases.id');
-                if (!auth()->user()->is_admin) {
+                if (! auth()->user()->is_admin) {
                     $join->where('legal_cases.user_id', auth()->id());
                 }
             })
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
             ->whereNotNull('court_hearings.hearing_date')
             ->orderByDesc('court_hearings.hearing_date')
             ->orderByDesc('court_hearings.id')
@@ -130,7 +141,7 @@ class CaseDashboardController extends Controller
             ->get();
 
         $recentCases = DB::table('legal_cases')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get();

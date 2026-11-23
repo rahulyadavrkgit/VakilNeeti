@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 64" role="img" aria-label="VakilNiti">
+  <defs>
+    <linearGradient id="vn-logo-gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3cf63"/>
+      <stop offset="1" stop-color="#c8951f"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#142235"/>
+  <path d="M20.5 22 32 47.5 43.5 22" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <g fill="none" stroke="#e0b043" stroke-linecap="round">
+    <path d="M11 17.5h42" stroke-width="3"/>
+    <path d="M11.5 18.5 6.5 34M11.5 18.5l5 15.5M52.5 18.5 47.5 34M52.5 18.5l5 15.5" stroke-width="1.5"/>
+  </g>
+  <g fill="url(#vn-logo-gold)">
+    <circle cx="32" cy="15" r="3.2"/>
+    <path d="M4.5 34h14a7 5.5 0 0 1-14 0z"/>
+    <path d="M45.5 34h14a7 5.5 0 0 1-14 0z"/>
+  </g>
+  <text x="78" y="44" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" letter-spacing="-0.5"><tspan fill="#142235">Vakil</tspan><tspan fill="#a87a0c">Niti</tspan></text>
+</svg>

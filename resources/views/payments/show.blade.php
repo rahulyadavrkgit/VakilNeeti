@@ -29,7 +29,7 @@
 
         <div class="flex justify-between border-b pb-8">
             <div>
-                <div class="mb-2"><img src="{{ asset('images/VakilNiti-logo.png') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] rounded bg-white px-2 py-1 object-contain"></div>
+                <div class="mb-2"><img src="{{ asset('images/logo.svg') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] object-contain"></div>
                 <p class="mt-2 text-slate-500">Legal Practice Management</p>
             </div>
 

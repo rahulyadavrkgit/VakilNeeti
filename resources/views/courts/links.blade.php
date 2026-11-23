@@ -33,7 +33,7 @@
 
     <nav class="grid gap-3 sm:grid-cols-2" aria-label="{{ $heading }} services">
         @foreach($links as $link)
-            <a href="{{ $link['url'] }}" target="_blank" rel="noopener noreferrer" data-direct-share
+            <a href="{{ $link['url'] }}" rel="noopener noreferrer"
                class="group flex items-center gap-4 rounded-2xl bg-[#142235] px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#16776e] hover:shadow-md focus-visible:outline-offset-4">
                 <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#8ed2c8] group-hover:text-white">
                     <x-icon :name="$link['icon']" :size="24" />
@@ -42,11 +42,15 @@
                     <span class="block text-base font-bold uppercase tracking-wide">{{ $link['title'] }}</span>
                     <span class="mt-0.5 block text-sm text-slate-300 group-hover:text-teal-50">{{ $link['description'] }}</span>
                 </span>
-                <x-icon name="external" :size="18" class="text-slate-400 group-hover:text-white" />
+                @if($link['internal'] ?? false)
+                    <x-icon name="chevron" :size="18" class="-rotate-90 text-slate-400 group-hover:text-white" />
+                @else
+                    <x-icon name="external" :size="18" class="text-slate-400 group-hover:text-white" />
+                @endif
             </a>
         @endforeach
     </nav>
 
-    <p class="text-xs text-slate-500">Links go to {{ $source }}. VakilNiti does not copy or store anything from these pages.</p>
+    <p class="text-xs text-slate-500">Official links go to {{ $source }}.</p>
 </div>
 @endsection
