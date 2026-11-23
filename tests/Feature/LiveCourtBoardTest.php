@@ -74,6 +74,26 @@ class LiveCourtBoardTest extends TestCase
         $this->assertSame('A27', collect($board['rooms'])->firstWhere('room', '12')['item']);
     }
 
+    public function test_an_unreachable_court_is_not_asked_again_for_a_while_and_its_live_board_is_not_offered(): void
+    {
+        Http::fake(['cdb.sci.gov.in/*' => Http::response('', 504)]);
+
+        $this->assertSame([], app(LiveCourtBoard::class)->board('supreme-court')['rooms']);
+        $this->assertFalse(app(LiveCourtBoard::class)->isAvailable('supreme-court'));
+        $this->assertNotContains(route('courts.live-board', 'supreme-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
+        $this->assertContains(route('courts.live-board', 'delhi-high-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
+
+        $this->travel(1)->minutes();
+        app(LiveCourtBoard::class)->board('supreme-court');
+        Http::assertSentCount(1);
+
+        $this->get(route('courts.live-board', 'supreme-court'))->assertOk()->assertSee("Open the court's board", false);
+
+        $this->travel(11)->minutes();
+        app(LiveCourtBoard::class)->board('supreme-court');
+        Http::assertSentCount(2);
+    }
+
     public function test_court_rooms_are_matched_to_board_rooms(): void
     {
         $this->assertSame('delhi-high-court', LiveCourtBoard::boardFor('High Court of Delhi'));

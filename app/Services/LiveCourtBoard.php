@@ -19,6 +19,8 @@ class LiveCourtBoard
 {
     private const FRESH_SECONDS = 30;
 
+    private const RETRY_MINUTES = 10;
+
     /**
      * @var array<string, array{name: string, short: string, source: string, legend: string}>
      */
@@ -63,7 +65,8 @@ class LiveCourtBoard
         }
 
         $board = Cache::remember("live-board:{$court}", self::FRESH_SECONDS, function () use ($court): array {
-            $rooms = $this->fetch($court);
+            // After a failure, wait before asking again so no visitor sits through the court's timeout.
+            $rooms = Cache::has("live-board-down:{$court}") ? null : $this->fetch($court);
 
             if ($rooms !== null) {
                 $fresh = ['ok' => true, 'updated_at' => now()->toIso8601String(), 'rooms' => $rooms];
@@ -72,12 +75,22 @@ class LiveCourtBoard
                 return $fresh;
             }
 
+            Cache::add("live-board-down:{$court}", true, now()->addMinutes(self::RETRY_MINUTES));
             $last = Cache::get("live-board-last:{$court}");
 
             return ['ok' => false, 'updated_at' => $last['updated_at'] ?? null, 'rooms' => $last['rooms'] ?? []];
         });
 
         return ['court' => $court] + self::COURTS[$court] + $board;
+    }
+
+    /**
+     * False when the court's data has not been reachable lately and there is no recent copy to show,
+     * so the board viewer offers the court's own board instead. Never contacts the court.
+     */
+    public function isAvailable(string $court): bool
+    {
+        return ! Cache::has("live-board-down:{$court}") || Cache::has("live-board-last:{$court}");
     }
 
     /**

@@ -543,6 +543,8 @@ if (liveChips.length) {
     const fill = (chip, board) => {
         const room = board.rooms.find((item) => item.room === chip.dataset.room);
         const text = chip.querySelector('[data-live-chip-text]');
+        // No board to show (the court's data cannot be reached): leave the line as it was.
+        chip.hidden = board.rooms.length === 0;
         const isMineNow = room?.status === 'running' && caseKey(chip.dataset.caseNumber) !== null
             && caseKey(chip.dataset.caseNumber) === caseKey(room.case_number);
 

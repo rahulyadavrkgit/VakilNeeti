@@ -80,7 +80,9 @@
             </li>
         @empty
             <li class="col-span-full rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-                The court's board could not be reached just now. It will try again in 30 seconds.
+                <p>The {{ $board['short'] }} board can't be reached from VakilNiti right now. Open the court's own board instead; it works from your device.</p>
+                <a href="{{ $board['source'] }}" target="_blank" rel="noopener noreferrer"
+                   class="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl bg-[#16776e] px-4 font-semibold text-white hover:bg-[#125f58] sm:inline-flex sm:w-auto">Open the court's board</a>
             </li>
         @endforelse
     </ul>

@@ -178,8 +178,8 @@ class CourtLinksController extends Controller
         $options = [];
 
         foreach (self::DISPLAY_BOARDS as $court) {
-            // Our own board for this court can always be shown inside VakilNiti.
-            if (isset($court['live'])) {
+            // Our own board for this court shows inside VakilNiti, while the court's data can be reached.
+            if (isset($court['live']) && app(LiveCourtBoard::class)->isAvailable($court['live'])) {
                 $options[] = [
                     'court' => $court['court'],
                     'level' => $court['level'],
