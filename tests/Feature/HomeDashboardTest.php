@@ -81,7 +81,7 @@ class HomeDashboardTest extends TestCase
         CourtHearing::create(['case_id' => $next->id, 'hearing_date' => '2026-03-11', 'hearing_time' => '10:30']);
 
         $html = $this->get(route('dashboard'))->assertOk()->getContent();
-        $card = substr($html, (int) strpos($html, 'id="next-hearing-heading"'), 3000);
+        $card = substr($html, (int) strpos($html, 'id="next-hearing-heading"'), 6000);
 
         $this->assertStringContainsString('Next hearing · Tomorrow · 10:30', $card);
         foreach (['Meera vs Union', 'Appellant', 'Room 37', 'Justice Dinesh Mehta', 'href="https://dhc.webex.com/meet/court37"'] as $detail) {

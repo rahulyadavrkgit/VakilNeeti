@@ -28,8 +28,13 @@ class QuickNextDateTest extends TestCase
         CourtHearing::create(['case_id' => $upcoming->id, 'hearing_date' => '2026-03-20']);
 
         $html = $this->get(route('cases.index'))->assertOk()->getContent();
-        $this->assertSame(1, substr_count($html, 'name="case_id" value="'.$case->id.'"'));
-        $this->assertStringNotContainsString('name="case_id" value="'.$upcoming->id.'"', $html);
+        // "Add next date" opens the next-date pop-up for that case only.
+        $this->assertSame(1, substr_count($html, 'data-sheet="'.route('sheets.next-date', ['case' => $case->id]).'"'));
+        $this->assertStringNotContainsString('data-sheet="'.route('sheets.next-date', ['case' => $upcoming->id]).'"', $html);
+        $this->get(route('sheets.next-date', ['case' => $case->id]))
+            ->assertOk()
+            ->assertSee('name="case_id" value="'.$case->id.'"', false)
+            ->assertSee('data-sheet-form', false);
 
         $this->from(route('cases.index', ['hearing_filter' => 'past']))
             ->post(route('hearings.store'), ['case_id' => $case->id, 'hearing_date' => '2026-03-18', 'hearing_time' => '11:00', 'hearing_stage' => 'Arguments', 'return' => 'back'])

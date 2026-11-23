@@ -8,7 +8,7 @@
     $sideLabel = \App\Models\LegalCase::sideLabel($side, $parties);
     $sizing = match ($size) {
         'lg' => 'gap-1.5 px-3 py-1 text-sm',
-        'sm' => 'gap-1 px-2 py-0.5 text-[11px]',
+        'sm' => 'gap-1 px-2 py-0.5 text-xs',
         default => 'gap-1 px-2.5 py-0.5 text-xs',
     };
     $iconSize = $size === 'lg' ? 16 : 13;

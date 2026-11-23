@@ -6,7 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
 
-    <x-page-header title="TDS Reconciliation Register" subtitle="Track deductions, certificates and tax-credit reconciliation.">
+    <x-page-header title="TDS Reconciliation Register" subtitle="Deductions, certificates and reconciliation.">
         <a href="{{ route('tds.follow-up-dashboard') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Follow-ups</a>
         <a href="{{ route('tds.follow-ups.due') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Due</a>
         <a href="{{ route('tds.follow-ups.upcoming') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Upcoming</a>

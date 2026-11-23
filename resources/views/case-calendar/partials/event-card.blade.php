@@ -3,7 +3,7 @@
     $eventDay = \Illuminate\Support\Carbon::parse($event['date']);
 @endphp
 <div class="space-y-1.5 text-sm text-slate-700">
-    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">
         {{ $event['label'] }} · {{ $eventDay->isToday() ? 'Today' : ($eventDay->isTomorrow() ? 'Tomorrow' : $eventDay->format('D, d M Y')) }}@if($event['time']) · {{ $event['time'] }}@endif
     </p>
     <p class="font-semibold leading-snug text-slate-900">
@@ -18,7 +18,7 @@
         <p class="text-xs text-slate-600">Client: {{ $event['client_name'] }}</p>
     @endif
     @if($event['details'])
-        <p class="text-xs leading-relaxed text-slate-600">{{ \Illuminate\Support\Str::limit($event['details'], 220) }}</p>
+        <p class="line-clamp-1 text-xs text-slate-600" title="{{ $event['details'] }}">{{ $event['details'] }}</p>
     @endif
     @if($withOpenLink ?? true)
         <a href="{{ $event['url'] }}" class="inline-block pt-0.5 text-xs font-semibold text-[#16776e] hover:underline">{{ $event['case_id'] ? 'Open case' : 'Open' }} &rarr;</a>

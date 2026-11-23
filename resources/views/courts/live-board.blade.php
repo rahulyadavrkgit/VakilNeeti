@@ -8,8 +8,9 @@
     $updated = $board['updated_at'] ? \Illuminate\Support\Carbon::parse($board['updated_at'])->timezone(config('app.timezone')) : null;
 @endphp
 <!DOCTYPE html>
-<html lang="en-IN">
+<html lang="en-IN" data-theme="{{ auth()->user()?->preference('theme') ?? 'system' }}" @auth data-theme-saved @endauth>
 <head>
+    @include('layouts.partials.theme-script')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $board['short'] }} live board | VakilNiti</title>
@@ -18,7 +19,8 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-mark.svg') }}">
     @vite(['resources/css/app.css'])
     <style nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
-        body { background: #f4f6f8; color: #172536; font-family: var(--font-sans), sans-serif; }
+        body { background: #f6f5f1; color: #172536; font-family: var(--font-sans), sans-serif; font-variant-numeric: tabular-nums; }
+        html.dark body { background: #0d1524; color: #e3e9f1; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -67,11 +69,11 @@
                 <p class="mt-1 text-3xl font-bold leading-none tabular-nums {{ $isRunning ? 'text-[#142235]' : 'text-slate-300' }}" data-item>{{ $room['item'] ?? '–' }}</p>
                 <p class="mt-1 text-xs font-semibold {{ $isRunning ? 'text-[#16776e]' : 'text-slate-400' }}" data-status-text>{{ $statusText[$room['status']] ?? '' }}</p>
                 <p class="mt-1 break-words text-xs font-medium text-slate-700" data-case @if(! $room['case_number']) hidden @endif>{{ $room['case_number'] }}</p>
-                <p class="line-clamp-2 break-words text-[11px] text-slate-500" data-parties @if(! $room['parties']) hidden @endif>{{ $room['parties'] }}</p>
-                <p class="mt-1 break-words text-[11px] italic text-amber-800" data-message @if(! $room['message']) hidden @endif>{{ $room['message'] }}</p>
-                <p class="mt-1 text-[11px] font-bold text-red-700" data-now-mine hidden>Your case is being heard now</p>
+                <p class="line-clamp-2 break-words text-xs text-slate-500" data-parties @if(! $room['parties']) hidden @endif>{{ $room['parties'] }}</p>
+                <p class="mt-1 break-words text-xs italic text-amber-800" data-message @if(! $room['message']) hidden @endif>{{ $room['message'] }}</p>
+                <p class="mt-1 text-xs font-bold text-red-700" data-now-mine hidden>Your case is being heard now</p>
                 @if($mine)
-                    <p class="mt-auto pt-2 text-[11px] text-teal-800">
+                    <p class="mt-auto pt-2 text-xs text-teal-800">
                         @foreach($mine as $case)
                             <span class="block truncate">{{ $case['title'] }}{{ $case['time'] ? ' · '.$case['time'] : '' }}</span>
                         @endforeach
@@ -87,7 +89,7 @@
         @endforelse
     </ul>
 
-    <footer class="mt-3 text-[11px] leading-relaxed text-slate-500">
+    <footer class="mt-3 text-xs leading-relaxed text-slate-500">
         {{ $board['legend'] }} From the court's own public board at
         <a href="{{ $board['source'] }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#16776e] hover:underline">{{ parse_url($board['source'], PHP_URL_HOST) }}</a>.
         There may be a short delay; confirm the exact position at the court.

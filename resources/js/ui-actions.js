@@ -21,12 +21,60 @@ function callGlobal(name, ...args) {
     }
 }
 
+/**
+ * One in-app confirmation box for the whole site (instead of the browser's own grey pop-up).
+ * The button says what will happen ("Delete", "Remove"…) and is red only when something is destroyed.
+ */
+let confirmDialog = null;
+
+function vnConfirm(message) {
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('dialog');
+        confirmDialog.className = 'vn-centered-dialog w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-black/50';
+        confirmDialog.innerHTML = `
+            <form method="dialog" class="p-5">
+                <p data-confirm-message class="text-base font-semibold leading-snug"></p>
+                <div class="mt-5 flex justify-end gap-2">
+                    <button value="cancel" class="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button value="ok" data-confirm-ok class="min-h-11 rounded-xl px-4 text-sm font-semibold text-white"></button>
+                </div>
+            </form>`;
+        document.body.append(confirmDialog);
+    }
+
+    const destroys = /\b(delete|remove|write off|unlink|clear|cover)\b/i.test(message);
+    const verb = message.match(/^(Delete|Remove|Write off|Unlink|Close|Clear|Cover|Mark|Add|Send|Cancel)\b/i)?.[0];
+    const okButton = confirmDialog.querySelector('[data-confirm-ok]');
+
+    confirmDialog.querySelector('[data-confirm-message]').textContent = message;
+    okButton.textContent = verb ? verb.charAt(0).toUpperCase() + verb.slice(1).toLowerCase() : 'Continue';
+    okButton.className = `min-h-11 rounded-xl px-4 text-sm font-semibold text-white ${destroys ? 'bg-red-600 hover:bg-red-700' : 'bg-[#16776e] hover:bg-[#125f58]'}`;
+    confirmDialog.returnValue = 'cancel';
+    confirmDialog.showModal();
+    okButton.focus();
+
+    return new Promise((resolve) => {
+        confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'ok'), { once: true });
+    });
+}
+
+window.vnConfirm = vnConfirm;
+
 document.addEventListener('click', (event) => {
     const confirmTrigger = event.target.closest('[data-confirm]:not(form)');
 
-    if (confirmTrigger && !window.confirm(confirmTrigger.dataset.confirm)) {
+    if (confirmTrigger && confirmTrigger.dataset.vnConfirmed !== '1') {
         event.preventDefault();
         event.stopImmediatePropagation();
+
+        vnConfirm(confirmTrigger.dataset.confirm).then((ok) => {
+            if (ok) {
+                // Run the action as if confirmed: the flag lets this one click through.
+                confirmTrigger.dataset.vnConfirmed = '1';
+                confirmTrigger.click();
+                delete confirmTrigger.dataset.vnConfirmed;
+            }
+        });
 
         return;
     }
@@ -61,9 +109,20 @@ document.addEventListener('click', (event) => {
 document.addEventListener('submit', (event) => {
     const form = event.target;
 
-    if (form instanceof HTMLFormElement && form.dataset.confirm && !window.confirm(form.dataset.confirm)) {
-        event.preventDefault();
+    if (!(form instanceof HTMLFormElement) || !form.dataset.confirm || form.dataset.vnConfirmed === '1') {
+        return;
     }
+
+    event.preventDefault();
+    const submitter = event.submitter;
+
+    vnConfirm(form.dataset.confirm).then((ok) => {
+        if (ok) {
+            form.dataset.vnConfirmed = '1';
+            form.requestSubmit ? form.requestSubmit(submitter || undefined) : form.submit();
+            delete form.dataset.vnConfirmed;
+        }
+    });
 });
 
 document.addEventListener('change', (event) => {
@@ -529,6 +588,44 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
     setHidden(!isBoardPage && boardStore.get('vn-boards-hidden', false) === true);
 });
 
+// Appearance: the account menu's Same as device / Light / Dark buttons, and the guest header's moon button.
+const themeChoice = () => document.documentElement.dataset.theme || 'system';
+const markThemeButtons = () => {
+    document.querySelectorAll('[data-theme-option]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.themeOption === themeChoice()));
+    });
+};
+
+document.querySelectorAll('[data-theme-switch]').forEach((group) => {
+    group.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-theme-option]');
+
+        if (!button) {
+            return;
+        }
+
+        window.vnSetTheme?.(button.dataset.themeOption);
+        markThemeButtons();
+
+        const token = document.querySelector('meta[name="csrf-token"]')?.content
+            || document.querySelector('input[name="_token"]')?.value;
+
+        fetch(group.dataset.saveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': token || '' },
+            body: JSON.stringify({ theme: button.dataset.themeOption }),
+        }).catch(() => {});
+    });
+});
+
+document.querySelectorAll('[data-theme-cycle]').forEach((button) => {
+    button.addEventListener('click', () => {
+        window.vnSetTheme?.(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+    });
+});
+
+markThemeButtons();
+
 // Today's hearings in courts with a live board (x-court-info): "Court 12 · now item 27". Each board is
 // fetched once per page and refreshed every minute while the page is open; the server caches it for everyone.
 const liveChips = [...document.querySelectorAll('[data-live-chip]')];
@@ -757,24 +854,7 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
     );
 });
 
-// Share buttons: data-share-text opens the phone's share sheet (WhatsApp, email, SMS…);
-// where that isn't available the link's own address (a WhatsApp message) opens instead.
-// Listens on the whole page, so share buttons added later (calendar cards) work too.
-document.addEventListener('click', async (event) => {
-    const link = event.target.closest('[data-share-text]');
-
-    if (!link || !navigator.share) {
-        return;
-    }
-
-    event.preventDefault();
-
-    try {
-        await navigator.share({ title: link.dataset.shareTitle || document.title, text: link.dataset.shareText });
-    } catch {
-        // The person closed the share sheet.
-    }
-});
+// Share buttons (data-share-text) open the share preview in resources/js/sheet.js.
 
 // Phone cards for tables (.vn-stack-table): cells take their column heading as a label, and the
 // first cell becomes the card title, unless the Blade view already set data-label / data-stack.

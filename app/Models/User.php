@@ -50,10 +50,11 @@ class User extends Authenticatable
      * @var array<string, array{default: string|bool, options?: array<string, string>}>
      */
     public const PREFERENCES = [
+        'theme' => ['default' => 'system', 'options' => ['system' => 'Same as device', 'light' => 'Light', 'dark' => 'Dark']],
         'calendar_view' => ['default' => 'month', 'options' => ['day' => 'Day', 'week' => 'Week', 'month' => 'Month', 'list' => 'List']],
         'week_starts_on' => ['default' => 'sunday', 'options' => ['sunday' => 'Sunday', 'monday' => 'Monday']],
         'home_display_boards' => ['default' => true],
-        'remind_hearings' => ['default' => 'today_and_tomorrow', 'options' => ['today_and_tomorrow' => 'Today and tomorrow', 'today' => 'Only on the day', 'off' => 'Off']],
+        'remind_hearings' => ['default' => 'today_and_tomorrow', 'options' => ['today_and_tomorrow' => 'Today + tomorrow (evening)', 'today' => 'Only on the day', 'off' => 'Off']],
         'remind_appointments' => ['default' => true],
         'remind_tasks' => ['default' => true],
         'remind_invoices' => ['default' => true],

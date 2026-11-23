@@ -56,7 +56,7 @@
                     <span class="block font-mono text-sm font-semibold text-slate-900">{{ $row['case_number'] }}</span>
                     <span class="block font-mono text-xs text-slate-500">{{ $row['cnr'] }}</span>
                     @if($row['existing_case_id'])
-                        <span class="mt-0.5 inline-block rounded bg-slate-100 px-1.5 text-[11px] font-semibold text-slate-600">Already added</span>
+                        <span class="mt-0.5 inline-block rounded bg-slate-100 px-1.5 text-xs font-semibold text-slate-600">Already added</span>
                     @endif
                 </span>
                 <span class="text-sm text-slate-800">{{ $row['case_title'] }}</span>

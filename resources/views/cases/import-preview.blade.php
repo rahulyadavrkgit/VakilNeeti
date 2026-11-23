@@ -156,7 +156,7 @@
 
         <div class="flex flex-wrap gap-3">
             <button type="submit"
-                    data-confirm="Add this reviewed official record to My Case Diary?"
+                   
                     class="rounded-lg bg-[#16776e] px-5 py-3 font-medium text-white hover:bg-[#125f58]">
                 Add to My Case Diary
             </button>

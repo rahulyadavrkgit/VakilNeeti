@@ -147,14 +147,14 @@
                 <div class="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:gap-0">
                     @if($panelNext)
                         <span class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl text-center {{ $panelNext['date']->isToday() ? 'bg-[#16776e] text-white' : 'bg-teal-50 text-teal-900' }}">
-                            <span class="text-[11px] font-bold uppercase">{{ $panelNext['date']->isToday() ? 'Today' : ($panelNext['date']->isTomorrow() ? 'Tomorrow' : $panelNext['date']->format('M Y')) }}</span>
+                            <span class="text-xs font-bold uppercase">{{ $panelNext['date']->isToday() ? 'Today' : ($panelNext['date']->isTomorrow() ? 'Tomorrow' : $panelNext['date']->format('M Y')) }}</span>
                             <span class="text-3xl font-extrabold leading-none">{{ $panelNext['date']->format('d') }}</span>
                             <span class="text-xs font-semibold">{{ $panelTime ?? $panelNext['date']->format('D') }}</span>
                         </span>
                     @else
                         <span class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl bg-red-100 text-center text-red-800">
                             <x-icon name="calendar" :size="22" />
-                            <span class="mt-1 text-[11px] font-bold uppercase">{{ $panelLast ? 'Date passed' : 'No date' }}</span>
+                            <span class="mt-1 text-xs font-bold uppercase">{{ $panelLast ? 'Date passed' : 'No date' }}</span>
                         </span>
                     @endif
                     <p class="text-sm font-bold text-slate-900 sm:mt-2 sm:text-center sm:text-xs sm:uppercase sm:tracking-wide sm:text-slate-500">Next hearing</p>
@@ -181,7 +181,13 @@
                                   :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $panelNext ? $panelNext['date']->toDateString() : null, 'time' => $panelTime, 'details' => $nextHearing?->hearing_stage]" />
                     <div class="flex flex-wrap items-start gap-2 pt-1">
                         <x-quick-next-date :case-id="$case->id" return="case" :open="! $panelNext" :label="$panelNext ? 'Add another date' : 'Add next date'" />
-                        <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="inline-flex min-h-9 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 hover:bg-slate-100">Full hearing form &rarr;</a>
+                        @php
+                            $feeCourt = match ($case->courtLevel()) { 'Supreme Court' => 'supreme', 'High Court' => 'high', default => 'district' };
+                        @endphp
+                        <a href="{{ route('court-fee.index', ['court' => $feeCourt]) }}" data-sheet-frame
+                           class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
+                            <x-icon name="calculator" :size="16" /> Court fee
+                        </a>
                     </div>
                 </div>
             </div>

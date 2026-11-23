@@ -6,8 +6,10 @@ use App\Models\Invoice;
 use App\Models\Task;
 use App\Models\User;
 use App\Notifications\ReminderNotification;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 /**
  * Creates the bell reminders: hearings and appointments today or tomorrow,
@@ -15,6 +17,11 @@ use Illuminate\Support\Facades\Cache;
  */
 class ReminderService
 {
+    /**
+     * From this hour, tomorrow's hearings are summed up in one evening reminder.
+     */
+    private const EVENING_HOUR = 17;
+
     public function __construct(private CalendarEventService $calendar) {}
 
     /**
@@ -74,8 +81,15 @@ class ReminderService
             'user_id' => $user->id,
         ]);
 
+        $tomorrowHearings = [];
+
         foreach ($events as $event) {
-            if ($event['group'] === 'hearing' && $hearingReminders === 'today' && $event['date'] !== $today->toDateString()) {
+            if ($event['group'] === 'hearing' && $event['date'] !== $today->toDateString()) {
+                // Tomorrow's hearings come as one evening summary instead of one note each.
+                if ($hearingReminders === 'today_and_tomorrow') {
+                    $tomorrowHearings[] = $event;
+                }
+
                 continue;
             }
 
@@ -89,6 +103,10 @@ class ReminderService
                 url: $this->relative($event['url']),
                 key: "{$kind}:{$event['id']}:{$event['date']}",
             ));
+        }
+
+        if ($tomorrowHearings !== [] && now()->hour >= self::EVENING_HOUR) {
+            $reminders->push($this->tomorrowSummary($tomorrowHearings, $today->copy()->addDay()));
         }
 
         $tasks = ! $user->preference('remind_tasks') ? collect() : Task::query()
@@ -134,6 +152,30 @@ class ReminderService
         }
 
         return $reminders;
+    }
+
+    /**
+     * "Tomorrow: 3 hearings" with the first hearing's time and court, sent once in the evening.
+     *
+     * @param  list<array<string, mixed>>  $hearings
+     */
+    private function tomorrowSummary(array $hearings, Carbon $tomorrow): ReminderNotification
+    {
+        $sorted = collect($hearings)->sortBy(fn (array $event): string => $event['time'] ?? '99:99')->values();
+        $first = $sorted->first();
+        $count = $sorted->count();
+
+        return new ReminderNotification(
+            kind: 'hearing',
+            title: 'Tomorrow: '.$count.' '.Str::plural('hearing', $count),
+            body: collect([
+                $first['time'] ? 'First at '.$first['time'] : null,
+                $first['court'] ?? null,
+                $sorted->pluck('title')->take(3)->implode(' · ').($count > 3 ? ' and '.($count - 3).' more' : ''),
+            ])->filter()->implode(' · '),
+            url: route('cases.calendar', ['view' => 'day', 'date' => $tomorrow->toDateString()], false),
+            key: 'hearings-tomorrow:'.$tomorrow->toDateString(),
+        );
     }
 
     /**

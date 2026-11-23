@@ -18,7 +18,6 @@ use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientManagementController;
 use App\Http\Controllers\ClientsFromCasesController;
-use App\Http\Controllers\CourtCatalogueController;
 use App\Http\Controllers\CourtIntegrationController;
 use App\Http\Controllers\CourtLinksController;
 use App\Http\Controllers\CourtStandSideController;
@@ -28,7 +27,6 @@ use App\Http\Controllers\DashboardStudioController;
 use App\Http\Controllers\ExternalWebviewController;
 use App\Http\Controllers\FirmProfileController;
 use App\Http\Controllers\HearingController;
-use App\Http\Controllers\HearingHistoryController;
 use App\Http\Controllers\InitialAdminSetupController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSettingsController;
@@ -46,6 +44,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileSetupController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SheetController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxComplianceController;
 use App\Http\Controllers\TdsDeductionController;
@@ -251,32 +250,9 @@ Route::resource('clients.activities', ClientActivityController::class)
 |--------------------------------------------------------------------------
 */
 
-Route::get(
-    '/court-catalogue',
-    [CourtCatalogueController::class, 'index']
-)->name('court-catalogue.index');
-
-/*
-|--------------------------------------------------------------------------
-| Court Catalogue Data Endpoints
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('court-catalogue/data')
-    ->name('court-catalogue.data.')
-    ->controller(CourtCatalogueController::class)
-    ->group(function () {
-
-        Route::get('/courts', 'courts')
-            ->name('courts');
-
-        Route::get('/districts', 'districts')
-            ->name('districts');
-
-        Route::get('/establishments', 'establishments')
-            ->name('establishments');
-
-    });
+// The empty court catalogue made way for the Tribunals page.
+Route::permanentRedirect('/court-catalogue', '/tribunals')->name('court-catalogue.index');
+Route::get('/tribunals', [CourtLinksController::class, 'tribunals'])->name('tribunals.index');
 
 Route::get('/firm-profile', [FirmProfileController::class, 'index'])
     ->name('firm-profile.index');
@@ -316,7 +292,8 @@ Route::get('/court-directory/districts/{districtId}', fn () => redirect()->route
     ->whereNumber('districtId')
     ->name('court-directory.districts.show');
 
-Route::get('/case-management/hearing-history', [HearingHistoryController::class, 'index'])->name('cases.hearing-history');
+// The older copy of Hearing History now opens the one kept.
+Route::permanentRedirect('/case-management/hearing-history', '/hearing-history')->name('cases.hearing-history');
 
 // Hearing History
 Route::get('/hearing-history', [CaseCalendarController::class, 'history'])
@@ -345,6 +322,21 @@ Route::post('/profile/preferences', [ProfileController::class, 'updatePreference
     ->name('profile.preferences.update');
 Route::post('/profile/system-preferences', [ProfileController::class, 'updateSystemPreferences'])
     ->name('profile.system-preferences.update');
+Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])
+    ->name('profile.theme.update');
+
+// Pop-up sheets (resources/js/sheet.js): everyday actions without leaving the page.
+Route::prefix('sheets')->name('sheets.')->controller(SheetController::class)->group(function () {
+    Route::get('/next-date', 'nextDate')->name('next-date');
+    Route::get('/task', 'task')->name('task');
+    Route::get('/client', 'client')->name('client');
+    Route::get('/case', 'case')->name('case');
+    Route::get('/cases/{case}', 'caseView')->name('case-view');
+    Route::get('/clients/{client}', 'clientCard')->name('client-card');
+    Route::get('/court', 'court')->name('court');
+    Route::get('/invoices/{invoice}/payment', 'payment')->name('payment');
+    Route::get('/search', 'search')->name('search');
+});
 Route::get('/profile/setup', [ProfileSetupController::class, 'start'])->name('profile.setup.start');
 Route::get('/profile/setup/next', [ProfileSetupController::class, 'next'])->name('profile.setup.next');
 Route::get('/profile/setup/skip/{step}', [ProfileSetupController::class, 'skip'])->name('profile.setup.skip');
@@ -500,6 +492,7 @@ Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class
         ->where('district', '[a-z-]+')
         ->name('delhi-district-courts.judges');
     Route::get('/delhi-high-court', 'delhiHighCourt')->name('delhi-high-court');
+    Route::get('/high-courts', 'highCourts')->name('high-courts');
     Route::get('/delhi-district-courts', 'delhiDistrictCourts')->name('delhi-district-courts');
     Route::get('/display-boards', 'displayBoards')->name('display-boards');
     Route::get('/live-board/{court}', 'liveBoard')->whereIn('court', array_keys(LiveCourtBoard::COURTS))->name('live-board');

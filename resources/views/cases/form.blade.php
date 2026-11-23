@@ -33,10 +33,6 @@
                 <input name="case_number" value="{{ old('case_number', $case->case_number) }}" maxlength="255" placeholder="e.g. HMA/2424/2024" class="{{ $field }}">
             </label>
             <label class="text-sm font-medium text-slate-700">
-                File No. <span class="font-normal text-slate-400">(your office)</span>
-                <input name="file_number" value="{{ old('file_number', $case->file_number) }}" maxlength="100" class="{{ $field }}">
-            </label>
-            <label class="text-sm font-medium text-slate-700">
                 CNR number
                 <input name="cnr_number" value="{{ old('cnr_number', $case->cnr_number) }}" maxlength="255" class="{{ $field }} uppercase">
             </label>
@@ -95,6 +91,24 @@
                 Judge
                 <input name="judge_name" value="{{ old('judge_name', $case->judge_name) }}" maxlength="255" class="{{ $field }}">
             </label>
+        </div>
+    </section>
+
+    {{-- Rarely needed details stay folded away; they open when one of them already has a value or an error. --}}
+    @php
+        $moreFields = ['file_number', 'filing_number', 'filing_date', 'disposed_on', 'petitioner_advocate', 'respondent_advocate', 'case_description'];
+        $moreOpen = collect($moreFields)->contains(fn ($name) => filled(old($name, $case->{$name})) || $errors->has($name));
+    @endphp
+    <details class="group rounded-xl border border-slate-200 bg-white shadow-sm" @if($moreOpen) open @endif>
+        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 sm:px-6">
+            <span class="font-semibold text-slate-900">More details <span class="font-normal text-slate-500">(filing, advocates, notes)</span></span>
+            <x-icon name="chevron" class="text-slate-400 transition group-open:rotate-180" />
+        </summary>
+        <div class="grid gap-4 px-5 pb-5 sm:grid-cols-2 sm:px-6 sm:pb-6">
+            <label class="text-sm font-medium text-slate-700">
+                File No. <span class="font-normal text-slate-400">(your office)</span>
+                <input name="file_number" value="{{ old('file_number', $case->file_number) }}" maxlength="100" class="{{ $field }}">
+            </label>
             <label class="text-sm font-medium text-slate-700">
                 Filing number
                 <input name="filing_number" value="{{ old('filing_number', $case->filing_number) }}" maxlength="255" class="{{ $field }}">
@@ -107,12 +121,6 @@
                 Disposed on
                 <input type="date" name="disposed_on" value="{{ old('disposed_on', $case->disposed_on?->format('Y-m-d')) }}" class="{{ $field }}">
             </label>
-        </div>
-    </section>
-
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Advocates &amp; notes</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700">
                 Petitioner's advocate
                 <input name="petitioner_advocate" value="{{ old('petitioner_advocate', $case->petitioner_advocate) }}" maxlength="255" class="{{ $field }}">
@@ -126,7 +134,7 @@
                 <textarea name="case_description" rows="3" class="{{ $field }}">{{ old('case_description', $case->case_description) }}</textarea>
             </label>
         </div>
-    </section>
+    </details>
 
     <div class="flex justify-end gap-3">
         <a href="{{ $isEditing ? route('cases.show', $case) : route('cases.index') }}" class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">Cancel</a>

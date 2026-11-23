@@ -3,11 +3,20 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\CourtLinksController;
+use App\Models\BarAssociation;
+use App\Models\BarCouncil;
+use App\Models\CourtBench;
+use Database\Seeders\BarCouncilAndAssociationSeeder;
+use Database\Seeders\CourtCatalogueSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CourtLinksControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * @return array<string, array{0: string, 1: list<array<string, string>>}>
      */
@@ -47,29 +56,101 @@ class CourtLinksControllerTest extends TestCase
             ->assertSee('https://wdb.sci.gov.in/display_original.php', false);
     }
 
-    public function test_delhi_district_courts_lists_every_complex_and_district_website(): void
+    public function test_each_delhi_district_has_the_six_buttons_on_its_own_website(): void
     {
-        $response = $this->get(route('courts.delhi-district-courts'))->assertOk()->assertSee('E-Courts filing portal');
+        $response = $this->get(route('courts.delhi-district-courts'))->assertOk()->assertSee('E-Courts Filing Portal');
 
         foreach (CourtLinksController::DELHI_DISTRICT_COMPLEXES as $complex => $districts) {
             $response->assertSee($complex);
 
             foreach ($districts as $district) {
                 $response->assertSee($district['district'])
-                    ->assertSee('href="'.$district['url'].'"', false)
-                    ->assertSee('href="'.$district['vc_links'].'"', false);
+                    ->assertSee(route('courts.delhi-district-courts.judges', Str::slug($district['district'])), false)
+                    ->assertSee('href="'.$district['url'].'judges-on-leave/"', false)
+                    ->assertSee('href="'.$district['url'].'duty-magistrate/"', false)
+                    ->assertSee('href="'.$district['url'].'case-status-search-by-case-number/"', false)
+                    ->assertSee('href="'.$district['url'].'cause-list-%e2%81%84-daily-board/"', false);
             }
         }
+
+        // A bail roster page where the district keeps one; otherwise the district site's search for the latest roster.
+        $response->assertSee('href="https://rohini.dcourts.gov.in/document-category/bail-roster-link-roster/"', false)
+            ->assertSee('href="https://westdelhi.dcourts.gov.in/?s=bail+roster"', false)
+            ->assertSeeInOrder(['Judges List', 'Judges On Leave', 'Bail Roster', 'Duty Magistrate', 'Case Status / Order', 'Cause List']);
     }
 
-    public function test_each_delhi_district_links_to_its_own_case_status_searches(): void
+    public function test_district_page_counts_courts_and_finds_a_judge_or_room(): void
     {
+        CourtBench::create(['court_key' => 'delhi-district-west', 'court_room' => '201', 'judges' => [['name' => 'Sh. Pitamber Dutt', 'designation' => 'Principal District & Sessions Judge']], 'vc_link' => 'https://vc.example/west1']);
+        CourtBench::create(['court_key' => 'delhi-district-west', 'judges' => [['name' => 'Vacant', 'designation' => 'ADJ-03']]]);
+        CourtBench::create(['court_key' => 'delhi-district-south', 'court_room' => '031', 'judges' => [['name' => 'Ms. Shreya Arora Mehta', 'designation' => 'District Judge-04']]]);
+
         $this->get(route('courts.delhi-district-courts'))
             ->assertOk()
-            ->assertSee('href="https://westdelhi.dcourts.gov.in/case-status-search-by-case-number/"', false)
-            ->assertSee('href="https://rohini.dcourts.gov.in/case-status-search-by-advocate/"', false)
-            ->assertSee('href="https://southdelhi.dcourts.gov.in/court-orders-search-by-order-date/"', false)
-            ->assertSee('href="https://shahdara.dcourts.gov.in/judges-on-leave/"', false);
+            ->assertSeeInOrder(['Courts', '3', 'Districts', '11', 'Complexes', '7', 'Vacant', '1'])
+            ->assertSee('2 courts · 1 vacant');
+
+        $this->get(route('courts.delhi-district-courts', ['q' => 'dutt']))
+            ->assertOk()
+            ->assertSee('1 court for "dutt"', false)
+            ->assertSee('Principal District &amp; Sessions Judge · Room 201 · West', false)
+            ->assertSee('href="https://vc.example/west1"', false)
+            ->assertDontSee('Shreya Arora Mehta');
+
+        $this->get(route('courts.delhi-district-courts', ['q' => '031']))->assertSee('Ms. Shreya Arora Mehta');
+    }
+
+    public function test_high_courts_page_lists_all_25_with_their_websites(): void
+    {
+        $this->assertCount(25, CourtLinksController::HIGH_COURTS);
+
+        $response = $this->get(route('courts.high-courts'))
+            ->assertOk()
+            ->assertSee('href="https://hcservices.ecourts.gov.in/"', false)
+            ->assertSee('href="'.route('courts.delhi-high-court').'"', false);
+
+        foreach (CourtLinksController::HIGH_COURTS as $court) {
+            $this->assertStringStartsWith('https://', $court['url']);
+            $response->assertSee($court['name']);
+
+            if ($court['seat'] !== 'New Delhi') {
+                $response->assertSee('href="'.$court['url'].'"', false);
+            }
+        }
+
+        $this->get(route('courts.index'))->assertSee(route('courts.high-courts'), false);
+    }
+
+    public function test_bar_directory_lists_the_bar_council_of_india_and_every_state_bar_council(): void
+    {
+        $this->seed(CourtCatalogueSeeder::class);
+        $this->seed(BarCouncilAndAssociationSeeder::class);
+
+        $this->assertSame(25, BarCouncil::count());
+        $this->assertSame('https://www.bctnpy.org/', BarCouncil::where('council_name', 'Bar Council of Tamil Nadu & Puducherry')->value('official_url'));
+        $this->assertNull(BarAssociation::where('association_name', 'New Delhi Bar Association (NDBA)')->value('official_url'));
+
+        $this->get(route('bar-directory.index'))
+            ->assertOk()
+            ->assertSee('Bar Council of India')
+            ->assertSee('Bar Council of Delhi')
+            ->assertSee('Bar Council of Kerala');
+    }
+
+    public function test_tribunals_page_lists_every_tribunal_with_its_official_website(): void
+    {
+        $response = $this->get(route('tribunals.index'))->assertOk();
+
+        foreach (CourtLinksController::TRIBUNALS as $group => $tribunals) {
+            $response->assertSee($group);
+
+            foreach ($tribunals as $tribunal) {
+                $this->assertStringStartsWith('https://', $tribunal['url']);
+                $response->assertSee($tribunal['short'])->assertSee('href="'.$tribunal['url'].'"', false);
+            }
+        }
+
+        $this->get('/court-catalogue')->assertRedirect(route('tribunals.index'));
     }
 
     public function test_display_boards_and_courts_hub_are_public(): void

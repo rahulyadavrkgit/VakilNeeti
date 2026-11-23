@@ -5,6 +5,7 @@
 
 @section('content')
 <div class="space-y-6">
+    @include('cases.partials.management-nav')
 
     <x-page-header title="Hearing History" subtitle="Every hearing in your cases, newest first.">
         <a href="{{ route('cases.calendar') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Open calendar</a>

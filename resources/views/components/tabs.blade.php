@@ -17,7 +17,7 @@
            class="group inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 text-sm font-semibold text-[#475467] transition hover:bg-slate-100 hover:text-[#142235] aria-selected:bg-[#16776e] aria-selected:text-white! aria-selected:shadow-sm">
             {{ $tabLabel }}
             @if(($counts[$panelId] ?? 0) > 0)
-                <span class="rounded-full bg-slate-100 px-1.5 text-[11px] font-bold leading-5 text-[#475467] group-aria-selected:bg-white/20 group-aria-selected:text-white">{{ $counts[$panelId] }}</span>
+                <span class="rounded-full bg-slate-100 px-1.5 text-xs font-bold leading-5 text-[#475467] group-aria-selected:bg-white/20 group-aria-selected:text-white">{{ $counts[$panelId] }}</span>
             @endif
         </a>
     @endforeach

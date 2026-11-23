@@ -10,9 +10,6 @@
         <a href="{{ route('bar-directory.index') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Open full directory</a>
     </x-page-header>
 
-    <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-        Directory entries may change. Confirm current office holders, contact details, membership requirements and official status directly with the relevant organization.
-    </div>
 
     <section id="bar-councils" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900">Statutory Bar Councils</h2>
@@ -50,6 +47,7 @@
             Search all organizations
         </a>
     </section>
+    <p class="text-xs text-slate-500">Entries may change. Confirm office holders and contact details with the organisation.</p>
 </div>
 @endsection
 

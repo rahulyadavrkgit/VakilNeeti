@@ -6,7 +6,7 @@
 @section('content')
 <div class="space-y-6">
 
-    <x-page-header title="Settings" subtitle="Profile and practice settings for your {{ $isCompany ? 'company' : 'advocate' }} account.">
+    <x-page-header title="Settings" subtitle="Profile, practice and app settings.">
         <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Complete my profile</a>
     </x-page-header>
 
@@ -116,57 +116,22 @@
     </section>
 
     <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-bold text-slate-800">Workspace preferences</h2>
-        <p class="mt-1 text-sm text-slate-600">Choose the tools and information you want to focus on.</p>
-
+        <h2 class="text-lg font-bold text-slate-800">Currency</h2>
         @if(session('preferences_success'))
             <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('preferences_success') }}</p>
         @endif
-        @error('onboarding_features')
-            <p role="alert" class="mt-3 text-sm text-red-600">{{ $message }}</p>
-        @enderror
-        @error('onboarding_features.*')
-            <p role="alert" class="mt-3 text-sm text-red-600">{{ $message }}</p>
-        @enderror
-
-        <form id="workspace-preferences-form" method="POST" action="{{ route('profile.preferences.update') }}" class="mt-4 space-y-4">
+        <form id="workspace-preferences-form" method="POST" action="{{ route('profile.preferences.update') }}" class="mt-3 flex flex-wrap items-end gap-3">
             @csrf
-            <fieldset>
-                <legend class="sr-only">Select workspace features</legend>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($onboardingFeatures as $value => $label)
-                        <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm hover:border-amber-400 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50">
-                            <input type="checkbox" name="onboarding_features[]" value="{{ $value }}"
-                                   @checked(in_array($value, (array) old('onboarding_features', $user->onboarding_features ?? []), true))
-                                   class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
-                            {{ $label }}
-                        </label>
-                    @endforeach
-                </div>
-            </fieldset>
-
-            <label class="block text-sm font-medium text-slate-700" data-preferences-other
-                   @if(!in_array('other', (array) old('onboarding_features', $user->onboarding_features ?? []), true)) hidden @endif>
-                Describe the other feature
-                <textarea name="onboarding_other" rows="2" maxlength="500" @required(in_array('other', (array) old('onboarding_features', $user->onboarding_features ?? []), true))
-                          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">{{ old('onboarding_other', $user->onboarding_other) }}</textarea>
-                @error('onboarding_other') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
-            </label>
-
-            <label class="block max-w-xs text-sm font-medium text-slate-700">
-                Currency
+            <label class="block min-w-[14rem] text-sm font-medium text-slate-700">
+                Symbol shown on amounts
                 <select name="currency" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
                     @foreach(\App\Enums\Currency::cases() as $currencyOption)
                         <option value="{{ $currencyOption->value }}" @selected(old('currency', $user->currency ?? 'INR') === $currencyOption->value)>{{ $currencyOption->label() }}</option>
                     @endforeach
                 </select>
-                <span class="mt-1 block text-xs font-normal text-slate-500">Changes the symbol shown on amounts. Amounts are not converted.</span>
                 @error('currency') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
             </label>
-
-            <button type="submit" class="rounded-lg bg-[#238b80] px-5 py-2.5 font-semibold text-white hover:bg-[#16776e]">
-                Save preferences
-            </button>
+            <button type="submit" class="min-h-11 rounded-lg bg-[#16776e] px-5 font-semibold text-white hover:bg-[#125f58]">Save</button>
         </form>
     </section>
 
@@ -225,6 +190,18 @@
 
         <form method="POST" action="{{ route('profile.system-preferences.update') }}" class="mt-4 space-y-6">
             @csrf
+
+            <fieldset>
+                <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Appearance</legend>
+                <div class="mt-2 grid grid-cols-3 gap-2 sm:max-w-md">
+                    @foreach(\App\Models\User::PREFERENCES['theme']['options'] as $value => $label)
+                        <label class="{{ $choice }}">
+                            <input type="radio" name="theme" value="{{ $value }}" class="sr-only" @checked($user->preference('theme') === $value)>
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
 
             <fieldset>
                 <legend class="text-sm font-bold uppercase tracking-wide text-slate-500">Calendar</legend>

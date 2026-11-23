@@ -6,7 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
 
-    <x-page-header title="Invoice & GST Settings" subtitle="GST, invoice numbering, and the bank or UPI details printed on your invoices." />
+    <x-page-header title="Invoice & GST Settings" subtitle="GST, numbering and bank or UPI details for your invoices." />
 
     @if(session('success'))
         <div class="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">

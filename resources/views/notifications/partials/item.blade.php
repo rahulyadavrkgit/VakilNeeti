@@ -10,7 +10,7 @@
         @if(! empty($notification->data['body']))
             <span class="block truncate text-xs text-slate-500">{{ $notification->data['body'] }}</span>
         @endif
-        <span class="block text-[11px] text-slate-400">{{ $notification->created_at->diffForHumans() }}</span>
+        <span class="block text-xs text-slate-400">{{ $notification->created_at->diffForHumans() }}</span>
     </span>
     @unless($notification->read_at)
         <span class="sr-only">Unread</span>

@@ -10,11 +10,9 @@
         $quickActions = auth()->check()
             ? [
                 ['Today', 'calendar', route('cases.calendar', ['view' => 'day'])],
-                ['+ Hearing', 'plus', route('hearings.create')],
-                ['+ Case', 'briefcase', route('cases.manual')],
-                ['Import cases', 'download', route('cases.find')],
-                ['Court fee', 'calculator', route('court-fee.index')],
-                ['My cases', 'list', route('cases.index')],
+                ['+ Next date', 'plus', route('hearings.create'), route('sheets.next-date')],
+                ['My cases', 'briefcase', route('cases.index')],
+                ['Live boards', 'board', route('courts.display-boards')],
             ]
             : [
                 ['Supreme Court', 'pillars', route('courts.supreme-court')],
@@ -29,11 +27,42 @@
         <h1 class="text-xl font-semibold tracking-tight sm:text-2xl">
             @auth {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }}, {{ now()->format('l, d M') }} @else Your legal workspace @endauth
         </h1>
+        @if($today ?? null)
+            {{-- The day at a glance. Red always means today; amber means something needs doing. --}}
+            <div class="mt-3 flex flex-wrap gap-2 text-sm">
+                <a href="{{ route('cases.calendar', ['view' => 'day']) }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 font-semibold {{ $today['hearings'] ? 'bg-red-600 text-white' : 'bg-white/10 text-white/80' }}">
+                    <span class="tabular-nums">{{ $today['hearings'] }}</span> today
+                </a>
+                <a href="{{ route('cases.calendar', ['view' => 'day', 'date' => today()->addDay()->toDateString()]) }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 font-semibold text-white hover:bg-white/15">
+                    <span class="tabular-nums">{{ $today['tomorrow'] }}</span> tomorrow
+                </a>
+                <a href="{{ route('tasks.index') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 font-semibold {{ $today['tasks'] ? 'bg-[#e6b84a] text-[#142235]' : 'bg-white/10 text-white/80' }}">
+                    <span class="tabular-nums">{{ $today['tasks'] }}</span> {{ \Illuminate\Support\Str::plural('task', $today['tasks']) }} due
+                </a>
+            </div>
+            @if($today['cleared'])
+                <p class="mt-2 inline-flex items-center gap-2 rounded-xl bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-[#8ed2c8]">
+                    <x-icon name="check" :size="16" /> Day cleared · every matter today has its next date
+                </p>
+            @elseif($today['needs_next_date'] !== [])
+                <div class="mt-2 rounded-xl bg-white/[0.06] px-3 py-2 text-sm">
+                    <p class="font-semibold text-[#e6b84a]">{{ count($today['needs_next_date']) }} {{ \Illuminate\Support\Str::plural('matter', count($today['needs_next_date'])) }} today without a next date</p>
+                    <ul class="mt-1 space-y-0.5">
+                        @foreach(array_slice($today['needs_next_date'], 0, 3) as $matter)
+                            <li class="flex items-center justify-between gap-2">
+                                <a href="{{ $matter['url'] }}" data-sheet="{{ route('sheets.case-view', $matter['case_id']) }}" class="min-w-0 truncate text-white/80 hover:text-white hover:underline">{{ $matter['title'] }}</a>
+                                <a href="{{ route('hearings.create', ['case' => $matter['case_id']]) }}" data-sheet="{{ route('sheets.next-date', ['case' => $matter['case_id']]) }}" class="inline-flex min-h-8 shrink-0 items-center rounded-full bg-[#e6b84a] px-3 text-xs font-bold text-[#142235]">+ Date</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        @endif
         @if($nextHearing ?? null)
             @php $nextDate = \Illuminate\Support\Carbon::parse($nextHearing['date']); @endphp
             <section aria-labelledby="next-hearing-heading" class="mt-3 rounded-2xl bg-white p-3.5 text-slate-900 shadow-sm sm:p-4">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p id="next-hearing-heading" class="text-[11px] font-bold uppercase tracking-wide text-[#16776e]">
+                    <p id="next-hearing-heading" class="text-xs font-bold uppercase tracking-wide {{ $nextDate->isToday() ? 'text-red-600' : 'text-[#16776e]' }}">
                         Next hearing · {{ $nextDate->isToday() ? 'Today' : ($nextDate->isTomorrow() ? 'Tomorrow' : $nextDate->format('D, d M')) }}@if($nextHearing['time']) · {{ $nextHearing['time'] }}@endif
                     </p>
                     <a href="{{ $nextHearing['url'] }}" class="text-xs font-semibold text-[#16776e] hover:underline">Open case &rarr;</a>
@@ -49,9 +78,10 @@
                               :share="['title' => $nextHearing['title'], 'case_number' => $nextHearing['case_number'], 'side' => $nextHearing['appearing_for'] ?? null, 'parties' => $nextHearing['appearing_for_parties'] ?? null, 'date' => $nextHearing['date'], 'time' => $nextHearing['time'], 'details' => $nextHearing['details']]" />
             </section>
         @endif
-        <nav aria-label="Quick actions" class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
-            @foreach($quickActions as [$actionLabel, $actionIcon, $actionUrl])
-                <a href="{{ $actionUrl }}" class="flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white/[0.07] px-1 text-center text-xs font-semibold text-white ring-1 ring-white/10 transition hover:bg-white/15 sm:text-sm">
+        <nav aria-label="Quick actions" class="mt-3 grid gap-2 {{ auth()->check() ? 'grid-cols-4' : 'grid-cols-3 sm:grid-cols-6' }}">
+            @foreach($quickActions as $action)
+                @php [$actionLabel, $actionIcon, $actionUrl] = $action; @endphp
+                <a href="{{ $actionUrl }}" @isset($action[3]) data-sheet="{{ $action[3] }}" @endisset class="flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white/[0.07] px-1 text-center text-xs font-semibold text-white ring-1 ring-white/10 transition hover:bg-white/15 sm:text-sm">
                     <x-icon :name="$actionIcon" :size="22" class="text-[#e6b84a]" />
                     {{ $actionLabel }}
                 </a>
@@ -63,7 +93,8 @@
         @if($profile ?? null)
             <section class="flex flex-wrap items-center gap-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-4 sm:p-5" aria-label="Profile completion">
                 <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-[#16776e] ring-4 ring-teal-100">{{ $profile['percent'] }}%</div>
-                <div class="min-w-0 flex-1">
+                {{-- At least 12rem wide, so on a phone the buttons move to their own row instead of squeezing the text. --}}
+                <div class="min-w-[12rem] flex-1">
                     <p class="font-semibold text-slate-900">Your profile is {{ $profile['percent'] }}% complete</p>
                     <div class="mt-2 h-2 max-w-md overflow-hidden rounded-full bg-white">
                         <div class="h-full rounded-full bg-[#16776e]" style="width: {{ $profile['percent'] }}%"></div>
@@ -74,8 +105,8 @@
                         @endforeach
                     </ul>
                 </div>
-                <div class="flex items-center gap-1">
-                    <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-10 items-center rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">Complete my profile &rarr;</a>
+                <div class="flex w-full items-center gap-1 sm:w-auto">
+                    <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-10 flex-1 items-center justify-center whitespace-nowrap rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58] sm:flex-none">Complete my profile &rarr;</a>
                     <form method="POST" action="{{ route('home.profile-banner.hide') }}">
                         @csrf
                         <button type="submit" class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-700">Hide</button>
@@ -114,14 +145,14 @@
                     @forelse($upcomingHearings as $event)
                         @php $eventDate = \Illuminate\Support\Carbon::parse($event['date']); @endphp
                         <li class="flex items-start gap-3 py-3">
-                            <a href="{{ $event['url'] }}" class="flex w-14 shrink-0 flex-col items-center rounded-lg py-1 {{ $eventDate->isToday() ? 'bg-[#16776e] text-white' : 'bg-teal-50 text-teal-900' }}">
-                                <span class="text-[11px] font-bold uppercase">{{ $eventDate->isToday() ? 'Today' : ($eventDate->isTomorrow() ? 'Tmrw' : $eventDate->format('M')) }}</span>
+                            <a href="{{ $event['url'] }}" class="flex w-14 shrink-0 flex-col items-center rounded-lg py-1 {{ $eventDate->isToday() ? 'bg-red-600 text-white' : 'bg-teal-50 text-teal-900' }}">
+                                <span class="text-xs font-bold uppercase">{{ $eventDate->isToday() ? 'Today' : ($eventDate->isTomorrow() ? 'Tmrw' : $eventDate->format('M')) }}</span>
                                 <span class="text-lg font-bold leading-tight">{{ $eventDate->format('d') }}</span>
-                                @if($event['time'])<span class="text-[10px] font-semibold">{{ $event['time'] }}</span>@endif
+                                @if($event['time'])<span class="text-[11px] font-semibold">{{ $event['time'] }}</span>@endif
                             </a>
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-1.5">
-                                    <a href="{{ $event['url'] }}" class="min-w-0 break-words text-sm font-semibold text-slate-900 hover:text-[#16776e]">{{ $event['title'] }}</a>
+                                    <a href="{{ $event['url'] }}" @if($event['case_id']) data-sheet="{{ route('sheets.case-view', $event['case_id']) }}" @endif class="min-w-0 break-words text-sm font-semibold text-slate-900 hover:text-[#16776e]">{{ $event['title'] }}</a>
                                     <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" :edit-url="$event['case_id'] ? route('cases.edit', $event['case_id']) : null" />
                                 </div>
                                 <p class="truncate text-xs text-slate-500">{{ collect([$event['case_number'], $event['details']])->filter()->implode(' · ') ?: $event['label'] }}</p>
@@ -145,7 +176,7 @@
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="agenda-heading">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="agenda-heading" class="text-lg font-semibold text-slate-900">Tasks &amp; appointments</h2>
-                    <a href="{{ route('tasks.create') }}" class="inline-flex min-h-9 items-center rounded-lg border border-[#16776e] px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">+ Task</a>
+                    <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="inline-flex min-h-9 items-center rounded-lg border border-[#16776e] px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">+ Task</a>
                 </div>
 
                 @if($overdueTaskCount)

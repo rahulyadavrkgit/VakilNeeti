@@ -80,8 +80,13 @@ class CourtRoomListTest extends TestCase
             ->assertSee('As per the Roster of Sitting effective 07.10.2026')
             ->assertSeeInOrder(['All', '47', 'Division Bench', '10', 'Single Bench — Civil', '11', 'Single Bench — Criminal', '9', 'Original Side', '6', 'IP Division', '2', 'Joint Registrar', '9'])
             ->assertSeeInOrder(['DB-VII', "Hon'ble Mr. Justice Avneesh Jhingan", "Hon'ble Ms. Justice Shail Jain", 'Service Tax'])
-            ->assertSee('VC link coming soon')
+            ->assertSee('href="https://virtualcourtdhc.webex.com/meet/virtualcourtdhc1"', false)
+            ->assertDontSee('VC link coming soon')
             ->assertSee('href="https://delhihighcourt.nic.in/web/cause-lists"', false);
+
+        // VC links and court numbers as in the cause list of 23.11.2026.
+        $this->assertSame(47, CourtBench::where('court_key', 'delhi-high-court')->whereNotNull('vc_link')->count());
+        $this->assertSame("Hon'ble Mr. Justice Anup Jairam Bhambhani", CourtBench::where('court_key', 'delhi-high-court')->where('court_room', '44')->first()->judgeList()[0]['name']);
 
         // One tap narrows the list to a section.
         $this->get(route('courts.delhi-high-court.judges', ['section' => 'single-bench-criminal']))

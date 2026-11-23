@@ -6,7 +6,7 @@
 @section('content')
 <div class="mx-auto max-w-4xl space-y-4">
     <x-page-header title="Clients from your cases"
-                   subtitle="Tick the people you act for. Each becomes a client linked to the case, so you can send them hearing updates.">
+                   subtitle="Tick the people you act for; each becomes a client.">
         <a href="{{ route('clients.index') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Back to clients</a>
     </x-page-header>
 

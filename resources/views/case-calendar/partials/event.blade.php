@@ -18,11 +18,11 @@
         <a href="{{ $event['url'] }}" class="block rounded-lg border-l-4 px-2 py-1.5 text-xs transition hover:shadow-sm {{ $eventClass }} {{ $struck ? 'line-through opacity-70' : '' }}">
             <span class="flex items-center justify-between gap-1 font-bold">
                 <span>{{ $event['time'] ?: $event['label'] }}</span>
-                @if($weekRoom !== '')<span class="truncate rounded bg-white/70 px-1 text-[10px] font-semibold">{{ preg_match('/^(court|room)\b/i', $weekRoom) ? $weekRoom : 'R '.$weekRoom }}</span>@endif
+                @if($weekRoom !== '')<span class="truncate rounded bg-white/70 px-1 text-[11px] font-semibold">{{ preg_match('/^(court|room)\b/i', $weekRoom) ? $weekRoom : 'R '.$weekRoom }}</span>@endif
             </span>
             <span class="mt-0.5 line-clamp-2 font-semibold leading-snug">{{ $event['title'] }}</span>
             @if($weekSide)
-                <span class="mt-1 inline-block rounded-full px-1.5 text-[10px] font-bold {{ \App\Models\LegalCase::isMovingSide($event['appearing_for'] ?? null) ? 'bg-teal-100 text-teal-900' : 'bg-amber-100 text-amber-900' }}">For {{ $weekSide }}</span>
+                <span class="mt-1 inline-block rounded-full px-1.5 text-[11px] font-bold {{ \App\Models\LegalCase::isMovingSide($event['appearing_for'] ?? null) ? 'bg-teal-100 text-teal-900' : 'bg-amber-100 text-amber-900' }}">For {{ $weekSide }}</span>
             @endif
         </a>
         <template data-event-card>@include('case-calendar.partials.event-card', ['event' => $event])</template>

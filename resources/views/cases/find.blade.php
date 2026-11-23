@@ -20,6 +20,7 @@
 
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
+    @include('cases.partials.management-nav')
     <p class="text-sm text-slate-600">
         <a href="{{ route('dashboard') }}" class="float-right ml-3 font-semibold text-[#16776e] hover:underline">Skip for now</a>
         Bring your cases in from files and searches you do yourself. VakilNiti never logs in to eCourts or Google for you, and you see every case before it is added.

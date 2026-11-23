@@ -1,7 +1,7 @@
 {{-- The facts needed at court, large and at the top: hearing, court, room, VC link and the client's phone. --}}
 @php
     $fact = 'min-w-0 rounded-xl bg-slate-50 px-3.5 py-3';
-    $factLabel = 'text-[11px] font-bold uppercase tracking-wide text-slate-500';
+    $factLabel = 'text-xs font-bold uppercase tracking-wide text-slate-500';
     $contactButton = 'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold';
 @endphp
 
@@ -35,7 +35,7 @@
                 <x-icon name="plus" :size="15" /> Set your side first
             </a>
         @elseif($standSide)
-            <p class="text-[11px] font-bold uppercase tracking-wide text-[#e6b84a]">Stand · {{ $case->appearingForLabel() }}</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-[#e6b84a]">Stand · {{ $case->appearingForLabel() }}</p>
             <p class="mt-0.5 text-2xl font-extrabold leading-tight">YOUR {{ strtoupper($standSide['label']) }}</p>
             <p class="text-xs text-white/75">As you face the judge (the judge's {{ $standSide['side'] === 'left' ? 'right' : 'left' }})</p>
             <details class="mt-1 text-xs text-white/75 print:hidden">
@@ -72,7 +72,7 @@
             @endphp
             <div class="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5">
                 <div class="min-w-0 flex-1">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Client</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Client</p>
                     <a href="{{ route('clients.show', $contactClient) }}" class="block truncate font-semibold text-slate-900 hover:text-[#16776e]">{{ $contactClient->displayName() }}</a>
                     <p class="truncate text-xs text-slate-500">{{ $contactClient->mobile ?: 'No mobile number saved' }}</p>
                 </div>

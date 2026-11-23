@@ -6,7 +6,7 @@
 
 @php
     $cell = 'min-w-0 rounded-xl bg-slate-50 px-3 py-2';
-    $cellLabel = 'text-[11px] font-bold uppercase tracking-wide text-slate-500';
+    $cellLabel = 'text-xs font-bold uppercase tracking-wide text-slate-500';
     $chip = 'inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition';
 @endphp
 

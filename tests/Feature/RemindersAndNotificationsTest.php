@@ -41,11 +41,16 @@ class RemindersAndNotificationsTest extends TestCase
         $this->invoice('INV-1', '2026-03-01');
         $this->invoice('INV-2', '2026-03-30');
 
-        $this->assertSame(3, app(ReminderService::class)->sendFor($user));
+        // Morning: tasks and invoices; tomorrow's hearings wait for the evening summary.
+        $this->assertSame(2, app(ReminderService::class)->sendFor($user));
+
+        $this->travelTo('2026-03-10 18:00:00');
+        $this->assertSame(1, app(ReminderService::class)->sendFor($user));
         $this->assertSame(0, app(ReminderService::class)->sendFor($user));
 
         $titles = $user->notifications()->get()->pluck('data.title')->sort()->values()->all();
-        $this->assertSame(['Hearing tomorrow at 10:30', 'Invoice INV-1 is overdue', 'Task overdue since 08 Mar'], $titles);
+        $this->assertSame(['Invoice INV-1 is overdue', 'Task overdue since 08 Mar', 'Tomorrow: 1 hearing'], $titles);
+        $this->assertSame('First at 10:30 · District Court Lucknow · Asha vs State', $user->notifications()->get()->firstWhere('data.title', 'Tomorrow: 1 hearing')->data['body']);
         $this->assertSame(0, $other->notifications()->count());
     }
 

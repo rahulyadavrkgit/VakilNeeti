@@ -46,10 +46,18 @@
                             <td class="p-4 font-semibold" data-label="Amount">@money($invoice->total_amount)</td>
                             <td class="p-4" data-label="Status">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</td>
                             <td class="p-4" data-stack="full">
-                                <a href="{{ route('invoices.show', $invoice) }}"
-                                   class="font-semibold text-blue-600 hover:underline">
-                                    View
-                                </a>
+                                <span class="flex flex-wrap items-center gap-3">
+                                    <a href="{{ route('invoices.show', $invoice) }}"
+                                       class="font-semibold text-blue-600 hover:underline">
+                                        View
+                                    </a>
+                                    @unless(in_array($invoice->status, ['paid', 'cancelled', 'draft'], true))
+                                        <a href="{{ route('invoices.show', $invoice) }}" data-sheet="{{ route('sheets.payment', $invoice) }}"
+                                           class="inline-flex min-h-9 items-center rounded-lg border border-[#16776e] px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">
+                                            Record payment
+                                        </a>
+                                    @endunless
+                                </span>
                             </td>
                         </tr>
                     @empty

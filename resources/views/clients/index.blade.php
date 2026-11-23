@@ -39,11 +39,15 @@
         </form>
 
         <div class="flex flex-wrap items-center gap-2">
-            <div class="flex overflow-hidden rounded-lg border border-slate-300" role="group" aria-label="View">
-                <a href="{{ route('clients.index', $keep(['view' => null])) }}" @if($view === 'list') aria-current="true" @endif
-                   class="px-3 py-2 text-sm font-semibold {{ $view === 'list' ? 'bg-[#e8f4f2] text-[#16776e]' : 'bg-white text-slate-600 hover:bg-slate-50' }}">List</a>
-                <a href="{{ route('clients.index', $keep(['view' => 'grid'])) }}" @if($view === 'grid') aria-current="true" @endif
-                   class="border-l border-slate-300 px-3 py-2 text-sm font-semibold {{ $view === 'grid' ? 'bg-[#e8f4f2] text-[#16776e]' : 'bg-white text-slate-600 hover:bg-slate-50' }}">Grid</a>
+            <div class="inline-flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" role="group" aria-label="Layout">
+                <a href="{{ route('clients.index', $keep(['view' => null])) }}" @if($view === 'list') aria-current="true" @endif aria-label="List view" title="List view"
+                   class="flex h-11 w-11 items-center justify-center {{ $view === 'list' ? 'bg-teal-50 text-[#16776e]' : 'text-slate-500 hover:bg-slate-50' }}">
+                    <x-icon name="list" :size="18" />
+                </a>
+                <a href="{{ route('clients.index', $keep(['view' => 'grid'])) }}" @if($view === 'grid') aria-current="true" @endif aria-label="Grid view" title="Grid view"
+                   class="flex h-11 w-11 items-center justify-center border-l border-slate-200 {{ $view === 'grid' ? 'bg-teal-50 text-[#16776e]' : 'text-slate-500 hover:bg-slate-50' }}">
+                    <x-icon name="dashboard" :size="18" />
+                </a>
             </div>
         </div>
     </div>
@@ -83,7 +87,7 @@
                         <input type="checkbox" name="ids[]" value="{{ $client->id }}" form="clients-bulk" data-select-item aria-label="Select {{ $client->displayName() }}"
                                class="absolute right-3 top-3 rounded border-slate-300 text-[#238b80]">
                         <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $client->isCompany() ? 'bg-indigo-50 text-indigo-700' : 'bg-[#e8f4f2] text-[#16776e]' }}">{{ $client->isCompany() ? 'Company' : 'Person' }}</span>
-                        <a href="{{ route('clients.show', $client) }}" class="mt-2 block pr-6 font-semibold text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>
+                        <a href="{{ route('clients.show', $client) }}" data-sheet="{{ route('sheets.client-card', $client) }}" class="mt-2 block pr-6 font-semibold text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>
                         @if($client->company)<p class="text-xs text-slate-500">at {{ $client->company->displayName() }}</p>@endif
                         @if($client->isCompany())<p class="text-xs text-slate-500">{{ $client->people_count }} {{ \Illuminate\Support\Str::plural('person', $client->people_count) }}</p>@endif
                         <p class="mt-2 text-sm text-slate-600">{{ collect([$client->mobile, $client->email])->filter()->implode(' · ') ?: 'No contact details' }}</p>
@@ -111,7 +115,7 @@
                             <tr class="hover:bg-slate-50">
                                 <td class="p-3" data-stack="corner"><input type="checkbox" name="ids[]" value="{{ $client->id }}" form="clients-bulk" data-select-item aria-label="Select {{ $client->displayName() }}" class="rounded border-slate-300 text-[#238b80]"></td>
                                 <td class="p-3" data-stack="title">
-                                    <a href="{{ route('clients.show', $client) }}" class="font-semibold text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>
+                                    <a href="{{ route('clients.show', $client) }}" data-sheet="{{ route('sheets.client-card', $client) }}" class="font-semibold text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>
                                     @if($client->company)<span class="block text-xs text-slate-500">at {{ $client->company->displayName() }}</span>@endif
                                     @if($client->isCompany() && $client->people_count)<span class="block text-xs text-slate-500">{{ $client->people_count }} {{ \Illuminate\Support\Str::plural('person', $client->people_count) }}</span>@endif
                                 </td>

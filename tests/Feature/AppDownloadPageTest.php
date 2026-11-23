@@ -76,7 +76,7 @@ class AppDownloadPageTest extends TestCase
             ->assertSee('aria-label="Account menu"', false)
             ->assertSee('Asha Verma')
             ->assertSee('aria-label="Add new"', false)
-            ->assertSee('href="'.route('invoices.index').'"', false)
+            ->assertSee('href="'.route('billing.index').'"', false)
             ->assertDontSee('Sign up');
     }
 

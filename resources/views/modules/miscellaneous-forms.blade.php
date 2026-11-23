@@ -8,9 +8,6 @@
 <div class="mx-auto max-w-7xl space-y-6">
     <x-page-header id="court-forms" title="Forms & Filing Resources" subtitle="Official filing portals and common practice forms in one place." />
 
-    <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-        Forms and filing requirements vary by court, State, case type and date. This page links to resources and internal workflows; it does not provide legal advice or guarantee that a form is current or suitable for a filing.
-    </div>
 
     <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <label for="forms-search" class="mb-1 block text-sm font-medium text-slate-700">Find a form or resource</label>
@@ -79,6 +76,7 @@
     <p id="forms-search-empty" hidden class="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
         No matching forms or resources. Try another search.
     </p>
+    <p class="text-xs text-slate-500">Forms and filing rules vary by court and State. Check that a form is current before filing.</p>
 </div>
 @endsection
 

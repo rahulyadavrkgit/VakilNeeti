@@ -37,7 +37,7 @@
                             <li>
                                 @if($key === 'cases')
                                     <div class="px-4 py-3 hover:bg-slate-50">
-                                        <a href="{{ route('cases.show', $item) }}" class="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900 hover:text-[#16776e]">
+                                        <a href="{{ route('cases.show', $item) }}" data-sheet="{{ route('sheets.case-view', $item) }}" class="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900 hover:text-[#16776e]">
                                             {{ $item->case_title }}
                                             <x-case-side :side="$item->appearing_for" :parties="$item->appearing_for_parties" />
                                         </a>

@@ -33,7 +33,7 @@ class MobileLayoutTest extends TestCase
             ->assertSee('Not legal advice; check the official source');
     }
 
-    public function test_side_menu_is_tidy_and_settings_live_in_the_account_menu(): void
+    public function test_side_menu_is_short_and_each_section_leads_to_its_own_pages(): void
     {
         $this->actingAs(User::factory()->create());
 
@@ -41,12 +41,17 @@ class MobileLayoutTest extends TestCase
         $sideMenu = substr($html, (int) strpos($html, 'id="vn-nav"'), (int) strpos($html, 'data-filter-empty') - (int) strpos($html, 'id="vn-nav"'));
         $accountMenu = substr($html, (int) strpos($html, 'aria-label="Account menu"'), 4000);
 
-        $this->assertStringNotContainsString('Official court search', $sideMenu);
-        $this->assertStringNotContainsString('Tax &amp; compliance', $sideMenu);
-        $this->assertStringContainsString('eCourts services &amp; CNR search', $sideMenu);
+        // Workspace 7, Courts 5, Library 4, More 4: down from 25 entries.
+        $this->assertSame(20, substr_count($sideMenu, 'class="vn-nav-link'));
+        $this->assertStringContainsString('href="'.route('tribunals.index').'"', $sideMenu);
+        $this->assertStringNotContainsString('Case dashboard', $sideMenu);
+        $this->assertStringNotContainsString('eCourts services', $sideMenu);
         $this->assertSame(1, substr_count($sideMenu, 'href="'.route('profile.index').'"'));
-        $this->assertStringContainsString('href="'.route('profile.practice-states.index').'"', $accountMenu);
-        $this->assertStringContainsString('href="'.route('profile.invoice-settings.index').'"', $accountMenu);
+
+        // Cases pages are tabs inside Cases; settings and appearance in the account menu.
+        $this->assertStringContainsString('href="'.route('case-dashboard.index').'"', $html);
+        $this->assertStringContainsString('href="'.route('hearings.history').'"', $html);
+        $this->assertStringContainsString('data-theme-switch', $accountMenu);
         $this->assertStringContainsString('vn-header-dropdown', $accountMenu);
     }
 

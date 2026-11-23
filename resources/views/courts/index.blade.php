@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
-    <x-page-header title="Courts" :subtitle="auth()->check() ? 'The courts your cases are in, with the next date, room, judge and VC link. Official court services below.' : 'Official court services, display boards and directories.'" />
+    <x-page-header title="Courts" :subtitle="auth()->check() ? 'Your courts first, then official court services.' : 'Official court services, display boards and directories.'" />
 
     @auth
         <section aria-labelledby="my-courts-heading" class="space-y-3">
@@ -47,7 +47,7 @@
                                 @if($nextLabel)
                                     <span class="shrink-0 rounded-xl px-2.5 py-1 text-center text-xs font-semibold {{ $isToday ? 'bg-[#16776e] text-white' : 'bg-slate-100 text-slate-700' }}">
                                         {{ $nextLabel }}
-                                        <span class="block text-[11px] font-medium {{ $isToday ? 'text-teal-50' : 'text-slate-500' }}">{{ $court['next_count'] }} {{ \Illuminate\Support\Str::plural('case', $court['next_count']) }}</span>
+                                        <span class="block text-xs font-medium {{ $isToday ? 'text-teal-50' : 'text-slate-500' }}">{{ $court['next_count'] }} {{ \Illuminate\Support\Str::plural('case', $court['next_count']) }}</span>
                                     </span>
                                 @else
                                     <span class="shrink-0 rounded-xl bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-200">No date</span>
@@ -81,10 +81,11 @@
         <nav id="courts-list" class="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-label="Court services">
             <x-module-tile :href="route('courts.supreme-court')" icon="pillars" title="Supreme Court" description="Court list, display boards, e-pass, calendar" />
             <x-module-tile :href="route('courts.delhi-high-court')" icon="building" title="Delhi High Court" description="Display board, roster, cause list, judgements" />
+            <x-module-tile :href="route('courts.high-courts')" icon="building" title="All High Courts" description="All 25, with case status and e-filing" />
             <x-module-tile :href="route('courts.delhi-district-courts')" icon="gavel" title="Delhi District Courts" description="All seven court complexes" />
             <x-module-tile :href="route('courts.display-boards')" icon="board" title="Display boards" description="Live courtroom boards" />
             <x-module-tile :href="route('courts.ecourts-services')" icon="search" title="eCourts services" description="Case status, ePay, eFiling, NJDG" />
-            <x-module-tile :href="route('court-catalogue.index')" icon="scale" title="Tribunals" description="Appellate courts and tribunals" />
+            <x-module-tile :href="route('tribunals.index')" icon="scale" title="Tribunals" description="Appellate courts and tribunals" />
             <p data-filter-empty hidden class="col-span-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Nothing matches your search.</p>
         </nav>
     </section>

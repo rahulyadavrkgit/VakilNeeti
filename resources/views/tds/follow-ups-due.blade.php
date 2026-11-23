@@ -103,7 +103,7 @@
                                 @csrf
                                 @method('PUT')
                                 <button type="submit"
-                                        data-confirm="Mark this follow-up as completed?"
+                                       
                                         class="text-sm font-medium text-green-700 hover:underline">
                                     Mark Completed
                                 </button>

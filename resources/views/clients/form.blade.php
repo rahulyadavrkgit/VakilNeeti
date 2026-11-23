@@ -41,6 +41,58 @@
             <label class="text-sm font-medium text-slate-700">Last name
                 <input name="last_name" value="{{ old('last_name', $client->last_name) }}" maxlength="255" class="{{ $field }}">
             </label>
+        </div>
+
+        <div class="mt-5 grid gap-4 sm:grid-cols-2" data-for-type="company" @unless($isCompany) hidden @endunless>
+            <label class="text-sm font-medium text-slate-700">Company name <span class="text-red-600">*</span>
+                <input name="organisation_name" value="{{ old('organisation_name', $client->organisation_name) }}" maxlength="255" @required($isCompany) data-required-for="company" class="{{ $field }}">
+            </label>
+        </div>
+
+    </section>
+
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h2 class="text-lg font-bold text-slate-900">Contact</h2>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="text-sm font-medium text-slate-700">Mobile
+                <input name="mobile" value="{{ old('mobile', $client->mobile) }}" maxlength="20" inputmode="tel" class="{{ $field }}">
+            </label>
+            <label class="text-sm font-medium text-slate-700">Email
+                <input type="email" name="email" value="{{ old('email', $client->email) }}" maxlength="255" class="{{ $field }}">
+            </label>
+        </div>
+    </section>
+
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h2 class="text-lg font-bold text-slate-900">Address</h2>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="text-sm font-medium text-slate-700 sm:col-span-2">Street address
+                <textarea name="address" rows="2" class="{{ $field }}">{{ old('address', $client->address) }}</textarea>
+            </label>
+            <x-location-fields class="sm:col-span-2" :with-country="true"
+                               :country="old('country', $client->country ?: 'India')" :state="old('state', $client->state)"
+                               :district="old('district', $client->district)" :city="old('city', $client->city)"
+                               field-class="{{ $field }}">
+                <label class="text-sm font-medium text-slate-700">PIN code
+                    <input name="pin_code" value="{{ old('pin_code', $client->pin_code) }}" maxlength="10" inputmode="numeric" class="{{ $field }}">
+                </label>
+            </x-location-fields>
+        </div>
+    </section>
+
+
+    {{-- Rarely needed details stay folded away; they open when one of them already has a value or an error. --}}
+    @php
+        $moreFields = ['middle_name', 'company_id', 'occupation', 'website', 'display_name', 'alternate_mobile', 'phone', 'locality', 'referred_by', 'notes'];
+        $moreOpen = collect($moreFields)->contains(fn ($name) => filled(old($name, $client->{$name})) || $errors->has($name));
+    @endphp
+    <details class="group rounded-xl border border-slate-200 bg-white shadow-sm" @if($moreOpen) open @endif>
+        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 sm:px-6">
+            <span class="font-semibold text-slate-900">More details <span class="font-normal text-slate-500">(other numbers, referral, notes)</span></span>
+            <x-icon name="chevron" class="text-slate-400 transition group-open:rotate-180" />
+        </summary>
+        <div class="grid gap-4 px-5 pb-5 sm:grid-cols-2 sm:px-6 sm:pb-6">
+            <div class="grid gap-4 sm:col-span-2 sm:grid-cols-2" data-for-type="person" @if($isCompany) hidden @endif>
             <label class="text-sm font-medium text-slate-700">Middle name
                 <input name="middle_name" value="{{ old('middle_name', $client->middle_name) }}" maxlength="255" class="{{ $field }}">
             </label>
@@ -56,63 +108,24 @@
             <label class="text-sm font-medium text-slate-700">Occupation
                 <input name="occupation" value="{{ old('occupation', $client->occupation) }}" maxlength="255" class="{{ $field }}">
             </label>
-        </div>
-
-        <div class="mt-5 grid gap-4 sm:grid-cols-2" data-for-type="company" @unless($isCompany) hidden @endunless>
-            <label class="text-sm font-medium text-slate-700">Company name <span class="text-red-600">*</span>
-                <input name="organisation_name" value="{{ old('organisation_name', $client->organisation_name) }}" maxlength="255" @required($isCompany) data-required-for="company" class="{{ $field }}">
-            </label>
+            </div>
+            <div class="grid gap-4 sm:col-span-2 sm:grid-cols-2" data-for-type="company" @unless($isCompany) hidden @endunless>
             <label class="text-sm font-medium text-slate-700">Website
                 <input type="url" name="website" value="{{ old('website', $client->website) }}" maxlength="255" placeholder="https://" class="{{ $field }}">
             </label>
-        </div>
-
-        <label class="mt-4 block text-sm font-medium text-slate-700">Display name <span class="font-normal text-slate-400">(optional, how the name appears in lists)</span>
+            </div>
+        <label class="text-sm font-medium text-slate-700 sm:col-span-2">Display name <span class="font-normal text-slate-400">(optional, how the name appears in lists)</span>
             <input name="display_name" value="{{ old('display_name', $client->display_name) }}" maxlength="255" class="{{ $field }}">
         </label>
-    </section>
-
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Contact</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
-            <label class="text-sm font-medium text-slate-700">Mobile
-                <input name="mobile" value="{{ old('mobile', $client->mobile) }}" maxlength="20" inputmode="tel" class="{{ $field }}">
-            </label>
-            <label class="text-sm font-medium text-slate-700">Email
-                <input type="email" name="email" value="{{ old('email', $client->email) }}" maxlength="255" class="{{ $field }}">
-            </label>
             <label class="text-sm font-medium text-slate-700">Alternate mobile
                 <input name="alternate_mobile" value="{{ old('alternate_mobile', $client->alternate_mobile) }}" maxlength="20" inputmode="tel" class="{{ $field }}">
             </label>
             <label class="text-sm font-medium text-slate-700">Phone (landline)
                 <input name="phone" value="{{ old('phone', $client->phone) }}" maxlength="20" inputmode="tel" class="{{ $field }}">
             </label>
-        </div>
-    </section>
-
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Address</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
-            <label class="text-sm font-medium text-slate-700 sm:col-span-2">Street address
-                <textarea name="address" rows="2" class="{{ $field }}">{{ old('address', $client->address) }}</textarea>
-            </label>
             <label class="text-sm font-medium text-slate-700 sm:col-span-2">Locality / area
                 <input name="locality" value="{{ old('locality', $client->locality) }}" maxlength="255" placeholder="e.g. Gomti Nagar" class="{{ $field }}">
             </label>
-            <x-location-fields class="sm:col-span-2" :with-country="true"
-                               :country="old('country', $client->country ?: 'India')" :state="old('state', $client->state)"
-                               :district="old('district', $client->district)" :city="old('city', $client->city)"
-                               field-class="{{ $field }}">
-                <label class="text-sm font-medium text-slate-700">PIN code
-                    <input name="pin_code" value="{{ old('pin_code', $client->pin_code) }}" maxlength="10" inputmode="numeric" class="{{ $field }}">
-                </label>
-            </x-location-fields>
-        </div>
-    </section>
-
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">More</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700">Referred by
                 <input name="referred_by" value="{{ old('referred_by', $client->referred_by) }}" maxlength="255" class="{{ $field }}">
             </label>
@@ -128,8 +141,7 @@
                 <textarea name="notes" rows="3" class="{{ $field }}">{{ old('notes', $client->notes) }}</textarea>
             </label>
         </div>
-    </section>
-
+    </details>
     <div class="flex justify-end gap-3">
         <a href="{{ $isEditing ? route('clients.show', $client) : route('clients.index') }}" class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">Cancel</a>
         <button type="submit" class="rounded-xl bg-[#238b80] px-6 py-2.5 font-semibold text-white hover:bg-[#16776e]">{{ $isEditing ? 'Save changes' : 'Add client' }}</button>

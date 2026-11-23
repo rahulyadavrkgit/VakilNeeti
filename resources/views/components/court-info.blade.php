@@ -29,25 +29,31 @@
     $shareText = is_array($share)
         ? \App\Services\HearingShareText::single($share + ['court' => $court, 'room' => $room, 'judge' => $judge, 'vc_link' => $vcLink])
         : null;
+    // Signed in: the room and judge chips open the court & judge card (sheets.court) in the pop-up.
+    $courtSheet = auth()->check() && ($room !== '' || $judge)
+        ? route('sheets.court', array_filter(['court' => $court, 'designation' => $designation ?? $court, 'complex' => $complex, 'room' => $room, 'judge' => $judge, 'vc' => $vcLink]))
+        : null;
+    $chipTag = $courtSheet ? 'a' : 'span';
+    $chipLink = $courtSheet ? 'href="'.e($courtSheet).'" data-sheet' : '';
     $iconButton = 'inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-white px-2 font-semibold text-slate-600 hover:border-[#16776e] hover:text-[#16776e] [&.is-copied]:border-[#16776e] [&.is-copied]:text-[#16776e]';
 @endphp
 @if($court || $room !== '' || $judge || $vcLink || $shareText)
-    <span {{ $attributes->merge(['class' => 'flex min-w-0 flex-wrap items-center gap-1 text-[11px]']) }}>
+    <span {{ $attributes->merge(['class' => 'flex min-w-0 flex-wrap items-center gap-1 text-xs']) }}>
         @if($court)
             <span class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
                 <x-icon name="building" :size="12" class="shrink-0 text-slate-400" /><span class="truncate">{{ $court }}</span>
             </span>
         @endif
         @if($room !== '')
-            <span class="inline-flex shrink-0 items-center rounded-full bg-[#142235] px-2 py-0.5 font-semibold text-white" @if(in_array('room', $fromList, true)) title="{{ $listNote }}" @endif>{{ $roomLabel }}</span>
+            <{{ $chipTag }} {!! $chipLink !!} class="inline-flex shrink-0 items-center rounded-full bg-[#142235] px-2 py-0.5 font-semibold text-white" @if(in_array('room', $fromList, true)) title="{{ $listNote }}" @endif>{{ $roomLabel }}</{{ $chipTag }}>
         @endif
         @if($judge)
-            <span class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200" @if(in_array('judge', $fromList, true)) title="{{ $listNote }}" @endif>
+            <{{ $chipTag }} {!! $chipLink !!} class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200" @if(in_array('judge', $fromList, true)) title="{{ $listNote }}" @endif>
                 <x-icon name="gavel" :size="12" class="shrink-0" /><span class="truncate">{{ $judge }}</span>
-            </span>
+            </{{ $chipTag }}>
         @endif
         @if($liveRoom)
-            <a href="{{ route('courts.live-board', [$liveBoard, 'room' => $room]) }}" data-live-chip data-source="{{ route('courts.live-board.data', $liveBoard) }}" data-room="{{ $liveRoom }}" data-case-number="{{ is_array($share) ? ($share['case_number'] ?? '') : '' }}"
+            <a href="{{ route('courts.live-board', [$liveBoard, 'room' => $room]) }}" data-sheet-frame data-live-chip data-source="{{ route('courts.live-board.data', $liveBoard) }}" data-room="{{ $liveRoom }}" data-case-number="{{ is_array($share) ? ($share['case_number'] ?? '') : '' }}"
                title="Live display board for this court" class="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 font-semibold text-red-700 ring-1 ring-inset ring-red-200 hover:bg-red-100 data-[mine-now]:bg-red-600 data-[mine-now]:text-white">
                 <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span><span data-live-chip-text>Live board</span>
             </a>

@@ -11,12 +11,67 @@ use Illuminate\Support\Facades\DB;
  *
  * Supreme Court: VC links as published for each court. Delhi High Court: benches, judges and
  * matters from the Roster of Sitting effective 07.10.2026 as amended on 09.10.2026 and
- * 19.11.2026; court numbers as listed with the roster. Delhi district rows: as supplied.
+ * 19.11.2026; court numbers and VC links as in the cause list of 23.11.2026. Delhi district rows: as supplied.
  * Re-running replaces the lists of these courts; later changes can also be loaded with
  * `php artisan courts:import-benches`.
  */
 class CourtBenchSeeder extends Seeder
 {
+    /**
+     * Delhi High Court VC links by court, from the Delhi High Court cause list of 23.11.2026.
+     *
+     * @var array<string, string>
+     */
+    private const DELHI_HIGH_COURT_VC = [
+        '01' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt15',
+        '02' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc1',
+        '03' => 'https://dhcvirtualcourt.webex.com/dhcvirtualcourt/j.php?MTID=md8014d1fa995927d292326703dfba03f',
+        '04' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc13',
+        '06' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt3',
+        '08' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt14',
+        '10' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc8',
+        '13' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc9',
+        '14' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc7',
+        '15' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc1',
+        '16' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc12',
+        '21' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc13',
+        '22' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt10',
+        '23' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt17',
+        '24' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt5',
+        '25' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc6',
+        '26' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc10',
+        '27' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt',
+        '28' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt04',
+        '29' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc12',
+        '30' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc2',
+        '31' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc5',
+        '32' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc014',
+        '33' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt6',
+        '34' => 'https://delhihighcourt.webex.com/join/dhcecourtvc5',
+        '35' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc9',
+        '37' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc8',
+        '38' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc10',
+        '41' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt19',
+        '42' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc015',
+        '43' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc',
+        '44' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt13',
+        '45' => 'https://delhihighcourt.webex.com/meet/dhcecourtvc14',
+        '46' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt1',
+        '47' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc4',
+        '49' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc11',
+        '50' => 'https://virtualcourtdhc.webex.com/meet/virtualcourtdhc3',
+        '51' => 'https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt12',
+        'R-1' => 'https://jrdhc.webex.com/join/jrdhc001',
+        'R-2' => 'https://jrdhc.webex.com/join/jrdhc2',
+        'R-3' => 'https://jrdhc.webex.com/join/jrdhc03',
+        'R-4' => 'https://jrdhc.webex.com/join/jrdhc4',
+        'R-5' => 'https://jrdhc.webex.com/meet/jrdhc05',
+        'R-6' => 'https://jrdhc.webex.com/join/jrdhc6',
+        'R-7' => 'https://jrdhc.webex.com/join/jrdhc7',
+        'R-8' => 'https://jrdhc.webex.com/join/jrdhc8',
+        'R-9' => 'https://jrdhc.webex.com/join/jrdhc9',
+    ];
+
     public function run(): void
     {
         $rows = [...$this->supremeCourt(), ...$this->delhiHighCourt(), ...$this->delhiDistricts()];
@@ -89,7 +144,7 @@ class CourtBenchSeeder extends Seeder
         $bailCriminal = 'Bail Matters.';
         $sexualHarassment = 'Cases relating to sexual harassment.';
 
-        return [
+        $benches = [
             // Division Benches
             $bench($division, '01', 'DB-I', [$judge("Hon'ble Mr. Justice Nitin Wasudeo Sambre", 'Acting Chief Justice'), $judge("Hon'ble Mr. Justice Sanjay Sharma")], [
                 'All PIL and Suo Moto Writ Petitions/matters.',
@@ -334,7 +389,7 @@ class CourtBenchSeeder extends Seeder
             ]),
 
             // Original Jurisdiction (Civil)
-            $bench($originalSide, '48', "'F' Court", [$judge("Hon'ble Mr. Justice Anup Jairam Bhambhani", 'Judge-in-Charge (Original Side)')], [
+            $bench($originalSide, '44', "'F' Court", [$judge("Hon'ble Mr. Justice Anup Jairam Bhambhani", 'Judge-in-Charge (Original Side)')], [
                 'Matters to be heard by the Commercial Division.',
                 'Original Side Matters (including Finals) of the years 2024, 2025 & 2026.',
                 'Matters under the Arbitration Act, 1940 and Arbitration & Conciliation Act, 1996 (including Finals) of the years 2024, 2025 & 2026.',
@@ -406,6 +461,8 @@ class CourtBenchSeeder extends Seeder
             $bench($registrar, 'R-8', "'F' Court", [$judge('Mr. Gopal Singh Chauhan', 'Joint Registrar (Judicial)')], [], 'New Courts Block, Ground Floor (OS-F)'),
             $bench($registrar, 'R-9', "'B' Court", [$judge('Mr. Kishor Kumar', 'Joint Registrar (Judicial)')], [], 'New Courts Block, Ground Floor (OS-B)'),
         ];
+
+        return array_map(fn (array $row): array => $row + ['vc_link' => self::DELHI_HIGH_COURT_VC[$row['court_room']] ?? null], $benches);
     }
 
     /**

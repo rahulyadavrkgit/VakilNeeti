@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\Task;
 use App\Services\CalendarEventService;
@@ -46,6 +47,7 @@ class DashboardController extends Controller
         $profile = $request->session()->get('profile_banner_hidden') ? null : $profileCompletion->forUser($user);
 
         return view('home', [
+            'today' => $this->todaySummary($calendar),
             'upcomingHearings' => $upcomingHearings,
             'nextHearing' => $nextHearing,
             'hearingSearch' => $hearingSearch,
@@ -54,6 +56,44 @@ class DashboardController extends Controller
             'hasCases' => LegalCase::query()->exists(),
             'profile' => $profile && $profile['percent'] < 100 ? $profile : null,
         ]);
+    }
+
+    /**
+     * The day at a glance: hearings today and tomorrow, tasks due, and which of today's matters
+     * still need their next date. The day is "cleared" once every matter heard today has one.
+     *
+     * @return array{hearings: int, tomorrow: int, tasks: int, needs_next_date: list<array{case_id: int, title: string, url: string}>, cleared: bool}
+     */
+    private function todaySummary(CalendarEventService $calendar): array
+    {
+        $todayHearings = $calendar->between(today(), today(), ['groups' => ['hearing']]);
+        $caseIds = $todayHearings->pluck('case_id')->filter()->unique()->values();
+
+        // A matter has its next date when any of its hearings falls after today.
+        $withNextDate = $caseIds->isEmpty() ? collect() : CourtHearing::query()
+            ->whereIn('case_id', $caseIds)
+            ->where(fn ($dates) => $dates->whereDate('hearing_date', '>', today())->orWhereDate('next_hearing_date', '>', today()))
+            ->pluck('case_id')
+            ->unique();
+
+        $needsNextDate = $todayHearings
+            ->filter(fn (array $event): bool => $event['case_id'] && ! $withNextDate->contains($event['case_id']))
+            ->unique('case_id')
+            ->map(fn (array $event): array => ['case_id' => $event['case_id'], 'title' => $event['title'], 'url' => $event['url']])
+            ->values()
+            ->all();
+
+        return [
+            'hearings' => $todayHearings->count(),
+            'tomorrow' => $calendar->between(today()->addDay(), today()->addDay(), ['groups' => ['hearing']])->count(),
+            'tasks' => Task::query()
+                ->whereNotIn('status', ['completed', 'cancelled'])
+                ->whereNotNull('due_at')
+                ->where('due_at', '<=', today()->endOfDay())
+                ->count(),
+            'needs_next_date' => $needsNextDate,
+            'cleared' => $todayHearings->isNotEmpty() && $needsNextDate === [],
+        ];
     }
 
     /**

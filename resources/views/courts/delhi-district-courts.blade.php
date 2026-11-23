@@ -2,97 +2,105 @@
 
 @section('title', 'Delhi District Courts')
 @section('page-heading', 'Delhi District Courts')
-@section('meta_description', 'Delhi District Courts by court complex: Rohini, Karkardooma, Tis Hazari, Dwarka, Saket, Patiala House and Rouse Avenue, with district websites, case status, cause lists and e-filing.')
+@section('meta_description', 'Delhi District Courts by court complex: Rohini, Karkardooma, Tis Hazari, Dwarka, Saket, Patiala House and Rouse Avenue. Judges list, judges on leave, bail roster, duty magistrate, case status and cause list for every district.')
+
+@php
+    $button = 'flex min-h-11 items-center justify-center rounded-full bg-slate-100 px-3 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200';
+@endphp
 
 @section('content')
-<div class="mx-auto max-w-5xl space-y-5">
-    @include('courts.partials.breadcrumb', ['current' => 'Delhi District Courts'])
-
-    <div>
-        <h1 class="text-2xl font-semibold text-slate-900">Delhi District Courts</h1>
-        <p class="mt-1 text-sm text-slate-600">Eleven district courts in seven court complexes.</p>
-    </div>
-
-    <div class="grid gap-3 sm:grid-cols-2">
-        <a href="{{ $services['efiling'] }}" rel="noopener noreferrer"
-           class="flex items-center justify-center gap-2 rounded-2xl bg-[#16776e] px-5 py-4 text-base font-bold text-white shadow-sm hover:bg-[#125f58]">
-            <x-icon name="upload" /> E-Courts filing portal <x-icon name="external" :size="16" />
-        </a>
+<div class="mx-auto max-w-3xl space-y-4">
+    <form method="GET" action="{{ route('courts.delhi-district-courts') }}" role="search">
         <label class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm focus-within:border-[#16776e]">
             <x-icon name="search" class="text-slate-400" />
-            <span class="sr-only">Search courts</span>
-            <input type="search" data-filter-list="delhi-complexes" placeholder="Search by complex or district" class="min-h-12 w-full border-0 bg-transparent text-sm focus:ring-0">
+            <span class="sr-only">Search by judge's name or room number</span>
+            <input type="search" name="q" value="{{ $query }}" placeholder="Search by name or room no." class="min-h-12 w-full border-0 bg-transparent px-0 text-base focus:ring-0">
         </label>
-    </div>
+    </form>
 
-    <div id="delhi-complexes" class="space-y-3">
+    @if($query !== '')
+        <section aria-labelledby="search-results-heading" class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div class="flex items-center justify-between gap-2 px-1">
+                <h2 id="search-results-heading" class="text-sm font-bold text-slate-900">{{ $results->count() }} {{ \Illuminate\Support\Str::plural('court', $results->count()) }} for "{{ $query }}"</h2>
+                <a href="{{ route('courts.delhi-district-courts') }}" class="text-sm font-semibold text-[#16776e]">Clear</a>
+            </div>
+            <ul class="mt-2 divide-y divide-slate-100">
+                @forelse($results as $bench)
+                    @php $judge = $bench->judgeList()[0] ?? ['name' => null, 'designation' => null]; @endphp
+                    <li class="flex flex-wrap items-center justify-between gap-2 px-1 py-2.5">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-slate-900">{{ $judge['name'] }}</p>
+                            <p class="text-sm text-slate-600">{{ collect([$judge['designation'], $bench->court_room ? 'Room '.$bench->court_room : null, $districtNames[$bench->court_key] ?? null])->filter()->implode(' · ') }}</p>
+                        </div>
+                        @if($bench->vc_link)
+                            <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">
+                                <x-icon name="screen" :size="16" /> Join VC
+                            </a>
+                        @endif
+                    </li>
+                @empty
+                    <li class="px-1 py-4 text-sm text-slate-500">No judge or room matches. Try a surname or just the room number.</li>
+                @endforelse
+            </ul>
+        </section>
+    @endif
+
+    <a href="{{ $services['efiling'] }}" target="_blank" rel="noopener noreferrer"
+       class="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 text-lg font-bold text-white shadow-sm hover:bg-green-700">
+        <span class="rounded bg-red-600 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide">New</span> E-Courts Filing Portal
+    </a>
+
+    {{-- Delhi at a glance, from the official judges & VC lists. --}}
+    <dl class="grid grid-cols-4 gap-2 text-center">
+        @foreach([['Courts', $totals['courts']], ['Districts', $totals['districts']], ['Complexes', $totals['complexes']], ['Vacant', $totals['vacant']]] as [$label, $value])
+            <div class="rounded-2xl border border-slate-200 bg-white px-2 py-3 shadow-sm">
+                <dt class="text-xs font-semibold text-slate-500">{{ $label }}</dt>
+                <dd class="mt-0.5 text-xl font-bold tabular-nums text-slate-900 sm:text-2xl">{{ $value }}</dd>
+            </div>
+        @endforeach
+    </dl>
+
+    <div class="space-y-3">
         @foreach($complexes as $complex => $districts)
-            <details data-filter-item class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" @if($loop->first) open @endif>
-                <summary class="flex cursor-pointer list-none items-center justify-between gap-3 bg-[#142235] px-5 py-4 text-white">
+            @php
+                $complexCourts = collect($districts)->sum(fn ($district) => $stats['delhi-district-'.\Illuminate\Support\Str::slug($district['district'])]['courts'] ?? 0);
+            @endphp
+            <details class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" @if($loop->first) open @endif>
+                <summary class="flex min-h-16 cursor-pointer list-none items-center justify-between gap-3 bg-[#142235] px-5 text-white">
                     <span class="text-lg font-bold uppercase tracking-wide">{{ $complex }}</span>
-                    <span class="flex items-center gap-3 text-sm text-slate-300">
-                        {{ collect($districts)->pluck('district')->implode(', ') }}
-                        <x-icon name="chevron" class="transition group-open:rotate-180" />
+                    <span class="flex items-center gap-3 text-sm text-white/70">
+                        <span class="tabular-nums">{{ $complexCourts }} courts</span>
+                        <x-icon name="chevron" class="text-white transition group-open:rotate-180" />
                     </span>
                 </summary>
-                <div class="space-y-4 p-4">
+                <div class="space-y-4 p-3 sm:p-4">
                     @foreach($districts as $district)
+                        @php
+                            $slug = \Illuminate\Support\Str::slug($district['district']);
+                            $districtStats = $stats['delhi-district-'.$slug] ?? ['courts' => 0, 'vacant' => 0];
+                        @endphp
                         <section>
-                            <h2 class="rounded-lg bg-teal-50 px-3 py-2 text-center text-sm font-bold uppercase tracking-wide text-teal-900">{{ $district['district'] }}</h2>
-                            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                <a href="{{ route('courts.delhi-district-courts.judges', \Illuminate\Support\Str::slug($district['district'])) }}"
-                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-[#16776e] px-4 text-center text-sm font-semibold text-white hover:bg-[#125f58]">
-                                    Judges list &amp; VC
-                                </a>
-                                <a href="{{ $district['vc_links'] }}" rel="noopener noreferrer"
-                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
-                                    Official VC list <x-icon name="external" :size="14" />
-                                </a>
-                                <a href="{{ $services['cause_list'] }}" rel="noopener noreferrer"
-                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
-                                    Cause list <x-icon name="external" :size="14" />
-                                </a>
-                                <a href="{{ $district['url'] }}" rel="noopener noreferrer"
-                                   class="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-slate-100 px-4 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200">
-                                    District website <x-icon name="external" :size="14" />
-                                </a>
-                            </div>
-                            <div class="mt-2 rounded-xl bg-slate-50 px-3 py-2.5">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Case status, orders &amp; leave</p>
-                                <div class="mt-1.5 flex flex-wrap gap-1.5">
-                                    @foreach(\App\Http\Controllers\CourtLinksController::DELHI_DISTRICT_CASE_SEARCHES as $label => $path)
-                                        <a href="{{ $district['url'].$path }}" rel="noopener noreferrer"
-                                           class="inline-flex min-h-9 items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
-                                            {{ $label }} <x-icon name="external" :size="12" />
-                                        </a>
-                                    @endforeach
-                                </div>
+                            <h2 class="flex flex-wrap items-center justify-center gap-x-3 rounded-xl bg-[#16776e] px-3 py-2.5 text-center text-white">
+                                <span class="text-base font-bold uppercase tracking-wide text-white">{{ $district['district'] }}</span>
+                                <span class="text-sm font-medium text-white/85 tabular-nums">{{ $districtStats['courts'] }} courts{{ $districtStats['vacant'] ? ' · '.$districtStats['vacant'].' vacant' : '' }}</span>
+                            </h2>
+                            <div class="mt-2 grid grid-cols-2 gap-2">
+                                <a href="{{ route('courts.delhi-district-courts.judges', $slug) }}" class="{{ $button }}">Judges List</a>
+                                @foreach($pages as $label => $path)
+                                    @php $path = $label === 'Bail roster' ? ($district['bail_roster'] ?? $path) : $path; @endphp
+                                    <a href="{{ $district['url'].$path }}" target="_blank" rel="noopener noreferrer" class="{{ $button }}">{{ \Illuminate\Support\Str::title($label) }}</a>
+                                @endforeach
                             </div>
                         </section>
                     @endforeach
                 </div>
             </details>
         @endforeach
-        <p data-filter-empty hidden class="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">No court complex or district matches your search.</p>
     </div>
 
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="text-lg font-semibold text-slate-900">More for all Delhi district courts</h2>
-        <div class="mt-3 flex flex-wrap gap-2">
-            @foreach([
-                'case_status' => 'Case status (all districts)',
-                'virtual_court' => 'Virtual courts',
-                'vc_links' => 'VC hearing links',
-                'evening_court' => 'Evening (traffic) court',
-                'statistics' => 'Case statistics (NJDG)',
-                'website' => 'Delhi District Courts website',
-            ] as $key => $label)
-                <a href="{{ $services[$key] }}" rel="noopener noreferrer"
-                   class="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[#16776e] px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">
-                    {{ $label }} <x-icon name="external" :size="14" />
-                </a>
-            @endforeach
-        </div>
-    </section>
+    <p class="text-center text-xs text-slate-500">
+        Court counts from each district's official judges &amp; VC list ·
+        <a href="{{ $services['statistics'] }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#16776e] hover:underline">Pending cases (NJDG)</a>
+    </p>
 </div>
 @endsection

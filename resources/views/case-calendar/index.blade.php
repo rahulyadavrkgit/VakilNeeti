@@ -101,7 +101,7 @@
                     <p class="text-sm font-bold text-slate-900">{{ $date->format('F Y') }}</p>
                     <a href="{{ route('cases.calendar', array_merge($query, ['view' => $viewMode, 'date' => $date->copy()->addMonthNoOverflow()->toDateString()])) }}" class="rounded px-2 py-1 text-slate-600 hover:bg-slate-100" aria-label="Next month">&rsaquo;</a>
                 </div>
-                <div class="mt-3 grid grid-cols-7 text-center text-[11px] font-semibold uppercase text-slate-400">
+                <div class="mt-3 grid grid-cols-7 text-center text-xs font-semibold uppercase text-slate-400">
                     @foreach(array_map(fn ($label) => $label[0], $weekdayLabels) as $weekday)
                         <span>{{ $weekday }}</span>
                     @endforeach
@@ -218,14 +218,14 @@
                         <div class="flex min-h-[28rem] min-w-0 flex-col border-r border-slate-100 last:border-r-0 {{ $day->isToday() ? 'bg-teal-50/50' : '' }}">
                             <div class="flex items-center justify-between gap-1 border-b border-slate-100 px-2 py-2">
                                 <a href="{{ $calendarUrl(['view' => 'day', 'date' => $day->toDateString()]) }}" class="flex items-baseline gap-1.5 rounded-md px-1 hover:bg-slate-100">
-                                    <span class="text-[11px] font-bold uppercase text-slate-500">{{ $day->format('D') }}</span>
+                                    <span class="text-xs font-bold uppercase text-slate-500">{{ $day->format('D') }}</span>
                                     <span class="flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-base font-bold {{ $day->isToday() ? 'bg-[#16776e] text-white' : 'text-slate-900' }}">{{ $day->format('d') }}</span>
                                 </a>
                                 @if($dayHearings->isNotEmpty())
                                     @php $dayText = \App\Services\HearingShareText::forEvents('Hearings · '.$day->format('D d M Y'), $dayHearings); @endphp
                                     <a href="https://wa.me/?text={{ rawurlencode($dayText) }}" target="_blank" rel="noopener noreferrer" data-direct-share data-share-text="{{ $dayText }}"
                                        title="Share this day's {{ $dayHearings->count() }} {{ \Illuminate\Support\Str::plural('hearing', $dayHearings->count()) }}" aria-label="Share {{ $day->format('D d M') }} hearings"
-                                       class="inline-flex h-7 items-center gap-1 rounded-full bg-white px-2 text-[11px] font-semibold text-[#16776e] ring-1 ring-inset ring-teal-200 hover:bg-teal-50">
+                                       class="inline-flex h-7 items-center gap-1 rounded-full bg-white px-2 text-xs font-semibold text-[#16776e] ring-1 ring-inset ring-teal-200 hover:bg-teal-50">
                                         <x-icon name="share" :size="12" /> {{ $dayHearings->count() }}
                                     </a>
                                 @endif

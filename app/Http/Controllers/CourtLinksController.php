@@ -56,8 +56,8 @@ class CourtLinksController extends Controller
      */
     public const DELHI_DISTRICT_COMPLEXES = [
         'Rohini' => [
-            ['district' => 'North', 'url' => 'https://northdelhi.dcourts.gov.in/', 'vc_links' => 'https://northdelhi.dcourts.gov.in/document-category/vc-links/'],
-            ['district' => 'North West', 'url' => 'https://rohini.dcourts.gov.in/', 'vc_links' => 'https://rohini.dcourts.gov.in/document-category/vc-links/'],
+            ['district' => 'North', 'url' => 'https://northdelhi.dcourts.gov.in/', 'vc_links' => 'https://northdelhi.dcourts.gov.in/document-category/vc-links/', 'bail_roster' => 'document-category/bail-roster-link-roster/'],
+            ['district' => 'North West', 'url' => 'https://rohini.dcourts.gov.in/', 'vc_links' => 'https://rohini.dcourts.gov.in/document-category/vc-links/', 'bail_roster' => 'document-category/bail-roster-link-roster/'],
         ],
         'Karkardooma' => [
             ['district' => 'East', 'url' => 'https://eastdelhi.dcourts.gov.in/', 'vc_links' => 'https://eastdelhi.dcourts.gov.in/document-category/vc-links/'],
@@ -81,24 +81,6 @@ class CourtLinksController extends Controller
         'Rouse Avenue' => [
             ['district' => 'Central (Rouse Avenue courts)', 'url' => 'https://centraldelhi.dcourts.gov.in/', 'vc_links' => 'https://centraldelhi.dcourts.gov.in/document-category/rouse-avenue-district-court-vc-links/'],
         ],
-    ];
-
-    /**
-     * Case status searches on every Delhi district website (same paths on each district's own site),
-     * as listed on delhidistrictcourts.nic.in/casestatus. Each search is on the court's site, behind its CAPTCHA.
-     *
-     * @var array<string, string>
-     */
-    public const DELHI_DISTRICT_CASE_SEARCHES = [
-        'Case number' => 'case-status-search-by-case-number/',
-        'FIR' => 'case-status-search-by-fir-number/',
-        'Party name' => 'case-status-search-by-petitioner-respondent/',
-        'Advocate' => 'case-status-search-by-advocate/',
-        'Filing number' => 'case-status-search-by-filing-number/',
-        'Act' => 'case-status-search-by-act-type/',
-        'Case type' => 'case-status-search-by-case-type/',
-        'Orders' => 'court-orders-search-by-order-date/',
-        'Judges on leave' => 'judges-on-leave/',
     ];
 
     /**
@@ -313,6 +295,84 @@ class CourtLinksController extends Controller
         ]);
     }
 
+    /**
+     * National tribunals, by the kind of matter they hear. Only the tribunals' own websites (checked 23.11.2026).
+     *
+     * @var array<string, list<array{name: string, short: string, hears: string, url: string, efiling?: string}>>
+     */
+    public const TRIBUNALS = [
+        'Company, insolvency & debt' => [
+            ['name' => 'National Company Law Tribunal', 'short' => 'NCLT', 'hears' => 'Insolvency (IBC), company law, oppression and mismanagement.', 'url' => 'https://nclt.gov.in/', 'efiling' => 'https://efiling.nclt.gov.in/'],
+            ['name' => 'National Company Law Appellate Tribunal', 'short' => 'NCLAT', 'hears' => 'Appeals from NCLT, CCI and NFRA.', 'url' => 'https://nclat.nic.in/', 'efiling' => 'https://efiling.nclat.gov.in/'],
+            ['name' => 'Debts Recovery Tribunals & Appellate Tribunals', 'short' => 'DRT / DRAT', 'hears' => 'Bank recovery and SARFAESI matters.', 'url' => 'https://drt.gov.in/'],
+        ],
+        'Tax' => [
+            ['name' => 'Income Tax Appellate Tribunal', 'short' => 'ITAT', 'hears' => 'Income tax appeals.', 'url' => 'https://itat.gov.in/'],
+            ['name' => 'Customs, Excise & Service Tax Appellate Tribunal', 'short' => 'CESTAT', 'hears' => 'Customs, central excise and service tax appeals.', 'url' => 'https://cestat.gov.in/'],
+            ['name' => 'Goods and Services Tax Appellate Tribunal', 'short' => 'GSTAT', 'hears' => 'GST appeals.', 'url' => 'https://gstat.gov.in/'],
+        ],
+        'Service' => [
+            ['name' => 'Central Administrative Tribunal', 'short' => 'CAT', 'hears' => 'Service matters of central government employees.', 'url' => 'https://cgat.gov.in/'],
+            ['name' => 'Armed Forces Tribunal', 'short' => 'AFT', 'hears' => 'Service matters and court-martial appeals of the armed forces.', 'url' => 'https://aft.gov.in/'],
+        ],
+        'Regulatory' => [
+            ['name' => 'National Green Tribunal', 'short' => 'NGT', 'hears' => 'Environment, forests and pollution.', 'url' => 'https://greentribunal.gov.in/'],
+            ['name' => 'Appellate Tribunal for Electricity', 'short' => 'APTEL', 'hears' => 'Appeals against electricity regulators.', 'url' => 'https://aptel.gov.in/'],
+            ['name' => 'Telecom Disputes Settlement & Appellate Tribunal', 'short' => 'TDSAT', 'hears' => 'Telecom, broadcasting and IT Act appeals.', 'url' => 'https://tdsat.gov.in/'],
+        ],
+        'Consumer & claims' => [
+            ['name' => 'Consumer Commissions (National, State, District)', 'short' => 'NCDRC · e-Jagriti', 'hears' => 'Consumer complaints and appeals; e-Jagriti files in every commission.', 'url' => 'https://ncdrc.nic.in/', 'efiling' => 'https://e-jagriti.gov.in/'],
+            ['name' => 'Railway Claims Tribunal', 'short' => 'RCT', 'hears' => 'Railway accident and goods claims.', 'url' => 'https://rct.indianrail.gov.in/'],
+        ],
+    ];
+
+    public function tribunals(): View
+    {
+        return view('courts.tribunals', ['groups' => self::TRIBUNALS]);
+    }
+
+    /**
+     * All 25 High Courts: principal seat, States and UTs covered, and the court's own website (checked 24.11.2026).
+     *
+     * @var list<array{name: string, seat: string, covers: string, url: string}>
+     */
+    public const HIGH_COURTS = [
+        ['name' => 'Allahabad High Court', 'seat' => 'Prayagraj', 'covers' => 'Uttar Pradesh', 'url' => 'https://www.allahabadhighcourt.in/'],
+        ['name' => 'High Court of Andhra Pradesh', 'seat' => 'Amaravati', 'covers' => 'Andhra Pradesh', 'url' => 'https://aphc.gov.in/'],
+        ['name' => 'Bombay High Court', 'seat' => 'Mumbai', 'covers' => 'Maharashtra, Goa, Dadra & Nagar Haveli and Daman & Diu', 'url' => 'https://bombayhighcourt.gov.in/'],
+        ['name' => 'Calcutta High Court', 'seat' => 'Kolkata', 'covers' => 'West Bengal, Andaman & Nicobar Islands', 'url' => 'https://www.calcuttahighcourt.gov.in/'],
+        ['name' => 'High Court of Chhattisgarh', 'seat' => 'Bilaspur', 'covers' => 'Chhattisgarh', 'url' => 'https://highcourt.cg.gov.in/'],
+        ['name' => 'High Court of Delhi', 'seat' => 'New Delhi', 'covers' => 'Delhi', 'url' => 'https://delhihighcourt.nic.in/'],
+        ['name' => 'Gauhati High Court', 'seat' => 'Guwahati', 'covers' => 'Assam, Nagaland, Mizoram, Arunachal Pradesh', 'url' => 'https://ghconline.gov.in/'],
+        ['name' => 'High Court of Gujarat', 'seat' => 'Ahmedabad', 'covers' => 'Gujarat', 'url' => 'https://gujarathighcourt.nic.in/'],
+        ['name' => 'High Court of Himachal Pradesh', 'seat' => 'Shimla', 'covers' => 'Himachal Pradesh', 'url' => 'https://highcourt.hp.gov.in/'],
+        ['name' => 'High Court of Jammu & Kashmir and Ladakh', 'seat' => 'Srinagar & Jammu', 'covers' => 'Jammu & Kashmir, Ladakh', 'url' => 'https://jkhighcourt.nic.in/'],
+        ['name' => 'High Court of Jharkhand', 'seat' => 'Ranchi', 'covers' => 'Jharkhand', 'url' => 'https://jharkhandhighcourt.nic.in/'],
+        ['name' => 'High Court of Karnataka', 'seat' => 'Bengaluru', 'covers' => 'Karnataka', 'url' => 'https://judiciary.karnataka.gov.in/'],
+        ['name' => 'High Court of Kerala', 'seat' => 'Kochi', 'covers' => 'Kerala, Lakshadweep', 'url' => 'https://highcourt.kerala.gov.in/'],
+        ['name' => 'High Court of Madhya Pradesh', 'seat' => 'Jabalpur', 'covers' => 'Madhya Pradesh', 'url' => 'https://mphc.gov.in/'],
+        ['name' => 'Madras High Court', 'seat' => 'Chennai', 'covers' => 'Tamil Nadu, Puducherry', 'url' => 'https://www.mhc.tn.gov.in/judis/'],
+        ['name' => 'High Court of Manipur', 'seat' => 'Imphal', 'covers' => 'Manipur', 'url' => 'https://hcmimphal.nic.in/'],
+        ['name' => 'High Court of Meghalaya', 'seat' => 'Shillong', 'covers' => 'Meghalaya', 'url' => 'https://meghalayahighcourt.nic.in/'],
+        ['name' => 'Orissa High Court', 'seat' => 'Cuttack', 'covers' => 'Odisha', 'url' => 'https://www.orissahighcourt.nic.in/'],
+        ['name' => 'Patna High Court', 'seat' => 'Patna', 'covers' => 'Bihar', 'url' => 'https://patnahighcourt.gov.in/'],
+        ['name' => 'High Court of Punjab & Haryana', 'seat' => 'Chandigarh', 'covers' => 'Punjab, Haryana, Chandigarh', 'url' => 'https://highcourtchd.gov.in/'],
+        ['name' => 'Rajasthan High Court', 'seat' => 'Jodhpur', 'covers' => 'Rajasthan', 'url' => 'https://hcraj.nic.in/'],
+        ['name' => 'High Court of Sikkim', 'seat' => 'Gangtok', 'covers' => 'Sikkim', 'url' => 'https://hcs.gov.in/'],
+        ['name' => 'High Court for the State of Telangana', 'seat' => 'Hyderabad', 'covers' => 'Telangana', 'url' => 'https://tshc.gov.in/'],
+        ['name' => 'High Court of Tripura', 'seat' => 'Agartala', 'covers' => 'Tripura', 'url' => 'https://thc.nic.in/'],
+        ['name' => 'High Court of Uttarakhand', 'seat' => 'Nainital', 'covers' => 'Uttarakhand', 'url' => 'https://highcourtofuttarakhand.gov.in/'],
+    ];
+
+    public function highCourts(): View
+    {
+        return view('courts.high-courts', [
+            'courts' => self::HIGH_COURTS,
+            'caseStatus' => 'https://hcservices.ecourts.gov.in/',
+            'efiling' => 'https://filing.ecourts.gov.in/',
+        ]);
+    }
+
     public function ecourtsServices(): View
     {
         return view('courts.links', [
@@ -326,11 +386,52 @@ class CourtLinksController extends Controller
         ]);
     }
 
-    public function delhiDistrictCourts(): View
+    /**
+     * The same pages on every Delhi district website, for the six buttons under each district.
+     * Bail rosters have no fixed page on most sites, so their search opens the latest roster.
+     *
+     * @var array<string, string>
+     */
+    public const DELHI_DISTRICT_PAGES = [
+        'Judges on leave' => 'judges-on-leave/',
+        'Bail roster' => '?s=bail+roster',
+        'Duty magistrate' => 'duty-magistrate/',
+        'Case status / Order' => 'case-status-search-by-case-number/',
+        'Cause list' => 'cause-list-%e2%81%84-daily-board/',
+    ];
+
+    public function delhiDistrictCourts(Request $request): View
     {
+        $benches = CourtBench::query()->where('court_key', 'like', 'delhi-district-%')->get();
+        $isVacant = fn (CourtBench $bench): bool => (bool) preg_match('/\bvacant\b/i', collect($bench->judgeList())->pluck('name')->implode(' '));
+
+        // Courts and vacancies per district list, from the official judges & VC lists.
+        $stats = $benches->groupBy('court_key')->map(fn ($rooms): array => [
+            'courts' => $rooms->count(),
+            'vacant' => $rooms->filter($isVacant)->count(),
+        ]);
+
+        $query = Str::of((string) $request->query('q'))->squish()->limit(60, '')->toString();
+        $results = mb_strlen($query) < 2 ? collect() : $benches
+            ->filter(function (CourtBench $bench) use ($query): bool {
+                $haystack = collect($bench->judgeList())->flatMap(fn (array $judge): array => [$judge['name'] ?? '', $judge['designation'] ?? ''])
+                    ->push((string) $bench->court_room)
+                    ->implode(' ');
+
+                return Str::contains(Str::lower($haystack), Str::lower($query));
+            })
+            ->take(40)
+            ->values();
+
         return view('courts.delhi-district-courts', [
             'complexes' => self::DELHI_DISTRICT_COMPLEXES,
             'services' => self::DELHI_DISTRICT_SERVICES,
+            'pages' => self::DELHI_DISTRICT_PAGES,
+            'stats' => $stats,
+            'totals' => ['courts' => $benches->count(), 'vacant' => $benches->filter($isVacant)->count(), 'districts' => 11, 'complexes' => count(self::DELHI_DISTRICT_COMPLEXES)],
+            'query' => $query,
+            'results' => $results,
+            'districtNames' => collect(self::DELHI_DISTRICT_COMPLEXES)->flatten(1)->mapWithKeys(fn (array $district): array => ['delhi-district-'.Str::slug($district['district']) => $district['district']]),
         ]);
     }
 

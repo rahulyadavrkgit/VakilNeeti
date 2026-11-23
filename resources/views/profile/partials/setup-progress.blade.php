@@ -24,7 +24,7 @@
                 @foreach($setupSteps as $index => $setupStep)
                     <li>
                         <span class="block h-1.5 rounded-full {{ $index === $stepNumber ? 'bg-[#16776e]' : ($setupStep['done'] ? 'bg-teal-300' : 'bg-white ring-1 ring-inset ring-teal-200') }}"></span>
-                        <span class="mt-1 block truncate text-[11px] font-semibold {{ $index === $stepNumber ? 'text-[#16776e]' : 'text-slate-500' }}">
+                        <span class="mt-1 block truncate text-xs font-semibold {{ $index === $stepNumber ? 'text-[#16776e]' : 'text-slate-500' }}">
                             {{ $setupStep['done'] ? '✓ ' : '' }}{{ $setupStep['label'] }}
                         </span>
                     </li>

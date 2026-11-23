@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-IN">
+@php
+    // Appearance: the signed-in person's choice from Settings; guests choose on this device.
+    $themeChoice = auth()->user()?->preference('theme') ?? 'system';
+@endphp
+<html lang="en-IN" data-theme="{{ $themeChoice }}" @auth data-theme-saved @endauth>
 <head>
     @php
         // Search engines: public pages are indexed with a clean canonical address; private pages are not.
@@ -39,6 +43,10 @@
     <meta name="twitter:title" content="{{ $seoTitle }}">
     <meta name="twitter:description" content="{{ $seoDescription }}">
     <meta name="theme-color" content="#142235">
+    @auth
+        <meta name="vn-search-sheet" content="{{ route('sheets.search') }}">
+        <meta name="vn-search-page" content="{{ route('search') }}">
+    @endauth
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-mark.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" sizes="32x32 48x48">
     <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
@@ -59,6 +67,7 @@
     @endif
     @stack('structured-data')
     <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
+
         try {
             if (localStorage.getItem('vn-sidebar-collapsed') === '1') {
                 document.documentElement.classList.add('vn-sidebar-collapsed');
@@ -72,6 +81,7 @@
             window.dispatchEvent(new Event('vn-installable'));
         });
     </script>
+    @include('layouts.partials.theme-script')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 
@@ -83,12 +93,30 @@
             --vn-accent: #16776e;
             --vn-accent-dark: #125f58;
             --vn-gold: #e6b84a;
-            --vn-canvas: #f4f6f8;
+            /* Warm paper rather than cold grey: easier on the eyes over a long working day. */
+            --vn-canvas: #f6f5f1;
             --vn-line: #e2e8ef;
+            --vn-text: #172536;
         }
-        body { background: var(--vn-canvas); color: #172536; font-family: var(--font-sans), sans-serif; }
-        .vn-sidebar h1, .vn-content h1, .vn-content h2, .vn-content h3, #vn-auth-dialog h2 { font-family: var(--font-serif), serif; letter-spacing: -0.02em; }
-        .vn-content h2, .vn-content h3 { color: var(--vn-ink); }
+        html.dark {
+            --vn-canvas: #0d1524;
+            --vn-line: #24344d;
+            --vn-text: #e3e9f1;
+        }
+        /* Figures line up in columns: dates, item numbers, rooms, amounts. */
+        body { background: var(--vn-canvas); color: var(--vn-text); font-family: var(--font-sans), sans-serif; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+        /* Serif only for page titles; everything else in the device's own clean sans-serif. */
+        .vn-content h1, #vn-auth-dialog h2 { font-family: var(--font-serif), serif; letter-spacing: -0.01em; }
+        .vn-content h2, .vn-content h3 { color: var(--vn-ink); letter-spacing: -0.005em; }
+        html.dark .vn-content h2, html.dark .vn-content h3 { color: #eef2f7; }
+        html.dark .vn-sidebar { background: #0a111d; border-right-color: #1c2a40; }
+        html.dark .vn-main-header { background: rgba(13, 21, 36, .92); }
+        html.dark .vn-mobile-nav { background: rgba(13, 21, 36, .97); border-top-color: #1f2d44; box-shadow: 0 -8px 28px rgba(0,0,0,.35); }
+        html.dark .vn-mobile-nav a, html.dark .vn-mobile-nav button { color: #93a1b4; }
+        html.dark .vn-mobile-nav .is-current { color: #6fd0c3; background: #15302f; }
+        html.dark .vn-footer { background-color: #0a111d; }
+        html.dark .vn-event-peek { background: #141f31; border-color: #2a3b56; }
+        html.dark img[data-invert-dark] { filter: invert(1) hue-rotate(180deg); }
         .vn-content input:focus, .vn-content select:focus, .vn-content textarea:focus, #vn-auth-dialog input:focus, #vn-auth-dialog select:focus {
             border-color: var(--vn-accent);
             box-shadow: 0 0 0 3px rgba(22, 119, 110, .18);
@@ -98,7 +126,7 @@
 
         /* Side menu. */
         .vn-sidebar { background: var(--vn-ink); color: #f3f6fa; border-right: 1px solid #2b3b50; }
-        .vn-nav-heading { color: #91c9c1; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; padding: 0 12px; margin-bottom: 9px; }
+        .vn-nav-heading { color: #91c9c1; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; padding: 0 12px; margin-bottom: 9px; }
         .vn-nav-link { display: flex; align-items: center; min-height: 42px; padding: 9px 12px; margin: 3px 0; border-radius: 9px; color: #e4ebf3 !important; font-size: 13px; font-weight: 500; text-decoration: none; }
         .vn-nav-link:hover { background: #263950; color: #fff !important; }
         .vn-nav-link.vn-active { background: #176f68; color: #fff !important; font-weight: 700; box-shadow: inset 3px 0 0 var(--vn-gold); }
@@ -164,7 +192,7 @@
         @media (min-width: 768px) { .vn-sidebar { position: sticky; top: 0; height: 100vh; } }
         .vn-nav-group { border-radius: 12px; }
         .vn-nav-group + .vn-nav-group { margin-top: 6px; }
-        .vn-nav-group-title { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 6px 12px; border-radius: 9px; color: #91c9c1; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; cursor: pointer; list-style: none; }
+        .vn-nav-group-title { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 6px 12px; border-radius: 9px; color: #91c9c1; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; cursor: pointer; list-style: none; }
         .vn-nav-group-title::-webkit-details-marker, .vn-nav-sub > summary::-webkit-details-marker { display: none; }
         .vn-nav-group-title:hover { background: rgba(255,255,255,.06); }
         .vn-nav-chevron { transition: transform .18s ease; }
@@ -205,7 +233,7 @@
 
 @endphp
 
-<body class="min-h-screen">
+<body class="min-h-screen {{ request()->boolean('embed') ? 'vn-embed' : '' }}">
 
 <button type="button" class="vn-sidebar-backdrop" id="vn-sidebar-backdrop" aria-label="Close navigation"></button>
 <div class="min-h-screen flex">
@@ -256,11 +284,11 @@
                         <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-[#16776e] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#16776e]/15">
                             <x-icon name="search" :size="17" class="text-slate-400" />
                             <span class="sr-only">Search cases, clients and invoices</span>
-                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search cases, judges, rooms, CNR…"
+                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search cases, judges, rooms, CNR…  (Ctrl K)"
                                    class="h-10 w-52 border-0 bg-transparent px-0 text-sm focus:ring-0 xl:w-72">
                         </label>
                     </form>
-                    <a href="{{ route('search') }}" aria-label="Search" title="Search" class="{{ $headerIcon }} lg:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
+                    <a href="{{ route('search') }}" data-search-open aria-label="Search" title="Search (Ctrl K)" class="{{ $headerIcon }} lg:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
                         <x-icon name="search" :size="20" />
                     </a>
 
@@ -269,12 +297,11 @@
                             <x-icon name="plus" :size="20" /><span class="hidden sm:inline">New</span>
                         </summary>
                         <div class="{{ $headerMenu }} w-60 py-1.5">
-                            <p class="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Add new</p>
-                            <a href="{{ route('hearings.create') }}" class="{{ $headerMenuItem }}"><x-icon name="calendar" :size="18" class="text-[#16776e]" />Hearing</a>
-                            <a href="{{ route('tasks.create') }}" class="{{ $headerMenuItem }}"><x-icon name="check" :size="18" class="text-[#16776e]" />Task or appointment</a>
-                            <a href="{{ route('cases.manual') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />Case</a>
-                            <a href="{{ route('cases.find') }}" class="{{ $headerMenuItem }}"><x-icon name="download" :size="18" class="text-[#16776e]" />Import cases</a>
-                            <a href="{{ route('clients.create') }}" class="{{ $headerMenuItem }}"><x-icon name="people" :size="18" class="text-[#16776e]" />Client</a>
+                            <p class="px-4 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Add new</p>
+                            <a href="{{ route('hearings.create') }}" data-sheet="{{ route('sheets.next-date') }}" class="{{ $headerMenuItem }}"><x-icon name="calendar" :size="18" class="text-[#16776e]" />Hearing / next date</a>
+                            <a href="{{ route('cases.manual') }}" data-sheet="{{ route('sheets.case') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />Case</a>
+                            <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="{{ $headerMenuItem }}"><x-icon name="check" :size="18" class="text-[#16776e]" />Task</a>
+                            <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="{{ $headerMenuItem }}"><x-icon name="people" :size="18" class="text-[#16776e]" />Client</a>
                             <a href="{{ route('invoices.create') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-[#16776e]" />Invoice</a>
                         </div>
                     </details>
@@ -321,11 +348,9 @@
                                     <span class="block truncate text-xs text-slate-500">{{ auth()->user()->mobile ?? auth()->user()->email }}</span>
                                 </span>
                             </div>
-                            <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />Profile settings</a>
+                            <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />Settings</a>
                             <a href="{{ route('firm-profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="building" :size="18" class="text-slate-500" />{{ auth()->user()->account_type === 'company' ? 'Firm profile' : 'Office & billing' }}</a>
-                            <a href="{{ route('profile.practice-states.index') }}" class="{{ $headerMenuItem }}"><x-icon name="map" :size="18" class="text-slate-500" />Practice States</a>
-                            <a href="{{ route('profile.invoice-settings.index') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-slate-500" />Invoice &amp; GST</a>
-                            <a href="{{ route('notifications.index') }}" class="{{ $headerMenuItem }}"><x-icon name="bell" :size="18" class="text-slate-500" />Notifications</a>
+                            @include('layouts.partials.theme-switch')
                             <a href="{{ route('app.download') }}" class="{{ $headerMenuItem }}"><x-icon name="phone" :size="18" class="text-slate-500" />Get the app</a>
                             <form method="POST" action="{{ auth()->user()->is_admin ? route('admin.logout') : route('user.logout') }}" class="mt-1 border-t border-slate-100 pt-1">
                                 @csrf
@@ -340,6 +365,9 @@
                     <a href="{{ route('app.download') }}" class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 lg:inline-flex">
                         <x-icon name="phone" :size="18" /> Get the app
                     </a>
+                    <button type="button" data-theme-cycle aria-label="Switch light or dark" title="Light or dark" class="{{ $headerIcon }}">
+                        <x-icon name="moon" :size="19" />
+                    </button>
                     <a href="{{ route('login') }}" data-vn-auth-open="login" class="inline-flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-800 hover:bg-slate-100">Log in</a>
                     <a href="{{ route('register') }}" data-vn-auth-open="register" class="inline-flex h-10 items-center rounded-xl bg-[#16776e] px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Sign up</a>
                 @endauth
@@ -362,7 +390,7 @@
 
         @php
             $footerLink = 'text-[#d3dde8] transition hover:text-white hover:underline';
-            $footerHeading = 'mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#e6b84a]';
+            $footerHeading = 'mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#e6b84a]';
         @endphp
         @auth
             <p class="vn-footer border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 md:hidden">
@@ -391,11 +419,11 @@
                             <p class="{{ $footerHeading }}">Your practice</p>
                             <ul class="space-y-2.5">
                                 @auth
-                                    <li><a href="{{ route('cases.index') }}" class="{{ $footerLink }}">My cases</a></li>
-                                    <li><a href="{{ route('cases.calendar') }}" class="{{ $footerLink }}">Calendar &amp; hearings</a></li>
+                                    <li><a href="{{ route('cases.index') }}" class="{{ $footerLink }}">Cases</a></li>
+                                    <li><a href="{{ route('cases.calendar') }}" class="{{ $footerLink }}">Calendar</a></li>
                                     <li><a href="{{ route('clients.index') }}" class="{{ $footerLink }}">Clients</a></li>
-                                    <li><a href="{{ route('invoices.index') }}" class="{{ $footerLink }}">Invoices</a></li>
-                                    <li><a href="{{ route('profile.index') }}" class="{{ $footerLink }}">Profile settings</a></li>
+                                    <li><a href="{{ route('billing.index') }}" class="{{ $footerLink }}">Billing</a></li>
+                                    <li><a href="{{ route('profile.index') }}" class="{{ $footerLink }}">Settings</a></li>
                                 @else
                                     <li><a href="{{ route('register') }}" data-vn-auth-open="register" class="{{ $footerLink }}">Create an account</a></li>
                                     <li><a href="{{ route('login') }}" data-vn-auth-open="login" class="{{ $footerLink }}">Log in</a></li>
@@ -406,31 +434,29 @@
                         <div>
                             <p class="{{ $footerHeading }}">Courts</p>
                             <ul class="space-y-2.5">
-                                <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">Supreme Court</a></li>
-                                <li><a href="{{ route('courts.delhi-high-court') }}" class="{{ $footerLink }}">Delhi High Court</a></li>
+                                <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">All courts</a></li>
+                                <li><a href="{{ route('courts.high-courts') }}" class="{{ $footerLink }}">High Courts</a></li>
                                 <li><a href="{{ route('courts.delhi-district-courts') }}" class="{{ $footerLink }}">Delhi District Courts</a></li>
-                                <li><a href="{{ route('courts.ecourts-services') }}" class="{{ $footerLink }}">eCourts services</a></li>
+                                <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">Supreme Court</a></li>
+                                <li><a href="{{ route('tribunals.index') }}" class="{{ $footerLink }}">Tribunals</a></li>
                                 <li><a href="{{ route('courts.display-boards') }}" class="{{ $footerLink }}">Display boards</a></li>
                             </ul>
                         </div>
                         <div>
-                            <p class="{{ $footerHeading }}">Legal reference</p>
+                            <p class="{{ $footerHeading }}">Library</p>
                             <ul class="space-y-2.5">
                                 <li><a href="{{ route('bare-acts.index') }}" class="{{ $footerLink }}">Bare Acts</a></li>
                                 <li><a href="{{ route('new-criminal-laws.index') }}" class="{{ $footerLink }}">New criminal laws</a></li>
-                                <li><a href="{{ route('court-fee.index') }}" class="{{ $footerLink }}">Court fee calculator</a></li>
-                                <li><a href="{{ route('miscellaneous-forms.index') }}" class="{{ $footerLink }}">Legal forms</a></li>
-                                <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">All courts</a></li>
+                                <li><a href="{{ route('court-fee.index') }}" class="{{ $footerLink }}">Court fee</a></li>
+                                <li><a href="{{ route('miscellaneous-forms.index') }}" class="{{ $footerLink }}">Forms</a></li>
                             </ul>
                         </div>
                     </nav>
                 </div>
 
-                <div class="mt-10 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-xs leading-relaxed text-[#b4c2d1]">
-                    <strong class="font-semibold text-white">Disclaimer:</strong>
-                    Information here is for general information and educational purposes only and is not legal advice. Laws and court links
-                    change, so check the official source before relying on it. VakilNiti is not affiliated with any court or government body.
-                </div>
+                <p class="mt-10 text-xs leading-relaxed text-[#b4c2d1]">
+                    General information, not legal advice. Check the official source before relying on it. VakilNiti is not affiliated with any court or government body.
+                </p>
 
                 <div class="mt-6 flex flex-col gap-2 border-t border-white/10 pt-5 text-xs text-[#93a4b7] sm:flex-row sm:items-center sm:justify-between">
                     <p>&copy; {{ date('Y') }} VakilNiti. All rights reserved.</p>

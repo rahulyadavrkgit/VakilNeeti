@@ -132,7 +132,7 @@
 
                             <form method="POST"
                                   action="{{ route('tds.follow-ups.complete', $followUp) }}"
-                                  data-confirm="Mark this follow-up as completed?">
+                                 >
                                 @csrf
                                 @method('PUT')
 

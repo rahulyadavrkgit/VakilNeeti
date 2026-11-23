@@ -162,19 +162,19 @@
                     <a href="{{ route('cases.show', $case) }}" class="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl px-1 py-2 text-center {{ $tileClass }}"
                        title="{{ $nextHearing ? 'Next hearing' : ($lastPastHearing ? 'Last date has passed: check the case status' : 'No hearing date recorded') }}">
                         @if($tileDate)
-                            <span class="text-[11px] font-bold uppercase">{{ $nextHearing && $tileDate->isToday() ? 'Today' : ($nextHearing && $tileDate->isTomorrow() ? 'Tmrw' : $tileDate->format('M')) }}</span>
+                            <span class="text-xs font-bold uppercase">{{ $nextHearing && $tileDate->isToday() ? 'Today' : ($nextHearing && $tileDate->isTomorrow() ? 'Tmrw' : $tileDate->format('M')) }}</span>
                             <span class="text-xl font-extrabold leading-tight">{{ $tileDate->format('d') }}</span>
-                            <span class="text-[10px] font-semibold">{{ $nextHearing ? ($upcomingDate['time'] ? substr((string) $upcomingDate['time'], 0, 5) : $tileDate->format('Y')) : 'Review' }}</span>
+                            <span class="text-[11px] font-semibold">{{ $nextHearing ? ($upcomingDate['time'] ? substr((string) $upcomingDate['time'], 0, 5) : $tileDate->format('Y')) : 'Review' }}</span>
                         @else
                             <x-icon name="calendar" :size="20" />
-                            <span class="mt-0.5 text-[10px] font-semibold">No date</span>
+                            <span class="mt-0.5 text-[11px] font-semibold">No date</span>
                         @endif
                     </a>
 
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                             <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                                <a href="{{ route('cases.show', $case) }}" class="min-w-0 break-words text-base font-semibold leading-snug text-slate-900 hover:text-[#16776e]">{{ $case->case_title ?: 'Untitled case' }}</a>
+                                <a href="{{ route('cases.show', $case) }}" data-sheet="{{ route('sheets.case-view', $case) }}" class="min-w-0 break-words text-base font-semibold leading-snug text-slate-900 hover:text-[#16776e]">{{ $case->case_title ?: 'Untitled case' }}</a>
                                 <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" :edit-url="route('cases.edit', $case)" />
                             </div>
                             <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>

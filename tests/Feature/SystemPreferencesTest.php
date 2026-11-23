@@ -58,6 +58,47 @@ class SystemPreferencesTest extends TestCase
         $this->assertFalse($user->preference('remind_invoices'));
     }
 
+    public function test_appearance_is_saved_from_the_account_menu_and_set_on_every_page(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('profile.index'))
+            ->assertSee('data-theme="system"', false)
+            ->assertSee('data-theme-saved', false)
+            ->assertSee('data-theme-switch', false);
+
+        $this->postJson(route('profile.theme.update'), ['theme' => 'dark'])->assertOk()->assertJson(['theme' => 'dark']);
+        $this->postJson(route('profile.theme.update'), ['theme' => 'purple'])->assertJsonValidationErrors('theme');
+
+        $this->assertSame('dark', $user->fresh()->preference('theme'));
+        $this->get(route('cases.index'))->assertSee('data-theme="dark"', false);
+
+        // Saving the Settings form without an appearance choice keeps it.
+        $this->post(route('profile.system-preferences.update'), ['calendar_view' => 'week', 'week_starts_on' => 'sunday', 'remind_hearings' => 'today']);
+        $this->assertSame('dark', $user->fresh()->preference('theme'));
+    }
+
+    public function test_home_shows_today_at_a_glance_and_when_the_day_is_cleared(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $case = LegalCase::create(['case_title' => 'Asha vs State', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-10']);
+        Task::create(['title' => 'File reply', 'due_at' => '2026-03-10 10:00:00', 'priority' => 'high', 'status' => 'pending']);
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSeeInOrder(['1', 'today', '0', 'tomorrow', '1', 'task due'])
+            ->assertSee('1 matter today without a next date')
+            ->assertDontSee('Day cleared');
+
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-04-02']);
+
+        $this->get(route('dashboard'))
+            ->assertSee('Day cleared · every matter today has its next date')
+            ->assertDontSee('without a next date');
+    }
+
     public function test_rejects_options_that_are_not_offered(): void
     {
         $user = User::factory()->create();

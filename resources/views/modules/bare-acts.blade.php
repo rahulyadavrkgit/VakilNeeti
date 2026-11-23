@@ -12,10 +12,6 @@
         <p class="mt-2 max-w-3xl text-sm text-slate-300">Common Central Acts, with links to the official India Code.</p>
     </section>
 
-    <div role="note" class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-        This is an index, not the text of the Acts and not a complete or authoritative catalogue. Always verify the latest amendments,
-        commencement dates, repeal and savings provisions, and the law applicable to the facts of a matter.
-    </div>
 
     <section id="central-acts" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-wrap items-end justify-between gap-4">
@@ -76,6 +72,7 @@
             Open India Code
         </a>
     </section>
+    <p class="text-xs text-slate-500">An index with links to India Code, not the text of the Acts. Check amendments and commencement before relying on it.</p>
 </div>
 @endsection
 

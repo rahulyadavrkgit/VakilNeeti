@@ -4,8 +4,12 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Dark mode follows the <html class="dark"> set in the layout (System, Light or Dark in Settings). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-    --font-sans: 'Aptos', 'Segoe UI', 'Helvetica Neue', Arial, ui-sans-serif, sans-serif;
+    /* The device's own interface font: San Francisco on iPhone, Roboto on Android, Segoe UI on Windows; Noto covers Hindi. */
+    --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', 'Helvetica Neue', Arial, sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
 
     --color-blue-50: #edf8f6;
@@ -81,6 +85,166 @@
     --color-emerald-900: #0c3b37;
     --color-emerald-950: #082724;
 }
+
+/*
+ * Dark mode. Every page is written with the light palette, so instead of a dark: variant on each
+ * element the palette itself turns over: pale tints become deep tints, dark text becomes light text,
+ * and the middle shades (400–600, used by buttons and badges) stay as they are.
+ */
+.dark {
+    color-scheme: dark;
+    --vn-dark-canvas: #0d1524;
+    --vn-dark-surface: #141f31;
+
+    --color-slate-50: #18243a;
+    --color-slate-100: #1e2c44;
+    --color-slate-200: #2a3b56;
+    --color-slate-300: #3b4e6b;
+    --color-slate-400: #7d8ca1;
+    --color-slate-500: #95a3b6;
+    --color-slate-600: #aab6c6;
+    --color-slate-700: #c5cedb;
+    --color-slate-800: #dbe2ea;
+    --color-slate-900: #eaeff5;
+    --color-slate-950: #f4f7fa;
+    --color-gray-50: #18243a;
+    --color-gray-100: #1e2c44;
+    --color-gray-200: #2a3b56;
+    --color-gray-300: #3b4e6b;
+    --color-gray-400: #7d8ca1;
+    --color-gray-500: #95a3b6;
+    --color-gray-600: #aab6c6;
+    --color-gray-700: #c5cedb;
+    --color-gray-800: #dbe2ea;
+    --color-gray-900: #eaeff5;
+    --color-gray-950: #f4f7fa;
+}
+
+/* Tinted families: pale backgrounds become deep tints of the same colour; deep text becomes a light tint. */
+.dark {
+    --vn-tint-base: #141f31;
+}
+
+.dark {
+    --color-blue-50: color-mix(in oklab, #238b80 16%, var(--vn-tint-base));
+    --color-blue-100: color-mix(in oklab, #238b80 24%, var(--vn-tint-base));
+    --color-blue-200: color-mix(in oklab, #238b80 36%, var(--vn-tint-base));
+    --color-blue-300: color-mix(in oklab, #238b80 52%, var(--vn-tint-base));
+    --color-blue-700: #6fd0c3;
+    --color-blue-800: #9be0d6;
+    --color-blue-900: #c2ede7;
+    --color-blue-950: #e3f7f4;
+    --color-emerald-50: color-mix(in oklab, #238b80 16%, var(--vn-tint-base));
+    --color-emerald-100: color-mix(in oklab, #238b80 24%, var(--vn-tint-base));
+    --color-emerald-200: color-mix(in oklab, #238b80 36%, var(--vn-tint-base));
+    --color-emerald-300: color-mix(in oklab, #238b80 52%, var(--vn-tint-base));
+    --color-emerald-700: #6fd0c3;
+    --color-emerald-800: #9be0d6;
+    --color-emerald-900: #c2ede7;
+    --color-emerald-950: #e3f7f4;
+    --color-teal-50: color-mix(in oklab, #14b8a6 14%, var(--vn-tint-base));
+    --color-teal-100: color-mix(in oklab, #14b8a6 22%, var(--vn-tint-base));
+    --color-teal-200: color-mix(in oklab, #14b8a6 34%, var(--vn-tint-base));
+    --color-teal-300: color-mix(in oklab, #14b8a6 50%, var(--vn-tint-base));
+    --color-teal-700: #6fd0c3;
+    --color-teal-800: #9be0d6;
+    --color-teal-900: #c2ede7;
+    --color-teal-950: #e3f7f4;
+    --color-indigo-50: #1a2740;
+    --color-indigo-100: #22324f;
+    --color-indigo-200: #2e4263;
+    --color-indigo-300: #4b6385;
+    --color-indigo-700: #c8d6e8;
+    --color-indigo-800: #dde6f2;
+    --color-indigo-900: #ecf1f8;
+    --color-indigo-950: #f5f8fc;
+    --color-amber-50: color-mix(in oklab, #c29a35 14%, var(--vn-tint-base));
+    --color-amber-100: color-mix(in oklab, #c29a35 22%, var(--vn-tint-base));
+    --color-amber-200: color-mix(in oklab, #c29a35 34%, var(--vn-tint-base));
+    --color-amber-300: color-mix(in oklab, #c29a35 50%, var(--vn-tint-base));
+    --color-amber-700: #e6c56f;
+    --color-amber-800: #efd796;
+    --color-amber-900: #f6e7bd;
+    --color-amber-950: #fbf3dd;
+    --color-red-50: color-mix(in oklab, #ef4444 14%, var(--vn-tint-base));
+    --color-red-100: color-mix(in oklab, #ef4444 22%, var(--vn-tint-base));
+    --color-red-200: color-mix(in oklab, #ef4444 34%, var(--vn-tint-base));
+    --color-red-300: color-mix(in oklab, #ef4444 50%, var(--vn-tint-base));
+    --color-red-700: #fca5a5;
+    --color-red-800: #fecaca;
+    --color-red-900: #fee2e2;
+    --color-red-950: #fef2f2;
+    --color-green-50: color-mix(in oklab, #22c55e 13%, var(--vn-tint-base));
+    --color-green-100: color-mix(in oklab, #22c55e 20%, var(--vn-tint-base));
+    --color-green-200: color-mix(in oklab, #22c55e 32%, var(--vn-tint-base));
+    --color-green-300: color-mix(in oklab, #22c55e 48%, var(--vn-tint-base));
+    --color-green-700: #86efac;
+    --color-green-800: #bbf7d0;
+    --color-green-900: #dcfce7;
+    --color-green-950: #f0fdf4;
+    --color-rose-50: color-mix(in oklab, #f43f5e 14%, var(--vn-tint-base));
+    --color-rose-100: color-mix(in oklab, #f43f5e 22%, var(--vn-tint-base));
+    --color-rose-700: #fda4af;
+    --color-rose-800: #fecdd3;
+    --color-sky-50: color-mix(in oklab, #0ea5e9 14%, var(--vn-tint-base));
+    --color-sky-100: color-mix(in oklab, #0ea5e9 22%, var(--vn-tint-base));
+    --color-sky-700: #7dd3fc;
+    --color-sky-800: #bae6fd;
+    --color-purple-50: color-mix(in oklab, #a855f7 14%, var(--vn-tint-base));
+    --color-purple-100: color-mix(in oklab, #a855f7 22%, var(--vn-tint-base));
+    --color-purple-700: #d8b4fe;
+    --color-purple-800: #e9d5ff;
+}
+
+/*
+ * White cards and fixed brand colours written as exact values. These rules sit outside Tailwind's
+ * layers, so they win over the utilities they replace.
+ */
+.dark .bg-white,
+.dark .hover\:bg-white:hover { background-color: var(--vn-dark-surface); }
+.dark .bg-white\/95 { background-color: color-mix(in oklab, var(--vn-dark-surface) 95%, transparent); }
+.dark .bg-white\/70 { background-color: color-mix(in oklab, var(--vn-dark-surface) 70%, transparent); }
+.dark .bg-white\/60 { background-color: color-mix(in oklab, var(--vn-dark-surface) 60%, transparent); }
+.dark .text-\[\#16776e\],
+.dark .hover\:text-\[\#16776e\]:hover,
+.dark .text-\[\#12645d\],
+.dark .text-\[\#238b80\] { color: #5cc4b7; }
+.dark .text-\[\#142235\],
+.dark .text-\[\#475467\] { color: var(--color-slate-900); }
+/*
+ * Panels and buttons that are dark in light mode (navy bands, dark buttons) stay exactly as they are:
+ * inside them the original palette comes back, so their background and the text on it keep their contrast.
+ */
+.dark :is(.bg-slate-900, .bg-slate-800, .bg-slate-700, .bg-gray-700, .bg-indigo-700, .hover\:bg-slate-800, .hover\:bg-slate-900) {
+    --color-slate-50: #f7f9fb;
+    --color-slate-100: #eef2f6;
+    --color-slate-200: #e2e8ef;
+    --color-slate-300: #cdd6e0;
+    --color-slate-400: #8592a3;
+    --color-slate-500: #667385;
+    --color-slate-600: #4b5768;
+    --color-slate-700: #354153;
+    --color-slate-800: #232e3d;
+    --color-slate-900: #1c2b44;
+    --color-slate-950: #0b1522;
+    --color-gray-700: #354153;
+    --color-indigo-700: #24385a;
+}
+
+/* Links written in the mid teal or navy shade: lighter on dark cards. */
+.dark .text-blue-600,
+.dark .hover\:text-blue-600:hover { color: #5cc4b7; }
+.dark .text-indigo-600,
+.dark .hover\:text-indigo-600:hover { color: #9fb6d3; }
+.dark .bg-\[\#e8f4f2\],
+.dark .bg-\[\#d9efeb\],
+.dark .hover\:bg-\[\#e8f4f2\]:hover { background-color: color-mix(in oklab, #238b80 22%, var(--vn-tint-base)); }
+.dark .bg-\[\#142235\] { background-color: #263a59; }
+.dark .border-\[\#16776e\] { border-color: #3ea397; }
+.dark .shadow-sm,
+.dark .shadow,
+.dark .shadow-md,
+.dark .shadow-lg { --tw-shadow-color: rgb(0 0 0 / 0.35); }
 /*
  * Form fields: Tailwind's reset removes every border, so fields written as
  * "rounded-lg border-slate-300" showed no box at all. Give fields a visible
@@ -96,6 +260,171 @@
         padding: 0.5rem 0.75rem;
     }
 }
+
+/* Pop-up sheet (resources/js/sheet.js): a panel on the right on computers, a sheet from the bottom on phones. */
+@layer components {
+    .vn-sheet {
+        position: fixed;
+        inset: 0 0 0 auto;
+        width: min(30rem, 100vw);
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+        border: 0;
+        border-left: 1px solid var(--color-slate-200);
+        background: #ffffff;
+        color: var(--vn-text, #172536);
+        box-shadow: -24px 0 60px rgb(10 25 40 / 0.18);
+        overscroll-behavior: contain;
+    }
+
+    .vn-sheet[open] {
+        animation: vn-sheet-in 0.18s ease-out;
+    }
+
+    .vn-sheet::backdrop {
+        background: rgb(8 15 28 / 0.5);
+    }
+
+    .vn-sheet-bar {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0.5rem 0.75rem 0;
+        background: inherit;
+    }
+
+    .vn-sheet-grip {
+        display: none;
+    }
+
+    .vn-sheet-close {
+        display: flex;
+        width: 2.5rem;
+        height: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        font-size: 1.6rem;
+        line-height: 1;
+        color: var(--color-slate-500);
+    }
+
+    .vn-sheet-close:hover {
+        background: var(--color-slate-100);
+        color: var(--color-slate-900);
+    }
+
+    .vn-sheet-body {
+        padding: 0 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+    }
+
+    .vn-sheet.is-frame {
+        width: min(60rem, 100vw);
+        overflow: hidden;
+    }
+
+    .vn-sheet.is-frame .vn-sheet-body {
+        padding: 0;
+    }
+
+    .vn-sheet-frame {
+        display: block;
+        width: 100%;
+        height: calc(100dvh - 3rem);
+        border: 0;
+    }
+
+    @media (max-width: 767px) {
+        .vn-sheet,
+        .vn-sheet.is-frame {
+            inset: auto 0 0 0;
+            width: 100%;
+            height: auto;
+            max-height: 88dvh;
+            border-left: 0;
+            border-radius: 1.25rem 1.25rem 0 0;
+            box-shadow: 0 -12px 40px rgb(10 25 40 / 0.2);
+        }
+
+        .vn-sheet.is-frame .vn-sheet-frame {
+            height: calc(88dvh - 3rem);
+        }
+
+        .vn-sheet-bar {
+            justify-content: space-between;
+        }
+
+        .vn-sheet-grip {
+            display: block;
+            width: 2.5rem;
+            height: 0.3rem;
+            margin-left: calc(50% - 1.25rem);
+            border-radius: 9999px;
+            background: var(--color-slate-300);
+        }
+
+        .vn-sheet[open] {
+            animation-name: vn-sheet-up;
+        }
+    }
+
+    .vn-toast {
+        position: fixed;
+        left: 50%;
+        bottom: calc(1.5rem + env(safe-area-inset-bottom));
+        z-index: 90;
+        transform: translateX(-50%);
+        border-radius: 9999px;
+        background: #142235;
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #ffffff;
+        box-shadow: 0 10px 30px rgb(10 25 40 / 0.25);
+        transition: opacity 0.4s ease;
+    }
+
+    .vn-toast.is-leaving {
+        opacity: 0;
+    }
+
+    @media (max-width: 767px) {
+        .vn-toast {
+            bottom: calc(5.5rem + env(safe-area-inset-bottom));
+        }
+    }
+
+    @keyframes vn-sheet-in {
+        from { transform: translateX(2rem); opacity: 0; }
+    }
+
+    @keyframes vn-sheet-up {
+        from { transform: translateY(2rem); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .vn-sheet[open] { animation: none; }
+    }
+}
+
+.dark .vn-sheet { background: #141f31; border-color: #2a3b56; }
+.dark .vn-toast { background: #e3e9f1; color: #0d1524; }
+
+/* A page shown inside the sheet (?embed=1): only its content, without the menu, header and footer. */
+.vn-embed .vn-sidebar,
+.vn-embed .vn-main-header,
+.vn-embed .vn-footer,
+.vn-embed .vn-mobile-nav,
+.vn-embed .vn-sidebar-backdrop { display: none !important; }
+.vn-embed body,
+body.vn-embed { padding-bottom: 0 !important; }
 
 /* Calendar hover card (resources/js/event-peek.js). */
 @layer components {

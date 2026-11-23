@@ -23,7 +23,7 @@ class DisplayBoardPickerTest extends TestCase
             ->assertSee('data-board-fullscreen', false)
             ->assertSee('data-board-open="full"', false)
             ->assertSee('data-view-toggle="home-modules"', false)
-            ->assertSee('for general information and educational purposes only and is not legal advice');
+            ->assertSee('General information, not legal advice');
 
         $this->actingAs(User::factory()->create())
             ->get(route('dashboard'))

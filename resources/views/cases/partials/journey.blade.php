@@ -21,7 +21,7 @@
                 @php $stepCase = $step['case']; @endphp
                 <li class="relative min-w-0 rounded-xl border p-3 {{ $step['current'] ? 'border-[#16776e] bg-teal-50/60 ring-1 ring-[#16776e]' : 'border-slate-200' }}">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="rounded-full px-2 py-0.5 text-[11px] font-bold {{ $levelTone($stepCase->courtLevel()) }}">{{ $stepCase->courtLevel() }}</span>
+                        <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $levelTone($stepCase->courtLevel()) }}">{{ $stepCase->courtLevel() }}</span>
                         @if($step['link_id'])
                             <form method="POST" action="{{ route('cases.links.destroy', [$case, $step['link_id']]) }}" data-confirm="Unlink this case? Both cases stay saved." class="print:hidden">
                                 @csrf
@@ -29,7 +29,7 @@
                                 <button type="submit" aria-label="Unlink {{ $stepCase->case_title }}" class="rounded px-1.5 text-slate-400 hover:bg-red-50 hover:text-red-700">&times;</button>
                             </form>
                         @else
-                            <span class="text-[11px] font-bold uppercase text-[#16776e]">This case</span>
+                            <span class="text-xs font-bold uppercase text-[#16776e]">This case</span>
                         @endif
                     </div>
                     @if($step['current'])

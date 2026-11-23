@@ -37,6 +37,7 @@ class EnsurePrivatePracticeAccess
         'bar-directory/*',
         'courts',
         'courts/*',
+        'tribunals',
         'app',
         'embed-check',
         'sitemap.xml',
