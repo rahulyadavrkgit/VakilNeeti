@@ -462,7 +462,9 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
     picker.querySelectorAll('[data-board-size]').forEach((button) => {
         button.addEventListener('click', () => setSize(button.dataset.boardSize));
     });
-    setSize(boardStore.get('vn-board-size', 'm'));
+    // On the display boards page the board is the page: larger by default and never hidden.
+    const isBoardPage = picker.hasAttribute('data-board-page');
+    setSize(boardStore.get('vn-board-size', isBoardPage ? 'l' : 'm'));
 
     const leaveFullScreen = () => {
         box.classList.remove('vn-board-fullscreen');
@@ -520,7 +522,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
     });
 
     applyFilters();
-    setHidden(boardStore.get('vn-boards-hidden', false) === true);
+    setHidden(!isBoardPage && boardStore.get('vn-boards-hidden', false) === true);
 });
 
 // Collections with many similar items: data-view-toggle="id" data-view="grid|list" switches #id

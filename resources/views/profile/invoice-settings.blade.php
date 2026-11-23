@@ -58,9 +58,14 @@
         </a>
     </div>
 
+    @include('profile.partials.setup-progress', ['step' => 'billing'])
+
     <form method="POST" action="{{ route('profile.invoice-settings.update') }}"
           class="space-y-6">
         @csrf
+        @if(request()->boolean('setup'))
+            <input type="hidden" name="setup" value="1">
+        @endif
 
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="mb-4 font-semibold text-slate-800">GST Configuration</h2>

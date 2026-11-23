@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToUser;
+use App\Services\CourtBenchMatcher;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -231,6 +233,84 @@ class LegalCase extends Model
     public function isClosed(): bool
     {
         return $this->closed_at !== null;
+    }
+
+    /**
+     * What a case search can look in. "all" covers every field below.
+     *
+     * @var array<string, string>
+     */
+    public const SEARCH_FIELDS = [
+        'all' => 'Everything',
+        'case_number' => 'Case number',
+        'cnr' => 'CNR',
+        'party_name' => 'Party name',
+        'case_title' => 'Case title',
+        'court' => 'Court',
+        'judge' => 'Judge',
+        'room' => 'Court room',
+    ];
+
+    /**
+     * Cases matching a search: title, numbers, parties, court and establishment, judge and room (on the case,
+     * on its hearings, or found for it in the official court lists), case type, stage and advocates.
+     */
+    public function scopeSearch(Builder $query, string $term, string $field = 'all'): Builder
+    {
+        $term = trim($term);
+
+        if ($term === '') {
+            return $query;
+        }
+
+        $like = '%'.addcslashes($term, '\\%_').'%';
+        $field = array_key_exists($field, self::SEARCH_FIELDS) ? $field : 'all';
+        $wants = fn (string ...$fields): bool => $field === 'all' || in_array($field, $fields, true);
+
+        // Cases whose judge or room comes only from the official court lists.
+        $fromCourtLists = $wants('judge', 'room')
+            ? app(CourtBenchMatcher::class)->caseIdsMatching($term, match ($field) {
+                'judge' => ['judge'],
+                'room' => ['room'],
+                default => ['judge', 'room'],
+            })
+            : [];
+
+        return $query->where(function ($q) use ($like, $wants, $fromCourtLists) {
+            $q->whereRaw('1 = 0');
+
+            if ($wants('case_title')) {
+                $q->orWhere('case_title', 'like', $like);
+            }
+            if ($wants('case_number')) {
+                $q->orWhere('case_number', 'like', $like)->orWhere('file_number', 'like', $like)->orWhere('filing_number', 'like', $like);
+            }
+            if ($wants('cnr')) {
+                $q->orWhere('cnr_number', 'like', $like);
+            }
+            if ($wants('party_name')) {
+                $q->orWhereHas('parties', fn ($parties) => $parties->where('party_name', 'like', $like))
+                    ->orWhere('petitioner_advocate', 'like', $like)
+                    ->orWhere('respondent_advocate', 'like', $like);
+            }
+            if ($wants('court')) {
+                $q->orWhere('court_name', 'like', $like)->orWhere('court_complex', 'like', $like);
+            }
+            if ($wants('judge')) {
+                $q->orWhere('judge_name', 'like', $like)
+                    ->orWhereHas('hearings', fn ($hearings) => $hearings->where('judge_name', 'like', $like));
+            }
+            if ($wants('room')) {
+                $q->orWhere('court_room', 'like', $like)
+                    ->orWhereHas('hearings', fn ($hearings) => $hearings->where('court_room', 'like', $like));
+            }
+            if ($wants('case_title')) {
+                $q->orWhere('case_type', 'like', $like)->orWhere('stage', 'like', $like);
+            }
+            if ($fromCourtLists !== []) {
+                $q->orWhereIn('id', $fromCourtLists);
+            }
+        });
     }
 
     public function parties(): HasMany

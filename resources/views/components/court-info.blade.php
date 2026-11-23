@@ -1,7 +1,22 @@
-@props(['court' => null, 'room' => null, 'judge' => null, 'vcLink' => null])
+@props(['court' => null, 'room' => null, 'judge' => null, 'vcLink' => null, 'complex' => null, 'designation' => null])
 
-{{-- Where a matter is heard, at a glance: court, room, judge and the VC link. Wraps on small screens instead of cutting off. --}}
+{{--
+    Where a matter is heard, at a glance: court, room, judge and the VC link. Wraps on small screens instead of cutting off.
+    With the case's court designation and establishment (`designation`, `complex`), whatever the case lacks is filled
+    from the official court lists (App\Services\CourtBenchMatcher); the case's own entries always win.
+--}}
 @php
+    $fromList = [];
+    if (($complex || $designation) && (! trim((string) $room) || ! $judge || ! $vcLink)) {
+        $bench = app(\App\Services\CourtBenchMatcher::class)->find($designation ?? $court, $complex, $judge);
+        if ($bench) {
+            $listJudge = $bench->judgeList()[0]['name'] ?? null;
+            if (! trim((string) $room) && $bench->court_room) { $room = $bench->court_room; $fromList[] = 'room'; }
+            if (! $judge && $listJudge) { $judge = $listJudge; $fromList[] = 'judge'; }
+            if (! $vcLink && $bench->vc_link) { $vcLink = $bench->vc_link; $fromList[] = 'vc'; }
+        }
+    }
+    $listNote = 'From the official court list';
     $room = trim((string) $room);
     $roomLabel = $room !== '' && ! preg_match('/^(court|room)\b/i', $room) ? 'Room '.$room : $room;
 @endphp
@@ -13,15 +28,15 @@
             </span>
         @endif
         @if($room !== '')
-            <span class="inline-flex shrink-0 items-center rounded-full bg-[#142235] px-2 py-0.5 font-semibold text-white">{{ $roomLabel }}</span>
+            <span class="inline-flex shrink-0 items-center rounded-full bg-[#142235] px-2 py-0.5 font-semibold text-white" @if(in_array('room', $fromList, true)) title="{{ $listNote }}" @endif>{{ $roomLabel }}</span>
         @endif
         @if($judge)
-            <span class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200">
+            <span class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200" @if(in_array('judge', $fromList, true)) title="{{ $listNote }}" @endif>
                 <x-icon name="gavel" :size="12" class="shrink-0" /><span class="truncate">{{ $judge }}</span>
             </span>
         @endif
         @if($vcLink)
-            <a href="{{ $vcLink }}" target="_blank" rel="noopener noreferrer" data-direct-share
+            <a href="{{ $vcLink }}" target="_blank" rel="noopener noreferrer" data-direct-share @if(in_array('vc', $fromList, true)) title="{{ $listNote }}" @endif
                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#16776e] px-2 py-0.5 font-semibold text-white hover:bg-[#125f58]">
                 <x-icon name="screen" :size="12" /> Join VC
             </a>

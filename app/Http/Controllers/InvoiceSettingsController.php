@@ -11,7 +11,7 @@ class InvoiceSettingsController extends Controller
     private function activeFirm()
     {
         return DB::table('firm_profiles')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
             ->where('is_active', true)
             ->first();
     }
@@ -20,14 +20,14 @@ class InvoiceSettingsController extends Controller
     {
         $firm = $this->activeFirm();
 
-        if (!$firm) {
+        if (! $firm) {
             return redirect()
-                ->route('firm-profile.index')
-                ->with('error', 'Please create an active Firm Profile first.');
+                ->route('firm-profile.index', array_filter(['next' => 'invoice-settings', 'setup' => request('setup')]))
+                ->with('error', 'Add your office name and address first. Your bank and UPI details come next.');
         }
 
         $settings = DB::table('invoice_settings')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
             ->where('firm_profile_id', $firm->id)
             ->first();
 
@@ -38,10 +38,10 @@ class InvoiceSettingsController extends Controller
     {
         $firm = $this->activeFirm();
 
-        if (!$firm) {
+        if (! $firm) {
             return redirect()
-                ->route('firm-profile.index')
-                ->with('error', 'Please create an active Firm Profile first.');
+                ->route('firm-profile.index', array_filter(['next' => 'invoice-settings', 'setup' => request('setup')]))
+                ->with('error', 'Add your office name and address first. Your bank and UPI details come next.');
         }
 
         $validated = $request->validate([
@@ -99,14 +99,19 @@ class InvoiceSettingsController extends Controller
         ]);
 
         DB::table('invoice_settings')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->updateOrInsert(
-            ['firm_profile_id' => $firm->id, 'user_id' => auth()->id()],
-            array_merge($data, [
-                'created_at' => DB::raw(
-                    'COALESCE(created_at, CURRENT_TIMESTAMP)'
-                ),
-            ])
-        );
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->updateOrInsert(
+                ['firm_profile_id' => $firm->id, 'user_id' => auth()->id()],
+                array_merge($data, [
+                    'created_at' => DB::raw(
+                        'COALESCE(created_at, CURRENT_TIMESTAMP)'
+                    ),
+                ])
+            );
+
+        // Guided profile setup: carry on to the next unfinished step.
+        if ($request->boolean('setup')) {
+            return redirect()->route('profile.setup.next', ['after' => 'billing'])->with('success', 'Bank and invoice details saved.');
+        }
 
         return redirect()
             ->route('profile.invoice-settings.index')

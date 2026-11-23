@@ -43,6 +43,7 @@ use App\Http\Controllers\ProfessionalProfileController;
 use App\Http\Controllers\ProfessionalTaxController;
 use App\Http\Controllers\ProfileContactController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfileSetupController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TaskController;
@@ -343,6 +344,9 @@ Route::get('/profile', [ProfileController::class, 'index'])
     ->name('profile.index');
 Route::post('/profile/preferences', [ProfileController::class, 'updatePreferences'])
     ->name('profile.preferences.update');
+Route::get('/profile/setup', [ProfileSetupController::class, 'start'])->name('profile.setup.start');
+Route::get('/profile/setup/next', [ProfileSetupController::class, 'next'])->name('profile.setup.next');
+Route::get('/profile/setup/skip/{step}', [ProfileSetupController::class, 'skip'])->name('profile.setup.skip');
 Route::get('/profile/advocate', [AdvocateProfileController::class, 'index'])
     ->name('profile.advocate.index');
 Route::post('/profile/advocate', [AdvocateProfileController::class, 'update'])

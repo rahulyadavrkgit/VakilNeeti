@@ -26,7 +26,7 @@
         @endif
 
         <div class="mt-8 overflow-x-auto rounded-xl bg-white shadow-sm">
-            <table class="w-full text-left">
+            <table class="vn-stack-table w-full text-left">
                 <thead class="bg-slate-100 text-slate-700">
                     <tr>
                         <th class="p-4">Invoice No.</th>
@@ -42,13 +42,13 @@
                 <tbody>
                     @forelse($invoices as $invoice)
                         <tr class="border-t border-slate-200">
-                            <td class="p-4 font-semibold">{{ $invoice->invoice_number }}</td>
-                            <td class="p-4">{{ $invoice->client->display_name ?: $invoice->client->first_name.' '.$invoice->client->last_name }}</td>
-                            <td class="p-4">{{ $invoice->invoice_date->format('d-m-Y') }}</td>
-                            <td class="p-4">{{ $invoice->due_date?->format('d-m-Y') ?? '—' }}</td>
-                            <td class="p-4 font-semibold">@money($invoice->total_amount)</td>
-                            <td class="p-4">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</td>
-                            <td class="p-4">
+                            <td class="p-4 font-semibold" data-stack="title">{{ $invoice->invoice_number }}</td>
+                            <td class="p-4" data-label="Client" data-stack="full">{{ $invoice->client->display_name ?: $invoice->client->first_name.' '.$invoice->client->last_name }}</td>
+                            <td class="p-4" data-label="Invoice date">{{ $invoice->invoice_date->format('d-m-Y') }}</td>
+                            <td class="p-4" data-label="Due date">{{ $invoice->due_date?->format('d-m-Y') ?? '—' }}</td>
+                            <td class="p-4 font-semibold" data-label="Amount">@money($invoice->total_amount)</td>
+                            <td class="p-4" data-label="Status">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</td>
+                            <td class="p-4" data-stack="full">
                                 <a href="{{ route('invoices.show', $invoice) }}"
                                    class="font-semibold text-blue-600 hover:underline">
                                     View

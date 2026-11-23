@@ -240,23 +240,7 @@ class LegalCaseController extends Controller
         $query = LegalCase::query();
 
         if ($request->filled('search')) {
-            $search = trim((string) $request->input('search'));
-            $searchType = $request->input('search_type', 'all');
-
-            $query->where(function ($q) use ($search, $searchType) {
-                match ($searchType) {
-                    'cnr' => $q->where('cnr_number', 'like', "%{$search}%"),
-                    'case_number' => $q->where('case_number', 'like', "%{$search}%"),
-                    'party_name' => $q->whereHas('parties', fn ($partyQuery) => $partyQuery->where('party_name', 'like', "%{$search}%")),
-                    'case_title' => $q->where('case_title', 'like', "%{$search}%"),
-                    default => $q->where('case_title', 'like', "%{$search}%")
-                        ->orWhere('case_number', 'like', "%{$search}%")
-                        ->orWhere('file_number', 'like', "%{$search}%")
-                        ->orWhere('cnr_number', 'like', "%{$search}%")
-                        ->orWhere('court_name', 'like', "%{$search}%")
-                        ->orWhereHas('parties', fn ($partyQuery) => $partyQuery->where('party_name', 'like', "%{$search}%")),
-                };
-            });
+            $query->search((string) $request->input('search'), (string) $request->input('search_type', 'all'));
         }
 
         if ($request->filled('case_status')) {

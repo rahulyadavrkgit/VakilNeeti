@@ -230,7 +230,7 @@
                                                 @if($event['case_number'])
                                                     <span class="block text-xs text-slate-500">{{ $event['case_number'] }}</span>
                                                 @endif
-                                                <x-court-info class="mt-1" :court="$event['court']" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
+                                                <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
 
                                                 @if($event['details'])
                                                     <span class="block text-xs text-slate-600">{{ \Illuminate\Support\Str::limit($event['details'], 160) }}</span>

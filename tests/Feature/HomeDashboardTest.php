@@ -64,6 +64,34 @@ class HomeDashboardTest extends TestCase
             ->assertSeeInOrder(['Room 505', 'Sh. Dheeraj Mor']);
     }
 
+    public function test_next_hearing_card_skips_hearings_already_started_today_and_offers_join_vc(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $started = LegalCase::create(['case_title' => 'Started vs Earlier', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
+        $next = LegalCase::create([
+            'case_title' => 'Meera vs Union',
+            'court_name' => 'Delhi High Court',
+            'court_room' => '37',
+            'judge_name' => 'Justice Dinesh Mehta',
+            'appearing_for' => 'appellant',
+            'vc_link' => 'https://dhc.webex.com/meet/court37',
+            'case_status' => 'pending',
+        ]);
+        CourtHearing::create(['case_id' => $started->id, 'hearing_date' => '2026-03-10', 'hearing_time' => '08:00']);
+        CourtHearing::create(['case_id' => $next->id, 'hearing_date' => '2026-03-11', 'hearing_time' => '10:30']);
+
+        $html = $this->get(route('dashboard'))->assertOk()->getContent();
+        $card = substr($html, (int) strpos($html, 'id="next-hearing-heading"'), 3000);
+
+        $this->assertStringContainsString('Next hearing · Tomorrow · 10:30', $card);
+        foreach (['Meera vs Union', 'Appellant', 'Room 37', 'Justice Dinesh Mehta', 'href="https://dhc.webex.com/meet/court37"'] as $detail) {
+            $this->assertStringContainsString($detail, $card);
+        }
+        $this->assertStringNotContainsString('Started vs Earlier', $card);
+
+        $this->get(route('dashboard', ['hearing_search' => 'Meera']))->assertOk()->assertDontSee('id="next-hearing-heading"', false);
+    }
+
     public function test_profile_banner_shows_what_is_missing_and_can_be_hidden(): void
     {
         $user = User::factory()->create(['account_type' => 'individual']);

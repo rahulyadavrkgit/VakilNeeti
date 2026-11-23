@@ -2,7 +2,7 @@
     $boards = collect(\App\Http\Controllers\CourtLinksController::boardOptions());
 @endphp
 
-<section data-board-picker class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="live-boards-heading">
+<section data-board-picker @if($pageMode ?? false) data-board-page @endif class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="live-boards-heading">
     <div class="flex flex-wrap items-center justify-between gap-2">
         <h2 id="live-boards-heading" class="flex items-center gap-2 text-lg font-semibold text-slate-900">
             <span class="relative flex h-2.5 w-2.5" aria-hidden="true"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-60 motion-reduce:animate-none"></span><span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span></span>
@@ -10,7 +10,7 @@
         </h2>
         <div class="flex items-center gap-1">
             <button type="button" data-board-manage-toggle data-board-body aria-expanded="false" class="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-[#16776e] hover:bg-teal-50">Manage</button>
-            <button type="button" data-board-hide aria-expanded="true" class="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">Hide</button>
+            <button type="button" data-board-hide aria-expanded="true" @if($pageMode ?? false) hidden @endif class="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">Hide</button>
         </div>
     </div>
 

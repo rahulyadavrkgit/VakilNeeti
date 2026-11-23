@@ -116,3 +116,98 @@
         display: none;
     }
 }
+
+/* Phones: the calendar card opens as a sheet from the bottom of the screen. */
+@layer components {
+    .vn-event-peek.is-sheet {
+        inset: auto 0 0 0;
+        width: auto;
+        max-height: 80dvh;
+        border-radius: 1.25rem 1.25rem 0 0;
+        padding: 1rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+        z-index: 70;
+    }
+
+    .vn-event-peek-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 65;
+        background: rgb(8 20 34 / 0.5);
+    }
+
+    .vn-event-peek-backdrop[hidden] {
+        display: none;
+    }
+
+    .vn-event-peek-close {
+        float: right;
+        margin: -0.25rem 0 0.25rem 0.75rem;
+        min-height: 2.75rem;
+        border-radius: var(--radius-lg);
+        padding: 0 0.875rem;
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: var(--color-slate-600);
+        background: var(--color-slate-100);
+    }
+}
+
+/*
+ * Phones: a table with .vn-stack-table shows each row as a card. Cells name their column with
+ * data-label; data-stack="full" spans the card, "title" is the card heading, "corner" sits top-right.
+ */
+@media (max-width: 767px) {
+    .vn-stack-table,
+    .vn-stack-table tbody {
+        display: block;
+    }
+
+    .vn-stack-table thead {
+        display: none;
+    }
+
+    .vn-stack-table tr {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.625rem 0.875rem;
+        padding: 0.875rem 1rem;
+        border-top: 1px solid var(--color-slate-100);
+    }
+
+    .vn-stack-table td {
+        display: block;
+        min-width: 0;
+        padding: 0 !important;
+        text-align: left !important;
+        white-space: normal !important;
+    }
+
+    .vn-stack-table td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.125rem;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--color-slate-500);
+    }
+
+    .vn-stack-table td[data-stack='full'],
+    .vn-stack-table td[data-stack='title'],
+    .vn-stack-table td[colspan] {
+        grid-column: 1 / -1;
+    }
+
+    .vn-stack-table td[data-stack='title'] {
+        padding-right: 2.5rem !important;
+        font-size: 1rem;
+    }
+
+    .vn-stack-table td[data-stack='corner'] {
+        position: absolute;
+        top: 0.875rem;
+        right: 1rem;
+    }
+}

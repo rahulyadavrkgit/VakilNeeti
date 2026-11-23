@@ -102,6 +102,10 @@ document.addEventListener('pointerout', (event) => {
 });
 
 document.addEventListener('focusin', (event) => {
+    if (!canHover.matches) {
+        return;
+    }
+
     const target = event.target.closest('[data-event-peek]');
 
     if (target) {
@@ -111,14 +115,68 @@ document.addEventListener('focusin', (event) => {
     }
 });
 
+/*
+ * Phones and tablets (no hover): tapping an event opens the same details as a sheet from the
+ * bottom of the screen, with Join VC and Open case; tapping outside or Close shuts it.
+ */
+const backdrop = document.createElement('div');
+backdrop.className = 'vn-event-peek-backdrop';
+backdrop.hidden = true;
+document.body.append(backdrop);
+
+function closeSheet() {
+    card.hidden = true;
+    backdrop.hidden = true;
+    card.classList.remove('is-sheet');
+    owner = null;
+}
+
+function openSheet(target) {
+    const template = target.querySelector('template[data-event-card]');
+
+    if (!template) {
+        return false;
+    }
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'vn-event-peek-close';
+    close.textContent = 'Close';
+    close.addEventListener('click', closeSheet);
+
+    owner = target;
+    card.replaceChildren(close, template.content.cloneNode(true));
+    card.classList.add('is-sheet');
+    card.style.left = '';
+    card.style.top = '';
+    card.hidden = false;
+    backdrop.hidden = false;
+
+    return true;
+}
+
+document.addEventListener('click', (event) => {
+    if (canHover.matches) {
+        return;
+    }
+
+    const target = event.target.closest('[data-event-peek]');
+
+    if (target && !card.contains(event.target) && openSheet(target)) {
+        event.preventDefault();
+    }
+});
+
+backdrop.addEventListener('click', closeSheet);
+
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !card.hidden) {
-        card.hidden = true;
+        card.classList.contains('is-sheet') ? closeSheet() : (card.hidden = true);
     }
 });
 
 window.addEventListener('scroll', () => {
-    if (!card.hidden && owner) {
+    if (!card.hidden && owner && !card.classList.contains('is-sheet')) {
         place(owner);
     }
 }, { passive: true });

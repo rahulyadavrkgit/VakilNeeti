@@ -89,7 +89,7 @@
             </div>
         @else
             <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-                <table class="w-full text-left text-sm">
+                <table class="vn-stack-table w-full text-left text-sm">
                     <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                         <tr>
                             <th class="w-10 p-3"><span class="sr-only">Select</span></th>
@@ -105,18 +105,18 @@
                     <tbody class="divide-y divide-slate-100">
                         @foreach($clients as $client)
                             <tr class="hover:bg-slate-50">
-                                <td class="p-3"><input type="checkbox" name="ids[]" value="{{ $client->id }}" form="clients-bulk" data-select-item aria-label="Select {{ $client->displayName() }}" class="rounded border-slate-300 text-[#238b80]"></td>
-                                <td class="p-3">
+                                <td class="p-3" data-stack="corner"><input type="checkbox" name="ids[]" value="{{ $client->id }}" form="clients-bulk" data-select-item aria-label="Select {{ $client->displayName() }}" class="rounded border-slate-300 text-[#238b80]"></td>
+                                <td class="p-3" data-stack="title">
                                     <a href="{{ route('clients.show', $client) }}" class="font-semibold text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>
                                     @if($client->company)<span class="block text-xs text-slate-500">at {{ $client->company->displayName() }}</span>@endif
                                     @if($client->isCompany() && $client->people_count)<span class="block text-xs text-slate-500">{{ $client->people_count }} {{ \Illuminate\Support\Str::plural('person', $client->people_count) }}</span>@endif
                                 </td>
-                                <td class="p-3">{{ $client->isCompany() ? 'Company' : 'Person' }}</td>
-                                <td class="p-3">{{ $client->mobile ?: '—' }}</td>
-                                <td class="p-3">{{ $client->email ?: '—' }}</td>
-                                <td class="p-3">{{ $client->city ?: '—' }}</td>
-                                <td class="p-3"><span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $client->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600' }}">{{ ucfirst($client->status) }}</span></td>
-                                <td class="p-3 text-right whitespace-nowrap">
+                                <td class="p-3" data-label="Type">{{ $client->isCompany() ? 'Company' : 'Person' }}</td>
+                                <td class="p-3" data-label="Mobile">{{ $client->mobile ?: '—' }}</td>
+                                <td class="p-3 break-all" data-label="Email" data-stack="full">{{ $client->email ?: '—' }}</td>
+                                <td class="p-3" data-label="City">{{ $client->city ?: '—' }}</td>
+                                <td class="p-3" data-label="Status"><span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $client->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600' }}">{{ ucfirst($client->status) }}</span></td>
+                                <td class="p-3 text-right whitespace-nowrap" data-stack="full">
                                     <a href="{{ route('clients.show', $client) }}" class="font-semibold text-[#16776e] hover:underline">View</a>
                                     <a href="{{ route('clients.edit', $client) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                                 </td>

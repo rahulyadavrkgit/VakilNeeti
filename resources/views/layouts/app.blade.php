@@ -17,7 +17,7 @@
         $seoImage = asset('images/og-image.png');
     @endphp
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $seoTitle }}</title>
     <meta name="description" content="{{ $seoDescription }}">
     <meta name="robots" content="{{ $seoIndexable ? 'index, follow, max-image-preview:large' : 'noindex, nofollow' }}">
@@ -140,6 +140,13 @@
             .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
             .vn-mobile-nav a, .vn-mobile-nav button { display: flex; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 10px; background: transparent; color: #657386; font-size: 10px; font-weight: 650; text-decoration: none; }
             .vn-mobile-nav .vn-mobile-icon { font-size: 18px; line-height: 1; }
+            .vn-mobile-nav a, .vn-mobile-nav button { font-size: 11.5px; }
+            /* Notch side insets (landscape iPhones) now that the page uses viewport-fit=cover. */
+            body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+            /* Header menus open as a full-width panel under the header, so none runs off the screen. */
+            .vn-header-dropdown { position: fixed !important; left: max(.75rem, env(safe-area-inset-left)) !important; right: max(.75rem, env(safe-area-inset-right)) !important; top: 4.25rem; width: auto !important; margin-top: 0 !important; max-height: calc(100dvh - 4.25rem - 88px - env(safe-area-inset-bottom)); overflow-y: auto; }
+            /* The page name is already in the header: hide repeats (breadcrumbs, a matching first heading). */
+            .vn-main-content nav[aria-label="Breadcrumb"], .vn-dup-title { display: none !important; }
             .vn-mobile-nav .is-current { color: #126c64; background: #e8f4f2; }
         }
         @media (max-width: 359px) { .vn-header-brand [data-brand-word] { display: none; } }
@@ -276,8 +283,8 @@
         @php
             $headerUserName = auth()->user()?->name ?? '';
             $headerInitial = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($headerUserName, 0, 1));
-            $headerIcon = 'flex h-10 w-10 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900';
-            $headerMenu = 'absolute right-0 z-40 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm shadow-xl shadow-slate-900/10';
+            $headerIcon = 'flex h-11 w-11 md:h-10 md:w-10 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900';
+            $headerMenu = 'vn-header-dropdown absolute right-0 z-40 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm shadow-xl shadow-slate-900/10';
             $headerMenuItem = 'flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50';
         @endphp
         <header class="vn-main-header {{ request()->routeIs('dashboard') ? 'is-home' : '' }}">
@@ -305,16 +312,16 @@
                         <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-[#16776e] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#16776e]/15">
                             <x-icon name="search" :size="17" class="text-slate-400" />
                             <span class="sr-only">Search cases, clients and invoices</span>
-                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search cases, clients, CNR…"
+                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search cases, judges, rooms, CNR…"
                                    class="h-10 w-52 border-0 bg-transparent px-0 text-sm focus:ring-0 xl:w-72">
                         </label>
                     </form>
-                    <a href="{{ route('search') }}" aria-label="Search" title="Search" class="{{ $headerIcon }} lg:hidden">
+                    <a href="{{ route('search') }}" aria-label="Search" title="Search" class="{{ $headerIcon }} lg:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
                         <x-icon name="search" :size="20" />
                     </a>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="Add new" title="Add new" class="flex h-10 shrink-0 cursor-pointer list-none items-center justify-center gap-1.5 rounded-xl bg-[#16776e] px-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125f58] sm:px-3.5">
+                        <summary aria-label="Add new" title="Add new" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center justify-center gap-1.5 rounded-xl bg-[#16776e] px-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125f58] sm:px-3.5">
                             <x-icon name="plus" :size="20" /><span class="hidden sm:inline">New</span>
                         </summary>
                         <div class="{{ $headerMenu }} w-60 py-1.5">
@@ -357,7 +364,7 @@
                     </details>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="Account menu" class="flex h-10 shrink-0 cursor-pointer list-none items-center gap-2 rounded-xl pl-1 pr-1 transition hover:bg-slate-100 xl:pr-2.5">
+                        <summary aria-label="Account menu" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center gap-2 rounded-xl pl-1 pr-1 transition hover:bg-slate-100 xl:pr-2.5">
                             <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#142235] text-sm font-bold text-[#e6b84a]">{{ $headerInitial }}</span>
                             <span class="hidden max-w-32 truncate text-sm font-semibold text-slate-800 xl:block">{{ \Illuminate\Support\Str::of($headerUserName)->before(' ') }}</span>
                             <x-icon name="chevron" :size="16" class="hidden text-slate-400 xl:block" />
@@ -371,7 +378,9 @@
                                 </span>
                             </div>
                             <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />Profile settings</a>
-                            <a href="{{ route('firm-profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="building" :size="18" class="text-slate-500" />Firm profile</a>
+                            <a href="{{ route('firm-profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="building" :size="18" class="text-slate-500" />{{ auth()->user()->account_type === 'company' ? 'Firm profile' : 'Office & billing' }}</a>
+                            <a href="{{ route('profile.practice-states.index') }}" class="{{ $headerMenuItem }}"><x-icon name="map" :size="18" class="text-slate-500" />Practice States</a>
+                            <a href="{{ route('profile.invoice-settings.index') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-slate-500" />Invoice &amp; GST</a>
                             <a href="{{ route('notifications.index') }}" class="{{ $headerMenuItem }}"><x-icon name="bell" :size="18" class="text-slate-500" />Notifications</a>
                             <a href="{{ route('app.download') }}" class="{{ $headerMenuItem }}"><x-icon name="phone" :size="18" class="text-slate-500" />Get the app</a>
                             <form method="POST" action="{{ auth()->user()->is_admin ? route('admin.logout') : route('user.logout') }}" class="mt-1 border-t border-slate-100 pt-1">
@@ -411,7 +420,14 @@
             $footerLink = 'text-[#d3dde8] transition hover:text-white hover:underline';
             $footerHeading = 'mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#e6b84a]';
         @endphp
-        <footer class="vn-footer bg-[#142235] text-[#c3cfdc]">
+        @auth
+            <p class="vn-footer border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 md:hidden">
+                &copy; {{ date('Y') }} VakilNiti · Not legal advice; check the official source ·
+                <a href="{{ route('courts.index') }}" class="font-semibold text-[#16776e]">Courts</a> ·
+                <a href="{{ route('bare-acts.index') }}" class="font-semibold text-[#16776e]">Bare Acts</a>
+            </p>
+        @endauth
+        <footer class="vn-footer bg-[#142235] text-[#c3cfdc] {{ auth()->check() ? 'max-md:hidden' : '' }}">
             <div class="mx-auto max-w-6xl px-5 pb-6 pt-10 sm:px-8">
                 <div class="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
                     <div>
@@ -532,6 +548,11 @@
         if (sidebar) sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setMenu(false)));
         document.addEventListener('keydown', event => { if (event.key === 'Escape') setMenu(false); });
         window.addEventListener('resize', () => { if (window.innerWidth >= 768) setMenu(false); });
+
+        // A page's own heading that repeats the header title is hidden on phones (.vn-dup-title).
+        const headerTitle = document.querySelector('.vn-header-title h2')?.textContent.trim().toLowerCase();
+        const pageTitle = document.querySelector('.vn-main-content h1');
+        if (headerTitle && pageTitle && pageTitle.textContent.trim().toLowerCase() === headerTitle) pageTitle.classList.add('vn-dup-title');
     }());
 </script>
 
@@ -568,18 +589,18 @@
                     @csrf
                     <div>
                         <label for="vn-login-otp" class="mb-1 block text-sm font-medium text-slate-700">Phone OTP</label>
-                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
                                required autocomplete="one-time-code"
                                class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
                     </div>
-                    <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                    <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
                         Verify and log in
                     </button>
                 </form>
                 <form method="POST" action="{{ route('login.submit') }}" class="mt-4 text-center">
                     @csrf
                     <input type="hidden" name="mobile" value="{{ session('login_otp_mobile') }}">
-                    <button type="submit" class="text-sm font-semibold text-blue-700 underline">Resend OTP</button>
+                    <button type="submit" class="text-sm font-semibold text-[#16776e] underline">Resend OTP</button>
                 </form>
             @else
                 <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
@@ -590,14 +611,14 @@
                                placeholder="10-digit Indian mobile number" autocomplete="tel"
                                class="w-full rounded-lg border border-slate-300 p-3">
                     </div>
-                    <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                    <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
                         Send OTP
                     </button>
                 </form>
             @endif
             <p class="mt-5 text-center text-sm text-slate-600">
                 New to VakilNiti?
-                <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-blue-700 underline">Create an account</a>
+                <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-[#16776e] underline">Create an account</a>
             </p>
         </section>
 
@@ -617,13 +638,13 @@
                            placeholder="10-digit Indian mobile number or +91..." autocomplete="tel"
                            required class="w-full rounded-lg border border-slate-300 p-3">
                 </div>
-                <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
                     Continue with phone OTP
                 </button>
             </form>
             <p class="mt-5 text-center text-sm text-slate-600">
                 Already registered?
-                <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-blue-700 underline">Log in</a>
+                <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-[#16776e] underline">Log in</a>
             </p>
         </section>
 
@@ -643,20 +664,20 @@
                 @csrf
                 <div>
                     <label for="vn-register-otp" class="mb-1 block text-sm font-medium text-slate-700">Four-digit OTP</label>
-                    <input id="vn-register-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                    <input id="vn-register-otp" name="otp" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
                            required autocomplete="one-time-code"
                            class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
                 </div>
-                <button type="submit" class="w-full rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800">
+                <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
                     Verify and create account
                 </button>
             </form>
             <form method="POST" action="{{ route('register.resend-otp') }}" class="mt-4 text-center">
                 @csrf
-                <button type="submit" class="text-sm font-semibold text-blue-700 underline">Resend OTP</button>
+                <button type="submit" class="text-sm font-semibold text-[#16776e] underline">Resend OTP</button>
             </form>
             <p class="mt-5 text-center text-sm">
-                <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-blue-700 underline">Start again</a>
+                <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-[#16776e] underline">Start again</a>
             </p>
         </section>
     </div>

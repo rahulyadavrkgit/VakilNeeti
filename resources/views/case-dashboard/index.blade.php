@@ -93,7 +93,7 @@
                             {{ $hearing->case_title }}
                         </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $hearing->case_number ?: 'Case number unavailable' }}
                         </p>
@@ -124,7 +124,7 @@
                                 {{ $hearing->case_title }}
                             </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                             <p class="mt-1 text-sm text-slate-600">{{ $hearing->case_number ?: 'Case number unavailable' }}</p>
                         </div>
                         <p class="text-sm font-semibold text-amber-800">
@@ -158,7 +158,7 @@
                             {{ $hearing->case_title }}
                         </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                         <p class="mt-1 text-sm text-slate-600">
                             {{ $hearing->case_number ?: 'Case number unavailable' }}
                             @if($hearing->cnr_number)
@@ -248,7 +248,7 @@
                         {{ $hearing->case_title }}
                     </a>
 <x-case-side :side="$hearing->appearing_for ?? null" :parties="$hearing->appearing_for_parties ?? null" class="ml-1 align-middle" />
-<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
+<x-court-info class="mt-1.5" :court="$hearing->court_name ?? null" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->case_vc_link ?? null)" />
                     <p class="mt-1 text-sm text-slate-600">
                         {{ $hearing->case_number ?: 'Case number unavailable' }}
                         · {{ $hearing->hearing_date ? \Carbon\Carbon::parse($hearing->hearing_date)->format('d M Y') : 'Date unavailable' }}

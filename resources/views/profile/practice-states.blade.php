@@ -36,6 +36,12 @@
             </div>
         @endif
 
+        @include('profile.partials.setup-progress', [
+            'step' => 'practice-states',
+            'continueUrl' => route('profile.setup.next', ['after' => 'practice-states']),
+            'continueLabel' => 'Your choices save as you go; press Continue when you are done.',
+        ])
+
         <form method="POST"
               action="{{ route('profile.practice-states.store') }}"
               id="practiceJurisdictionForm">

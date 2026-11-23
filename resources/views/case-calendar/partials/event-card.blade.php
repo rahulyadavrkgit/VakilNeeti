@@ -13,7 +13,7 @@
     @if($event['case_number'])
         <p class="text-xs text-slate-500">{{ $event['case_number'] }}</p>
     @endif
-    <x-court-info :court="$event['court']" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" />
+    <x-court-info :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" />
     @if($event['client_name'])
         <p class="text-xs text-slate-600">Client: {{ $event['client_name'] }}</p>
     @endif

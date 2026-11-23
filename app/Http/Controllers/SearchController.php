@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\CourtBench;
 use App\Models\Invoice;
 use App\Models\LegalCase;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * One search box for the signed-in user's own cases, clients and invoices.
+ * One search box for the signed-in user's own cases, clients and invoices, plus the official court lists
+ * (judge, room). Cases are also found by court, establishment, judge and room.
  */
 class SearchController extends Controller
 {
@@ -18,18 +20,22 @@ class SearchController extends Controller
         $query = mb_substr(trim((string) $request->query('q', '')), 0, 100);
         // Treat % and _ typed by the person as plain characters, not wildcards.
         $like = '%'.addcslashes($query, '\\%_').'%';
-        $results = ['cases' => collect(), 'clients' => collect(), 'invoices' => collect()];
+        $results = ['cases' => collect(), 'court_rooms' => collect(), 'clients' => collect(), 'invoices' => collect()];
 
         if (mb_strlen($query) >= 2) {
+            // Cases: also by court, establishment, judge and room (including the official court lists).
             $results['cases'] = LegalCase::query()
-                ->where(fn ($q) => $q->where('case_title', 'like', $like)
-                    ->orWhere('case_number', 'like', $like)
-                    ->orWhere('cnr_number', 'like', $like)
-                    ->orWhere('file_number', 'like', $like)
-                    ->orWhere('court_name', 'like', $like))
+                ->search($query)
                 ->latest()
                 ->limit(10)
                 ->get();
+
+            // Court rooms in the official lists: a judge's name or a room number.
+            $results['court_rooms'] = CourtBench::query()
+                ->get()
+                ->filter(fn ($bench) => str_contains(mb_strtolower(collect($bench->judgeList())->pluck('name')->implode(' ').' '.$bench->court_room.' '.$bench->section), mb_strtolower($query)))
+                ->take(8)
+                ->values();
 
             $results['clients'] = Client::query()
                 ->where(fn ($q) => $q->where('display_name', 'like', $like)

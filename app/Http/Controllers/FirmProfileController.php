@@ -9,26 +9,32 @@ use Illuminate\Validation\Rule;
 
 class FirmProfileController extends Controller
 {
-    public function index()
+    /**
+     * Office and billing details printed on invoices. Company accounts call it their firm profile;
+     * individual advocates use the same page for their chamber or office address.
+     */
+    public function index(Request $request)
     {
-        if (auth()->user()->account_type !== 'company' && ! auth()->user()->is_admin) {
-            return redirect()->route('profile.advocate.index');
-        }
-
+        $user = $request->user();
+        $isAdvocate = $user->account_type !== 'company' && ! $user->is_admin;
         $firm = FirmProfile::first();
 
         return view('firm-profile.index', [
             'firm' => $firm,
+            'isAdvocate' => $isAdvocate,
+            'defaults' => $firm ? [] : [
+                'firm_name' => $isAdvocate ? 'Adv. '.$user->name : null,
+                'proprietor_name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->mobile,
+            ],
+            'next' => $request->query('next') === 'invoice-settings' ? 'invoice-settings' : null,
             'stateGroups' => State::dropdownGroups(),
         ]);
     }
 
     public function update(Request $request)
     {
-        if ($request->user()->account_type !== 'company' && ! $request->user()->is_admin) {
-            return redirect()->route('profile.advocate.index');
-        }
-
         $request->merge([
             'gstin' => trim((string) $request->input('gstin')) === '' ? null : strtoupper(trim((string) $request->input('gstin'))),
         ]);
@@ -65,8 +71,20 @@ class FirmProfileController extends Controller
             FirmProfile::create($validated);
         }
 
+        // Guided profile setup: carry on to the next unfinished step.
+        if ($request->boolean('setup')) {
+            return redirect()->route('profile.setup.next', ['after' => 'office'])->with('success', 'Office details saved.');
+        }
+
+        // Coming from "Add bank or UPI details": carry on to that step.
+        if ($request->input('next') === 'invoice-settings') {
+            return redirect()
+                ->route('profile.invoice-settings.index')
+                ->with('success', 'Office details saved. Now add your bank or UPI details.');
+        }
+
         return redirect()
             ->route('firm-profile.index')
-            ->with('success', 'Firm profile saved successfully.');
+            ->with('success', $request->user()->account_type === 'company' ? 'Firm profile saved successfully.' : 'Office details saved.');
     }
 }

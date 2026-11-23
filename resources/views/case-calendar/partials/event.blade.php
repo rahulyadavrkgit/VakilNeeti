@@ -32,7 +32,7 @@
         @if($event['case_number'])
             <span class="block text-xs opacity-80">{{ $event['case_number'] }}</span>
         @endif
-        <x-court-info class="mt-1" :court="$event['court']" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" />
+        <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" />
         @if($event['client_name'])
             <span class="block text-xs opacity-80">Client: {{ $event['client_name'] }}</span>
         @endif

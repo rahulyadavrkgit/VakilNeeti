@@ -2,10 +2,9 @@
     $isActive = fn (string ...$patterns): bool => request()->is(...$patterns);
 
     $groups = [
-        'workspace' => $isActive('/', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*'),
+        'workspace' => $isActive('/', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
         'courts' => $isActive('courts*', 'court-directory*', 'court-catalogue*', 'court-integrations*', 'court-management*'),
         'reference' => $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*', 'police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'),
-        'settings' => $isActive('profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
     ];
 
     // Open the group for the current page; on a page outside every group, open Workspace.
@@ -21,7 +20,7 @@
         <x-icon name="search" :size="16" class="text-slate-400" />
         <span class="sr-only">Find in menu</span>
         <input type="search" data-filter-list="vn-nav" data-filter-also="a.vn-nav-link" placeholder="Find in menu"
-               class="min-h-10 w-full border-0 bg-transparent px-0 text-sm text-white placeholder:text-slate-400 focus:ring-0">
+               class="min-h-10 w-full border-0 bg-transparent px-0 text-base text-white md:text-sm placeholder:text-slate-400 focus:ring-0">
     </label>
 </div>
 
@@ -33,7 +32,7 @@
         <div class="vn-nav-items">
             <a href="{{ route('dashboard') }}" class="{{ $link($isActive('/')) }}"><x-icon name="home" :size="18" />Home</a>
             @auth
-                <a href="{{ route('search') }}" class="{{ $link($isActive('search')) }}"><x-icon name="search" :size="18" />Search</a>
+                <a href="{{ route('search') }}" class="{{ $link($isActive('search')) }} md:hidden"><x-icon name="search" :size="18" />Search</a>
                 <a href="{{ route('case-dashboard.index') }}" class="{{ $link($isActive('case-dashboard*')) }}"><x-icon name="dashboard" :size="18" />Case dashboard</a>
                 <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases', 'cases/*') && ! $isActive('cases/find*', 'cases/import*', 'cases/create')) }}"><x-icon name="briefcase" :size="18" />My cases</a>
                 <a href="{{ route('cases.find') }}" class="{{ $link($isActive('cases/find*', 'cases/import*', 'cases/create')) }}"><x-icon name="download" :size="18" />Find &amp; import cases</a>
@@ -42,6 +41,7 @@
                 <a href="{{ route('tasks.index') }}" class="{{ $link($isActive('tasks*')) }}"><x-icon name="check" :size="18" />Tasks &amp; reminders</a>
                 <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*', 'client-management*')) }}"><x-icon name="people" :size="18" />Clients</a>
                 <a href="{{ route('billing.index') }}" class="{{ $link($isActive('billing*', 'invoices*', 'payments*')) }}"><x-icon name="receipt" :size="18" />Billing</a>
+                <a href="{{ route('profile.index') }}" class="{{ $link($isActive('profile*', 'firm-profile*', 'tds*', 'professional-tax*')) }}"><x-icon name="settings" :size="18" />Settings</a>
             @else
                 <p class="px-3 py-2 text-xs leading-relaxed text-slate-400">
                     <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-[#8ed2c8] hover:underline">Log in</a>
@@ -59,7 +59,7 @@
             <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court')) }}"><x-icon name="building" :size="18" />Delhi High Court</a>
             <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts')) }}"><x-icon name="gavel" :size="18" />Delhi District Courts</a>
             <a href="{{ route('courts.display-boards') }}" class="{{ $link($isActive('courts/display-boards')) }}"><x-icon name="board" :size="18" />Display boards</a>
-            <a href="{{ route('courts.ecourts-services') }}" class="{{ $link($isActive('courts/ecourts-services')) }}"><x-icon name="search" :size="18" />eCourts services</a>
+            <a href="{{ route('courts.ecourts-services') }}" class="{{ $link($isActive('courts/ecourts-services')) }}"><x-icon name="screen" :size="18" />eCourts services &amp; CNR search</a>
 
             <details class="vn-nav-sub" @if(request('level') === 'high-court') open @endif>
                 <summary class="vn-nav-link"><x-icon name="building" :size="18" /><span class="flex-1">High Courts</span><x-icon name="chevron" :size="14" class="vn-nav-chevron" /></summary>
@@ -97,7 +97,6 @@
             </details>
 
             <a href="{{ route('court-catalogue.index') }}" class="{{ $link($isActive('court-catalogue*')) }}"><x-icon name="scale" :size="18" />Tribunals &amp; appellate courts</a>
-            <a href="{{ route('court-integrations.ecourts.search') }}" class="{{ $link($isActive('court-integrations*')) }}"><x-icon name="search" :size="18" />Official court search</a>
             <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts') || ($isActive('court-directory') && ! request('level'))) }}"><x-icon name="list" :size="18" />All courts</a>
         </div>
     </details>
@@ -116,30 +115,6 @@
             <a href="{{ route('dashboard-studio.index') }}" class="{{ $link($isActive('dashboard-studio*')) }}"><x-icon name="chart" :size="18" />Law data dashboards</a>
         </div>
     </details>
-
-    {{-- SETTINGS --}}
-    @auth
-        <details class="vn-nav-group" data-filter-item data-nav-group="settings" @if($groups['settings']) open @endif>
-            <summary class="vn-nav-group-title"><span>Settings</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
-            <div class="vn-nav-items">
-                <a href="{{ route('profile.index') }}" class="{{ $link($isActive('profile')) }}"><x-icon name="settings" :size="18" />All settings</a>
-                @if($showAllProfileTypes || ! $isCompanyAccount)
-                    <a href="{{ route('profile.advocate.index') }}" class="{{ $link($isActive('profile/advocate*')) }}"><x-icon name="user" :size="18" />Advocate profile</a>
-                @endif
-                @if($showAllProfileTypes)
-                    <a href="{{ route('profile.personal.index') }}" class="{{ $link($isActive('profile/personal*')) }}"><x-icon name="user" :size="18" />Personal profile</a>
-                    <a href="{{ route('profile.professional.index') }}" class="{{ $link($isActive('profile/professional*')) }}"><x-icon name="briefcase" :size="18" />Professional profile</a>
-                @endif
-                @if($showAllProfileTypes || $isCompanyAccount)
-                    <a href="{{ route('firm-profile.index') }}" class="{{ $link($isActive('firm-profile*')) }}"><x-icon name="building" :size="18" />Firm / company profile</a>
-                @endif
-                <a href="{{ route('profile.contacts.index') }}" class="{{ $link($isActive('profile/contacts*')) }}"><x-icon name="people" :size="18" />Contact information</a>
-                <a href="{{ route('profile.practice-states.index') }}" class="{{ $link($isActive('profile/practice-states*')) }}"><x-icon name="map" :size="18" />Practice States</a>
-                <a href="{{ route('profile.invoice-settings.index') }}" class="{{ $link($isActive('profile/invoice-settings*')) }}"><x-icon name="receipt" :size="18" />Invoice &amp; GST</a>
-                <a href="{{ route('profile.tax-compliance') }}" class="{{ $link($isActive('profile/tax-compliance*', 'tds*', 'professional-tax*')) }}"><x-icon name="wallet" :size="18" />Tax &amp; compliance</a>
-            </div>
-        </details>
-    @endauth
 
     <p data-filter-empty hidden class="px-3 py-2 text-xs text-slate-400">Nothing in the menu matches.</p>
 </nav>

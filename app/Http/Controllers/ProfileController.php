@@ -24,12 +24,11 @@ class ProfileController extends Controller
         $user = Auth::user();
         $isCompany = $user->account_type === 'company';
         $showAllProfileTypes = $user->is_admin;
-        $firm = $isCompany || $showAllProfileTypes
-            ? DB::table('firm_profiles')
-                ->where('user_id', $user->id)
-                ->where('is_active', true)
-                ->first()
-            : null;
+        // Every account can keep office details for invoices (advocates call it office & billing).
+        $firm = DB::table('firm_profiles')
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->first();
 
         return view('profile.index', [
             'firm' => $firm,

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\CourtBenchMatcher;
 use App\Services\CourtData\CourtDataProviderRegistry;
 use App\Services\ReminderService;
 use Illuminate\Support\Facades\Blade;
@@ -15,6 +16,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // One matcher per request, so each court list is read from the database once.
+        $this->app->scoped(CourtBenchMatcher::class);
+
         $this->app->singleton(
             CourtDataProviderRegistry::class,
             function ($app) {

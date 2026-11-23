@@ -36,8 +36,13 @@
         </div>
     @endif
 
+    @include('profile.partials.setup-progress', ['step' => 'advocate'])
+
     <form method="POST" action="{{ route('profile.advocate.update') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
+        @if(request()->boolean('setup'))
+            <input type="hidden" name="setup" value="1">
+        @endif
 
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-lg font-bold text-slate-900">Basic information</h2>

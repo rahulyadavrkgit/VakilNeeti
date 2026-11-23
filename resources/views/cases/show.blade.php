@@ -11,21 +11,26 @@
                 ->filter(fn ($hearing) => $hearing->next_hearing_date && \Carbon\Carbon::parse($hearing->next_hearing_date)->startOfDay()->gte(today()))
                 ->sortBy('next_hearing_date')
                 ->first();
+            // The court room in the official court lists, for whatever this case does not record itself.
+            $listBench = app(\App\Services\CourtBenchMatcher::class)->find($case->court_name, $case->court_complex, $case->judge_name);
+            $listJudge = $listBench?->judgeList()[0]['name'] ?? null;
+            $listNote = '<span class="ml-1 text-xs font-normal text-slate-400">(official court list)</span>';
             $shareText = collect([
                 'Case: '.($case->case_title ?: 'Untitled case'),
                 $case->case_number ? 'Case No: '.$case->case_number : null,
                 $case->appearingForLabel() ? 'Appearing for: '.$case->appearingForLabel() : null,
                 $case->court_name ? 'Court: '.$case->court_name : null,
-                ($upcomingHearing?->court_room ?: $case->court_room) ? 'Court room: '.($upcomingHearing?->court_room ?: $case->court_room) : null,
+                ($upcomingHearing?->court_room ?: $case->court_room ?: $listBench?->court_room) ? 'Court room: '.($upcomingHearing?->court_room ?: $case->court_room ?: $listBench?->court_room) : null,
+                ($upcomingHearing?->judge_name ?: $case->judge_name ?: $listJudge) ? 'Judge: '.($upcomingHearing?->judge_name ?: $case->judge_name ?: $listJudge) : null,
                 'Status: '.ucfirst($case->case_status ?: 'unknown').($case->stage ? ' ('.$case->stage.')' : ''),
                 $upcomingHearing ? 'Next hearing: '.\Carbon\Carbon::parse($upcomingHearing->next_hearing_date)->format('d M Y') : null,
-                ($upcomingHearing?->vc_link ?: $case->vc_link) ? 'VC link: '.($upcomingHearing?->vc_link ?: $case->vc_link) : null,
+                ($upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link) ? 'VC link: '.($upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link) : null,
             ])->filter()->implode("\n");
             $linkedClients = $case->parties->filter(fn ($party) => $party->is_client && $party->client);
             $advocateName = auth()->user()?->name;
-            $courtRoom = $upcomingHearing?->court_room ?: $case->court_room;
+            $courtRoom = $upcomingHearing?->court_room ?: $case->court_room ?: $listBench?->court_room;
             // A link sent for the next hearing beats the case's usual link.
-            $vcLink = $upcomingHearing?->vc_link ?: $case->vc_link;
+            $vcLink = $upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link;
             $tabCounts = [
                 'case-history' => $case->hearings->count(),
                 'case-clients' => $linkedClients->count(),
@@ -174,13 +179,13 @@
                     <div>
                         <p class="text-xs font-medium uppercase text-slate-500">Courtroom</p>
                         <p class="mt-1 font-semibold">
-                            {{ $nextHearing->court_room ?: ($case->court_room ?: 'Not available') }}
+                            {{ $nextHearing->court_room ?: ($case->court_room ?: ($listBench?->court_room ?: 'Not available')) }}
                         </p>
                     </div>
                     <div>
                         <p class="text-xs font-medium uppercase text-slate-500">Judge</p>
                         <p class="mt-1 font-semibold">
-                            {{ $nextHearing->judge_name ?: 'Not available' }}
+                            {{ $nextHearing->judge_name ?: ($case->judge_name ?: ($listJudge ?: 'Not available')) }}
                         </p>
                     </div>
                 </div>
@@ -222,11 +227,14 @@
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Court Complex / Establishment</p>
                     <p class="mt-1 font-medium">{{ $case->court_complex ?: 'Not available' }}</p>
+                    @if($listBench)
+                        <a href="{{ route('courts.delhi-district-courts.judges', \Illuminate\Support\Str::after($listBench->court_key, 'delhi-district-')) }}" class="mt-1 inline-block text-xs font-semibold text-[#16776e] hover:underline">Found in the official court list &rarr;</a>
+                    @endif
                 </div>
 
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Judge</p>
-                    <p class="mt-1 font-medium">{{ $case->judge_name ?: 'Not available' }}</p>
+                    <p class="mt-1 font-medium">{{ $case->judge_name ?: ($listJudge ?: 'Not available') }}@if(! $case->judge_name && $listJudge){!! $listNote !!}@endif</p>
                 </div>
 
                 <div>
@@ -236,13 +244,14 @@
 
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Court room</p>
-                    <p class="mt-1 font-medium">{{ $case->court_room ?: 'Not available' }}</p>
+                    <p class="mt-1 font-medium">{{ $case->court_room ?: ($listBench?->court_room ?: 'Not available') }}@if(! $case->court_room && $listBench?->court_room){!! $listNote !!}@endif</p>
                 </div>
 
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">VC link</p>
-                    @if($case->vc_link)
-                        <a href="{{ $case->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="mt-1 block truncate font-medium text-[#16776e] hover:underline">{{ $case->vc_link }}</a>
+                    @if($case->vc_link ?: $listBench?->vc_link)
+                        <a href="{{ $case->vc_link ?: $listBench->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="mt-1 block truncate font-medium text-[#16776e] hover:underline">{{ $case->vc_link ?: $listBench->vc_link }}</a>
+                        @if(! $case->vc_link)<p class="text-xs text-slate-400">Official court list</p>@endif
                     @else
                         <p class="mt-1 font-medium">Not available</p>
                     @endif

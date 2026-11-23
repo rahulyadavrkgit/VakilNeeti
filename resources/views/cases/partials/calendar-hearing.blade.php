@@ -16,7 +16,7 @@
                 @endif
             </p>
 
-            <x-court-info class="mt-1.5" :court="$hearing->court_name ?: 'Court unavailable'" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->vc_link ?? null)" />
+            <x-court-info class="mt-1.5" :court="$hearing->court_name ?: 'Court unavailable'" :designation="$hearing->court_name" :complex="$hearing->court_complex ?? null" :room="($hearing->court_room ?? null) ?: ($hearing->case_court_room ?? null)" :judge="($hearing->judge_name ?? null) ?: ($hearing->case_judge_name ?? null)" :vc-link="($hearing->hearing_vc_link ?? null) ?: ($hearing->vc_link ?? null)" />
         </div>
 
         <div class="text-sm text-slate-700">

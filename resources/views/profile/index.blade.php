@@ -98,6 +98,12 @@
                     <p class="mt-2 text-sm text-slate-600">Update your registration details, practice areas, profile photo and court information.</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">Manage Advocate Profile &rarr;</p>
                 </a>
+                <a href="{{ route('firm-profile.index') }}"
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                    <h3 class="font-semibold text-slate-800">Office &amp; billing details</h3>
+                    <p class="mt-2 text-sm text-slate-600">Your chamber or office address and GSTIN, printed on your invoices.</p>
+                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ $firm ? 'Update office details' : 'Add office details' }} &rarr;</p>
+                </a>
             @endif
 
             <a href="{{ route('profile.contacts.index') }}"

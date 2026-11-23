@@ -164,6 +164,11 @@ class AdvocateProfileController extends Controller
             ]);
         }
 
+        // Guided profile setup: carry on to the next unfinished step.
+        if ($request->boolean('setup')) {
+            return redirect()->route('profile.setup.next', ['after' => 'advocate'])->with('success', 'Advocate profile saved.');
+        }
+
         return redirect()
             ->route('profile.advocate.index')
             ->with('success', 'Advocate profile saved.');

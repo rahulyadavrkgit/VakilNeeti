@@ -9,17 +9,82 @@
     "orientation": "any",
     "background_color": "#f4f6f8",
     "theme_color": "#142235",
-    "categories": ["business", "productivity"],
+    "categories": [
+        "business",
+        "productivity"
+    ],
     "lang": "en-IN",
     "icons": [
-        { "src": "/images/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-        { "src": "/images/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-        { "src": "/images/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-        { "src": "/images/logo-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+        {
+            "src": "/images/app-icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/images/app-icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/images/app-icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/images/logo-mark.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
     ],
     "shortcuts": [
-        { "name": "My cases", "url": "/cases" },
-        { "name": "Calendar", "url": "/case-calendar" },
-        { "name": "Display boards", "url": "/courts/display-boards" }
+        {
+            "name": "Add hearing",
+            "short_name": "Add hearing",
+            "url": "/hearings/create",
+            "icons": [
+                {
+                    "src": "/images/app-icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Calendar",
+            "url": "/case-calendar",
+            "icons": [
+                {
+                    "src": "/images/app-icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "My cases",
+            "url": "/cases",
+            "icons": [
+                {
+                    "src": "/images/app-icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Search",
+            "url": "/search",
+            "icons": [
+                {
+                    "src": "/images/app-icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        }
     ]
 }

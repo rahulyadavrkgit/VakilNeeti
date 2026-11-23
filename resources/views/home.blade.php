@@ -29,6 +29,25 @@
         <h1 class="text-xl font-semibold tracking-tight sm:text-2xl">
             @auth {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }}, {{ now()->format('l, d M') }} @else Your legal workspace @endauth
         </h1>
+        @if($nextHearing ?? null)
+            @php $nextDate = \Illuminate\Support\Carbon::parse($nextHearing['date']); @endphp
+            <section aria-labelledby="next-hearing-heading" class="mt-3 rounded-2xl bg-white p-3.5 text-slate-900 shadow-sm sm:p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p id="next-hearing-heading" class="text-[11px] font-bold uppercase tracking-wide text-[#16776e]">
+                        Next hearing · {{ $nextDate->isToday() ? 'Today' : ($nextDate->isTomorrow() ? 'Tomorrow' : $nextDate->format('D, d M')) }}@if($nextHearing['time']) · {{ $nextHearing['time'] }}@endif
+                    </p>
+                    <a href="{{ $nextHearing['url'] }}" class="text-xs font-semibold text-[#16776e] hover:underline">Open case &rarr;</a>
+                </div>
+                <p class="mt-1 flex flex-wrap items-center gap-1.5 font-semibold leading-snug">
+                    <a href="{{ $nextHearing['url'] }}" class="hover:text-[#16776e]">{{ $nextHearing['title'] }}</a>
+                    <x-case-side :side="$nextHearing['appearing_for'] ?? null" :parties="$nextHearing['appearing_for_parties'] ?? null" />
+                </p>
+                @if($nextHearing['case_number'] || $nextHearing['details'])
+                    <p class="mt-0.5 truncate text-xs text-slate-500">{{ collect([$nextHearing['case_number'], $nextHearing['details']])->filter()->implode(' · ') }}</p>
+                @endif
+                <x-court-info class="mt-2" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextHearing['court_room'] ?? null" :judge="$nextHearing['judge_name'] ?? null" :vc-link="$nextHearing['vc_link'] ?? null" />
+            </section>
+        @endif
         <nav aria-label="Quick actions" class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
             @foreach($quickActions as [$actionLabel, $actionIcon, $actionUrl])
                 <a href="{{ $actionUrl }}" class="flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white/[0.07] px-1 text-center text-xs font-semibold text-white ring-1 ring-white/10 transition hover:bg-white/15 sm:text-sm">
@@ -54,10 +73,13 @@
                         @endforeach
                     </ul>
                 </div>
-                <form method="POST" action="{{ route('home.profile-banner.hide') }}">
-                    @csrf
-                    <button type="submit" class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-700">Hide</button>
-                </form>
+                <div class="flex items-center gap-1">
+                    <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-10 items-center rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">Complete my profile &rarr;</a>
+                    <form method="POST" action="{{ route('home.profile-banner.hide') }}">
+                        @csrf
+                        <button type="submit" class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-700">Hide</button>
+                    </form>
+                </div>
             </section>
         @endif
 
@@ -102,7 +124,7 @@
                                         <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" />
                                     </span>
                                     <span class="block truncate text-xs text-slate-500">{{ collect([$event['time'], $event['case_number']])->filter()->implode(' · ') ?: $event['label'] }}</span>
-                                    <x-court-info class="mt-1" :court="$event['court']" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
+                                    <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" />
                                     @if($event['details'])
                                         <span class="block truncate text-xs text-slate-600">{{ $event['details'] }}</span>
                                     @endif

@@ -28,6 +28,12 @@ class DashboardController extends Controller
             'search' => $hearingSearch,
         ])->take(12);
 
+        // The next hearing that has not started yet (today without a time counts); hidden while searching.
+        $now = now()->format('H:i');
+        $nextHearing = $hearingSearch === ''
+            ? $upcomingHearings->first(fn (array $event): bool => $event['date'] > today()->toDateString() || $event['time'] === null || $event['time'] >= $now)
+            : null;
+
         $agenda = $calendar->between(today(), today()->addDays(7), ['groups' => ['appointment', 'task']])
             ->reject(fn (array $event): bool => $event['is_done'] && $event['group'] === 'task')
             ->take(10);
@@ -41,6 +47,7 @@ class DashboardController extends Controller
 
         return view('home', [
             'upcomingHearings' => $upcomingHearings,
+            'nextHearing' => $nextHearing,
             'hearingSearch' => $hearingSearch,
             'agenda' => $agenda,
             'overdueTaskCount' => $overdueTaskCount,
