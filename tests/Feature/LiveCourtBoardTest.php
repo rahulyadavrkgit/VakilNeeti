@@ -64,9 +64,12 @@ class LiveCourtBoardTest extends TestCase
         Http::fake(['delhihighcourt.nic.in/*' => Http::sequence()
             ->push(['all_courts' => ['12' => 'A27']])
             ->push('down', 503)]);
+        $this->withoutDefer();
         app(LiveCourtBoard::class)->board('delhi-high-court');
 
+        // After 30 seconds the last copy is served at once while a new one is fetched (which fails here).
         $this->travel(1)->minutes();
+        $this->assertTrue(app(LiveCourtBoard::class)->board('delhi-high-court')['ok']);
 
         $board = app(LiveCourtBoard::class)->board('delhi-high-court');
 
@@ -77,6 +80,7 @@ class LiveCourtBoardTest extends TestCase
     public function test_an_unreachable_court_is_not_asked_again_for_a_while_and_its_live_board_is_not_offered(): void
     {
         Http::fake(['cdb.sci.gov.in/*' => Http::response('', 504)]);
+        $this->withoutDefer();
 
         $this->assertSame([], app(LiveCourtBoard::class)->board('supreme-court')['rooms']);
         $this->assertFalse(app(LiveCourtBoard::class)->isAvailable('supreme-court'));

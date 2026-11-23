@@ -19,6 +19,8 @@ class LiveCourtBoard
 {
     private const FRESH_SECONDS = 30;
 
+    private const USABLE_SECONDS = 300;
+
     private const RETRY_MINUTES = 10;
 
     /**
@@ -64,7 +66,9 @@ class LiveCourtBoard
             return null;
         }
 
-        $board = Cache::remember("live-board:{$court}", self::FRESH_SECONDS, function () use ($court): array {
+        // Fresh for 30 seconds; after that the copy is still served at once while a new one is fetched
+        // after the response has gone, so no visitor waits for the court (up to 5 minutes old).
+        $board = Cache::flexible("live-board:{$court}", [self::FRESH_SECONDS, self::USABLE_SECONDS], function () use ($court): array {
             // After a failure, wait before asking again so no visitor sits through the court's timeout.
             $rooms = Cache::has("live-board-down:{$court}") ? null : $this->fetch($court);
 
