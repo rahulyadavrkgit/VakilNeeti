@@ -36,6 +36,10 @@ return [
 
     'otp_bypass_enabled' => env('OTP_BYPASS_ENABLED', false),
 
+    // Numbers allowed to skip the SMS code while the bypass is on (comma separated; "*" = every number,
+    // only for a private development machine). Empty means nobody skips it.
+    'otp_bypass_numbers' => array_values(array_filter(array_map('trim', explode(',', (string) env('OTP_BYPASS_NUMBERS', ''))))),
+
     // Store listings for the VakilNiti phone apps. Until these are set, the site offers
     // "Add to Home Screen" installation instead of store badges.
     'mobile_apps' => [

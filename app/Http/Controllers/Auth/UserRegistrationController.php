@@ -79,10 +79,26 @@ class UserRegistrationController extends Controller
 
     }
 
-    private function otpBypassEnabled(): bool
+    /**
+     * Whether this number may skip the SMS code. Only in local mode with the bypass switched on, and only for
+     * numbers listed in OTP_BYPASS_NUMBERS ("*" lists every number, for development on a private machine).
+     * Any other number has to receive and enter the real SMS code.
+     */
+    private function otpBypassEnabled(string $mobile): bool
     {
-        return app()->environment('local')
-            && (bool) config('services.otp_bypass_enabled', false);
+        if (! app()->environment('local') || ! config('services.otp_bypass_enabled', false)) {
+            return false;
+        }
+
+        $allowed = (array) config('services.otp_bypass_numbers', []);
+
+        if (in_array('*', $allowed, true)) {
+            return true;
+        }
+
+        $lastTen = fn (string $number): string => substr(preg_replace('/\D+/', '', $number) ?? '', -10);
+
+        return collect($allowed)->contains(fn (string $number): bool => $lastTen($number) !== '' && $lastTen($number) === $lastTen($mobile));
     }
 
     private function sendMobileOtp(
@@ -164,7 +180,7 @@ class UserRegistrationController extends Controller
 
         $pending = ['mobile' => $mobile];
 
-        if ($this->otpBypassEnabled()) {
+        if ($this->otpBypassEnabled($mobile)) {
             $pending['otp_bypassed'] = true;
             $request->session()->forget('pending_user_registration');
             $request->session()->put('verified_registration', $pending);
@@ -513,7 +529,7 @@ class UserRegistrationController extends Controller
 
         $userQuery = User::where('mobile', $mobile);
 
-        if (! $this->otpBypassEnabled()) {
+        if (! $this->otpBypassEnabled($mobile)) {
             $userQuery->whereNotNull('mobile_verified_at');
         }
 
@@ -526,7 +542,7 @@ class UserRegistrationController extends Controller
                 ->with('show_login_modal', true);
         }
 
-        if ($this->otpBypassEnabled()) {
+        if ($this->otpBypassEnabled($mobile)) {
             Auth::login($user);
             $request->session()->regenerate();
 

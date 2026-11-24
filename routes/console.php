@@ -37,6 +37,12 @@ Artisan::command('courts:check-boards', function (CourtBoardEmbedCheck $check) {
 
 Schedule::command('courts:check-boards')->dailyAt('06:00');
 
+// After Hostinger's automatic deploy: migrate and rebuild the caches once for each new commit.
+Schedule::command('app:refresh-after-deploy')->everyMinute()->withoutOverlapping();
+
+// A compressed database copy every night, kept for 14 days (storage/app/backups).
+Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping();
+
 Artisan::command('courts:import-benches {file : CSV with court_key, section, court_room, bench, location, judges, designations, roster, vc_link, vc_meeting_id, email, photos; lists separated by a vertical bar} {--replace : Replace the existing list of every court in the file}', function (string $file) {
     if (! is_readable($file)) {
         $this->error("Cannot read {$file}.");
