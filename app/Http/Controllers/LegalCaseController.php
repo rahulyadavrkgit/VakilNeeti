@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CaseTag;
+use App\Models\CauseListAppearance;
 use App\Models\Client;
 use App\Models\CourtStandSide;
 use App\Models\LegalCase;
@@ -157,6 +158,7 @@ class LegalCaseController extends Controller
             'folderDocuments' => $case->documents->where('folder_id', $currentFolder?->id)->values(),
             'journey' => $case->journey(),
             'standSide' => CourtStandSide::forCase($case),
+            'causeListings' => CauseListAppearance::upcomingForCases([$case->id]),
             'linkableCases' => LegalCase::query()
                 ->where('user_id', $case->user_id)
                 ->whereKeyNot($case->id)

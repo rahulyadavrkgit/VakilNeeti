@@ -157,14 +157,15 @@
                         @error('full_name') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                     </label>
                     <label class="text-sm font-medium text-slate-700">
-                        Verified phone number
-                        <input value="{{ $pending['mobile'] }}" readonly class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-600">
+                        Verified email
+                        <input value="{{ $pending['email'] }}" readonly class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-600">
                     </label>
                     <label class="text-sm font-medium text-slate-700 sm:col-span-2">
-                        Account email <span class="text-red-600">*</span>
-                        <input type="email" name="email" value="{{ old('email') }}" required maxlength="255" autocomplete="email"
+                        Mobile number <span class="font-normal text-slate-500">(optional)</span>
+                        <input type="tel" name="mobile" value="{{ old('mobile') }}" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="98xxxxxxxx"
                                class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                        @error('email') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                        <span class="mt-1 block text-xs text-slate-500">For your office details and team invites. You sign in with your email.</span>
+                        @error('mobile') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                     </label>
                 </div>
             </section>
@@ -253,7 +254,7 @@
                         </label>
                         <label class="text-sm font-medium text-slate-700">
                             Business phone
-                            <input name="firm_phone" value="{{ old('firm_phone', $pending['mobile']) }}" maxlength="20" inputmode="tel"
+                            <input name="firm_phone" value="{{ old('firm_phone') }}" maxlength="20" inputmode="tel"
                                    class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
                             @error('firm_phone') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                         </label>

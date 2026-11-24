@@ -160,10 +160,10 @@ class CaseCalendarController extends Controller
             ->leftJoin('legal_cases as lc', function ($join) {
                 $join->on('lc.id', '=', 'h.case_id');
                 if (! auth()->user()->is_admin) {
-                    $join->where('lc.user_id', auth()->id());
+                    $join->where('lc.user_id', auth()->user()->workspaceId());
                 }
             })
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('h.user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('h.user_id', auth()->user()->workspaceId()))
             ->select(
                 'h.id',
                 'h.case_id',

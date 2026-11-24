@@ -233,12 +233,12 @@
 
 @endphp
 
-<body class="min-h-screen {{ request()->boolean('embed') ? 'vn-embed' : '' }}">
+<body class="min-h-screen {{ request()->boolean('embed') ? 'vn-embed' : '' }}" data-signed-in="{{ auth()->check() ? 1 : 0 }}">
 
-<button type="button" class="vn-sidebar-backdrop" id="vn-sidebar-backdrop" aria-label="Close navigation"></button>
+<button type="button" class="vn-sidebar-backdrop" id="vn-sidebar-backdrop" aria-label="{{ __('Close navigation') }}"></button>
 <div class="min-h-screen flex">
 
-    <aside id="vn-sidebar" class="vn-sidebar w-72 shrink-0 flex flex-col" aria-label="Main navigation">
+    <aside id="vn-sidebar" class="vn-sidebar w-72 shrink-0 flex flex-col" aria-label="{{ __('Main navigation') }}">
 
         <div class="flex h-16 shrink-0 items-center border-b border-white/10 px-5">
             <a href="{{ route('dashboard') }}" aria-label="VakilNiti home" class="inline-flex rounded-lg">
@@ -262,7 +262,7 @@
         <header class="vn-main-header {{ request()->routeIs('dashboard') ? 'is-home' : '' }}">
             <div class="flex h-16 items-center gap-1.5 px-3 sm:gap-2 sm:px-5 lg:px-6">
                 {{-- Computers: show or hide the side menu. Phones use the Menu tab at the bottom. --}}
-                <button type="button" class="vn-menu-toggle {{ $headerIcon }}" id="vn-menu-toggle" aria-label="Hide side menu" title="Show / hide menu" aria-controls="vn-sidebar" aria-expanded="true">
+                <button type="button" class="vn-menu-toggle {{ $headerIcon }}" id="vn-menu-toggle" aria-label="{{ __('Hide side menu') }}" title="{{ __('Show / hide menu') }}" aria-controls="vn-sidebar" aria-expanded="true">
                     <x-icon name="sidebar" :size="20" />
                 </button>
 
@@ -283,31 +283,31 @@
                     <form method="GET" action="{{ route('search') }}" role="search" class="mr-1 hidden lg:block">
                         <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-[#16776e] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#16776e]/15">
                             <x-icon name="search" :size="17" class="text-slate-400" />
-                            <span class="sr-only">Search cases, clients and invoices</span>
-                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search cases, judges, rooms, CNR…  (Ctrl K)"
+                            <span class="sr-only">{{ __('Search cases, clients and invoices') }}</span>
+                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="{{ __('Search cases, judges, rooms, CNR…  (Ctrl K)') }}"
                                    class="h-10 w-52 border-0 bg-transparent px-0 text-sm focus:ring-0 xl:w-72">
                         </label>
                     </form>
-                    <a href="{{ route('search') }}" data-search-open aria-label="Search" title="Search (Ctrl K)" class="{{ $headerIcon }} lg:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
+                    <a href="{{ route('search') }}" data-search-open aria-label="{{ __('Search') }}" title="{{ __('Search') }} (Ctrl K)" class="{{ $headerIcon }} lg:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
                         <x-icon name="search" :size="20" />
                     </a>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="Add new" title="Add new" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center justify-center gap-1.5 rounded-xl bg-[#16776e] px-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125f58] sm:px-3.5">
-                            <x-icon name="plus" :size="20" /><span class="hidden sm:inline">New</span>
+                        <summary aria-label="{{ __('Add new') }}" title="{{ __('Add new') }}" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center justify-center gap-1.5 rounded-xl bg-[#16776e] px-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125f58] sm:px-3.5">
+                            <x-icon name="plus" :size="20" /><span class="hidden sm:inline">{{ __('New') }}</span>
                         </summary>
                         <div class="{{ $headerMenu }} w-60 py-1.5">
-                            <p class="px-4 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Add new</p>
-                            <a href="{{ route('hearings.create') }}" data-sheet="{{ route('sheets.next-date') }}" class="{{ $headerMenuItem }}"><x-icon name="calendar" :size="18" class="text-[#16776e]" />Hearing / next date</a>
-                            <a href="{{ route('cases.manual') }}" data-sheet="{{ route('sheets.case') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />Case</a>
-                            <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="{{ $headerMenuItem }}"><x-icon name="check" :size="18" class="text-[#16776e]" />Task</a>
-                            <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="{{ $headerMenuItem }}"><x-icon name="people" :size="18" class="text-[#16776e]" />Client</a>
-                            <a href="{{ route('invoices.create') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-[#16776e]" />Invoice</a>
+                            <p class="px-4 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Add new') }}</p>
+                            <a href="{{ route('hearings.create') }}" data-sheet="{{ route('sheets.next-date') }}" class="{{ $headerMenuItem }}"><x-icon name="calendar" :size="18" class="text-[#16776e]" />{{ __('Hearing / next date') }}</a>
+                            <a href="{{ route('cases.manual') }}" data-sheet="{{ route('sheets.case') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />{{ __('Case') }}</a>
+                            <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="{{ $headerMenuItem }}"><x-icon name="check" :size="18" class="text-[#16776e]" />{{ __('Task') }}</a>
+                            <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="{{ $headerMenuItem }}"><x-icon name="people" :size="18" class="text-[#16776e]" />{{ __('Client') }}</a>
+                            <a href="{{ route('invoices.create') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-[#16776e]" />{{ __('Invoice') }}</a>
                         </div>
                     </details>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="Notifications{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' unread' : '' }}" title="Notifications" class="relative {{ $headerIcon }}">
+                        <summary aria-label="{{ __('Notifications') }}{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' '.__('unread') : '' }}" title="{{ __('Notifications') }}" class="relative {{ $headerIcon }}">
                             <x-icon name="bell" :size="20" />
                             @if($bellUnreadCount ?? 0)
                                 <span class="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">{{ $bellUnreadCount > 9 ? '9+' : $bellUnreadCount }}</span>
@@ -315,11 +315,11 @@
                         </summary>
                         <div class="{{ $headerMenu }} w-[min(22rem,calc(100vw-1.5rem))]">
                             <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-                                <p class="font-semibold text-slate-900">Notifications</p>
+                                <p class="font-semibold text-slate-900">{{ __('Notifications') }}</p>
                                 @if($bellUnreadCount ?? 0)
                                     <form method="POST" action="{{ route('notifications.read-all') }}">
                                         @csrf
-                                        <button type="submit" class="text-xs font-semibold text-[#16776e] hover:underline">Mark all read</button>
+                                        <button type="submit" class="text-xs font-semibold text-[#16776e] hover:underline">{{ __('Mark all read') }}</button>
                                     </form>
                                 @endif
                             </div>
@@ -327,15 +327,15 @@
                                 @forelse($bellNotifications ?? [] as $notification)
                                     @include('notifications.partials.item', ['notification' => $notification])
                                 @empty
-                                    <p class="px-4 py-6 text-center text-slate-500">You're all caught up.</p>
+                                    <p class="px-4 py-6 text-center text-slate-500">{{ __("You're all caught up.") }}</p>
                                 @endforelse
                             </div>
-                            <a href="{{ route('notifications.index') }}" class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-[#16776e] hover:bg-slate-50">View all</a>
+                            <a href="{{ route('notifications.index') }}" class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-[#16776e] hover:bg-slate-50">{{ __('View all') }}</a>
                         </div>
                     </details>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="Account menu" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center gap-2 rounded-xl pl-1 pr-1 transition hover:bg-slate-100 xl:pr-2.5">
+                        <summary aria-label="{{ __('Account menu') }}" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center gap-2 rounded-xl pl-1 pr-1 transition hover:bg-slate-100 xl:pr-2.5">
                             <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#142235] text-sm font-bold text-[#e6b84a]">{{ $headerInitial }}</span>
                             <span class="hidden max-w-32 truncate text-sm font-semibold text-slate-800 xl:block">{{ \Illuminate\Support\Str::of($headerUserName)->before(' ') }}</span>
                             <x-icon name="chevron" :size="16" class="hidden text-slate-400 xl:block" />
@@ -345,31 +345,33 @@
                                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#142235] font-bold text-[#e6b84a]">{{ $headerInitial }}</span>
                                 <span class="min-w-0">
                                     <span class="block truncate font-semibold text-slate-900">{{ $headerUserName }}</span>
-                                    <span class="block truncate text-xs text-slate-500">{{ auth()->user()->mobile ?? auth()->user()->email }}</span>
+                                    <span class="block truncate text-xs text-slate-500">{{ auth()->user()->email ?? auth()->user()->mobile }}</span>
                                 </span>
                             </div>
-                            <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />Settings</a>
-                            <a href="{{ route('firm-profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="building" :size="18" class="text-slate-500" />{{ auth()->user()->account_type === 'company' ? 'Firm profile' : 'Office & billing' }}</a>
+                            <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />{{ __('Settings') }}</a>
+                            @unless(auth()->user()->isTeamMember())
+                                <a href="{{ route('firm-profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="building" :size="18" class="text-slate-500" />{{ __(auth()->user()->account_type === 'company' ? 'Firm profile' : 'Office & billing') }}</a>
+                            @endunless
                             @include('layouts.partials.theme-switch')
-                            <a href="{{ route('app.download') }}" class="{{ $headerMenuItem }}"><x-icon name="phone" :size="18" class="text-slate-500" />Get the app</a>
+                            <a href="{{ route('app.download') }}" class="{{ $headerMenuItem }}"><x-icon name="phone" :size="18" class="text-slate-500" />{{ __('Get the app') }}</a>
                             <form method="POST" action="{{ auth()->user()->is_admin ? route('admin.logout') : route('user.logout') }}" class="mt-1 border-t border-slate-100 pt-1">
                                 @csrf
-                                <button type="submit" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-red-700 hover:bg-red-50"><x-icon name="logout" :size="18" />Log out</button>
+                                <button type="submit" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-red-700 hover:bg-red-50"><x-icon name="logout" :size="18" />{{ __('Log out') }}</button>
                             </form>
                         </div>
                     </details>
                 @else
                     <button type="button" data-install-app hidden class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 md:inline-flex">
-                        <x-icon name="phone" :size="18" /> Install app
+                        <x-icon name="phone" :size="18" /> {{ __('Install app') }}
                     </button>
                     <a href="{{ route('app.download') }}" class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 lg:inline-flex">
-                        <x-icon name="phone" :size="18" /> Get the app
+                        <x-icon name="phone" :size="18" /> {{ __('Get the app') }}
                     </a>
-                    <button type="button" data-theme-cycle aria-label="Switch light or dark" title="Light or dark" class="{{ $headerIcon }}">
+                    <button type="button" data-theme-cycle aria-label="{{ __('Switch light or dark') }}" title="{{ __('Light or dark') }}" class="{{ $headerIcon }}">
                         <x-icon name="moon" :size="19" />
                     </button>
-                    <a href="{{ route('login') }}" data-vn-auth-open="login" class="inline-flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-800 hover:bg-slate-100">Log in</a>
-                    <a href="{{ route('register') }}" data-vn-auth-open="register" class="inline-flex h-10 items-center rounded-xl bg-[#16776e] px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">Sign up</a>
+                    <a href="{{ route('login') }}" data-vn-auth-open="login" class="inline-flex h-10 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100 sm:px-3">{{ __('Log in') }}</a>
+                    <a href="{{ route('register') }}" data-vn-auth-open="register" class="inline-flex h-10 items-center whitespace-nowrap rounded-xl bg-[#16776e] px-3 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58] sm:px-3.5">{{ __('Sign up') }}</a>
                 @endauth
             </div>
         </header>
@@ -394,9 +396,9 @@
         @endphp
         @auth
             <p class="vn-footer border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 md:hidden">
-                &copy; {{ date('Y') }} VakilNiti · Not legal advice; check the official source ·
-                <a href="{{ route('courts.index') }}" class="font-semibold text-[#16776e]">Courts</a> ·
-                <a href="{{ route('bare-acts.index') }}" class="font-semibold text-[#16776e]">Bare Acts</a>
+                &copy; {{ date('Y') }} VakilNiti · {{ __('Not legal advice; check the official source') }} ·
+                <a href="{{ route('courts.index') }}" class="font-semibold text-[#16776e]">{{ __('Courts') }}</a> ·
+                <a href="{{ route('bare-acts.index') }}" class="font-semibold text-[#16776e]">{{ __('Bare Acts') }}</a>
             </p>
         @endauth
         <footer class="vn-footer bg-[#142235] text-[#c3cfdc] {{ auth()->check() ? 'max-md:hidden' : '' }}">
@@ -407,60 +409,62 @@
                             <x-brand tone="dark" :size="40" />
                         </a>
                         <p class="mt-4 max-w-sm text-sm leading-relaxed">
-                            Case diary, hearings, clients and invoices for advocates in India.
+                            {{ __('Case diary, hearings, clients and invoices for advocates in India.') }}
                         </p>
 
-                        <p class="{{ $footerHeading }} mt-6">Get the app</p>
+                        <p class="{{ $footerHeading }} mt-6">{{ __('Get the app') }}</p>
                         @include('layouts.partials.app-store-buttons')
                     </div>
 
-                    <nav class="grid grid-cols-2 gap-x-6 gap-y-8 text-sm sm:grid-cols-3" aria-label="Footer">
+                    <nav class="grid grid-cols-2 gap-x-6 gap-y-8 text-sm sm:grid-cols-3" aria-label="{{ __('Footer') }}">
                         <div>
-                            <p class="{{ $footerHeading }}">Your practice</p>
+                            <p class="{{ $footerHeading }}">{{ __('Your practice') }}</p>
                             <ul class="space-y-2.5">
                                 @auth
-                                    <li><a href="{{ route('cases.index') }}" class="{{ $footerLink }}">Cases</a></li>
-                                    <li><a href="{{ route('cases.calendar') }}" class="{{ $footerLink }}">Calendar</a></li>
-                                    <li><a href="{{ route('clients.index') }}" class="{{ $footerLink }}">Clients</a></li>
-                                    <li><a href="{{ route('billing.index') }}" class="{{ $footerLink }}">Billing</a></li>
-                                    <li><a href="{{ route('profile.index') }}" class="{{ $footerLink }}">Settings</a></li>
+                                    <li><a href="{{ route('cases.index') }}" class="{{ $footerLink }}">{{ __('Cases') }}</a></li>
+                                    <li><a href="{{ route('cases.calendar') }}" class="{{ $footerLink }}">{{ __('Calendar') }}</a></li>
+                                    <li><a href="{{ route('clients.index') }}" class="{{ $footerLink }}">{{ __('Clients') }}</a></li>
+                                    @unless(auth()->user()->isTeamMember())
+                                        <li><a href="{{ route('billing.index') }}" class="{{ $footerLink }}">{{ __('Billing') }}</a></li>
+                                    @endunless
+                                    <li><a href="{{ route('profile.index') }}" class="{{ $footerLink }}">{{ __('Settings') }}</a></li>
                                 @else
-                                    <li><a href="{{ route('register') }}" data-vn-auth-open="register" class="{{ $footerLink }}">Create an account</a></li>
-                                    <li><a href="{{ route('login') }}" data-vn-auth-open="login" class="{{ $footerLink }}">Log in</a></li>
-                                    <li><a href="{{ route('app.download') }}" class="{{ $footerLink }}">Install on your phone</a></li>
+                                    <li><a href="{{ route('register') }}" data-vn-auth-open="register" class="{{ $footerLink }}">{{ __('Create an account') }}</a></li>
+                                    <li><a href="{{ route('login') }}" data-vn-auth-open="login" class="{{ $footerLink }}">{{ __('Log in') }}</a></li>
+                                    <li><a href="{{ route('app.download') }}" class="{{ $footerLink }}">{{ __('Install on your phone') }}</a></li>
                                 @endauth
                             </ul>
                         </div>
                         <div>
-                            <p class="{{ $footerHeading }}">Courts</p>
+                            <p class="{{ $footerHeading }}">{{ __('Courts') }}</p>
                             <ul class="space-y-2.5">
-                                <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">All courts</a></li>
-                                <li><a href="{{ route('courts.high-courts') }}" class="{{ $footerLink }}">High Courts</a></li>
-                                <li><a href="{{ route('courts.delhi-district-courts') }}" class="{{ $footerLink }}">Delhi District Courts</a></li>
-                                <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">Supreme Court</a></li>
-                                <li><a href="{{ route('tribunals.index') }}" class="{{ $footerLink }}">Tribunals</a></li>
-                                <li><a href="{{ route('courts.display-boards') }}" class="{{ $footerLink }}">Display boards</a></li>
+                                <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">{{ __('All courts') }}</a></li>
+                                <li><a href="{{ route('courts.high-courts') }}" class="{{ $footerLink }}">{{ __('High Courts') }}</a></li>
+                                <li><a href="{{ route('courts.delhi-district-courts') }}" class="{{ $footerLink }}">{{ __('Delhi District Courts') }}</a></li>
+                                <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">{{ __('Supreme Court') }}</a></li>
+                                <li><a href="{{ route('tribunals.index') }}" class="{{ $footerLink }}">{{ __('Tribunals') }}</a></li>
+                                <li><a href="{{ route('courts.display-boards') }}" class="{{ $footerLink }}">{{ __('Display boards') }}</a></li>
                             </ul>
                         </div>
                         <div>
-                            <p class="{{ $footerHeading }}">Library</p>
+                            <p class="{{ $footerHeading }}">{{ __('Library') }}</p>
                             <ul class="space-y-2.5">
-                                <li><a href="{{ route('bare-acts.index') }}" class="{{ $footerLink }}">Bare Acts</a></li>
-                                <li><a href="{{ route('new-criminal-laws.index') }}" class="{{ $footerLink }}">New criminal laws</a></li>
-                                <li><a href="{{ route('court-fee.index') }}" class="{{ $footerLink }}">Court fee</a></li>
-                                <li><a href="{{ route('miscellaneous-forms.index') }}" class="{{ $footerLink }}">Forms</a></li>
+                                <li><a href="{{ route('bare-acts.index') }}" class="{{ $footerLink }}">{{ __('Bare Acts') }}</a></li>
+                                <li><a href="{{ route('new-criminal-laws.index') }}" class="{{ $footerLink }}">{{ __('New criminal laws') }}</a></li>
+                                <li><a href="{{ route('court-fee.index') }}" class="{{ $footerLink }}">{{ __('Court fee') }}</a></li>
+                                <li><a href="{{ route('miscellaneous-forms.index') }}" class="{{ $footerLink }}">{{ __('Forms') }}</a></li>
                             </ul>
                         </div>
                     </nav>
                 </div>
 
                 <p class="mt-10 text-xs leading-relaxed text-[#b4c2d1]">
-                    General information, not legal advice. Check the official source before relying on it. VakilNiti is not affiliated with any court or government body.
+                    {{ __('General information, not legal advice. Check the official source before relying on it. VakilNiti is not affiliated with any court or government body.') }}
                 </p>
 
                 <div class="mt-6 flex flex-col gap-2 border-t border-white/10 pt-5 text-xs text-[#93a4b7] sm:flex-row sm:items-center sm:justify-between">
-                    <p>&copy; {{ date('Y') }} VakilNiti. All rights reserved.</p>
-                    <p>Made in India for Indian advocates</p>
+                    <div class="flex flex-wrap items-center gap-x-1">&copy; {{ date('Y') }} VakilNiti · <a href="{{ route('legal.privacy') }}" class="hover:text-white hover:underline">{{ __('Privacy') }}</a> · <a href="{{ route('legal.terms') }}" class="hover:text-white hover:underline">{{ __('Terms') }}</a></div>
+                    <p>{{ __('Made in India for Indian advocates') }}</p>
                 </div>
             </div>
         </footer>
@@ -468,12 +472,12 @@
     </div>
 </div>
 
-<nav class="vn-mobile-nav" aria-label="Quick navigation">
-    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-current' : '' }}"><x-icon name="home" :size="21" class="vn-mobile-icon" /><span>Home</span></a>
-    <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*') || request()->is('case-dashboard*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>Cases</span></a>
-    <a href="{{ route('cases.calendar') }}" class="{{ request()->is('case-calendar*') ? 'is-current' : '' }}"><x-icon name="calendar" :size="21" class="vn-mobile-icon" /><span>Calendar</span></a>
-    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>Courts</span></a>
-    <button type="button" id="vn-mobile-more" aria-label="Open the full menu" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>Menu</span></button>
+<nav class="vn-mobile-nav" aria-label="{{ __('Quick navigation') }}">
+    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-current' : '' }}"><x-icon name="home" :size="21" class="vn-mobile-icon" /><span>{{ __('Home') }}</span></a>
+    <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*') || request()->is('case-dashboard*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>{{ __('Cases') }}</span></a>
+    <a href="{{ route('cases.calendar') }}" class="{{ request()->is('case-calendar*') ? 'is-current' : '' }}"><x-icon name="calendar" :size="21" class="vn-mobile-icon" /><span>{{ __('Calendar') }}</span></a>
+    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></a>
+    <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the full menu') }}" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>{{ __('Menu') }}</span></button>
 </nav>
 
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
@@ -551,15 +555,24 @@
                     @endforeach
                 </div>
             @endif
-            @if(session('show_login_otp') || session('login_otp_mobile'))
+            @php
+                $loginCodeMobile = session('login_otp_mobile');
+                $loginCodeEmail = $loginCodeMobile ? null : session('login_otp_email');
+                $loginVia = session('login_via') ?? (old('mobile') ? 'mobile' : 'email');
+            @endphp
+            @if((session('show_login_otp') && ($loginCodeMobile || $loginCodeEmail)) || $loginCodeMobile || $loginCodeEmail)
                 <p class="mb-4 text-sm text-slate-600">
-                    Enter the four-digit OTP sent to {{ session('login_otp_mobile') }}.
+                    @if($loginCodeMobile)
+                        Enter the 4-digit code sent by SMS to <strong class="text-slate-900">{{ $loginCodeMobile }}</strong>.
+                    @else
+                        Enter the 6-digit code we emailed to <strong class="text-slate-900">{{ $loginCodeEmail }}</strong>. Check spam if it is not in your inbox.
+                    @endif
                 </p>
                 <form method="POST" action="{{ route('login.verify.submit') }}" class="space-y-4">
                     @csrf
                     <div>
-                        <label for="vn-login-otp" class="mb-1 block text-sm font-medium text-slate-700">Phone OTP</label>
-                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+                        <label for="vn-login-otp" class="mb-1 block text-sm font-medium text-slate-700">{{ $loginCodeMobile ? 'Code from the SMS' : 'Code from the email' }}</label>
+                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{{ '{'.($loginCodeMobile ? 4 : 6).'}' }}" maxlength="{{ $loginCodeMobile ? 4 : 6 }}"
                                required autocomplete="one-time-code"
                                class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
                     </div>
@@ -567,22 +580,51 @@
                         Verify and log in
                     </button>
                 </form>
-                <form method="POST" action="{{ route('login.submit') }}" class="mt-4 text-center">
-                    @csrf
-                    <input type="hidden" name="mobile" value="{{ session('login_otp_mobile') }}">
-                    <button type="submit" class="text-sm font-semibold text-[#16776e] underline">Resend OTP</button>
-                </form>
+                <div class="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                    <form method="POST" action="{{ route('login.submit') }}">
+                        @csrf
+                        @if($loginCodeMobile)
+                            <input type="hidden" name="mobile" value="{{ $loginCodeMobile }}">
+                        @else
+                            <input type="hidden" name="email" value="{{ $loginCodeEmail }}">
+                        @endif
+                        <button type="submit" class="text-sm font-semibold text-[#16776e] underline">Send a new code</button>
+                    </form>
+                    <form method="POST" action="{{ route('login.change') }}">
+                        @csrf
+                        <button type="submit" class="text-sm font-semibold text-slate-600 underline">{{ $loginCodeMobile ? 'Use another number or email' : 'Use another email or number' }}</button>
+                    </form>
+                </div>
             @else
-                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
+                {{-- Log in with email (code by email) or with the mobile number on the account (code by SMS). --}}
+                <div class="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist" aria-label="Log in with">
+                    <button type="button" role="tab" data-login-via="email" aria-selected="{{ $loginVia === 'email' ? 'true' : 'false' }}"
+                            class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Email</button>
+                    <button type="button" role="tab" data-login-via="mobile" aria-selected="{{ $loginVia === 'mobile' ? 'true' : 'false' }}"
+                            class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Mobile number</button>
+                </div>
+                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4" data-login-form="email" @if($loginVia !== 'email') hidden @endif>
                     @csrf
                     <div>
-                        <label for="vn-login-mobile" class="mb-1 block text-sm font-medium text-slate-700">Phone number</label>
-                        <input id="vn-login-mobile" type="tel" name="mobile" value="{{ old('mobile') }}" required
-                               placeholder="10-digit Indian mobile number" autocomplete="tel"
+                        <label for="vn-login-email" class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                        <input id="vn-login-email" type="email" name="email" value="{{ old('email') }}" required
+                               placeholder="you@example.com" autocomplete="email" inputmode="email"
                                class="w-full rounded-lg border border-slate-300 p-3">
                     </div>
                     <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
-                        Send OTP
+                        Email me a code
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4" data-login-form="mobile" @if($loginVia !== 'mobile') hidden @endif>
+                    @csrf
+                    <div>
+                        <label for="vn-login-mobile" class="mb-1 block text-sm font-medium text-slate-700">Mobile number</label>
+                        <input id="vn-login-mobile" type="tel" name="mobile" value="{{ old('mobile') }}" required
+                               placeholder="10-digit Indian mobile number" autocomplete="tel" inputmode="tel"
+                               class="w-full rounded-lg border border-slate-300 p-3">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
+                        Send code by SMS
                     </button>
                 </form>
             @endif
@@ -603,14 +645,18 @@
             <form method="POST" action="{{ route('register.send-otp') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label for="vn-register-mobile" class="mb-1 block text-sm font-medium text-slate-700">Mobile number</label>
-                    <input id="vn-register-mobile" type="tel" name="mobile" value="{{ old('mobile') }}"
-                           placeholder="10-digit Indian mobile number or +91..." autocomplete="tel"
+                    <label for="vn-register-email" class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                    <input id="vn-register-email" type="email" name="email" value="{{ old('email') }}"
+                           placeholder="you@example.com" autocomplete="email" inputmode="email"
                            required class="w-full rounded-lg border border-slate-300 p-3">
                 </div>
                 <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
-                    Continue with phone OTP
+                    Email me a code
                 </button>
+                <p class="text-center text-xs text-slate-500">
+                    By continuing you agree to the <a href="{{ route('legal.terms') }}" class="font-semibold text-[#16776e] underline">Terms</a>
+                    and <a href="{{ route('legal.privacy') }}" class="font-semibold text-[#16776e] underline">Privacy policy</a>.
+                </p>
             </form>
             <p class="mt-5 text-center text-sm text-slate-600">
                 Already registered?
@@ -629,12 +675,12 @@
                     @endforeach
                 </div>
             @endif
-            <p class="mb-5 text-sm text-slate-600">Enter the four-digit OTP sent to your mobile number.</p>
+            <p class="mb-5 text-sm text-slate-600">Enter the 6-digit code we emailed to you. Check spam if it is not in your inbox.</p>
             <form method="POST" action="{{ route('register.verify.submit') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label for="vn-register-otp" class="mb-1 block text-sm font-medium text-slate-700">Four-digit OTP</label>
-                    <input id="vn-register-otp" name="otp" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+                    <label for="vn-register-otp" class="mb-1 block text-sm font-medium text-slate-700">Code from the email</label>
+                    <input id="vn-register-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
                            required autocomplete="one-time-code"
                            class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
                 </div>
@@ -644,7 +690,7 @@
             </form>
             <form method="POST" action="{{ route('register.resend-otp') }}" class="mt-4 text-center">
                 @csrf
-                <button type="submit" class="text-sm font-semibold text-[#16776e] underline">Resend OTP</button>
+                <button type="submit" class="text-sm font-semibold text-[#16776e] underline">Send a new code</button>
             </form>
             <p class="mt-5 text-center text-sm">
                 <a href="{{ route('register') }}" data-vn-auth-open="register" class="font-semibold text-[#16776e] underline">Start again</a>
@@ -663,15 +709,15 @@
         const authModes = {
             login: {
                 title: 'Log in to VakilNiti',
-                description: 'Sign in securely with a phone OTP.'
+                description: 'We send you a one-time code. No password needed.'
             },
             register: {
                 title: 'Create your VakilNiti account',
                 description: 'Set up your individual workspace.'
             },
             verify: {
-                title: 'Verify your account',
-                description: 'Confirm your phone number to continue registration.'
+                title: 'Check your email',
+                description: 'Confirm your email to continue.'
             }
         };
 
@@ -693,6 +739,20 @@
                 firstField.focus();
             }
         }
+
+        document.querySelectorAll('[data-login-via]').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('[data-login-via]').forEach(function (other) {
+                    other.setAttribute('aria-selected', other === tab ? 'true' : 'false');
+                });
+                document.querySelectorAll('[data-login-form]').forEach(function (form) {
+                    form.hidden = form.dataset.loginForm !== tab.dataset.loginVia;
+                    if (!form.hidden) {
+                        form.querySelector('input:not([type=hidden])').focus();
+                    }
+                });
+            });
+        });
 
         document.querySelectorAll('[data-vn-auth-open]').forEach(function (link) {
             link.addEventListener('click', function (event) {

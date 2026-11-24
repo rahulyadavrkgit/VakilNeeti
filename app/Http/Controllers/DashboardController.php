@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CauseListAppearance;
 use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\Task;
@@ -9,6 +10,7 @@ use App\Services\CalendarEventService;
 use App\Services\ProfileCompletion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -62,7 +64,7 @@ class DashboardController extends Controller
      * The day at a glance: hearings today and tomorrow, tasks due, and which of today's matters
      * still need their next date. The day is "cleared" once every matter heard today has one.
      *
-     * @return array{hearings: int, tomorrow: int, tasks: int, needs_next_date: list<array{case_id: int, title: string, url: string}>, cleared: bool}
+     * @return array{hearings: int, tomorrow: int, tasks: int, needs_next_date: list<array{case_id: int, title: string, url: string}>, cleared: bool, listed: Collection<int, CauseListAppearance>}
      */
     private function todaySummary(CalendarEventService $calendar): array
     {
@@ -93,6 +95,8 @@ class DashboardController extends Controller
                 ->count(),
             'needs_next_date' => $needsNextDate,
             'cleared' => $todayHearings->isNotEmpty() && $needsNextDate === [],
+            // Where our Delhi HC matters are printed in the court's cause list today and tomorrow (court and item).
+            'listed' => CauseListAppearance::upcomingForCases(LegalCase::query()->select('id'), today()->addDay()),
         ];
     }
 

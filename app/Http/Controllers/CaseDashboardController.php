@@ -17,11 +17,11 @@ class CaseDashboardController extends Controller
         $dayThirty = $today->copy()->addDays(30);
 
         $totalCases = DB::table('legal_cases')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->user()->workspaceId()))
             ->count();
 
         $pendingCases = DB::table('legal_cases')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->user()->workspaceId()))
             ->whereNotIn('case_status', [
                 'disposed', 'Disposed',
                 'closed', 'Closed',
@@ -33,10 +33,10 @@ class CaseDashboardController extends Controller
             ->join('legal_cases', function ($join) {
                 $join->on('court_hearings.case_id', '=', 'legal_cases.id');
                 if (! auth()->user()->is_admin) {
-                    $join->where('legal_cases.user_id', auth()->id());
+                    $join->where('legal_cases.user_id', auth()->user()->workspaceId());
                 }
             })
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->user()->workspaceId()))
             ->whereNotNull('court_hearings.next_hearing_date');
 
         $hearingColumns = [
@@ -126,10 +126,10 @@ class CaseDashboardController extends Controller
             ->join('legal_cases', function ($join) {
                 $join->on('court_hearings.case_id', '=', 'legal_cases.id');
                 if (! auth()->user()->is_admin) {
-                    $join->where('legal_cases.user_id', auth()->id());
+                    $join->where('legal_cases.user_id', auth()->user()->workspaceId());
                 }
             })
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('court_hearings.user_id', auth()->user()->workspaceId()))
             ->whereNotNull('court_hearings.hearing_date')
             ->orderByDesc('court_hearings.hearing_date')
             ->orderByDesc('court_hearings.id')
@@ -155,7 +155,7 @@ class CaseDashboardController extends Controller
             ->get();
 
         $recentCases = DB::table('legal_cases')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->user()->workspaceId()))
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get();

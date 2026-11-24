@@ -228,7 +228,7 @@ class ClientController extends Controller
             'company_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('clients', 'id')->where('user_id', auth()->id())->whereIn('client_type', Client::COMPANY_TYPES)->whereNull('deleted_at'),
+                Rule::exists('clients', 'id')->where('user_id', auth()->user()->workspaceId())->whereIn('client_type', Client::COMPANY_TYPES)->whereNull('deleted_at'),
                 Rule::notIn(array_filter([$client?->id])),
             ],
             'display_name' => ['nullable', 'string', 'max:255'],

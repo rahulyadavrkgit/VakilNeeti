@@ -126,6 +126,26 @@ class CourtBench extends Model
     }
 
     /**
+     * The words in this room's web address: court, room and first judge, e.g. "saket-room-031-shreya-arora-mehta".
+     */
+    public function pageSlug(): string
+    {
+        $court = self::courts()[$this->court_key]['court'] ?? $this->court_key;
+        $judge = $this->judgeList()[0]['name'] ?? '';
+        $judge = (string) preg_replace('/^(hon.?ble\s+)?(mr|ms|mrs|dr|sh|shri|smt)\.?\s+(justice\s+)?/i', '', $judge);
+
+        return Str::limit(Str::slug(collect([$court, ($this->roomParts()['number'] ?? null) ? 'room '.$this->roomParts()['number'] : null, $judge])->filter()->implode(' ')), 120, '');
+    }
+
+    /**
+     * The public page for this room (judge, room, VC link), for people searching Google.
+     */
+    public function pageUrl(): string
+    {
+        return route('courts.room', [$this->id, $this->pageSlug()]);
+    }
+
+    /**
      * Each judge as name and designation, whatever shape was imported.
      *
      * @return list<array{name: string, designation: ?string, photo: ?string}>

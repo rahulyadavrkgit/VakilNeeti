@@ -42,6 +42,18 @@
     ],
     "shortcuts": [
         {
+            "name": "Court day",
+            "short_name": "Court day",
+            "url": "/today",
+            "icons": [
+                {
+                    "src": "/images/app-icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
             "name": "Add hearing",
             "short_name": "Add hearing",
             "url": "/hearings/create",

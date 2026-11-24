@@ -7,17 +7,20 @@ use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Auth\UserRegistrationController;
 use App\Http\Controllers\BarDirectoryController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\CaseCalendarController;
 use App\Http\Controllers\CaseClientController;
 use App\Http\Controllers\CaseDashboardController;
 use App\Http\Controllers\CaseFileImportController;
 use App\Http\Controllers\CaseFinderController;
 use App\Http\Controllers\CaseLinkController;
+use App\Http\Controllers\CaseStatusLinkController;
 use App\Http\Controllers\CaseWorkspaceController;
 use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientManagementController;
 use App\Http\Controllers\ClientsFromCasesController;
+use App\Http\Controllers\CourtDayController;
 use App\Http\Controllers\CourtIntegrationController;
 use App\Http\Controllers\CourtLinksController;
 use App\Http\Controllers\CourtStandSideController;
@@ -48,6 +51,7 @@ use App\Http\Controllers\SheetController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaxComplianceController;
 use App\Http\Controllers\TdsDeductionController;
+use App\Http\Controllers\TeamController;
 use App\Services\LiveCourtBoard;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +65,9 @@ Route::get('/', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::view('/app', 'app-download')->name('app.download');
+
+// Today's and tomorrow's matters on one page; the phone keeps a copy for court rooms without signal.
+Route::get('/today', CourtDayController::class)->middleware('auth')->name('court-day');
 
 Route::get('/court-integrations/ecourts', [CourtIntegrationController::class, 'index'])->name('court-integrations.ecourts');
 // Repeated eCourts services (which has the CNR search too).
@@ -325,6 +332,26 @@ Route::post('/profile/system-preferences', [ProfileController::class, 'updateSys
 Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])
     ->name('profile.theme.update');
 
+// Privacy policy and terms of use.
+Route::view('/privacy', 'legal.privacy')->name('legal.privacy');
+Route::view('/terms', 'legal.terms')->name('legal.terms');
+
+// Calendar sync: a private subscription link for Google Calendar / iPhone (public, the token is the key).
+Route::get('/calendar/{token}.ics', [CalendarFeedController::class, 'show'])->where('token', '[A-Za-z0-9]{40}')->name('calendar.feed');
+Route::post('/profile/calendar-link', [CalendarFeedController::class, 'reset'])->name('profile.calendar-link');
+
+// Client status link: a private read-only page per case (public, the token is the key).
+Route::get('/status/{token}', [CaseStatusLinkController::class, 'show'])->where('token', '[A-Za-z0-9]{40}')->name('case-status.show');
+Route::post('/cases/{case}/status-link', [CaseStatusLinkController::class, 'create'])->name('cases.status-link.create');
+Route::delete('/cases/{case}/status-link', [CaseStatusLinkController::class, 'destroy'])->name('cases.status-link.destroy');
+
+// Settings → Team: juniors and clerks in the advocate's workspace.
+Route::post('/profile/team', [TeamController::class, 'invite'])->name('profile.team.invite');
+Route::delete('/profile/team/invites/{invite}', [TeamController::class, 'cancelInvite'])->name('profile.team.cancel');
+Route::delete('/profile/team/members/{member}', [TeamController::class, 'remove'])->name('profile.team.remove');
+Route::patch('/profile/team/members/{member}', [TeamController::class, 'changeRole'])->name('profile.team.role');
+Route::post('/profile/leave-team', [TeamController::class, 'leave'])->name('profile.team.leave');
+
 // Pop-up sheets (resources/js/sheet.js): everyday actions without leaving the page.
 Route::prefix('sheets')->name('sheets.')->controller(SheetController::class)->group(function () {
     Route::get('/next-date', 'nextDate')->name('next-date');
@@ -493,6 +520,7 @@ Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class
         ->name('delhi-district-courts.judges');
     Route::get('/delhi-high-court', 'delhiHighCourt')->name('delhi-high-court');
     Route::get('/high-courts', 'highCourts')->name('high-courts');
+    Route::get('/room/{bench}/{slug?}', 'room')->whereNumber('bench')->name('room');
     Route::get('/delhi-district-courts', 'delhiDistrictCourts')->name('delhi-district-courts');
     Route::get('/display-boards', 'displayBoards')->name('display-boards');
     Route::get('/live-board/{court}', 'liveBoard')->whereIn('court', array_keys(LiveCourtBoard::COURTS))->name('live-board');
@@ -580,6 +608,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [UserRegistrationController::class, 'showLogin'])->name('login');
     Route::post('/login', [UserRegistrationController::class, 'sendLoginOtp'])->middleware('throttle:5,10')->name('login.submit');
     Route::post('/login/verify', [UserRegistrationController::class, 'verifyLoginOtp'])->middleware('throttle:10,10')->name('login.verify.submit');
+    Route::post('/login/change', [UserRegistrationController::class, 'changeLoginEmail'])->name('login.change');
 });
 
 Route::post('/user-logout', [UserRegistrationController::class, 'logout'])

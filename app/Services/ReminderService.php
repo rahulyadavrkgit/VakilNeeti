@@ -78,7 +78,7 @@ class ReminderService
 
         $events = $groups === [] ? collect() : $this->calendar->between($today, $today->copy()->addDay(), [
             'groups' => $groups,
-            'user_id' => $user->id,
+            'user_id' => $user->workspaceId(),
         ]);
 
         $tomorrowHearings = [];
@@ -111,7 +111,7 @@ class ReminderService
 
         $tasks = ! $user->preference('remind_tasks') ? collect() : Task::query()
             ->withoutGlobalScope('user_ownership')
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->workspaceId())
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->whereNotNull('due_at')
             ->where('due_at', '<=', $today->copy()->endOfDay())
@@ -133,7 +133,7 @@ class ReminderService
         $invoices = ! $user->preference('remind_invoices') ? collect() : Invoice::query()
             ->withoutGlobalScope('user_ownership')
             ->with(['client', 'payments'])
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->workspaceId())
             ->whereNull('written_off_at')
             ->whereNotIn('status', ['draft', 'cancelled', 'paid'])
             ->whereNotNull('due_date')

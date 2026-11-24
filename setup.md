@@ -155,14 +155,12 @@ MAIL_FROM_ADDRESS=no-reply@example.com
 MAIL_FROM_NAME="${APP_NAME}"
 RESEND_API_KEY=
 
-# Mobile OTP via Twilio Verify (required for registration/login)
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_API_KEY=
-TWILIO_API_SECRET=
-TWILIO_VERIFY_SERVICE_SID=
-TWILIO_FROM=
-TWILIO_MESSAGING_SERVICE_SID=
+# Email sign-in codes via MSG91 (required for registration/login)
+MSG91_AUTH_KEY=
+MSG91_EMAIL_DOMAIN=
+MSG91_EMAIL_FROM=
+MSG91_EMAIL_FROM_NAME=VakilNiti
+MSG91_EMAIL_OTP_TEMPLATE=
 
 # MUST stay false in production (bypass only works when APP_ENV=local anyway)
 OTP_BYPASS_ENABLED=false
@@ -406,6 +404,6 @@ php artisan db:seed --class=DelhiPoliceStationsSeeder --force
 | Changed `.env` but nothing happens | `php artisan config:clear && php artisan config:cache` |
 | `Permission denied (publickey)` on `git pull` | Re-check the deploy key (3.3) with `ssh -T git@github.com` |
 | `Identifier name ... is too long` during migrate | Pull the latest code; this was fixed in the migrations |
-| OTP SMS not arriving | Check the `TWILIO_*` values; the Twilio log shows `21608` = unverified number on a trial account |
+| Sign-in code email not arriving | Run `php artisan app:test-login-email you@example.com`; check the `MSG91_*` values, that the sending domain is verified in MSG91, that the auth key allows the server's IP, and MSG91's email logs |
 | Whole site shows Hostinger's default page | `public_html` isn't pointing at the repo's `public/` (step 5.1) |
 | 419 "Page expired" on forms | `APP_URL` must match the real `https://` domain; clear the config cache |

@@ -15,6 +15,7 @@ class EnsurePrivatePracticeAccess
      */
     public const PUBLIC_PATHS = [
         'login',
+        'login/*',
         'register',
         'register/*',
         'admin/login',
@@ -38,6 +39,10 @@ class EnsurePrivatePracticeAccess
         'courts',
         'courts/*',
         'tribunals',
+        'calendar/*',
+        'privacy',
+        'terms',
+        'status/*',
         'app',
         'embed-check',
         'sitemap.xml',

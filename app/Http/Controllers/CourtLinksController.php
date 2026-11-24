@@ -10,6 +10,7 @@ use App\Services\CourtBoardEmbedCheck;
 use App\Services\LiveCourtBoard;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -364,6 +365,31 @@ class CourtLinksController extends Controller
         ['name' => 'High Court of Uttarakhand', 'seat' => 'Nainital', 'covers' => 'Uttarakhand', 'url' => 'https://highcourtofuttarakhand.gov.in/'],
     ];
 
+    /**
+     * One court room's own public page (judge, room, VC link and how to reach the court), so an advocate
+     * searching Google for a judge or a room finds it. Old or wrong words in the address lead to the right one.
+     */
+    public function room(CourtBench $bench, ?string $slug = null): View|RedirectResponse
+    {
+        if ($slug !== $bench->pageSlug()) {
+            return redirect()->to($bench->pageUrl(), 301);
+        }
+
+        $court = CourtBench::courts()[$bench->court_key] ?? ['court' => $bench->court_key, 'title' => 'Judges list'];
+        $listUrl = match (true) {
+            $bench->court_key === 'supreme-court' => route('courts.supreme-court.court-list'),
+            $bench->court_key === 'delhi-high-court' => route('courts.delhi-high-court.judges'),
+            default => route('courts.delhi-district-courts.judges', Str::after($bench->court_key, 'delhi-district-')),
+        };
+
+        return view('courts.room', [
+            'bench' => $bench,
+            'court' => $court,
+            'listUrl' => $listUrl,
+            'neighbours' => CourtBench::query()->where('court_key', $bench->court_key)->where('id', '!=', $bench->id)->orderBy('sort_order')->limit(8)->get(),
+        ]);
+    }
+
     public function highCourts(): View
     {
         return view('courts.high-courts', [
@@ -515,7 +541,7 @@ class CourtLinksController extends Controller
         $matcher = app(CourtBenchMatcher::class);
         $rooms = [];
 
-        $hearings = app(CalendarEventService::class)->between(today(), today(), ['groups' => ['hearing'], 'user_id' => auth()->id()]);
+        $hearings = app(CalendarEventService::class)->between(today(), today(), ['groups' => ['hearing'], 'user_id' => auth()->user()->workspaceId()]);
 
         foreach ($hearings as $hearing) {
             if (LiveCourtBoard::boardFor($hearing['court'] ?? null) !== $court) {

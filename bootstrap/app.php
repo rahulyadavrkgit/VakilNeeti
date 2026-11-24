@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnforceTeamRole;
 use App\Http\Middleware\EnsurePrivatePracticeAccess;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\SecurityHeaders;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             EnsurePrivatePracticeAccess::class,
+            EnforceTeamRole::class,
         ]);
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,

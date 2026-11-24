@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class CauseListAppearance extends Model
 {
@@ -42,6 +45,32 @@ class CauseListAppearance extends Model
             'source_line' => 'integer',
             'metadata' => 'array',
         ];
+    }
+
+    /**
+     * Where the given cases are listed from today on (court, item, bench), earliest first; a case printed
+     * in two lists for the same court and item shows once.
+     *
+     * @param  iterable<int>|Builder<LegalCase>  $caseIds  ids, or a query selecting the ids
+     * @return Collection<int, self>
+     */
+    public static function upcomingForCases(iterable|Builder $caseIds, ?Carbon $until = null): Collection
+    {
+        return static::query()
+            ->with(['courtDocument:id,listing_date,document_label,source_url', 'legalCase:id,case_title,case_number,court_name'])
+            ->whereIn('legal_case_id', $caseIds instanceof Builder ? $caseIds : collect($caseIds)->all())
+            ->whereHas('courtDocument', fn ($documents) => $documents
+                ->whereDate('listing_date', '>=', today())
+                ->when($until, fn ($dated) => $dated->whereDate('listing_date', '<=', $until)))
+            ->get()
+            ->sortBy(fn (self $appearance): string => $appearance->courtDocument->listing_date->format('Ymd').str_pad((string) $appearance->court_room, 4, '0', STR_PAD_LEFT).str_pad((string) $appearance->item_number, 5, '0', STR_PAD_LEFT))
+            ->unique(fn (self $appearance): string => $appearance->legal_case_id.'|'.$appearance->courtDocument->listing_date->toDateString().'|'.$appearance->court_room.'|'.$appearance->item_number)
+            ->values();
+    }
+
+    public function vcLink(): ?string
+    {
+        return $this->metadata['vc_link'] ?? null;
     }
 
     public function courtDocument(): BelongsTo

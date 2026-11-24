@@ -12,17 +12,19 @@ trait BelongsToUser
         static::addGlobalScope('user_ownership', function (Builder $query) {
             $user = Auth::user();
 
-            if ($user && !$user->is_admin) {
+            // A junior or clerk works in the workspace of the advocate who invited them.
+            if ($user && ! $user->is_admin) {
                 $query->where(
                     $query->getModel()->qualifyColumn('user_id'),
-                    $user->id
+                    method_exists($user, 'workspaceId') ? $user->workspaceId() : $user->id
                 );
             }
         });
 
         static::creating(function ($model) {
-            if (!$model->user_id && Auth::check()) {
-                $model->user_id = Auth::id();
+            if (! $model->user_id && Auth::check()) {
+                $user = Auth::user();
+                $model->user_id = method_exists($user, 'workspaceId') ? $user->workspaceId() : $user->id;
             }
         });
     }

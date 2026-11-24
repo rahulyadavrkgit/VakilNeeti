@@ -12,7 +12,7 @@ class UserRegistrationControllerTest extends TestCase
 
     public function test_profile_setup_lists_every_state_without_a_seeded_states_table(): void
     {
-        $this->withSession(['verified_registration' => ['mobile' => '+919876543210']])
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
             ->get(route('register.profile'))
             ->assertOk()
             ->assertSee('<optgroup label="States">', false)
@@ -22,11 +22,11 @@ class UserRegistrationControllerTest extends TestCase
 
     public function test_company_registration_stores_the_gst_state_code_for_the_firm(): void
     {
-        $this->withSession(['verified_registration' => ['mobile' => '+919876543210']])
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
             ->post(route('register.profile.submit'), $this->companyPayload(['region' => 'Uttar Pradesh']))
             ->assertSessionHasNoErrors();
 
-        $user = User::where('mobile', '+919876543210')->firstOrFail();
+        $user = User::where('email', 'new@example.test')->firstOrFail();
 
         $this->assertDatabaseHas('firm_profiles', [
             'user_id' => $user->id,
@@ -37,7 +37,7 @@ class UserRegistrationControllerTest extends TestCase
 
     public function test_company_registration_rejects_a_state_that_is_not_in_the_official_list(): void
     {
-        $this->withSession(['verified_registration' => ['mobile' => '+919876543210']])
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
             ->from(route('register.profile'))
             ->post(route('register.profile.submit'), $this->companyPayload(['region' => 'Uttar Pardesh']))
             ->assertRedirect(route('register.profile'))

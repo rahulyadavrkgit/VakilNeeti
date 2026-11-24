@@ -36,8 +36,11 @@ return [
 
     'otp_bypass_enabled' => env('OTP_BYPASS_ENABLED', false),
 
-    // Numbers allowed to skip the SMS code while the bypass is on (comma separated; "*" = every number,
-    // only for a private development machine). Empty means nobody skips it.
+    // Account emails allowed to skip the emailed code while the bypass is on (comma separated; "*" = everyone,
+    // only for a private development machine). Empty means nobody skips it. Works only when APP_ENV=local.
+    'otp_bypass_emails' => array_values(array_filter(array_map(fn (string $email): string => strtolower(trim($email)), explode(',', (string) env('OTP_BYPASS_EMAILS', ''))))),
+
+    // Mobile numbers allowed to skip the SMS code on phone log-in while the bypass is on (same rules as above).
     'otp_bypass_numbers' => array_values(array_filter(array_map('trim', explode(',', (string) env('OTP_BYPASS_NUMBERS', ''))))),
 
     // Store listings for the VakilNiti phone apps. Until these are set, the site offers
@@ -47,19 +50,26 @@ return [
         'app_store' => env('APP_STORE_URL'),
     ],
 
-    'twilio' => [
+    // Who hears about site errors in the bell each morning (comma-separated mobile numbers; admins always do).
+    'alerts' => [
+        'mobiles' => array_values(array_filter(array_map('trim', explode(',', (string) env('ERROR_ALERT_MOBILES', ''))))),
+    ],
 
-        // Existing ordinary SMS configuration
-        'account_sid' => env('TWILIO_ACCOUNT_SID'),
-        'auth_token' => env('TWILIO_AUTH_TOKEN'),
-        'from' => env('TWILIO_FROM'),
-        'messaging_service_sid' => env('TWILIO_MESSAGING_SERVICE_SID'),
+    // MSG91 email: sign-in and sign-up codes. The sending domain must be verified in MSG91, and the template
+    // (its ID or name) must use the variable "otp" (optionally "name" and "minutes").
+    'msg91' => [
+        'key' => env('MSG91_AUTH_KEY'),
+        'email_domain' => env('MSG91_EMAIL_DOMAIN'),
+        'email_from' => env('MSG91_EMAIL_FROM'),
+        'email_from_name' => env('MSG91_EMAIL_FROM_NAME', 'VakilNiti'),
+        'otp_template_id' => env('MSG91_EMAIL_OTP_TEMPLATE'),
+    ],
 
-        // Twilio Verify configuration
-        'api_key' => env('TWILIO_API_KEY'),
-        'api_secret' => env('TWILIO_API_SECRET'),
-        'verify_service_sid' => env('TWILIO_VERIFY_SERVICE_SID'),
-
+    // AuthKey.io (kept for phone sign-in later): the auth key and the SID of the DLT-approved code template ({#otp#}).
+    'authkey' => [
+        'key' => env('AUTHKEY_API_KEY'),
+        'otp_sid' => env('AUTHKEY_OTP_SID'),
+        'country_code' => env('AUTHKEY_COUNTRY_CODE', '91'),
     ],
 
 ];

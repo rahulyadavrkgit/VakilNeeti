@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourtBench;
 use Illuminate\Http\Response;
 
 /**
@@ -27,6 +28,8 @@ class SeoController extends Controller
         'courts.display-boards' => 'monthly',
         'courts.ecourts-services' => 'monthly',
         'tribunals.index' => 'monthly',
+        'legal.privacy' => 'yearly',
+        'legal.terms' => 'yearly',
         'bare-acts.index' => 'monthly',
         'new-criminal-laws.index' => 'monthly',
         'court-fee.index' => 'monthly',
@@ -69,6 +72,11 @@ class SeoController extends Controller
 
         foreach (self::SITEMAP_ROUTES as $route => $frequency) {
             $xml[] = '  <url><loc>'.e(route($route)).'</loc><lastmod>'.$today.'</lastmod><changefreq>'.$frequency.'</changefreq><priority>'.($route === 'dashboard' ? '1.0' : '0.7').'</priority></url>';
+        }
+
+        // Every court room's own page (judge, room, VC link), so searches for a judge or a room find VakilNiti.
+        foreach (CourtBench::query()->orderBy('court_key')->orderBy('sort_order')->get() as $bench) {
+            $xml[] = '  <url><loc>'.e($bench->pageUrl()).'</loc><lastmod>'.$today.'</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url>';
         }
 
         $xml[] = '</urlset>';

@@ -86,7 +86,7 @@ class BarRegistrationTest extends TestCase
 
     public function test_signup_saves_the_parts_for_an_advocate(): void
     {
-        $this->withSession(['verified_registration' => ['mobile' => '+919876543210', 'otp_bypassed' => true]])
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test', 'otp_bypassed' => true]])
             ->post(route('register.profile.submit'), [
                 'account_role' => 'independent_practitioner',
                 'onboarding_features' => ['personalized_hearings'],
@@ -100,7 +100,7 @@ class BarRegistrationTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('cases.find'));
 
-        $user = User::where('email', 'asha@example.test')->firstOrFail();
+        $user = User::where('email', 'new@example.test')->firstOrFail();
         $this->assertDatabaseHas('advocate_profiles', [
             'user_id' => $user->id,
             'bar_state' => 'Uttar Pradesh',

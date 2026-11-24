@@ -1,6 +1,6 @@
 @php
     $kind = $notification->data['kind'] ?? 'other';
-    $dotClass = ['hearing' => 'bg-teal-600', 'appointment' => 'bg-sky-500', 'task' => 'bg-amber-500', 'invoice' => 'bg-red-500'][$kind] ?? 'bg-slate-400';
+    $dotClass = ['alert' => 'bg-red-600', 'hearing' => 'bg-teal-600', 'appointment' => 'bg-sky-500', 'task' => 'bg-amber-500', 'invoice' => 'bg-red-500'][$kind] ?? 'bg-slate-400';
 @endphp
 <a href="{{ route('notifications.open', $notification->id) }}"
    class="flex gap-3 border-b border-slate-100 px-4 py-3 last:border-0 hover:bg-slate-50 {{ $notification->read_at ? '' : 'bg-teal-50/50' }}">

@@ -179,6 +179,27 @@
                     <x-court-info :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
                                   :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link"
                                   :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $panelNext ? $panelNext['date']->toDateString() : null, 'time' => $panelTime, 'details' => $nextHearing?->hearing_stage]" />
+                    @if(($causeListings ?? collect())->isNotEmpty())
+                        <div id="cause-list" class="scroll-mt-24 space-y-1.5 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2 text-sm">
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">In the Delhi HC cause list</p>
+                            @foreach($causeListings as $listing)
+                                @php $listedOn = $listing->courtDocument->listing_date; @endphp
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                    <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $listedOn->isToday() ? 'bg-red-600 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">{{ $listedOn->isToday() ? 'Today' : ($listedOn->isTomorrow() ? 'Tomorrow' : $listedOn->format('D, d M')) }}</span>
+                                    <span class="font-semibold tabular-nums text-slate-900">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</span>
+                                    @if($listing->judge_name)
+                                        <span class="min-w-0 truncate text-slate-600">{{ \Illuminate\Support\Str::title(mb_strtolower($listing->judge_name)) }}</span>
+                                    @endif
+                                    <span class="ml-auto flex shrink-0 items-center gap-2">
+                                        @if($listing->vcLink())
+                                            <a href="{{ $listing->vcLink() }}" target="_blank" rel="noopener" class="inline-flex min-h-8 items-center gap-1 rounded-full bg-[#16776e] px-3 text-xs font-bold text-white hover:bg-[#12635c]"><x-icon name="video" :size="14" /> Join VC</a>
+                                        @endif
+                                        <a href="{{ $listing->courtDocument->source_url }}" target="_blank" rel="noopener" class="text-xs font-semibold text-[#16776e] hover:underline" title="{{ $listing->courtDocument->document_label }}">List PDF</a>
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                     <div class="flex flex-wrap items-start gap-2 pt-1">
                         <x-quick-next-date :case-id="$case->id" return="case" :open="! $panelNext" :label="$panelNext ? 'Add another date' : 'Add next date'" />
                         @php
@@ -188,7 +209,34 @@
                            class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
                             <x-icon name="calculator" :size="16" /> Court fee
                         </a>
+                        @unless(auth()->user()->isClerk())
+                            @if(! $case->status_token)
+                                <form method="POST" action="{{ route('cases.status-link.create', $case) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
+                                        <x-icon name="share" :size="16" /> Client link
+                                    </button>
+                                </form>
+                            @endif
+                        @endunless
                     </div>
+                    @if($case->status_token && ! auth()->user()->isClerk())
+                        @php
+                            $statusUrl = route('case-status.show', $case->status_token);
+                            $statusMessage = "Updates on your case {$case->case_title}: next date, purpose and court are always here:\n{$statusUrl}";
+                        @endphp
+                        <div id="client-link" class="flex flex-wrap items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2 text-sm">
+                            <span class="font-semibold text-slate-800">Client link</span>
+                            <span class="min-w-0 flex-1 truncate text-slate-600" title="{{ $statusUrl }}">{{ $statusUrl }}</span>
+                            <button type="button" data-copy="{{ $statusUrl }}" class="inline-flex min-h-8 items-center gap-1 rounded-full border border-slate-200 bg-white px-3 font-semibold text-slate-700"><x-icon name="copy" :size="14" /><span data-copy-label>Copy</span></button>
+                            <a href="https://wa.me/?text={{ rawurlencode($statusMessage) }}" data-share-text="{{ $statusMessage }}" data-share-title="Case update link" class="inline-flex min-h-8 items-center gap-1 rounded-full bg-[#16776e] px-3 font-semibold text-white"><x-icon name="share" :size="14" /> Send</a>
+                            <form method="POST" action="{{ route('cases.status-link.destroy', $case) }}" data-confirm="Switch off this client link? The old link will stop opening.">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs font-semibold text-red-700 hover:underline">Switch off</button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
             </div>
         </section>

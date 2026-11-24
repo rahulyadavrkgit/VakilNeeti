@@ -12,12 +12,12 @@ class MobileLayoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_page_reaches_iphone_safe_areas_and_the_login_otp_takes_four_digits(): void
+    public function test_page_reaches_iphone_safe_areas_and_the_emailed_code_takes_six_digits(): void
     {
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSee('content="width=device-width, initial-scale=1.0, viewport-fit=cover"', false)
-            ->assertDontSee('pattern="[0-9]{6}"', false)
+            ->assertSee('pattern="[0-9]{6}"', false)
             ->assertSee('class="min-h-10 w-full border-0 bg-transparent px-0 text-base text-white md:text-sm', false);
     }
 

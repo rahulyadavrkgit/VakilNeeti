@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Contracts\OtpSmsSender;
+use App\Services\AuthKeySmsService;
 use App\Services\CourtBenchMatcher;
 use App\Services\CourtData\CourtDataProviderRegistry;
 use App\Services\ReminderService;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +22,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // One matcher per request, so each court list is read from the database once.
         $this->app->scoped(CourtBenchMatcher::class);
+
+        // An invited junior or clerk joins the advocate's workspace the first time they sign in.
+        Event::listen(Login::class, fn (Login $event) => method_exists($event->user, 'acceptTeamInvite') ? $event->user->acceptTeamInvite() : null);
+
+        // Phone codes (for phone sign-in, planned) go out through AuthKey.io. Email codes use Msg91EmailService.
+        $this->app->bind(OtpSmsSender::class, AuthKeySmsService::class);
 
         $this->app->singleton(
             CourtDataProviderRegistry::class,

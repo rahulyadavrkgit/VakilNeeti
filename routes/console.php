@@ -40,6 +40,12 @@ Schedule::command('courts:check-boards')->dailyAt('06:00');
 // After Hostinger's automatic deploy: migrate and rebuild the caches once for each new commit.
 Schedule::command('app:refresh-after-deploy')->everyMinute()->withoutOverlapping();
 
+// Delhi High Court cause lists: the next day's lists come out in the evening, supplementary lists in the morning.
+Schedule::command('courts:delhi-hc-cause-list')->cron('15 7,9,20,22 * * *')->withoutOverlapping(60);
+
+// Every morning: a note in the bell if the site logged errors yesterday.
+Schedule::command('app:error-alerts')->dailyAt('09:00');
+
 // A compressed database copy every night, kept for 14 days (storage/app/backups).
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping();
 

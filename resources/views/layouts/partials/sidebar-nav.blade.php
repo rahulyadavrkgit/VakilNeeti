@@ -20,30 +20,32 @@
 <div class="px-3 pt-4">
     <label class="flex items-center gap-2 rounded-xl bg-white/10 px-3 text-white/80 focus-within:bg-white/15">
         <x-icon name="search" :size="16" class="text-slate-400" />
-        <span class="sr-only">Find in menu</span>
-        <input type="search" data-filter-list="vn-nav" data-filter-also="a.vn-nav-link" placeholder="Find in menu"
+        <span class="sr-only">{{ __('Find in menu') }}</span>
+        <input type="search" data-filter-list="vn-nav" data-filter-also="a.vn-nav-link" placeholder="{{ __('Find in menu') }}"
                class="min-h-10 w-full border-0 bg-transparent px-0 text-base text-white md:text-sm placeholder:text-slate-400 focus:ring-0">
     </label>
 </div>
 
-<nav id="vn-nav" class="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Sections">
+<nav id="vn-nav" class="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="{{ __('Sections') }}">
 
     {{-- WORKSPACE --}}
     <details class="vn-nav-group" data-filter-item data-nav-group="workspace" @if($groups['workspace']) open @endif>
-        <summary class="vn-nav-group-title"><span>Workspace</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
+        <summary class="vn-nav-group-title"><span>{{ __('Workspace') }}</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
         <div class="vn-nav-items">
-            <a href="{{ route('dashboard') }}" class="{{ $link($isActive('/')) }}"><x-icon name="home" :size="18" />Home</a>
+            <a href="{{ route('dashboard') }}" class="{{ $link($isActive('/')) }}"><x-icon name="home" :size="18" />{{ __('Home') }}</a>
             @auth
-                <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases*', 'case-dashboard*', 'hearing-history*')) }}"><x-icon name="briefcase" :size="18" />Cases</a>
-                <a href="{{ route('cases.calendar') }}" class="{{ $link($isActive('case-calendar*', 'hearings*')) }}"><x-icon name="calendar" :size="18" />Calendar</a>
-                <a href="{{ route('tasks.index') }}" class="{{ $link($isActive('tasks*')) }}"><x-icon name="check" :size="18" />Tasks</a>
-                <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*', 'client-management*')) }}"><x-icon name="people" :size="18" />Clients</a>
-                <a href="{{ route('billing.index') }}" class="{{ $link($isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')) }}"><x-icon name="receipt" :size="18" />Billing</a>
-                <a href="{{ route('profile.index') }}" class="{{ $link($isActive('profile*', 'firm-profile*')) }}"><x-icon name="settings" :size="18" />Settings</a>
+                <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases*', 'case-dashboard*', 'hearing-history*')) }}"><x-icon name="briefcase" :size="18" />{{ __('Cases') }}</a>
+                <a href="{{ route('cases.calendar') }}" class="{{ $link($isActive('case-calendar*', 'hearings*')) }}"><x-icon name="calendar" :size="18" />{{ __('Calendar') }}</a>
+                <a href="{{ route('tasks.index') }}" class="{{ $link($isActive('tasks*')) }}"><x-icon name="check" :size="18" />{{ __('Tasks') }}</a>
+                <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*', 'client-management*')) }}"><x-icon name="people" :size="18" />{{ __('Clients') }}</a>
+                @unless(auth()->user()->isTeamMember())
+                    <a href="{{ route('billing.index') }}" class="{{ $link($isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')) }}"><x-icon name="receipt" :size="18" />{{ __('Billing') }}</a>
+                @endunless
+                <a href="{{ route('profile.index') }}" class="{{ $link($isActive('profile*', 'firm-profile*')) }}"><x-icon name="settings" :size="18" />{{ __('Settings') }}</a>
             @else
                 <p class="px-3 py-2 text-xs leading-relaxed text-slate-400">
-                    <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-[#8ed2c8] hover:underline">Log in</a>
-                    to use your case diary, calendar, clients and billing.
+                    <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-[#8ed2c8] hover:underline">{{ __('Log in') }}</a>
+                    {{ __('to use your case diary, calendar, clients and billing.') }}
                 </p>
             @endauth
         </div>
@@ -51,39 +53,39 @@
 
     {{-- COURTS --}}
     <details class="vn-nav-group" data-filter-item data-nav-group="courts" @if($groups['courts']) open @endif>
-        <summary class="vn-nav-group-title"><span>Courts</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
+        <summary class="vn-nav-group-title"><span>{{ __('Courts') }}</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
         <div class="vn-nav-items">
-            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/display-boards', 'courts/ecourts-services', 'courts/live-board*')) }}"><x-icon name="list" :size="18" />All courts</a>
-            <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts*')) }}"><x-icon name="gavel" :size="18" />Delhi District Courts</a>
-            <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court*')) }}"><x-icon name="building" :size="18" />Delhi High Court</a>
-            <a href="{{ route('courts.supreme-court') }}" class="{{ $link($isActive('courts/supreme-court*') || request('level') === 'supreme') }}"><x-icon name="pillars" :size="18" />Supreme Court</a>
-            <a href="{{ route('tribunals.index') }}" class="{{ $link($isActive('tribunals*', 'court-catalogue*')) }}"><x-icon name="scale" :size="18" />Tribunals</a>
+            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/display-boards', 'courts/ecourts-services', 'courts/live-board*')) }}"><x-icon name="list" :size="18" />{{ __('All courts') }}</a>
+            <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts*')) }}"><x-icon name="gavel" :size="18" />{{ __('Delhi District Courts') }}</a>
+            <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court*')) }}"><x-icon name="building" :size="18" />{{ __('Delhi High Court') }}</a>
+            <a href="{{ route('courts.supreme-court') }}" class="{{ $link($isActive('courts/supreme-court*') || request('level') === 'supreme') }}"><x-icon name="pillars" :size="18" />{{ __('Supreme Court') }}</a>
+            <a href="{{ route('tribunals.index') }}" class="{{ $link($isActive('tribunals*', 'court-catalogue*')) }}"><x-icon name="scale" :size="18" />{{ __('Tribunals') }}</a>
         </div>
     </details>
 
     {{-- LIBRARY --}}
     <details class="vn-nav-group" data-filter-item data-nav-group="library" @if($groups['library']) open @endif>
-        <summary class="vn-nav-group-title"><span>Library</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
+        <summary class="vn-nav-group-title"><span>{{ __('Library') }}</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
         <div class="vn-nav-items">
-            <a href="{{ route('bare-acts.index') }}" class="{{ $link($isActive('bare-acts*')) }}"><x-icon name="book" :size="18" />Bare Acts</a>
-            <a href="{{ url('/new-criminal-laws') }}" class="{{ $link($isActive('new-criminal-laws*')) }}"><x-icon name="law" :size="18" />New Criminal Laws</a>
-            <a href="{{ url('/court-fee') }}" class="{{ $link($isActive('court-fee*')) }}"><x-icon name="calculator" :size="18" />Court fee</a>
-            <a href="{{ route('miscellaneous-forms.index') }}" class="{{ $link($isActive('miscellaneous-forms*')) }}"><x-icon name="form" :size="18" />Forms</a>
+            <a href="{{ route('bare-acts.index') }}" class="{{ $link($isActive('bare-acts*')) }}"><x-icon name="book" :size="18" />{{ __('Bare Acts') }}</a>
+            <a href="{{ url('/new-criminal-laws') }}" class="{{ $link($isActive('new-criminal-laws*')) }}"><x-icon name="law" :size="18" />{{ __('New Criminal Laws') }}</a>
+            <a href="{{ url('/court-fee') }}" class="{{ $link($isActive('court-fee*')) }}"><x-icon name="calculator" :size="18" />{{ __('Court fee') }}</a>
+            <a href="{{ route('miscellaneous-forms.index') }}" class="{{ $link($isActive('miscellaneous-forms*')) }}"><x-icon name="form" :size="18" />{{ __('Forms') }}</a>
         </div>
     </details>
 
     {{-- MORE: tools used now and then. --}}
     <details class="vn-nav-group" data-filter-item data-nav-group="more" @if($groups['more']) open @endif>
-        <summary class="vn-nav-group-title"><span>More</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
+        <summary class="vn-nav-group-title"><span>{{ __('More') }}</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
         <div class="vn-nav-items">
-            <a href="{{ url('/police-administration') }}" class="{{ $link($isActive('police-administration*')) }}"><x-icon name="shield" :size="18" />Police administration</a>
-            <a href="{{ route('bar-associations.index') }}" class="{{ $link($isActive('bar-associations*')) }}"><x-icon name="bar" :size="18" />Bar associations</a>
-            <a href="{{ url('/pdf-annotator') }}" class="{{ $link($isActive('pdf-annotator*')) }}"><x-icon name="pdf" :size="18" />PDF annotator</a>
-            <a href="{{ route('dashboard-studio.index') }}" class="{{ $link($isActive('dashboard-studio*')) }}"><x-icon name="chart" :size="18" />Law data dashboards</a>
+            <a href="{{ url('/police-administration') }}" class="{{ $link($isActive('police-administration*')) }}"><x-icon name="shield" :size="18" />{{ __('Police administration') }}</a>
+            <a href="{{ route('bar-associations.index') }}" class="{{ $link($isActive('bar-associations*')) }}"><x-icon name="bar" :size="18" />{{ __('Bar associations') }}</a>
+            <a href="{{ url('/pdf-annotator') }}" class="{{ $link($isActive('pdf-annotator*')) }}"><x-icon name="pdf" :size="18" />{{ __('PDF annotator') }}</a>
+            <a href="{{ route('dashboard-studio.index') }}" class="{{ $link($isActive('dashboard-studio*')) }}"><x-icon name="chart" :size="18" />{{ __('Law data dashboards') }}</a>
         </div>
     </details>
 
-    <p data-filter-empty hidden class="px-3 py-2 text-xs text-slate-400">Nothing in the menu matches.</p>
+    <p data-filter-empty hidden class="px-3 py-2 text-xs text-slate-400">{{ __('Nothing in the menu matches.') }}</p>
 </nav>
 
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">

@@ -80,7 +80,7 @@ class HearingController extends Controller
     private function validated(Request $request): array
     {
         $validated = $request->validate([
-            'case_id' => ['required', 'integer', Rule::exists('legal_cases', 'id')->where('user_id', auth()->id())->whereNull('deleted_at')],
+            'case_id' => ['required', 'integer', Rule::exists('legal_cases', 'id')->where('user_id', auth()->user()->workspaceId())->whereNull('deleted_at')],
             'hearing_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:1950-01-01', 'before_or_equal:2100-12-31'],
             'hearing_time' => ['nullable', 'date_format:H:i'],
             'hearing_stage' => ['nullable', 'string', 'max:255'],

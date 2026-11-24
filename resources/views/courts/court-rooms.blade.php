@@ -54,10 +54,10 @@
                             <article data-filter-item class="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                 @php $room = $bench->roomParts(); @endphp
                                 <div class="flex items-start gap-3">
-                                    <div class="flex h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#142235] px-2 text-white">
+                                    <a href="{{ $bench->pageUrl() }}" title="This room's own page" class="flex h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#142235] px-2 text-white hover:ring-2 hover:ring-[#16776e]">
                                         <span class="text-[10px] font-semibold uppercase tracking-wide text-white/70">Court</span>
                                         <span class="whitespace-nowrap font-extrabold leading-none {{ mb_strlen((string) $room['number']) > 4 ? 'text-sm' : 'text-lg' }}">{{ $room['number'] ?? '—' }}</span>
-                                    </div>
+                                    </a>
                                     <div class="min-w-0 flex-1">
                                         @if($bench->bench || $bench->location)
                                             <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">{{ collect([$bench->bench, $bench->location])->filter()->implode(' · ') }}</p>
