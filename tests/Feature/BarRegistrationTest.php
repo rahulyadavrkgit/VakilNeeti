@@ -96,6 +96,7 @@ class BarRegistrationTest extends TestCase
                 'bar_state_code' => 'up',
                 'bar_number' => '1234',
                 'bar_registration_year' => 2017,
+                'practice_district' => ' Lucknow ',
                 'password' => 'advocate-password-42',
                 'password_confirmation' => 'advocate-password-42',
             ])
@@ -109,6 +110,8 @@ class BarRegistrationTest extends TestCase
             'bar_state_code' => 'UP',
             'bar_number' => '1234',
             'bar_council_registration_number' => 'UP/1234/2017',
+            'district' => 'Lucknow',
+            'region' => 'Uttar Pradesh',
         ]);
     }
 

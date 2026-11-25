@@ -377,6 +377,7 @@ Route::prefix('sheets')->name('sheets.')->controller(SheetController::class)->gr
     Route::get('/cases/{case}', 'caseView')->name('case-view');
     Route::get('/clients/{client}', 'clientCard')->name('client-card');
     Route::get('/court', 'court')->name('court');
+    Route::get('/payment', 'paymentPick')->name('payment-pick');
     Route::get('/invoices/{invoice}/payment', 'payment')->name('payment');
     Route::get('/search', 'search')->name('search');
 });

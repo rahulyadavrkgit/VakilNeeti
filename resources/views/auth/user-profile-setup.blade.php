@@ -173,6 +173,16 @@
                     <div class="mt-4">
                         <x-bar-registration-fields :state-groups="$stateGroups" :student-optional="true" />
                     </div>
+                    {{-- The district suggestions follow the Bar Council State chosen above. --}}
+                    <label class="mt-3 block text-sm font-medium text-slate-700 sm:max-w-sm">
+                        District where you practise <span class="font-normal text-slate-500">(optional)</span>
+                        <input name="practice_district" value="{{ old('practice_district') }}" list="signup-districts" maxlength="100" autocomplete="off"
+                               data-signup-district data-districts-url="{{ url('/api/locations/court-districts') }}"
+                               data-state-codes="{{ json_encode(\App\Models\State::query()->pluck('code', 'name')->map(fn ($code) => \Illuminate\Support\Str::after($code, 'IN-'))) }}"
+                               placeholder="e.g. Lucknow" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                        <datalist id="signup-districts"></datalist>
+                        @error('practice_district') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    </label>
                 </section>
             </div>
             <div data-registration-profile="company" @if($accountType !== 'company') hidden @endif class="space-y-6">
@@ -404,6 +414,31 @@
         form.querySelectorAll('input[name="onboarding_features[]"]').forEach(function (input) {
             input.addEventListener('change', updateAccountFields);
         });
+
+        // District suggestions for the Bar Council State picked (a typed district is accepted too).
+        const districtInput = form.querySelector('[data-signup-district]');
+        const barState = form.querySelector('[data-bar-state]');
+        if (districtInput && barState) {
+            const stateCodes = JSON.parse(districtInput.dataset.stateCodes || '{}');
+            const list = document.getElementById(districtInput.getAttribute('list'));
+            const loadDistricts = function () {
+                const code = stateCodes[barState.value];
+                list.replaceChildren();
+                if (!code) return;
+                fetch(districtInput.dataset.districtsUrl + '/' + code, { headers: { Accept: 'application/json' } })
+                    .then(function (response) { return response.ok ? response.json() : { data: [] }; })
+                    .then(function (payload) {
+                        (payload.data || []).forEach(function (name) {
+                            const option = document.createElement('option');
+                            option.value = name;
+                            list.append(option);
+                        });
+                    })
+                    .catch(function () {});
+            };
+            barState.addEventListener('change', loadDistricts);
+            loadDistricts();
+        }
 
         updateAccountFields();
         showStep(currentStep);

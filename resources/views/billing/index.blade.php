@@ -29,7 +29,7 @@
         </form>
 
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('payments.create') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Record payment</a>
+            <a href="{{ route('payments.create') }}" data-sheet="{{ route('sheets.payment-pick') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Record payment</a>
             <a href="{{ route('invoices.create') }}" class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">+ New invoice</a>
         </div>
     </div>

@@ -129,6 +129,6 @@ class CaseListArrangement
             $judge ? Str::title(Str::lower((string) $judge)) : null,
         ]);
 
-        return $parts ? implode(' · ', $parts) : ($case->court_complex ?: 'Bench not listed yet');
+        return $parts ? implode(' · ', $parts) : ($case->court_complex ?: 'bench shown when the cause list is out');
     }
 }

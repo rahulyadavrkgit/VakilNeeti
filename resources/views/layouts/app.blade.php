@@ -390,6 +390,9 @@
                                 </span>
                             </div>
                             <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />{{ __('Settings') }}</a>
+                            @if(auth()->user()->account_type !== 'company')
+                                <a href="{{ route('profile.cv.edit') }}" class="{{ $headerMenuItem }}"><x-icon name="pass" :size="18" class="text-slate-500" />{{ __('Public profile & CV') }}</a>
+                            @endif
                             @if(auth()->user()->is_admin)
                                 <a href="{{ route('admin.overview') }}" class="{{ $headerMenuItem }}"><x-icon name="shield" :size="18" class="text-slate-500" />{{ __('Account administration') }}</a>
                             @endif
@@ -686,7 +689,12 @@
                         <input name="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-lg border border-slate-300 p-3">
                     </label>
                     <button class="min-h-11 w-full rounded-lg bg-teal-700 font-semibold text-white">Sign in with password</button>
-                    <p class="text-xs text-slate-600">Use Email code if you need to set or reset your password.</p>
+                    {{-- Forgot password: the same email gets a sign-in code, then the page to choose a new password. --}}
+                    <p class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+                        <span>No password yet? Use Email code.</span>
+                        <button type="submit" formaction="{{ route('login.submit') }}" formnovalidate name="forgot" value="1"
+                                class="min-h-9 text-sm font-semibold text-[#16776e] underline underline-offset-2">Forgot password?</button>
+                    </p>
                 </form>
                 <form method="POST" action="{{ route('login.submit') }}" class="space-y-4" data-login-form="code" @if($loginVia !== 'code') hidden @endif>
                     @csrf

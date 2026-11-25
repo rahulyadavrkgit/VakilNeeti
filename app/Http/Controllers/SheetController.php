@@ -283,6 +283,25 @@ class SheetController extends Controller
         ]);
     }
 
+    /**
+     * "Record payment" without an invoice in hand: the unpaid invoices (optionally one client's) to pick from.
+     */
+    public function paymentPick(Request $request): View
+    {
+        $invoices = Invoice::query()
+            ->with(['client', 'payments'])
+            ->whereNotIn('status', ['paid', 'cancelled', 'written_off'])
+            ->whereNull('written_off_at')
+            ->when($request->integer('client'), fn ($query, int $client) => $query->where('client_id', $client))
+            ->latest('invoice_date')
+            ->limit(100)
+            ->get()
+            ->filter(fn (Invoice $invoice): bool => $invoice->balanceDue() > 0)
+            ->values();
+
+        return view('sheets.payment-pick', ['invoices' => $invoices, 'clientId' => $request->integer('client') ?: null]);
+    }
+
     public function payment(Invoice $invoice): View
     {
         $invoice->load(['client', 'payments']);

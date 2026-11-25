@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -51,6 +52,22 @@ class PopupsAndCourtsBarTest extends TestCase
             ->assertSee('value="'.today()->addDays(3)->toDateString().'"', false);
         $this->get(route('sheets.next-date', ['date' => today()->subDay()->toDateString()]))->assertOk()
             ->assertDontSee('value="'.today()->subDay()->toDateString().'"', false);
+    }
+
+    public function test_record_payment_lists_unpaid_invoices_to_pick_from(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $asha = Client::create(['first_name' => 'Asha']);
+        $ravi = Client::create(['first_name' => 'Ravi']);
+        $unpaid = Invoice::create(['client_id' => $asha->id, 'invoice_number' => 'INV-OPEN', 'invoice_date' => today()->toDateString(), 'subtotal' => 1500, 'total_amount' => 1500, 'status' => 'sent']);
+        Invoice::create(['client_id' => $asha->id, 'invoice_number' => 'INV-PAID', 'invoice_date' => today()->toDateString(), 'subtotal' => 900, 'total_amount' => 900, 'status' => 'paid']);
+        Invoice::create(['client_id' => $ravi->id, 'invoice_number' => 'INV-RAVI', 'invoice_date' => today()->toDateString(), 'subtotal' => 700, 'total_amount' => 700, 'status' => 'sent']);
+
+        $this->get(route('sheets.payment-pick'))->assertOk()
+            ->assertSee('INV-OPEN')->assertSee('INV-RAVI')->assertDontSee('INV-PAID')
+            ->assertSee('data-sheet="'.route('sheets.payment', $unpaid).'"', false);
+        $this->get(route('sheets.payment-pick', ['client' => $asha->id]))->assertOk()->assertSee('INV-OPEN')->assertDontSee('INV-RAVI');
+        $this->get(route('billing.index'))->assertOk()->assertSee('data-sheet="'.route('sheets.payment-pick').'"', false);
     }
 
     public function test_phones_open_the_menu_from_the_top_left_and_every_court_from_the_bottom_bar(): void

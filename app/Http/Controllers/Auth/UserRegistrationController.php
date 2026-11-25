@@ -412,6 +412,7 @@ class UserRegistrationController extends Controller
 
             $request->merge(AdvocateProfile::normaliseBarInput($request->all()));
             $rules += AdvocateProfile::barRegistrationRules(! $isStudent);
+            $rules['practice_district'] = ['nullable', 'string', 'max:100'];
         } else {
             $gstin = strtoupper(trim((string) $request->input('gstin')));
             $request->merge(['gstin' => $gstin === '' ? null : $gstin]);
@@ -471,6 +472,9 @@ class UserRegistrationController extends Controller
                         'bar_state_code' => $validated['bar_state_code'] ?? null,
                         'bar_number' => $validated['bar_number'] ?? null,
                         'bar_registration_year' => $validated['bar_registration_year'] ?? null,
+                        // Where the advocate practises: the district typed at sign-up, in the Bar Council's State.
+                        'district' => filled($validated['practice_district'] ?? null) ? trim($validated['practice_district']) : null,
+                        'region' => filled($validated['practice_district'] ?? null) ? ($validated['bar_state'] ?? null) : null,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -541,6 +545,10 @@ class UserRegistrationController extends Controller
 
         $email = Str::lower(trim($validator->validated()['email']));
         $user = User::where('email', $email)->first();
+        // "Forgot password?": after the code, go straight to choosing a new password.
+        $request->boolean('forgot')
+            ? $request->session()->put('login_reset_password', true)
+            : $request->session()->forget('login_reset_password');
 
         if (! $user) {
             return back()->withErrors(['email' => 'No account uses this email. Check it, or create an account.'], 'login')
@@ -670,9 +678,16 @@ class UserRegistrationController extends Controller
             $request->session()->put('password_setup_proof', ['id' => $user->id, 'until' => now()->addMinutes(15)->timestamp]);
         }
 
+        $forgotPassword = (bool) $request->session()->pull('login_reset_password');
+
         if (! $user->password_set_at && ! $user->is_admin) {
             return redirect()->to(route('profile.index').'#password')
                 ->with('auth_login_success', 'Signed in. Set a password now, so next time you sign in with your email and password.');
+        }
+
+        if ($forgotPassword && ! $user->is_admin) {
+            return redirect()->to(route('profile.index').'#password')
+                ->with('auth_login_success', 'Signed in. Choose a new password below; the old one is not needed.');
         }
 
         return redirect()->intended('/')->with('auth_login_success', 'Login successful.');

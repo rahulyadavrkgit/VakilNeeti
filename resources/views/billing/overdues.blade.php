@@ -51,7 +51,7 @@
                                 <td class="p-3 text-right"><span class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">{{ (int) $invoice->due_date->diffInDays(today()) }}</span></td>
                                 <td class="p-3">
                                     <div class="flex items-center justify-end gap-3 whitespace-nowrap">
-                                        <a href="{{ route('payments.create', ['invoice_id' => $invoice->id, 'client_id' => $invoice->client_id]) }}" class="text-sm font-semibold text-[#16776e] hover:underline">Record payment</a>
+                                        <a href="{{ route('payments.create', ['invoice_id' => $invoice->id, 'client_id' => $invoice->client_id]) }}" data-sheet="{{ route('sheets.payment', $invoice) }}" class="text-sm font-semibold text-[#16776e] hover:underline">Record payment</a>
                                         <form method="POST" action="{{ route('invoices.write-off', $invoice) }}" data-confirm="Write off the remaining balance of {{ $invoice->invoice_number }}?">
                                             @csrf
                                             <button type="submit" class="text-sm text-slate-600 hover:underline">Write off</button>

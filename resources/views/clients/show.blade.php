@@ -67,7 +67,7 @@
                     + Create Invoice
                 </a>
 
-                <a href="{{ route('payments.create', ['client_id' => $client->id]) }}"
+                <a href="{{ route('payments.create', ['client_id' => $client->id]) }}" data-sheet="{{ route('sheets.payment-pick', ['client' => $client->id]) }}"
                    class="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">
                     + Record Payment
                 </a>
@@ -306,7 +306,7 @@
     <section id="payments" data-tab-panel role="tabpanel" aria-labelledby="tab-payments" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Client Payments</h3>
-            <a href="{{ route('payments.create', ['client_id' => $client->id]) }}"
+            <a href="{{ route('payments.create', ['client_id' => $client->id]) }}" data-sheet="{{ route('sheets.payment-pick', ['client' => $client->id]) }}"
                class="text-sm font-semibold text-blue-600 hover:underline">
                 + Record Payment
             </a>

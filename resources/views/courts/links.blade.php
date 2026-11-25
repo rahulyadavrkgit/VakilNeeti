@@ -39,12 +39,12 @@
                 </span>
                 <span class="min-w-0 flex-1">
                     <span class="block text-base font-bold uppercase tracking-wide">{{ $link['title'] }}</span>
-                    <span class="mt-0.5 block text-sm text-slate-300 group-hover:text-teal-50">{{ $link['description'] }}</span>
+                    <span class="mt-0.5 block text-sm text-white/75 group-hover:text-white/90">{{ $link['description'] }}</span>
                 </span>
                 @if($link['internal'] ?? false)
-                    <x-icon name="chevron" :size="18" class="-rotate-90 text-slate-400 group-hover:text-white" />
+                    <x-icon name="chevron" :size="18" class="-rotate-90 text-white/60 group-hover:text-white" />
                 @else
-                    <x-icon name="external" :size="18" class="text-slate-400 group-hover:text-white" />
+                    <x-icon name="external" :size="18" class="text-white/60 group-hover:text-white" />
                 @endif
             </a>
         @endforeach

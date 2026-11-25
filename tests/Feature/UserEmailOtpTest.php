@@ -209,6 +209,19 @@ class UserEmailOtpTest extends TestCase
         $this->get(route('login'))->assertOk()->assertSee('data-login-form="email"', false)->assertSee('data-login-form="mobile"', false);
     }
 
+    public function test_forgot_password_signs_in_with_a_code_and_lets_a_new_password_be_set(): void
+    {
+        $user = User::factory()->create(['email' => 'asha@example.test', 'password_set_at' => now()]);
+        $this->get(route('courts.index'))->assertSee('Forgot password?')->assertSee('name="forgot" value="1"', false);
+
+        $this->post(route('login.submit'), ['email' => 'asha@example.test', 'password' => '', 'forgot' => '1'])->assertSessionHasNoErrors();
+        $this->post(route('login.verify.submit'), ['otp' => $this->code])->assertRedirect(route('profile.index').'#password');
+        $this->assertAuthenticatedAs($user);
+
+        $this->post(route('profile.password.store'), ['password' => 'fresh-start', 'password_confirmation' => 'fresh-start'])->assertSessionHasNoErrors();
+        $this->assertTrue(Hash::check('fresh-start', $user->fresh()->password));
+    }
+
     public function test_signing_in_with_a_code_or_password_keeps_the_device_signed_in(): void
     {
         User::factory()->create(['email' => 'asha@example.test']);
