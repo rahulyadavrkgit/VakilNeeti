@@ -54,6 +54,8 @@ class UserRegistrationControllerTest extends TestCase
     {
         return array_merge([
             'account_role' => 'law_firm',
+            'password' => 'test-password-123',
+            'password_confirmation' => 'test-password-123',
             'onboarding_features' => ['invoices_expenses_documents'],
             'full_name' => 'Asha Sharma',
             'email' => 'asha@firm.example',

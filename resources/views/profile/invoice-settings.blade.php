@@ -22,8 +22,8 @@
         </div>
     @endif
 
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="font-semibold text-slate-800">Firm Registration Information</h2>
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Firm Registration Information</h2>
 
         <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -59,8 +59,8 @@
             <input type="hidden" name="setup" value="1">
         @endif
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">GST Configuration</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">GST Configuration</h2>
 
             <div class="space-y-4">
                 <div>
@@ -141,8 +141,8 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Invoice Numbering & Payment Terms</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Invoice Numbering & Payment Terms</h2>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -176,8 +176,8 @@
             <p class="mt-3 text-xs text-slate-500">Saved as a preference; not yet used for invoice numbers.</p>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Bank & Payment Instructions</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Bank & Payment Instructions</h2>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -224,8 +224,8 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Invoice Text & Conditions</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Invoice Text & Conditions</h2>
 
             <div class="space-y-4">
                 <div>
@@ -255,8 +255,8 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">TDS / Tax Deducted at Source</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">TDS / Tax Deducted at Source</h2>
 
             <div class="space-y-4">
                 <label class="flex items-center gap-3">
@@ -305,8 +305,8 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Professional Tax Compliance</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Professional Tax Compliance</h2>
 
             <div class="space-y-4">
                 <label class="flex items-center gap-3">

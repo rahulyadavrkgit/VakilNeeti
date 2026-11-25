@@ -146,8 +146,8 @@
                 <p class="mt-2 text-slate-600">Add your account details to set up your workspace.</p>
             </div>
 
-            <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <h3 class="text-lg font-bold text-slate-900">Account holder</h3>
+            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <h3 class="text-lg font-semibold text-slate-900">Account holder</h3>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
                     <label class="text-sm font-medium text-slate-700">
                         <span data-name-label data-individual-label="Full name (as per Vakalatnama)" data-company-label="Your full name">Full name (as per Vakalatnama)</span>
@@ -171,8 +171,8 @@
             </section>
 
             <div data-registration-profile="individual" @if($accountType !== 'individual') hidden @endif class="space-y-6">
-                <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                    <h3 class="text-lg font-bold text-slate-900">Bar Council enrolment details</h3>
+                <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h3 class="text-lg font-semibold text-slate-900">Bar Council enrolment details</h3>
                     <p class="mt-1 text-sm text-slate-500">These details are used for advocate identification and case fetching.</p>
 
                     <div class="mt-4">
@@ -181,8 +181,8 @@
                 </section>
             </div>
             <div data-registration-profile="company" @if($accountType !== 'company') hidden @endif class="space-y-6">
-                <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                    <h3 class="text-lg font-bold text-slate-900">Company / law firm details</h3>
+                <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h3 class="text-lg font-semibold text-slate-900">Company / law firm details</h3>
                     <div class="mt-4 grid gap-3 sm:grid-cols-2" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
                         <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                             Company / firm name <span class="text-red-600">*</span>

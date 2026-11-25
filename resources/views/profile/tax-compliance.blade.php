@@ -10,7 +10,7 @@
 
     @if($firm)
         <section class="rounded-xl border border-slate-200 bg-white p-5">
-            <h2 class="font-semibold text-slate-800">{{ $firm->firm_name }}</h2>
+            <h2 class="text-lg font-semibold text-slate-900">{{ $firm->firm_name }}</h2>
             <p class="mt-1 text-sm text-slate-500">
                 GSTIN: {{ $firm->gstin ?: 'Not configured' }}
             </p>
@@ -25,7 +25,7 @@
     @endif
 
     <section>
-        <h2 class="mb-3 text-lg font-semibold text-slate-800">TDS Summary - {{ $financialYear }}</h2>
+        <h2 class="mb-3 text-lg font-semibold text-slate-900">TDS Summary - {{ $financialYear }}</h2>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -66,7 +66,7 @@
     </section>
 
     <section>
-        <h2 class="mb-3 text-lg font-semibold text-slate-800">Professional Tax Summary</h2>
+        <h2 class="mb-3 text-lg font-semibold text-slate-900">Professional Tax Summary</h2>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -105,7 +105,7 @@
 
         <section class="rounded-xl border bg-white p-5">
             <div class="mb-4 flex items-center justify-between">
-                <h2 class="font-semibold text-slate-800">TDS Certificates Awaited</h2>
+                <h2 class="text-lg font-semibold text-slate-900">TDS Certificates Awaited</h2>
                 <a href="{{ route('tds.index') }}" class="text-sm text-indigo-600">View All</a>
             </div>
 
@@ -135,7 +135,7 @@
 
         <section class="rounded-xl border bg-white p-5">
             <div class="mb-4 flex items-center justify-between">
-                <h2 class="font-semibold text-slate-800">Recent Professional Tax Records</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Recent Professional Tax Records</h2>
                 <a href="{{ route('professional-tax.index') }}" class="text-sm text-indigo-600">View All</a>
             </div>
 
@@ -168,7 +168,7 @@
     </div>
 
     <section class="rounded-xl border bg-white p-5">
-        <h2 class="mb-4 font-semibold text-slate-800">State-wise Professional Tax Summary</h2>
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">State-wise Professional Tax Summary</h2>
 
         @if($professionalTaxByState->isNotEmpty())
             <div class="overflow-x-auto">
@@ -199,7 +199,7 @@
     </section>
 
     <section class="rounded-xl border bg-white p-5">
-        <h2 class="mb-4 font-semibold text-slate-800">Tax Settings & Registers</h2>
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Tax Settings & Registers</h2>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <a href="{{ route('profile.invoice-settings.index') }}" class="rounded-lg border p-4 hover:bg-slate-50">

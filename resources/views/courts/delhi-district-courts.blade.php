@@ -19,7 +19,7 @@
     </form>
 
     @if($query !== '')
-        <section aria-labelledby="search-results-heading" class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <section aria-labelledby="search-results-heading" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div class="flex items-center justify-between gap-2 px-1">
                 <h2 id="search-results-heading" class="text-sm font-bold text-slate-900">{{ $results->count() }} {{ \Illuminate\Support\Str::plural('court', $results->count()) }} for "{{ $query }}"</h2>
                 <a href="{{ route('courts.delhi-district-courts') }}" class="text-sm font-semibold text-[#16776e]">Clear</a>

@@ -44,20 +44,21 @@
                 <a href="{{ route('tasks.index') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 font-semibold {{ $today['tasks'] ? 'bg-[#e6b84a] text-[#142235]' : 'bg-white/10 text-white/80' }}">
                     <span class="tabular-nums">{{ $today['tasks'] }}</span> {{ trans_choice('task due|tasks due', $today['tasks']) }}
                 </a>
-                <a href="{{ route('court-day') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 font-semibold text-white hover:bg-white/15" title="{{ __('Today and tomorrow on one page, also without internet') }}">
+                <a href="{{ route('court-day') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 font-semibold text-white hover:bg-white/15" title="{{ __('Today and tomorrow on one page') }}">
                     <x-icon name="court-day" :size="16" /> {{ __('Court day') }}
                 </a>
             </div>
             @if($today['listed']->isNotEmpty())
                 {{-- Read from the Delhi High Court's published cause lists: where each matter is, and its item number. --}}
                 <div class="mt-2 rounded-xl bg-white/[0.06] px-3 py-2 text-sm" data-cause-list-today>
-                    <p class="font-semibold text-white">{{ __('In the Delhi HC cause list') }}</p>
+                    <p class="font-semibold text-white">{{ __('In the courts\' cause lists') }}</p>
                     <ul class="mt-1 space-y-1.5">
                         @foreach($today['listed']->take(5) as $listing)
                             @php $listedOn = $listing->courtDocument->listing_date; @endphp
                             <li class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                 <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $listedOn->isToday() ? 'bg-red-600 text-white' : 'bg-white/10 text-white/80' }}">{{ $listedOn->isToday() ? __('Today') : __('Tomorrow') }}</span>
-                                <span class="font-semibold tabular-nums text-white">@if($listing->court_room){{ __('Court') }} {{ $listing->court_room }} · @endif {{ __('Item') }} {{ $listing->item_number }}</span>
+                                <span class="font-semibold tabular-nums text-white">{{ $listing->courtShortName() }} · @if($listing->court_room){{ __('Court') }} {{ $listing->court_room }} · @endif {{ __('Item') }} {{ $listing->item_number }}</span>
+                                @if($listing->boardFacts())<span class="text-xs text-white/80">{{ implode(' · ', $listing->boardFacts()) }}</span>@endif
                                 <a href="{{ route('cases.show', $listing->legal_case_id) }}#cause-list" class="order-last min-w-0 basis-full truncate text-white/80 sm:order-none sm:basis-0 sm:flex-1 hover:text-white hover:underline">{{ $listing->legalCase?->case_title ?: $listing->case_reference }}</a>
                                 @if($listing->vcLink())
                                     <a href="{{ $listing->vcLink() }}" target="_blank" rel="noopener" class="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full bg-[#16776e] px-3 text-xs font-bold text-white hover:bg-[#12635c] sm:ml-0"><x-icon name="video" :size="14" /> {{ __('Join VC') }}</a>
@@ -103,6 +104,7 @@
                 @endif
                 <x-court-info class="mt-2" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextHearing['court_room'] ?? null" :judge="$nextHearing['judge_name'] ?? null" :vc-link="$nextHearing['vc_link'] ?? null"
                               :share="['title' => $nextHearing['title'], 'case_number' => $nextHearing['case_number'], 'side' => $nextHearing['appearing_for'] ?? null, 'parties' => $nextHearing['appearing_for_parties'] ?? null, 'date' => $nextHearing['date'], 'time' => $nextHearing['time'], 'details' => $nextHearing['details']]" />
+                <x-hearing-strip :date="$nextHearing['date']" :court="$nextHearing['court']" :room="$nextHearing['court_room'] ?? null" :item="$nextHearing['item_number'] ?? null" :list-total="$nextHearing['list_total'] ?? null" :cause-list="$nextHearing['cause_list'] ?? null" :case-number="$nextHearing['case_number']" :district="($nextHearing['court_level'] ?? null) === 'district'" :order-url="!empty($nextHearing['order']) ? route('cases.documents.download', [$nextHearing['case_id'], $nextHearing['order'], 'preview' => 1]) : null" :order-date="($nextHearing['order'] ?? null)?->created_at?->format('d M Y')" />
             </section>
         @endif
         <nav aria-label="{{ __('Quick actions') }}" class="mt-3 grid gap-2 {{ auth()->check() ? 'grid-cols-4' : 'grid-cols-3 sm:grid-cols-6' }}">
@@ -188,6 +190,7 @@
                                 </p>
                                 <x-court-info class="mt-1.5" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null"
                                               :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
+                                <x-hearing-strip :date="$event['date']" :court="$event['court']" :room="$event['court_room'] ?? null" :item="$event['item_number'] ?? null" :list-total="$event['list_total'] ?? null" :cause-list="$event['cause_list'] ?? null" :case-number="$event['case_number']" :district="($event['court_level'] ?? null) === 'district'" :order-url="!empty($event['order']) ? route('cases.documents.download', [$event['case_id'], $event['order'], 'preview' => 1]) : null" :order-date="($event['order'] ?? null)?->created_at?->format('d M Y')" />
                             </div>
                         </li>
                     @empty

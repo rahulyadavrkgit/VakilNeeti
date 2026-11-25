@@ -187,22 +187,10 @@ class CaseHearingFilterTest extends TestCase
 
     private function signInAsAdmin(User $admin): void
     {
-        $code = null;
-        $this->mock(Msg91EmailService::class, function ($mock) use (&$code, $admin): void {
-            $mock->shouldReceive('sendOtp')->once()->withArgs(function (string $email, string $value) use (&$code, $admin): bool {
-                $code = $value;
-
-                return $email === $admin->email;
-            })->andReturnNull();
-        });
-
         $this->post(route('admin.login.submit'), ['email' => $admin->email, 'password' => 'password'])
-            ->assertRedirect(route('admin.verify'));
-        $this->assertNull(session('admin_verified'));
-        $this->get(route('admin.verify'))->assertOk();
-        $this->post(route('admin.verify.submit'), ['code' => '000000'])->assertSessionHasErrors('code');
-        $this->assertNull(session('admin_verified'));
-        $this->post(route('admin.verify.submit'), ['code' => $code])->assertRedirect(route('admin.overview'));
+            ->assertRedirect(route('admin.overview'));
+        $this->assertAuthenticatedAs($admin);
+        $this->assertNull(session('admin_challenge'));
     }
 
     public function test_court_identity_preview_preserves_saved_cases_until_applied(): void

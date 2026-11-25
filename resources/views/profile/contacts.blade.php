@@ -32,8 +32,8 @@
 
     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="font-semibold text-slate-800">Firm Contact Details</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="text-lg font-semibold text-slate-900">Firm Contact Details</h2>
 
             <div class="mt-4 space-y-3 text-sm">
                 <div>
@@ -64,8 +64,8 @@
             </a>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="font-semibold text-slate-800">Personal Contact Details</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="text-lg font-semibold text-slate-900">Personal Contact Details</h2>
 
             @if($personal)
                 <div class="mt-4 space-y-3 text-sm">
@@ -96,8 +96,8 @@
 
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="font-semibold text-slate-800">Add Additional Contact Information</h2>
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Add Additional Contact Information</h2>
 
         <form method="POST" action="{{ route('profile.contacts.store') }}"
               class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -139,8 +139,8 @@
         </form>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="font-semibold text-slate-800">Additional Contact Channels</h2>
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Additional Contact Channels</h2>
 
         @if($contacts->count())
             <div class="mt-4 divide-y divide-slate-100">

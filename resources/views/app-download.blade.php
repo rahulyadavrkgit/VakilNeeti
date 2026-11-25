@@ -92,7 +92,7 @@
         </section>
     </div>
 
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900">What you get</h2>
         <ul class="mt-4 grid gap-4 text-sm text-slate-700 sm:grid-cols-2">
             <li class="flex gap-3"><x-icon name="calendar" :size="22" class="text-[#16776e]" /><span><strong class="block text-slate-900">Today's hearings first</strong>Your diary and reminders open in one tap.</span></li>

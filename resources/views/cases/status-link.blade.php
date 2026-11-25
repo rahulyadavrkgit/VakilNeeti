@@ -25,7 +25,7 @@
         <x-brand :size="30" />
     </header>
 
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Case update</p>
         <h1 class="mt-1 text-xl font-semibold leading-snug text-slate-900">{{ $case->case_title }}</h1>
         <p class="mt-1 text-sm text-slate-600">{{ collect([$case->case_number, $case->court_name])->filter()->implode(' · ') }}</p>
@@ -47,7 +47,7 @@
     </section>
 
     @if($last)
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Last hearing</p>
             <p class="mt-1 font-semibold text-slate-900">{{ $last['date']->format('d M Y') }}</p>
             @if($last['hearing']->hearing_stage)

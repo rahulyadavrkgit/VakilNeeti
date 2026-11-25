@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -147,6 +149,12 @@ class LiveCourtBoard
                 'delhi-high-court' => $this->delhiHighCourt(),
                 default => null,
             };
+        } catch (ConnectionException $exception) {
+            // A court site that does not answer (the Supreme Court board cannot be reached from outside India) is a
+            // warning, not a site error, so it does not raise the morning error alert every day.
+            Log::warning("Live board {$court} could not be reached", ['message' => $exception->getMessage()]);
+
+            return null;
         } catch (\Throwable $exception) {
             report($exception);
 

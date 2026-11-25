@@ -49,7 +49,7 @@
         @endunless
         <button type="submit"
                 class="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
-            Send verification code
+            {{ $setup ? 'Send setup code' : 'Sign in' }}
         </button>
     </form>
     <a href="{{ route('admin.login', $setup ? [] : ['setup' => 1]) }}" class="mt-4 inline-flex min-h-11 items-center text-sm font-semibold underline">{{ $setup ? 'Back to administrator sign-in' : 'Set up a newly granted administrator account' }}</a>

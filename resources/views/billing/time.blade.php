@@ -12,7 +12,7 @@
         <div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>
     @endif
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900">Add time</h2>
         <form method="POST" action="{{ route('billing.time.store') }}" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_80px_80px_1fr_auto] lg:items-end">
             @csrf

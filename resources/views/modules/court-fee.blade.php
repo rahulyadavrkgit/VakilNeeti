@@ -41,7 +41,7 @@
 
     {{-- 3. Where the fee comes from and where to pay --}}
     @if($guide)
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="fee-court">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="fee-court">
             <h2 id="fee-court" class="text-lg font-semibold text-slate-900">{{ $guide['title'] }}</h2>
             <p class="mt-1 text-sm text-slate-600">Fee set by: <strong class="text-slate-900">{{ $guide['law'] }}</strong></p>
             <div class="mt-4 grid gap-2 sm:grid-cols-2">
@@ -62,7 +62,7 @@
     @endif
 
     {{-- 4. Estimate an ad valorem fee from the rate in the schedule --}}
-    <section id="calculator" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section id="calculator" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900">Estimate</h2>
         <form id="court-fee-estimator" class="mt-3 grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label class="text-sm font-medium text-slate-700">Claim value (Rs.)

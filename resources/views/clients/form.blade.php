@@ -21,7 +21,7 @@
         </div>
     @endif
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <fieldset>
             <legend class="text-lg font-bold text-slate-900">This client is a</legend>
             <div class="mt-3 flex flex-wrap gap-2">
@@ -51,8 +51,8 @@
 
     </section>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Contact</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Contact</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700">Mobile
                 <input name="mobile" value="{{ old('mobile', $client->mobile) }}" maxlength="20" inputmode="tel" class="{{ $field }}">
@@ -63,8 +63,8 @@
         </div>
     </section>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Address</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Address</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700 sm:col-span-2">Street address
                 <textarea name="address" rows="2" class="{{ $field }}">{{ old('address', $client->address) }}</textarea>

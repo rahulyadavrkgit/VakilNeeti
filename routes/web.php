@@ -29,6 +29,7 @@ use App\Http\Controllers\CourtStandSideController;
 use App\Http\Controllers\CriminalLawComparisonController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardStudioController;
+use App\Http\Controllers\DistrictCauseListController;
 use App\Http\Controllers\ExternalWebviewController;
 use App\Http\Controllers\FirmProfileController;
 use App\Http\Controllers\HearingController;
@@ -152,6 +153,8 @@ Route::post('/cases/import/{import}/save', [OfficialCourtImportController::class
     ->name('cases.import.save');
 Route::post('/cases/{case}/follow-ups', [CaseFollowUpController::class, 'store'])->name('cases.follow-ups.store');
 Route::patch('/cases/{case}/follow-ups/{task}', [CaseFollowUpController::class, 'status'])->name('cases.follow-ups.status');
+Route::post('/cases/{case}/district-list', [DistrictCauseListController::class, 'store'])->middleware('throttle:10,1')->name('cases.district-list.store');
+
 Route::post('/cases/{case}/report', [CaseFollowUpController::class, 'report'])->middleware('throttle:10,1')->name('cases.report');
 
 Route::post('/cases/{case}/notes', [CaseWorkspaceController::class, 'storeNote'])
@@ -646,9 +649,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/register/profile', [UserRegistrationController::class, 'completeProfile'])->middleware('throttle:10,10')->name('register.profile.submit');
     Route::get('/login', [UserRegistrationController::class, 'showLogin'])->name('login');
     Route::post('/login', [UserRegistrationController::class, 'sendLoginOtp'])->middleware('throttle:5,10')->name('login.submit');
+    Route::post('/login/password', [UserRegistrationController::class, 'passwordLogin'])->middleware('throttle:20,1')->name('login.password');
     Route::post('/login/verify', [UserRegistrationController::class, 'verifyLoginOtp'])->middleware('throttle:10,10')->name('login.verify.submit');
     Route::post('/login/change', [UserRegistrationController::class, 'changeLoginEmail'])->name('login.change');
 });
+
+Route::post('/profile/password', [UserRegistrationController::class, 'savePassword'])->middleware(['auth', 'throttle:5,10'])->name('profile.password.store');
 
 Route::post('/user-logout', [UserRegistrationController::class, 'logout'])
     ->middleware('auth')

@@ -96,7 +96,7 @@
             @foreach($module['categories'] as $category)
                 <div id="{{ $category['id'] }}"
                      class="rounded-xl border border-slate-200 bg-white p-5">
-                    <h2 class="font-semibold text-slate-800">{{ $category['label'] }}</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ $category['label'] }}</h2>
                 </div>
             @endforeach
         </div>

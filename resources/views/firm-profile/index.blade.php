@@ -49,7 +49,7 @@
         @endif
 
         <section>
-            <h3 class="text-lg font-semibold text-slate-800 border-b pb-3 mb-5">
+            <h3 class="mb-5 border-b border-slate-100 pb-3 text-lg font-semibold text-slate-900">
                 {{ $isAdvocate ? 'Name on invoices' : 'Firm Identity' }}
             </h3>
 
@@ -74,7 +74,7 @@
         </section>
 
         <section>
-            <h3 class="text-lg font-semibold text-slate-800 border-b pb-3 mb-5">
+            <h3 class="mb-5 border-b border-slate-100 pb-3 text-lg font-semibold text-slate-900">
                 Business Address
             </h3>
 
@@ -143,7 +143,7 @@
         </section>
 
         <section>
-            <h3 class="text-lg font-semibold text-slate-800 border-b pb-3 mb-5">
+            <h3 class="mb-5 border-b border-slate-100 pb-3 text-lg font-semibold text-slate-900">
                 GST and Contact Details
             </h3>
 

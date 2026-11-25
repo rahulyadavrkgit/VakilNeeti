@@ -20,6 +20,7 @@ use Illuminate\Notifications\Notifiable;
     'mobile_verified_at',
     'email_verified_at',
     'password',
+    'password_set_at',
     'account_type',
     'account_role',
     'onboarding_features',
@@ -41,6 +42,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'mobile_verified_at' => 'datetime',
+            'password_set_at' => 'datetime',
             'password' => 'hashed',
             'onboarding_features' => 'array',
             'preferences' => 'array',

@@ -540,3 +540,22 @@ body.vn-embed { padding-bottom: 0 !important; }
         right: 1rem;
     }
 }
+
+/* Hearing strip (components/hearing-strip): the cause-list line glides sideways only when it is too long to fit,
+   pauses on hover or touch, and simply wraps for people who prefer less motion. */
+@layer components {
+    .vn-ticker { overflow: hidden; white-space: nowrap; }
+    .vn-ticker-text { display: inline-block; }
+    .vn-ticker.is-moving .vn-ticker-text { animation: vn-ticker var(--vn-ticker-time, 12s) ease-in-out 1.5s infinite alternate; }
+    .vn-ticker.is-moving:hover .vn-ticker-text, .vn-ticker.is-moving:active .vn-ticker-text { animation-play-state: paused; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .vn-ticker { white-space: normal; }
+        .vn-ticker.is-moving .vn-ticker-text { animation: none; }
+    }
+}
+
+@keyframes vn-ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-1 * var(--vn-ticker-shift, 0px))); }
+}

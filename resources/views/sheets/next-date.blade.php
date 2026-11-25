@@ -38,6 +38,17 @@
         {{ __('Purpose') }}
         <input type="text" name="hearing_stage" maxlength="255" placeholder="{{ __('Arguments, Evidence, Orders…') }}" class="{{ $field }}">
     </label>
+    {{-- District cause lists cannot be read automatically: the item and the list's size are noted here. --}}
+    <div class="grid grid-cols-2 gap-3">
+        <label class="{{ $label }}">
+            Item no. <span class="font-normal text-slate-500">(optional)</span>
+            <input type="text" name="item_number" maxlength="20" inputmode="numeric" placeholder="12" class="{{ $field }}">
+        </label>
+        <label class="{{ $label }}">
+            Cases in that list <span class="font-normal text-slate-500">(optional)</span>
+            <input type="number" name="list_total" min="1" max="5000" inputmode="numeric" placeholder="45" class="{{ $field }}">
+        </label>
+    </div>
     <p class="text-xs text-slate-500">Room, judge and VC link come from the case and the official court list.</p>
     <div class="flex items-center justify-between gap-3 pt-1">
         <a href="{{ route('hearings.create', array_filter(['case' => $case?->id])) }}" class="text-sm font-semibold text-[#16776e] hover:underline">More details</a>

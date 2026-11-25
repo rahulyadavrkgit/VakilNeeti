@@ -39,7 +39,7 @@ class CourtDayOfflineTest extends TestCase
         $response = $this->get(route('court-day'))->assertOk()
             ->assertSee('Saved by you')->assertSee('Open order')->assertSee('Add next date')->assertSee('Report a problem')
             ->assertHeader('Cache-Control', 'no-store, private')
-            ->assertSeeInOrder(['Today', 'Asha vs State', 'Room 214', 'Purpose:', 'Arguments', 'Tomorrow', 'Ravi vs Union', 'Join VC'])
+            ->assertSeeInOrder(['Today', 'Asha vs State', 'Room', '214', 'Purpose:', 'Arguments', 'Tomorrow', 'Ravi vs Union', 'Join VC'])
             ->assertSee('href="tel:+919810012345"', false)
             ->assertSee('data-offline-note', false)
             ->assertDontSee('Next week matter');

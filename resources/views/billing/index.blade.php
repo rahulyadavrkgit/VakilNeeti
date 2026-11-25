@@ -44,7 +44,7 @@
             ['Payment due', \App\Enums\Currency::current()->format($stats['payment_due']), 'text-amber-700'],
             ['Overdue', \App\Enums\Currency::current()->format($stats['payment_overdue']), 'text-rose-700'],
         ] as [$label, $value, $colour])
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</p>
                 <p class="mt-2 text-xl font-bold {{ $colour }}">{{ $value }}</p>
             </div>

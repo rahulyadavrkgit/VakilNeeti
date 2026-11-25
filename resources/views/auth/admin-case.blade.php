@@ -21,7 +21,7 @@
             </dl>
         </x-panel>
         <x-panel>
-            <h2 class="font-bold">Hearing history</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Hearing history</h2>
             <div class="my-2 divide-y divide-slate-200">
                 @forelse($hearings as $hearing)
                     <div class="space-y-1 py-3 text-sm">
@@ -38,7 +38,7 @@
             {{ $hearings->appends(request()->except('hearings'))->links() }}
         </x-panel>
         <x-panel>
-            <h2 class="font-bold">Cause-list matches</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Cause-list matches</h2>
             @forelse($listings as $listing)
                 <p class="my-2 text-sm">{{ $listing->courtDocument?->listing_date?->format('d M Y') ?? 'Unknown date' }} &middot; {{ $listing->courtDocument?->document_label }} &middot; Room {{ $listing->court_room ?: 'unknown' }} &middot; Item {{ $listing->item_number ?: 'unknown' }}</p>
             @empty
@@ -47,7 +47,7 @@
             {{ $listings->appends(request()->except('listings'))->links() }}
         </x-panel>
         <x-panel>
-            <h2 class="font-bold">Document inventory</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Document inventory</h2>
             @forelse($documents as $document)
                 <p class="my-2 break-words text-sm">{{ $document->original_name }} &middot; {{ $document->created_at?->format('d M Y') }} &middot; {{ number_format($document->size / 1024, 1) }} KB</p>
             @empty

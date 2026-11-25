@@ -14,7 +14,7 @@
 
     {{-- Hearing counters --}}
     <section>
-        <h2 class="mb-3 text-lg font-semibold text-slate-800">Hearing Schedule</h2>
+        <h2 class="mb-3 text-lg font-semibold text-slate-900">Hearing Schedule</h2>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -47,7 +47,7 @@
 
     {{-- Case overview --}}
     <section>
-        <h2 class="mb-3 text-lg font-semibold text-slate-800">Case Overview</h2>
+        <h2 class="mb-3 text-lg font-semibold text-slate-900">Case Overview</h2>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <a href="{{ route('cases.index') }}" class="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-sm">
@@ -67,7 +67,7 @@
     <section class="grid gap-4 xl:grid-cols-2">
         <div class="rounded-xl border border-teal-200 bg-white">
             <div class="border-b border-teal-100 bg-teal-50 p-5">
-                <h2 class="font-semibold text-slate-800">Today's Hearings</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Today's Hearings</h2>
                 <p class="mt-1 text-sm text-slate-500">{{ now()->format('d M Y') }}</p>
             </div>
             <div class="divide-y divide-slate-100">
@@ -127,7 +127,7 @@
     <section class="rounded-xl border border-slate-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
             <div>
-                <h2 class="font-semibold text-slate-800">Upcoming Hearings</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Upcoming Hearings</h2>
                 <p class="mt-1 text-sm text-slate-500">Tomorrow through the next 30 days.</p>
             </div>
             <a href="{{ route('cases.calendar') }}" class="text-sm font-medium text-[#16776e] hover:underline">
@@ -174,7 +174,7 @@
     <section class="rounded-xl border border-slate-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
             <div>
-                <h2 class="font-semibold text-slate-800">Recently Updated Cases</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Recently Updated Cases</h2>
                 <p class="mt-1 text-sm text-slate-500">Latest changes to case records.</p>
             </div>
             <a href="{{ route('cases.index') }}" class="text-sm font-medium text-[#16776e] hover:underline">All Cases</a>
@@ -221,7 +221,7 @@
     <section class="rounded-xl border border-slate-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
             <div>
-                <h2 class="font-semibold text-slate-800">Recent Hearing History</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Recent Hearing History</h2>
                 <p class="mt-1 text-sm text-slate-500">Recorded hearings in your case diary.</p>
             </div>
             <a href="{{ route('hearings.history') }}" class="text-sm font-medium text-[#16776e] hover:underline">Full Hearing History</a>

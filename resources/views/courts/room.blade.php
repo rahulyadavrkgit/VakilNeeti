@@ -24,7 +24,7 @@
 <div class="mx-auto max-w-3xl space-y-4">
     @include('courts.partials.breadcrumb', ['current' => $heading])
 
-    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">{{ $court['court'] }}</p>
         <h1 class="mt-1 text-2xl font-semibold text-slate-900">{{ $heading }}</h1>
         @if($roomPlace || $bench->bench || $bench->location)
@@ -80,7 +80,7 @@
     </a>
 
     @if($neighbours->isNotEmpty())
-        <section aria-labelledby="other-rooms" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section aria-labelledby="other-rooms" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 id="other-rooms" class="text-sm font-bold uppercase tracking-wide text-slate-500">Other rooms here</h2>
             <ul class="mt-2 divide-y divide-slate-100">
                 @foreach($neighbours as $other)

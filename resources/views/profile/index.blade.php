@@ -4,6 +4,26 @@
 @section('page-heading', 'Settings')
 
 @section('content')
+    @php
+        $passwordProof = session('password_setup_proof');
+        $canSetPassword = !auth()->user()->is_admin && ($passwordProof['id'] ?? null) === auth()->id()
+            && ($passwordProof['until'] ?? 0) > now()->timestamp;
+    @endphp
+    <section id="password" class="mx-auto mb-4 max-w-5xl scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4">
+        <h2 class="font-bold">{{ auth()->user()->password_set_at ? 'Change password' : 'Set your email sign-in password' }}</h2>
+        @if(session('password_saved'))<p role="status" class="my-2 text-sm text-teal-700">{{ session('password_saved') }}</p>@endif
+        @foreach($errors->passwordSetup->all() as $error)<p role="alert" class="my-2 text-sm text-red-700">{{ $error }}</p>@endforeach
+        <form method="POST" action="{{ route('profile.password.store') }}" class="mt-3 grid gap-3 sm:grid-cols-3">
+            @csrf
+            @unless($canSetPassword)
+                <label class="text-sm font-medium">Current password<input name="current_password" type="password" autocomplete="current-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            @endunless
+            <label class="text-sm font-medium">New password<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            <label class="text-sm font-medium">Confirm password<input name="password_confirmation" type="password" autocomplete="new-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            <p class="text-xs text-slate-600 sm:col-span-3">Use at least 12 characters, including letters and numbers.</p>
+            <button class="min-h-11 justify-self-start rounded-lg bg-teal-700 px-4 font-semibold text-white sm:col-span-3">Save password</button>
+        </form>
+    </section>
 <div class="space-y-6">
 
     <x-page-header title="Settings" subtitle="Profile, practice and app settings.">
@@ -13,13 +33,13 @@
     {{-- PROFILE INFORMATION --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">
         <div class="mb-4">
-            <h2 class="text-lg font-bold text-slate-800">{{ __('1. Profile Information') }}</h2>
+            <h2 class="text-lg font-semibold text-slate-900">{{ __('1. Profile Information') }}</h2>
             <p class="mt-1 text-sm text-slate-600">{{ __('Manage the account-specific profile and contact information used in VakilNiti.') }}</p>
         </div>
 
         @if(($isCompany || $showAllProfileTypes) && $firm)
             <div class="mb-5 rounded-lg bg-slate-50 p-4">
-                <h3 class="font-semibold text-slate-800">{{ __('Current Firm / Law Office') }}</h3>
+                <h3 class="text-base font-semibold text-slate-900">{{ __('Current Firm / Law Office') }}</h3>
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div>
                         <p class="text-xs text-slate-500">{{ __('Firm Name') }}</p>
@@ -59,45 +79,45 @@
             @if($showAllProfileTypes)
                 <a href="{{ route('profile.personal.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Personal Profile') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Personal Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage personal identity, address and individual information.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Personal Profile') }} →</p>
                 </a>
                 <a href="{{ route('profile.advocate.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Advocate Profile') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Advocate Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage registration, practice areas and court information.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Advocate Profile') }} →</p>
                 </a>
                 <a href="{{ route('profile.professional.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Professional Profile') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Professional Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage credentials, qualifications and professional information.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Professional Profile') }} →</p>
                 </a>
                 <a href="{{ route('firm-profile.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Company / Firm Profile') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Company / Firm Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage firm identity, business address and tax details.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Company Profile') }} →</p>
                 </a>
             @elseif($isCompany)
                 <a href="{{ route('firm-profile.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Company / Firm Profile') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Company / Firm Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage company identity, proprietor, business address, GST and office details.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Company Profile') }} →</p>
                 </a>
             @else
                 <a href="{{ route('profile.advocate.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Advocate Profile') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Advocate Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Update your registration details, practice areas, profile photo and court information.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Advocate Profile') }} →</p>
                 </a>
                 <a href="{{ route('firm-profile.index') }}"
                    class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                    <h3 class="font-semibold text-slate-800">{{ __('Office & billing details') }}</h3>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('Office & billing details') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Your chamber or office address and GSTIN, printed on your invoices.') }}</p>
                     <p class="mt-4 text-sm font-semibold text-blue-600">{{ $firm ? 'Update office details' : 'Add office details' }} &rarr;</p>
                 </a>
@@ -105,7 +125,7 @@
 
             <a href="{{ route('profile.contacts.index') }}"
                class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                <h3 class="font-semibold text-slate-800">{{ __('Contact Information') }}</h3>
+                <h3 class="text-base font-semibold text-slate-900">{{ __('Contact Information') }}</h3>
                 <p class="mt-2 text-sm text-slate-600">
                     {{ __('Manage personal, professional and office contact channels.') }}
                 </p>
@@ -117,7 +137,7 @@
 
     @unless($user->isTeamMember())
     <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-bold text-slate-800">{{ __('Currency') }}</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{{ __('Currency') }}</h2>
         @if(session('preferences_success'))
             <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('preferences_success') }}</p>
         @endif
@@ -138,7 +158,7 @@
 
     {{-- PRACTICE STATES --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-bold text-slate-800">{{ __('2. Practice States & Jurisdictions') }}</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{{ __('2. Practice States & Jurisdictions') }}</h2>
         <p class="mt-1 text-sm text-slate-600">{{ __('Choose the States/UTs where you practise.') }}</p>
 
         <a href="{{ route('profile.practice-states.index') }}"
@@ -150,7 +170,7 @@
     {{-- INVOICE AND TAX SETTINGS --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">
         <div class="mb-4">
-            <h2 class="text-lg font-bold text-slate-800">{{ __('3. Invoice & Tax Settings') }}</h2>
+            <h2 class="text-lg font-semibold text-slate-900">{{ __('3. Invoice & Tax Settings') }}</h2>
             <p class="mt-1 text-sm text-slate-600">
                 {{ __('Manage invoicing, GST configuration and tax-compliance records together.') }}
             </p>
@@ -160,14 +180,14 @@
 
             <a href="{{ route('profile.invoice-settings.index') }}"
                class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                <h3 class="font-semibold text-slate-800">{{ __('Invoice & GST Settings') }}</h3>
+                <h3 class="text-base font-semibold text-slate-900">{{ __('Invoice & GST Settings') }}</h3>
                 <p class="mt-2 text-sm text-slate-600">{{ __('GST, numbering, bank details and terms.') }}</p>
                 <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Invoice & GST Settings') }} →</p>
             </a>
 
             <a href="{{ route('profile.tax-compliance') }}"
                class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
-                <h3 class="font-semibold text-slate-800">{{ __('Tax & Compliance') }}</h3>
+                <h3 class="text-base font-semibold text-slate-900">{{ __('Tax & Compliance') }}</h3>
                 <p class="mt-2 text-sm text-slate-600">{{ __('TDS, certificates and Professional Tax.') }}</p>
                 <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Open Tax & Compliance') }} →</p>
             </a>
@@ -184,7 +204,7 @@
         $switch = 'relative h-6 w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-slate-300 transition before:absolute before:left-0.5 before:top-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition checked:bg-[#16776e] checked:before:translate-x-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16776e]/40';
     @endphp
     <section id="system-preferences" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-bold text-slate-800">{{ __('4. System Preferences') }}</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{{ __('4. System Preferences') }}</h2>
         <p class="mt-1 text-sm text-slate-600">{{ __('How the calendar opens, what Home shows, and which reminders reach your bell.') }}</p>
 
         @if(session('system_preferences_success'))
@@ -283,7 +303,7 @@
 
     {{-- CALENDAR SYNC --}}
     <section id="calendar-sync" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-bold text-slate-800">{{ __('Calendar sync') }}</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{{ __('Calendar sync') }}</h2>
         <p class="mt-1 text-sm text-slate-600">{{ __('Hearings and appointments in Google Calendar or your iPhone calendar, kept up to date by themselves.') }}</p>
         @if(session('calendar_success'))
             <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('calendar_success') }}</p>
@@ -316,7 +336,7 @@
 
     {{-- TEAM: juniors and clerks --}}
     <section id="team" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-bold text-slate-800">{{ __('Team') }}</h2>
+        <h2 class="text-lg font-semibold text-slate-900">{{ __('Team') }}</h2>
         @if(session('team_success'))
             <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('team_success') }}</p>
         @endif

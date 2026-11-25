@@ -645,16 +645,19 @@ if (liveChips.length) {
         const isMineNow = room?.status === 'running' && caseKey(chip.dataset.caseNumber) !== null
             && caseKey(chip.dataset.caseNumber) === caseKey(room.case_number);
 
+        // The hearing strip's "Now" cell (data-live-compact) shows just the value.
+        const compact = chip.hasAttribute('data-live-compact');
+
         if (!room) {
-            text.textContent = 'Live board';
+            text.textContent = compact ? 'Live' : 'Live board';
         } else if (isMineNow) {
-            text.textContent = 'Your case is on now · item ' + room.item;
+            text.textContent = compact ? room.item + ' · yours' : 'Your case is on now · item ' + room.item;
         } else if (room.status === 'running') {
-            text.textContent = 'Now item ' + room.item;
+            text.textContent = compact ? room.item : 'Now item ' + room.item;
         } else if (room.status === 'exhausted') {
-            text.textContent = 'Board over';
+            text.textContent = compact ? 'Over' : 'Board over';
         } else {
-            text.textContent = 'Not sitting yet';
+            text.textContent = compact ? 'Not yet' : 'Not sitting yet';
         }
 
         chip.toggleAttribute('data-mine-now', isMineNow);
@@ -891,3 +894,19 @@ document.querySelectorAll('table.vn-stack-table').forEach((table) => {
         });
     });
 });
+
+// Hearing strips (components/hearing-strip): a cause-list line too long for its box glides to show the rest.
+const sizeTickers = () => {
+    document.querySelectorAll('[data-ticker]').forEach((ticker) => {
+        const text = ticker.querySelector('[data-ticker-text]');
+        const shift = text ? text.scrollWidth - ticker.clientWidth + 24 : 0;
+
+        ticker.classList.toggle('is-moving', shift > 24);
+        ticker.style.setProperty('--vn-ticker-shift', `${Math.max(0, shift)}px`);
+        ticker.style.setProperty('--vn-ticker-time', `${Math.max(5, shift / 35)}s`);
+    });
+};
+
+sizeTickers();
+window.addEventListener('resize', () => window.requestAnimationFrame(sizeTickers));
+document.addEventListener('vn:sheet-loaded', sizeTickers);

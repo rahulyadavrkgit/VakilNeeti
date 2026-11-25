@@ -40,10 +40,10 @@
               id="practiceJurisdictionForm">
             @csrf
 
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 class="font-semibold text-slate-800">1. Practice States / Union Territories</h2>
+                        <h2 class="text-lg font-semibold text-slate-900">1. Practice States / Union Territories</h2>
                         <p class="mt-1 text-sm text-slate-500">
                             The State's High Court is included automatically.
                         </p>
@@ -98,8 +98,8 @@
 
             </div>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 class="font-semibold text-slate-800">2. District Practice (Optional)</h2>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <h2 class="text-lg font-semibold text-slate-900">2. District Practice (Optional)</h2>
                 <p class="mt-1 text-sm text-slate-500">
                     Only if you also practise in district courts.
                 </p>
@@ -163,8 +163,8 @@
             </div>
         </form>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="font-semibold text-slate-800">3. Saved Practice Jurisdictions</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="text-lg font-semibold text-slate-900">3. Saved Practice Jurisdictions</h2>
 
             @forelse($selectedStates as $stateName)
                 @php
@@ -201,7 +201,7 @@
         </div>
 
         @if(auth()->user()?->is_admin)
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <p class="text-xs font-bold uppercase tracking-[.16em] text-slate-500">Admin · data coverage</p>
             <h2 class="mt-1 font-semibold text-slate-800">Court Catalogue Coverage</h2>
             <p class="mt-1 text-sm text-slate-500">Counts show catalogue records, not all courts.</p>
@@ -230,7 +230,7 @@
 
                 <div class="flex shrink-0 items-center justify-between border-b border-slate-200 p-4 sm:p-5">
                     <div class="min-w-0">
-                        <h2 id="districtModalTitle" class="text-lg font-bold text-slate-800">
+                        <h2 id="districtModalTitle" class="text-lg font-semibold text-slate-900">
                             Select Practice Districts
                         </h2>
                         <p id="districtModalState" class="mt-1 truncate text-sm text-slate-500"></p>

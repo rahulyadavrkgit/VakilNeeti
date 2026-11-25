@@ -111,7 +111,7 @@
 
         <div class="vn-workspace">
             <aside class="vn-panel">
-                <h3 class="font-semibold mb-2">Pages</h3>
+                <h3 class="mb-2 text-base font-semibold text-slate-900">Pages</h3>
                 <div class="vn-toolbar mb-3">
                     <button id="vn-prev">Previous</button>
                     <button id="vn-next">Next</button>
@@ -149,7 +149,7 @@
             </main>
 
             <aside class="vn-panel">
-                <h3 class="font-semibold mb-2">Annotation Manager</h3>
+                <h3 class="mb-2 text-base font-semibold text-slate-900">Annotation Manager</h3>
                 <p id="vn-annotation-count" class="text-xs text-slate-500 mb-2">0 annotations</p>
                 <div id="vn-annotation-list"></div>
             </aside>

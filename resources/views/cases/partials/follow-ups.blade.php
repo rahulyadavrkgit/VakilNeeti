@@ -1,6 +1,6 @@
 <section id="case-follow-ups" data-tab-panel role="tabpanel" aria-labelledby="tab-case-follow-ups">
     <x-panel>
-        <h2 class="font-bold">Case follow-ups</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Case follow-ups</h2>
         <div class="my-3 divide-y divide-slate-200">
             @forelse($followUps as $task)
                 <article class="flex flex-wrap items-center justify-between gap-2 py-3">

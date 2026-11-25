@@ -35,7 +35,7 @@
                 <a href="{{ $calendarUrl(['date' => $previousDate]) }}" class="inline-flex min-h-10 items-center px-3 text-slate-700 hover:bg-slate-50" aria-label="Previous">&larr;</a>
                 <a href="{{ $calendarUrl(['date' => $nextDate]) }}" class="inline-flex min-h-10 items-center border-l border-slate-200 px-3 text-slate-700 hover:bg-slate-50" aria-label="Next">&rarr;</a>
             </div>
-            <h2 class="text-lg font-bold text-slate-900">{{ $periodLabel }}</h2>
+            <h2 class="text-lg font-semibold text-slate-900">{{ $periodLabel }}</h2>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -95,7 +95,7 @@
     <div class="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside class="space-y-4 print:hidden">
             {{-- Small month picker --}}
-            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div class="flex items-center justify-between">
                     <a href="{{ route('cases.calendar', array_merge($query, ['view' => $viewMode, 'date' => $date->copy()->subMonthNoOverflow()->toDateString()])) }}" class="rounded px-2 py-1 text-slate-600 hover:bg-slate-100" aria-label="Previous month">&lsaquo;</a>
                     <p class="text-sm font-bold text-slate-900">{{ $date->format('F Y') }}</p>
@@ -314,6 +314,9 @@
                                                     <span class="block text-xs text-slate-500">{{ $event['case_number'] }}</span>
                                                 @endif
                                                 <x-court-info class="mt-1" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null" :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
+                                                @if(($event['group'] ?? null) === 'hearing')
+                                                    <x-hearing-strip :date="$event['date']" :court="$event['court']" :room="$event['court_room'] ?? null" :item="$event['item_number'] ?? null" :list-total="$event['list_total'] ?? null" :cause-list="$event['cause_list'] ?? null" :case-number="$event['case_number']" :district="($event['court_level'] ?? null) === 'district'" :order-url="!empty($event['order']) ? route('cases.documents.download', [$event['case_id'], $event['order'], 'preview' => 1]) : null" :order-date="($event['order'] ?? null)?->created_at?->format('d M Y')" />
+                                                @endif
 
                                                 @if($event['details'])
                                                     <span class="block text-xs text-slate-600">{{ \Illuminate\Support\Str::limit($event['details'], 160) }}</span>

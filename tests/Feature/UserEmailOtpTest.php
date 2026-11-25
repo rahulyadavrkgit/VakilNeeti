@@ -12,6 +12,14 @@ use Tests\TestCase;
 
 class UserEmailOtpTest extends TestCase
 {
+    public function test_an_account_with_a_password_signs_in_without_a_code(): void
+    {
+        $user = User::factory()->create(['password_set_at' => now()]);
+        $this->post(route('login.password'), ['email' => $user->email, 'password' => 'password'])->assertRedirect('/');
+        $this->assertAuthenticatedAs($user);
+        $this->assertNull(session('login_otp_email'));
+    }
+
     use RefreshDatabase;
 
     private string $code = '';
@@ -73,6 +81,8 @@ class UserEmailOtpTest extends TestCase
 
         $this->post(route('register.profile.submit'), [
             'account_role' => 'independent_practitioner',
+            'password' => 'test-password-123',
+            'password_confirmation' => 'test-password-123',
             'onboarding_features' => ['personalized_hearings', 'judgment_research'],
             'full_name' => 'Asha Advocate',
             'mobile' => '98765 43210',
@@ -97,6 +107,8 @@ class UserEmailOtpTest extends TestCase
 
         $this->post(route('register.profile.submit'), [
             'account_role' => 'law_firm',
+            'password' => 'test-password-123',
+            'password_confirmation' => 'test-password-123',
             'onboarding_features' => ['invoices_expenses_documents'],
             'full_name' => 'Asha Sharma',
             'firm_name' => 'Sharma Legal Associates',
@@ -133,7 +145,9 @@ class UserEmailOtpTest extends TestCase
         $this->post(route('login.verify.submit'), ['otp' => '12345'])->assertSessionHasErrors('otp', null, 'login');
         $this->assertGuest();
 
-        $this->post(route('login.verify.submit'), ['otp' => $this->code])->assertRedirect('/');
+        $this->post(route('login.verify.submit'), ['otp' => $this->code])->assertRedirect(route('profile.index').'#password');
+        $this->post(route('profile.password.store'), ['password' => 'first-password-42', 'password_confirmation' => 'first-password-42'])->assertSessionHasNoErrors();
+        $this->assertTrue(Hash::check('first-password-42', $user->fresh()->password));
 
         $this->assertAuthenticatedAs($user);
         $this->assertNotNull($user->fresh()->email_verified_at);
@@ -182,7 +196,7 @@ class UserEmailOtpTest extends TestCase
 
         $this->get(route('login'))->assertSee('Code from the SMS')->assertSee('pattern="[0-9]{4}"', false);
 
-        $this->post(route('login.verify.submit'), ['otp' => $this->smsCode])->assertRedirect('/');
+        $this->post(route('login.verify.submit'), ['otp' => $this->smsCode])->assertRedirect(route('profile.index').'#password');
         $this->assertAuthenticatedAs($user);
     }
 

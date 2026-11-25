@@ -56,7 +56,7 @@
     </section>
 
     <section class="rounded-xl border bg-white p-5">
-        <h2 class="mb-4 font-semibold text-slate-800">Filter TDS Records</h2>
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Filter TDS Records</h2>
 
         <form method="GET" action="{{ route('tds.index') }}"
               class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

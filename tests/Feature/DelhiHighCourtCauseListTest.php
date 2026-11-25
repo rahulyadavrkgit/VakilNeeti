@@ -92,10 +92,10 @@ TEXT;
         $this->assertSame([[$listed->id, '1', '3']], $appearances->map(fn ($appearance) => [$appearance->legal_case_id, $appearance->court_room, $appearance->item_number])->unique()->values()->all());
         $this->assertSame(0, CauseListAppearance::query()->whereIn('legal_case_id', [$notListed->id, $elsewhere->id])->count());
 
-        $this->assertSame(['Listed Thu, 26 Nov · Delhi HC Court 1 · Item 3', 'Listed tomorrow · Delhi HC Court 1 · Item 3'], $owner->notifications()->get()->pluck('data.title')->sort()->values()->all());
+        $this->assertSame(['Listed Thu, 26 Nov · Delhi HC · Court 1 · Item 3', 'Listed tomorrow · Delhi HC · Court 1 · Item 3'], $owner->notifications()->get()->pluck('data.title')->sort()->values()->all());
 
         $this->get(route('dashboard'))->assertOk()
-            ->assertSee('In the Delhi HC cause list')
+            ->assertSee('In the courts&#039; cause lists', false)->assertSee('Delhi HC · Court 1')
             ->assertSeeInOrder(['Tomorrow', 'Court 1 · ', 'Item 3', 'Rashtriya Mukti Morcha vs UOI'])
             ->assertSee('https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt9');
         $this->get(route('cases.show', $listed))->assertOk()->assertSee('id="cause-list"', false)->assertSee('c_25112026.pdf');
@@ -106,9 +106,9 @@ TEXT;
         $this->assertStringContainsString('Rashtriya Mukti Morcha', $diary->viewData('shareText'));
 
         // Court day lists it for tomorrow even though no hearing was saved for that day.
-        $this->get(route('court-day'))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Court 1', 'Item 3', 'Join VC']);
+        $this->get(route('court-day'))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Delhi HC cause list', 'Court room', '1', 'My item', '3', 'Join VC']);
 
-        $this->actingAs($other)->get(route('dashboard'))->assertOk()->assertDontSee('In the Delhi HC cause list');
+        $this->actingAs($other)->get(route('dashboard'))->assertOk()->assertDontSee('cause lists');
 
         $this->actingAs($owner);
         $hearing = CourtHearing::create(['case_id' => $listed->id, 'next_hearing_date' => '2026-11-27']);

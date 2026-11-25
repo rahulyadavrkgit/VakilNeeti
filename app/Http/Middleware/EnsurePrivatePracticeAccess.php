@@ -79,7 +79,9 @@ class EnsurePrivatePracticeAccess
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors(['email' => 'This account is suspended.']);
+            return redirect()->route('login')
+                ->withErrors(['email' => 'This account is suspended. Write to support@vakilniti.com if you think this is a mistake.'], 'login')
+                ->with('show_login_modal', true);
         }
 
         // The section directory is public and contains no account-specific records.

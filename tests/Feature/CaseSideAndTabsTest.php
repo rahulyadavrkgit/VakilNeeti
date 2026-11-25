@@ -64,9 +64,9 @@ class CaseSideAndTabsTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['For', 'Petitioner', 'Next hearing', 'Court room', 'Room 214'])
+            ->assertSeeInOrder(['For', 'Petitioner', 'Next hearing', 'Room 214'])
             ->assertSee('href="https://vc.example.in/room214"', false)
-            ->assertSee('Join VC hearing')
+            ->assertSee('Join VC')
             ->assertSee('href="tel:+919876543210"', false)
             ->assertSee('https://wa.me/919876543210?text=', false)
             ->assertSee('data-share-text=', false);
@@ -85,7 +85,7 @@ class CaseSideAndTabsTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['Court room', 'Court 12']);
+            ->assertSeeInOrder(['Next hearing', 'Court 12']);
     }
 
     public function test_a_hearing_can_carry_its_own_vc_link_which_beats_the_case_link(): void
@@ -104,7 +104,8 @@ class CaseSideAndTabsTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['Join VC hearing', 'Join VC for this hearing'])
+            ->assertSee('href="https://vc.example.in/this-date"', false)
+            ->assertDontSee('Join VC for this hearing')
             ->assertSee('data-copy="https://vc.example.in/this-date"', false);
     }
 

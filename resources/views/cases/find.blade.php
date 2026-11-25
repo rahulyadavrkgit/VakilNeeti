@@ -51,7 +51,7 @@
           class="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         @csrf
         <input type="hidden" name="method" value="app">
-        <h2 class="text-lg font-bold text-slate-900">Upload your eCourts app export</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Upload your eCourts app export</h2>
         <ol class="space-y-3 text-sm text-slate-700">
             <li class="flex gap-3">{!! $step(1) !!}<span>In the official <span class="font-semibold">eCourts Services</span> app, open <span class="font-semibold">My Cases</span> and use its <span class="font-semibold">Export</span> option. It saves <span class="font-mono">myCases.txt</span> (District courts) and <span class="font-mono">hcMyCases.txt</span> (High Courts).</span></li>
             <li class="flex gap-3">{!! $step(2) !!}<span>Send the files to this device (email, WhatsApp or Drive) and choose them below. You can choose both at once.</span></li>
@@ -73,7 +73,7 @@
         @csrf
         <input type="hidden" name="method" value="website">
 
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="flex items-center gap-3 text-lg font-bold text-slate-900">{!! $step(1) !!} Choose the court</h2>
             <div class="mt-4 grid gap-2 sm:grid-cols-3">
                 @foreach($portals as $key => $portal)
@@ -89,7 +89,7 @@
             </label>
         </section>
 
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="flex items-center gap-3 text-lg font-bold text-slate-900">{!! $step(2) !!} Search on eCourts</h2>
 
             <div class="mt-4 rounded-lg bg-slate-50 p-4">
@@ -129,7 +129,7 @@
             @endforeach
         </section>
 
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="flex items-center gap-3 text-lg font-bold text-slate-900">{!! $step(3) !!} Paste the results</h2>
             <label class="mt-4 block text-sm font-medium text-slate-700">
                 Results copied from eCourts <span class="text-red-600">*</span>
@@ -149,7 +149,7 @@
           class="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         @csrf
         <input type="hidden" name="method" value="calendar">
-        <h2 class="text-lg font-bold text-slate-900">Upload your Google Calendar</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Upload your Google Calendar</h2>
         <ol class="space-y-3 text-sm text-slate-700">
             <li class="flex gap-3">{!! $step(1) !!}<span>On a computer, open Google Calendar → <span class="font-semibold">Settings</span> → <span class="font-semibold">Import &amp; export</span> → <span class="font-semibold">Export</span>. Google downloads a .zip file.</span></li>
             <li class="flex gap-3">{!! $step(2) !!}<span>Upload the .zip, or a single calendar's .ics file from it.</span></li>

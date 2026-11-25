@@ -11,7 +11,7 @@
     </x-page-header>
 
 
-    <section id="bar-councils" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section id="bar-councils" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900">Statutory Bar Councils</h2>
         <p class="mt-2 text-sm text-slate-600">Statutory regulators under the Advocates Act, 1961.</p>
         <a href="{{ route('bar-directory.index') }}"
@@ -21,7 +21,7 @@
     </section>
 
     <div class="grid gap-6 md:grid-cols-2">
-        <section id="state-high-court" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="state-high-court" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">State &amp; High Court Associations</h2>
             <p class="mt-2 text-sm text-slate-600">Associations for State and High Court practice.</p>
             <a href="{{ route('bar-directory.index', ['court_type' => 'High Court']) }}"
@@ -30,7 +30,7 @@
             </a>
         </section>
 
-        <section id="district" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="district" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">District Bar Associations</h2>
             <p class="mt-2 text-sm text-slate-600">District and court-level associations.</p>
             <a href="{{ route('bar-directory.index', ['court_type' => 'District Court']) }}"
@@ -40,7 +40,7 @@
         </section>
     </div>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900">Search the directory</h2>
         <a href="{{ route('bar-directory.index') }}"
            class="mt-4 inline-flex rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">

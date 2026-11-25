@@ -31,7 +31,9 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
 
-        if ($request->hasSession() && $request->user()) {
+        // Signed-in pages are never stored by the browser or a shared cache. Public location lists (States,
+        // districts, cities) hold nothing private and keep the caching they set, so the pickers open fast.
+        if ($request->hasSession() && $request->user() && ! $request->is('api/locations/*', 'api/court-directory/*')) {
             $response->headers->set('Cache-Control', 'private, no-store');
         }
 

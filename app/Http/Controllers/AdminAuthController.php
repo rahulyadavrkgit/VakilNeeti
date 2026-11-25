@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -33,9 +34,21 @@ class AdminAuthController extends Controller
         $user = User::query()->whereRaw('lower(email) = ?', [strtolower(trim($credentials['email']))])->first();
 
         $setup = $request->boolean('setup');
+        $key = 'admin-password:'.hash('sha256', strtolower(trim($credentials['email'])));
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return back()->withErrors(['email' => 'Too many sign-in attempts. Try again in 15 minutes.'])->onlyInput('email');
+        }
         if (! $user || ! $user->is_admin || $user->suspended_at || (bool) $user->admin_password_setup !== $setup
             || (! $setup && ! Hash::check($credentials['password'], $user->password))) {
+            RateLimiter::hit($key, 900);
+
             return back()->withErrors(['email' => 'Administrator sign-in failed.'])->onlyInput('email');
+        }
+
+        if (! $setup) {
+            RateLimiter::clear($key);
+
+            return $this->startAdminSession($request, $user);
         }
 
         $code = (string) random_int(100000, 999999);
@@ -98,7 +111,7 @@ class AdminAuthController extends Controller
         if ($setup) {
             $updated = User::query()->whereKey($user->id)->where('is_admin', true)->whereNull('suspended_at')
                 ->where('admin_access_version', $challenge['version'])->where('admin_password_setup', true)
-                ->update(['password' => Hash::make($validated['password']), 'admin_password_setup' => false]);
+                ->update(['password' => Hash::make($validated['password']), 'password_set_at' => now(), 'admin_password_setup' => false]);
 
             if ($updated !== 1) {
                 return redirect()->route('admin.login');
@@ -109,6 +122,11 @@ class AdminAuthController extends Controller
             ]);
         }
 
+        return $this->startAdminSession($request, $user);
+    }
+
+    private function startAdminSession(Request $request, User $user): RedirectResponse
+    {
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put('admin_verified', [

@@ -34,8 +34,8 @@
           class="space-y-6">
         @csrf
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Bar Council Enrolment</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Bar Council Enrolment</h2>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -70,8 +70,8 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Supreme Court AOR Details</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Supreme Court AOR Details</h2>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -97,8 +97,8 @@
             </p>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Qualifications & Memberships</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Qualifications & Memberships</h2>
 
             <div class="space-y-4">
                 <div>
@@ -121,8 +121,8 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 font-semibold text-slate-800">Practice Information</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 class="mb-4 text-lg font-semibold text-slate-900">Practice Information</h2>
 
             <div class="space-y-4">
                 <div>

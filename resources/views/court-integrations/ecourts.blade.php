@@ -17,21 +17,21 @@
 
         <div class="bg-white rounded-lg shadow p-5">
             <p class="text-sm text-gray-500">Source status</p>
-            <h2 class="text-lg font-semibold mt-2">
+            <h2 class="mt-2 text-lg font-semibold text-slate-900">
                 {{ $source->is_enabled ? 'Registered' : 'Disabled' }}
             </h2>
         </div>
 
         <div class="bg-white rounded-lg shadow p-5">
             <p class="text-sm text-gray-500">Integration mode</p>
-            <h2 class="text-lg font-semibold mt-2">
+            <h2 class="mt-2 text-lg font-semibold text-slate-900">
                 Portal-assisted
             </h2>
         </div>
 
         <div class="bg-white rounded-lg shadow p-5">
             <p class="text-sm text-gray-500">Imported source records</p>
-            <h2 class="text-lg font-semibold mt-2">
+            <h2 class="mt-2 text-lg font-semibold text-slate-900">
                 {{ number_format($recordCount) }}
             </h2>
         </div>

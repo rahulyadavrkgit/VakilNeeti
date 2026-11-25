@@ -19,7 +19,7 @@
     @endif
 
     {{-- CLIENT HEADER --}}
-    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex flex-wrap items-start justify-between gap-5">
 
             <div>
@@ -98,7 +98,7 @@
 
     {{-- OVERVIEW --}}
     <section id="overview" data-tab-panel role="tabpanel" aria-labelledby="tab-overview" class="space-y-4">
-        <h3 class="text-lg font-bold text-slate-900">Client Overview</h3>
+        <h3 class="text-lg font-semibold text-slate-900">Client Overview</h3>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -161,7 +161,7 @@
     {{-- CASES --}}
     <section id="cases" data-tab-panel role="tabpanel" aria-labelledby="tab-cases" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
-            <h3 class="text-lg font-bold">Connected Cases</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Connected Cases</h3>
             <a href="{{ route('cases.index') }}" class="text-sm text-blue-600 hover:underline">All Cases</a>
         </div>
 
@@ -191,7 +191,7 @@
     {{-- HEARINGS --}}
     <section id="hearings" data-tab-panel role="tabpanel" aria-labelledby="tab-hearings" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
-            <h3 class="text-lg font-bold">Hearing History & Dates</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Hearing History & Dates</h3>
             <a href="{{ route('cases.calendar') }}" class="text-sm text-blue-600 hover:underline">Open Calendar</a>
         </div>
 
@@ -226,7 +226,7 @@
     {{-- TASKS --}}
     <section id="tasks" data-tab-panel role="tabpanel" aria-labelledby="tab-tasks" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
-            <h3 class="text-lg font-bold">Client Tasks</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Client Tasks</h3>
             <a href="{{ route('tasks.create', ['client_id' => $client->id]) }}"
                class="text-sm font-semibold text-blue-600 hover:underline">
                 + Create Task
@@ -265,7 +265,7 @@
     {{-- INVOICES --}}
     <section id="invoices" data-tab-panel role="tabpanel" aria-labelledby="tab-invoices" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
-            <h3 class="text-lg font-bold">Client Invoices</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Client Invoices</h3>
             <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
                class="text-sm font-semibold text-blue-600 hover:underline">
                 + Create Invoice
@@ -305,7 +305,7 @@
     {{-- PAYMENTS --}}
     <section id="payments" data-tab-panel role="tabpanel" aria-labelledby="tab-payments" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
-            <h3 class="text-lg font-bold">Client Payments</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Client Payments</h3>
             <a href="{{ route('payments.create', ['client_id' => $client->id]) }}"
                class="text-sm font-semibold text-blue-600 hover:underline">
                 + Record Payment
@@ -353,7 +353,7 @@
     {{-- ACTIVITIES --}}
     <section id="activities" data-tab-panel role="tabpanel" aria-labelledby="tab-activities" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
-            <h3 class="text-lg font-bold">Client Activities</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Client Activities</h3>
             <a href="{{ route('clients.activities.create', $client) }}"
                class="text-sm font-semibold text-blue-600 hover:underline">
                 + Add Activity

@@ -24,8 +24,8 @@
         </div>
     @endif
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Hearing</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Hearing</h2>
 
         @if($cases->isEmpty())
             <p class="mt-3 text-sm text-slate-600">Add a case first, then you can add its hearings.</p>
@@ -59,6 +59,18 @@
                     Court room
                     <input name="court_room" value="{{ old('court_room', $hearing->court_room) }}" maxlength="100" placeholder="e.g. Court No. 12" class="{{ $field }}">
                 </label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-sm font-medium text-slate-700">
+                        Item no.
+                        <input name="item_number" value="{{ old('item_number', $hearing->item_number) }}" maxlength="20" inputmode="numeric" placeholder="12" class="{{ $field }}">
+                        @error('item_number') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <label class="text-sm font-medium text-slate-700">
+                        Cases in that list
+                        <input type="number" name="list_total" value="{{ old('list_total', $hearing->list_total) }}" min="1" max="5000" inputmode="numeric" placeholder="45" class="{{ $field }}">
+                        @error('list_total') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                </div>
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                     VC link for this hearing <span class="font-normal text-slate-400">(if the court sent one)</span>
                     <input type="url" name="vc_link" value="{{ old('vc_link', $hearing->vc_link) }}" maxlength="500" placeholder="https://…" inputmode="url" class="{{ $field }}">
@@ -73,7 +85,7 @@
     </section>
 
     @if($cases->isNotEmpty())
-        <details class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" @if(old('proceedings', $hearing->proceedings) || old('next_hearing_date', $nextDate)) open @endif>
+        <details class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" @if(old('proceedings', $hearing->proceedings) || old('next_hearing_date', $nextDate)) open @endif>
             <summary class="cursor-pointer text-lg font-bold text-slate-900">Already happened? Add the outcome</summary>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">

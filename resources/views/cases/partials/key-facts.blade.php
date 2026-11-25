@@ -5,28 +5,7 @@
     $contactButton = 'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold';
 @endphp
 
-<div class="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-    <div class="{{ $fact }} {{ $upcomingHearing ? 'bg-teal-50 ring-1 ring-inset ring-teal-200' : '' }}">
-        <p class="{{ $factLabel }}">Next hearing</p>
-        <p class="mt-1 text-lg font-bold leading-tight {{ $upcomingHearing ? 'text-[#12645d]' : 'text-slate-400' }}">
-            {{ $upcomingHearing ? \Carbon\Carbon::parse($upcomingHearing->next_hearing_date)->format('d M Y') : 'Not fixed' }}
-        </p>
-        @if($upcomingHearing && \Carbon\Carbon::parse($upcomingHearing->next_hearing_date)->isToday())
-            <p class="mt-0.5 text-xs font-bold text-red-700">Today</p>
-        @endif
-    </div>
-    <div class="{{ $fact }}">
-        <p class="{{ $factLabel }}">Court room</p>
-        <p class="mt-1 text-lg font-bold leading-tight {{ $courtRoom ? 'text-slate-900' : 'text-slate-400' }}">{{ $courtRoom ?: 'Not added' }}</p>
-    </div>
-    <div class="{{ $fact }} col-span-2 lg:col-span-1">
-        <p class="{{ $factLabel }}">Court</p>
-        <p class="mt-1 font-semibold leading-snug text-slate-900">{{ $case->court_name ?: 'Not added' }}</p>
-        @if($case->court_complex || $case->judge_name)
-            <p class="mt-0.5 text-xs text-slate-500">{{ collect([$case->court_complex, $case->judge_name])->filter()->implode(' · ') }}</p>
-        @endif
-    </div>
-
+<details class="mt-4 space-y-2"><summary class="cursor-pointer text-sm font-semibold underline">Court position and client contact</summary><div class="grid gap-2 sm:grid-cols-2">
     {{-- Where we stand: our side plus the court's practice, recorded once per court. --}}
     <div class="{{ $standSide ? 'min-w-0 rounded-xl bg-[#142235] px-3.5 py-3 text-white' : $fact }} col-span-2 lg:col-span-1">
         @if(! $case->appearing_for)
@@ -47,20 +26,6 @@
             @include('cases.partials.stand-side-buttons')
         @endif
     </div>
-</div>
-
-<div class="mt-2.5 flex flex-wrap gap-2 print:hidden">
-    @if($vcLink)
-        <a href="{{ $vcLink }}" target="_blank" rel="noopener noreferrer" data-direct-share
-           class="{{ $contactButton }} bg-[#142235] px-4 text-white hover:bg-[#20334a]">
-            <x-icon name="screen" :size="18" /> Join VC hearing
-        </a>
-        <button type="button" data-copy="{{ $vcLink }}" class="{{ $contactButton }} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Copy VC link</button>
-    @else
-        <a href="{{ route('cases.edit', $case) }}" class="{{ $contactButton }} border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50">
-            <x-icon name="plus" :size="16" /> {{ $case->court_room ? 'Add VC link' : 'Add court room & VC link' }}
-        </a>
-    @endif
 </div>
 
 @if($linkedClients->isNotEmpty())
@@ -100,3 +65,5 @@
         <x-icon name="people" :size="16" /> Link a client to call or WhatsApp them from here
     </a>
 @endif
+
+</details>

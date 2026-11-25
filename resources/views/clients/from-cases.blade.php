@@ -28,7 +28,7 @@
             <ul class="space-y-2.5">
                 @foreach($suggestions as $suggestion)
                     @php $case = $suggestion['case']; @endphp
-                    <li class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <li class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="flex flex-wrap items-center gap-1.5">
                             <a href="{{ route('cases.show', $case) }}" class="font-semibold text-slate-900 hover:text-[#16776e]">{{ $case->case_title }}</a>
                             <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" :edit-url="route('cases.edit', $case)" />

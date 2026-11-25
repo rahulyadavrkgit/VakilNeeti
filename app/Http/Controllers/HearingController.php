@@ -85,6 +85,9 @@ class HearingController extends Controller
             'hearing_time' => ['nullable', 'date_format:H:i'],
             'hearing_stage' => ['nullable', 'string', 'max:255'],
             'court_room' => ['nullable', 'string', 'max:100'],
+            // The case's item number and how many cases the court's list has that day ("12" of 45).
+            'item_number' => ['nullable', 'string', 'max:20', 'regex:/^\d{1,4}([.\/-]\d{1,3})?$/'],
+            'list_total' => ['nullable', 'integer', 'min:1', 'max:5000'],
             'vc_link' => ['nullable', 'url:http,https', 'max:500'],
             'judge_name' => ['nullable', 'string', 'max:255'],
             'proceedings' => ['nullable', 'string', 'max:5000'],

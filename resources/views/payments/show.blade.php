@@ -48,7 +48,7 @@
                     Received From
                 </p>
 
-                <h3 class="text-lg font-bold">
+                <h3 class="text-lg font-semibold text-slate-900">
                     {{ $payment->client->display_name ?: trim($payment->client->first_name.' '.$payment->client->last_name) }}
                 </h3>
 
@@ -113,7 +113,7 @@
 
         @if($payment->notes)
             <div class="mt-8 border-t pt-6">
-                <h3 class="font-bold">Notes</h3>
+                <h3 class="text-base font-semibold text-slate-900">Notes</h3>
                 <p class="mt-2 whitespace-pre-line text-slate-600">
                     {{ $payment->notes }}
                 </p>

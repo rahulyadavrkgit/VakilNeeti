@@ -43,6 +43,13 @@ Schedule::command('app:refresh-after-deploy')->everyMinute()->withoutOverlapping
 // Delhi High Court cause lists: the next day's lists come out in the evening, supplementary lists in the morning.
 Schedule::command('courts:delhi-hc-cause-list')->cron('15 7,9,20,22 * * *')->withoutOverlapping(60);
 
+// Supreme Court: the next day's lists in the evening, supplementary lists in the morning.
+Schedule::command('courts:cause-lists supreme-court')->cron('35 7,9,20,22 * * *')->withoutOverlapping(60);
+
+// Allahabad High Court (one PDF per court, about a hundred courts): tomorrow's lists in the evening, today's again early.
+Schedule::command('courts:cause-lists allahabad-high-court --when=tomorrow')->dailyAt('21:05')->withoutOverlapping(90);
+Schedule::command('courts:cause-lists allahabad-high-court --when=today')->dailyAt('07:50')->withoutOverlapping(90);
+
 // Every morning: a note in the bell if the site logged errors yesterday.
 Schedule::command('app:error-alerts')->dailyAt('09:00');
 

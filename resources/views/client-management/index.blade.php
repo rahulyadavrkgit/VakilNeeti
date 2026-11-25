@@ -47,7 +47,7 @@
     <div class="rounded-xl border border-slate-200 bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
             <div>
-                <h2 class="font-semibold text-slate-800">Client Directory</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Client Directory</h2>
                 <p class="mt-1 text-sm text-slate-500">Open a client profile to access related records.</p>
             </div>
 

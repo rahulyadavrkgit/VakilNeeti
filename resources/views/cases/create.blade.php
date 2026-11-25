@@ -20,7 +20,7 @@
         </a>
     </div>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Select Court and Search Criteria</h2>
 
         <form method="GET" action="{{ route('cases.create') }}" class="space-y-5">
@@ -167,7 +167,7 @@
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
         <div class="rounded-xl border border-slate-200 bg-white p-5">
-            <h2 class="font-semibold text-slate-900">District Court Cause Lists</h2>
+            <h2 class="text-lg font-semibold text-slate-900">District Court Cause Lists</h2>
             <p class="mt-2 text-sm text-slate-600">
                 Check date-wise court listings, daily cause lists and establishment information.
             </p>
@@ -179,7 +179,7 @@
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-5">
-            <h2 class="font-semibold text-slate-900">High Court Cause Lists</h2>
+            <h2 class="text-lg font-semibold text-slate-900">High Court Cause Lists</h2>
             <p class="mt-2 text-sm text-slate-600">
                 Access High Court services and check the relevant court's official listing facilities.
             </p>
@@ -193,7 +193,7 @@
     </section>
 
     <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="font-semibold text-slate-900">My Case Diary</h2>
+        <h2 class="text-lg font-semibold text-slate-900">My Case Diary</h2>
         <p class="mt-2 text-sm text-slate-600">
             View cases already saved in VakilNiti, their hearing information and case status.
         </p>

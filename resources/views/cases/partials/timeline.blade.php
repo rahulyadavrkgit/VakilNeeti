@@ -18,8 +18,12 @@
         }
     }
 
-    foreach ($case->causeListAppearances as $listing) {
-        if ($listing->courtDocument?->listing_date) {
+    $listingOn = $case->causeListAppearances->filter(fn ($listing) => $listing->courtDocument?->listing_date)
+        ->sortBy(fn ($listing) => [$listing->listPriority(), $listing->id])
+        ->keyBy(fn ($listing) => $listing->courtDocument->listing_date->toDateString());
+    $savedDays = $entries->pluck('date')->map(fn ($date) => $date->toDateString());
+    foreach ($listingOn as $day => $listing) {
+        if (!$savedDays->contains($day)) {
             $entries->push(['date' => $listing->courtDocument->listing_date, 'kind' => 'listed', 'listing' => $listing]);
         }
     }
@@ -29,10 +33,11 @@
     }
 
     $days = $entries
+        ->unique(fn (array $entry): string => $entry['kind'] === 'next' ? 'next:'.$entry['date']->toDateString()
+            : $entry['kind'].':'.(data_get($entry, 'hearing.id') ?? data_get($entry, 'listing.id') ?? data_get($entry, 'document.id')))
         ->groupBy(fn (array $entry) => $entry['date']->toDateString())
         ->sortKeysDesc();
     // The item number and bench from the cause list, for the hearing on the same day.
-    $listingOn = $case->causeListAppearances->keyBy(fn ($listing) => $listing->courtDocument?->listing_date?->toDateString());
     $card = 'rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm';
 @endphp
 
@@ -70,7 +75,7 @@
                 <li class="relative">
                     <span aria-hidden="true" class="absolute -left-[27px] top-1.5 h-3 w-3 rounded-full border-2 border-white {{ $date->isToday() ? 'bg-red-600' : ($isFuture ? 'bg-[#16776e]' : 'bg-[#142235]') }}"></span>
                     <p class="inline-flex rounded-full px-3 py-1 text-sm font-bold {{ $date->isToday() ? 'bg-red-600 text-white' : 'bg-[#142235] text-white' }}">
-                        {{ $date->isToday() ? 'Today · ' : '' }}{{ $date->format("d M 'y") }}
+                        {{ $date->isToday() ? 'Today · ' : '' }}{{ $date->format('l, d F Y') }}
                     </p>
 
                     <div class="mt-2 space-y-2">
@@ -98,17 +103,19 @@
                                             @endif
                                         </span>
                                     </div>
-                                    @if($room || $listing?->item_number || $hearing->hearing_time)
+                                    @if($room || $listing?->item_number || (! $isNext && $hearing->item_number) || $hearing->hearing_time)
                                         <p class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-800">
                                             @if($room)<span>Court room: {{ $room }}</span>@endif
-                                            @if($listing?->item_number)<span>Item No: {{ $listing->item_number }}</span>@endif
+                                            @if($listing?->item_number)<span>Item No: {{ $listing->item_number }}</span>
+                                            @elseif(! $isNext && $hearing->item_number)<span>Item No: {{ $hearing->item_number }}@if($hearing->list_total) of {{ $hearing->list_total }}@endif</span>@endif
+                                            @if($listing?->boardFacts())<span class="font-normal text-slate-600">{{ implode(' · ', $listing->boardFacts()) }}</span>@endif
                                             @if(! $isNext && $hearing->hearing_time)<span>{{ \Illuminate\Support\Carbon::parse($hearing->hearing_time)->format('g:i a') }}</span>@endif
                                         </p>
                                     @endif
                                     @if($judges)
                                         <p class="mt-1 text-sm text-slate-600">Judge(s): {{ $judges }}</p>
                                     @endif
-                                    @if(! $isNext && $hearing->vc_link)
+                                    @if(! $isNext && $hearing->vc_link && (! $panelNext || !$date->isSameDay($panelNext['date'])))
                                         <a href="{{ $hearing->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="mt-1.5 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Join VC for this hearing</a>
                                     @endif
                                     @if(! $isNext && $hearing->proceedings)
@@ -128,6 +135,7 @@
                                 <article class="{{ $card }} border-teal-200 bg-teal-50/50">
                                     <p class="font-semibold text-[#16776e]">Listed in the cause list</p>
                                     <p class="mt-1 text-sm font-semibold text-slate-800">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</p>
+                                    @if($listing->boardFacts())<p class="text-sm text-slate-600">{{ implode(' · ', $listing->boardFacts()) }}</p>@endif
                                     @if($listing->judge_name)
                                         <p class="mt-0.5 text-sm text-slate-600">{{ \Illuminate\Support\Str::title(mb_strtolower($listing->judge_name)) }}</p>
                                     @endif

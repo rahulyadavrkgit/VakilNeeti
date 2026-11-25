@@ -31,9 +31,9 @@
         </div>
     @endif
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-lg font-bold text-slate-900">Invoice</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Invoice</h2>
             <span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">{{ $isEditing ? $invoice->invoice_number : 'No. '.$nextNumber }}</span>
         </div>
         <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,8 +84,8 @@
         </div>
     </section>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Client tax details</h2>
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <h2 class="text-lg font-semibold text-slate-900">Client tax details</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-3">
             <label class="text-sm font-medium text-slate-700">
                 Client PAN
@@ -108,9 +108,9 @@
         </div>
     </section>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-lg font-bold text-slate-900">Line items</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Line items</h2>
             <button type="button" data-invoice-add-row class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Add line</button>
         </div>
 
@@ -165,7 +165,7 @@
     </section>
 
     <section class="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <label class="block text-sm font-medium text-slate-700">
                 Payment terms &amp; notes
                 <textarea name="notes" rows="3" maxlength="2000" class="{{ $field }}">{{ old('notes', $invoice->notes) }}</textarea>

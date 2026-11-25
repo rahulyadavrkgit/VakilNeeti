@@ -33,6 +33,8 @@
                 {{ $board['short'] }} · Live board
             </h1>
             <p class="text-xs text-slate-500">
+                <time datetime="{{ today()->toDateString() }}">{{ today()->format('l, d F Y') }}</time>
+                <span aria-hidden="true">&middot;</span>
                 <span data-live-updated>{{ $updated ? 'Updated '.$updated->format('H:i:s') : 'Waiting for the court' }}</span>
                 <span data-live-stale @if($board['ok']) hidden @endif class="ml-1 font-semibold text-amber-700">· Court site not answering, showing the last known board</span>
             </p>

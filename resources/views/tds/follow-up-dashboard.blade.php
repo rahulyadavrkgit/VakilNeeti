@@ -76,7 +76,7 @@
     <div class="rounded-xl border bg-white">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b p-5">
             <div>
-                <h2 class="font-semibold text-slate-800">Next Scheduled Follow-ups</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Next Scheduled Follow-ups</h2>
                 <p class="mt-1 text-xs text-slate-500">Showing up to 10 pending entries.</p>
             </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CaseDocument;
 use App\Models\CaseTag;
 use App\Models\CauseListAppearance;
 use App\Models\Client;
@@ -46,7 +47,7 @@ class LegalCaseController extends Controller
             ->with([
                 'parties',
                 'tags',
-                'causeListAppearances.courtDocument:id,listing_date',
+                'causeListAppearances.courtDocument:id,provider_key,listing_date,document_label,source_url,fetched_at',
                 'hearings' => fn ($hearingQuery) => $hearingQuery->orderBy('next_hearing_date')->orderBy('hearing_time'),
             ])
             ->withCount('hearings')
@@ -61,6 +62,7 @@ class LegalCaseController extends Controller
 
         return view('cases.index', [
             'cases' => $cases,
+            'orders' => CaseDocument::latestOrdersForCases($cases->pluck('id')),
             'hearingCounts' => $hearingCounts,
             'hearingChips' => self::HEARING_CHIPS,
             'shareText' => $cases->total() > 0 ? $this->shareText($request) : null,
@@ -193,6 +195,7 @@ class LegalCaseController extends Controller
 
         return view('cases.show', [
             'case' => $case,
+            'latestOrder' => CaseDocument::latestOrdersForCases([$case->id])->get($case->id),
             'tags' => CaseTag::query()->orderBy('name')->get(),
             'clients' => Client::query()->where('status', 'active')->orderBy('display_name')->orderBy('first_name')->get(['id', 'display_name', 'first_name', 'last_name']),
             'currentFolder' => $currentFolder,

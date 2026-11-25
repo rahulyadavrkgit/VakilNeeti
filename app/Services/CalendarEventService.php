@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\CaseAppointment;
+use App\Models\CaseDocument;
+use App\Models\CauseListAppearance;
 use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\Task;
@@ -53,7 +55,10 @@ class CalendarEventService
             $events = $events->merge($this->tasks($from, $to, $filters));
         }
 
+        $orders = CaseDocument::latestOrdersForCases($events->where('group', 'hearing')->pluck('case_id')->filter()->unique());
+
         return $events
+            ->map(fn (array $event): array => $event + ['order' => $event['group'] === 'hearing' ? $orders->get($event['case_id']) : null])
             ->sortBy(fn (array $event): string => $event['date'].' '.($event['time'] ?? '00:00').' '.$event['title'])
             ->values();
     }
@@ -118,6 +123,8 @@ class CalendarEventService
                 'appearing_for' => $case?->appearing_for,
                 'appearing_for_parties' => $case?->appearing_for_parties,
                 'court_room' => $hearing->court_room ?: $case?->court_room,
+                'item_number' => $hearing->item_number,
+                'list_total' => $hearing->list_total,
                 'judge_name' => $hearing->judge_name ?: $case?->judge_name,
                 'vc_link' => $hearing->vc_link ?: $case?->vc_link,
                 'client_name' => null,
@@ -140,7 +147,8 @@ class CalendarEventService
             }
 
             if ($nextDate && $nextDate !== $hearingDate && $hearing->next_hearing_date->between($from, $to)) {
-                $events->push($base + [
+                // The item and list size noted with a hearing belong to that hearing's own date.
+                $events->push(['item_number' => null, 'list_total' => null] + $base + [
                     'type' => 'next_hearing',
                     'label' => 'Next hearing',
                     'date' => $nextDate,
@@ -151,7 +159,101 @@ class CalendarEventService
             }
         }
 
+        return $this->withCauseLists($events, $from, $to, $filters);
+    }
+
+    /**
+     * Each hearing with where its case is printed in a court's cause list that day (court, item, the
+     * board facts for that court, list name, bench), when one of the cause-list checks found it. A case
+     * found in a cause list on a day without a saved hearing is added as its own entry ("Listed").
+     *
+     * @param  Collection<int, array<string, mixed>>  $events
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function withCauseLists(Collection $events, Carbon $from, Carbon $to, array $filters): Collection
+    {
+        // The workspace's cases (same court, case type and search filters as the rest of the calendar).
+        $cases = LegalCase::query();
+        $this->applyCaseFilters($cases, $filters);
+
+        $listings = CauseListAppearance::query()
+            ->with('courtDocument:id,provider_key,listing_date,document_label,source_url,fetched_at')
+            ->whereIn('legal_case_id', $events->pluck('case_id')->filter()->unique()->values()->merge((clone $cases)->select('id')->pluck('id'))->unique()->values())
+            ->whereHas('courtDocument', fn ($documents) => $documents
+                ->whereDate('listing_date', '>=', $from->toDateString())
+                ->whereDate('listing_date', '<=', $to->toDateString()))
+            ->get()
+            // The latest list read for a day wins (a supplementary list after the main one).
+            ->sortBy(fn (CauseListAppearance $listing): array => [$listing->listPriority(), $listing->id])
+            ->keyBy(fn (CauseListAppearance $listing): string => $listing->legal_case_id.'|'.$listing->courtDocument->listing_date->toDateString());
+
+        $events = $events->sortBy(fn (array $event): array => [
+            $event['type'] === 'hearing' ? 0 : 1, $event['time'] ?? '99:99', $event['item_number'] ? 0 : 1, -$event['id'],
+        ])->unique(fn (array $event): string => ($event['case_id'] ?? 'hearing-'.$event['id']).'|'.$event['date'])->values();
+        $events = $events->map(fn (array $event): array => $event + ['cause_list' => ($listings[$event['case_id'].'|'.$event['date']] ?? null)?->stripData()]);
+        $covered = $events->map(fn (array $event): string => $event['case_id'].'|'.$event['date'])->flip();
+        $listedOnly = $listings->reject(fn (CauseListAppearance $listing, string $key): bool => $covered->has($key));
+
+        if ($listedOnly->isEmpty()) {
+            return $events;
+        }
+
+        $listedCases = (clone $cases)->whereIn('id', $listedOnly->pluck('legal_case_id')->unique())->get()->keyBy('id');
+
+        foreach ($listedOnly as $listing) {
+            $case = $listedCases[$listing->legal_case_id] ?? null;
+
+            if (! $case) {
+                continue;
+            }
+
+            $date = $listing->courtDocument->listing_date;
+            $events->push([
+                'group' => 'hearing', 'type' => 'listed', 'label' => 'Listed in the cause list',
+                'title' => $case->case_title ?: 'Court hearing', 'case_id' => $case->id,
+                'date_source' => 'From the cause list', 'source_updated_at' => $listing->courtDocument->fetched_at,
+                'case_title' => $case->case_title, 'case_number' => $case->case_number,
+                'court' => $case->court_name, 'court_complex' => $case->court_complex,
+                'court_level' => $case->court_level, 'state_code' => $case->state_code, 'district' => $case->district,
+                'appearing_for' => $case->appearing_for, 'appearing_for_parties' => $case->appearing_for_parties,
+                'court_room' => $case->court_room, 'item_number' => null, 'list_total' => null,
+                'judge_name' => $case->judge_name, 'vc_link' => $listing->vcLink() ?: $case->vc_link, 'client_name' => null,
+                'url' => route('cases.show', $case), 'id' => 'listed-'.$listing->id,
+                'date' => $date->toDateString(), 'time' => null, 'details' => null, 'is_done' => $date->lt(today()),
+                'cause_list' => $listing->stripData(),
+            ]);
+        }
+
         return $events;
+    }
+
+    /**
+     * The calendar's owner, court, case type and search filters, on a cases query.
+     *
+     * @param  Builder<LegalCase>  $cases
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyCaseFilters(Builder $cases, array $filters): void
+    {
+        if (! empty($filters['user_id'])) {
+            $cases->withoutGlobalScope('user_ownership')->where('user_id', $filters['user_id']);
+        }
+
+        foreach (['court' => 'court_name', 'case_type' => 'case_type'] as $filter => $column) {
+            if (! empty($filters[$filter])) {
+                $cases->where($column, $filters[$filter]);
+            }
+        }
+
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        if ($search !== '') {
+            $cases->where(fn (Builder $case) => $case->where('case_title', 'like', "%{$search}%")
+                ->orWhere('case_number', 'like', "%{$search}%")
+                ->orWhere('cnr_number', 'like', "%{$search}%")
+                ->orWhere('court_name', 'like', "%{$search}%"));
+        }
     }
 
     /**

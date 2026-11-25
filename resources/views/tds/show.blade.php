@@ -28,7 +28,7 @@
     @endif
 
     <section class="rounded-xl border bg-white p-6">
-        <h2 class="mb-4 font-semibold text-slate-800">Deduction Information</h2>
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Deduction Information</h2>
 
         <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -86,7 +86,7 @@
     </section>
 
     <section class="rounded-xl border bg-white p-6">
-        <h2 class="font-semibold text-slate-800">Form 26AS / AIS Credit Reconciliation</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Form 26AS / AIS Credit Reconciliation</h2>
         <p class="mt-1 text-sm text-slate-500">Record the result after checking your tax statement.</p>
 
         <div class="mt-4 rounded-lg bg-slate-50 p-4">
@@ -156,7 +156,7 @@
 </div>
 
 <section class="rounded-xl border bg-white p-6 mt-6">
-    <h2 class="font-semibold text-slate-800">TDS Follow-up History</h2>
+    <h2 class="text-lg font-semibold text-slate-900">TDS Follow-up History</h2>
     <p class="mt-1 text-sm text-slate-500">
         Record communication with the deductor about the TDS certificate or missing tax credit.
     </p>

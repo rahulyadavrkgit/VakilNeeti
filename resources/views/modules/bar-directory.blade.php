@@ -74,7 +74,7 @@
 
     <!-- Section 1: Bar Councils (Statutory) -->
     <div class="mt-8">
-        <h2 class="text-xl font-bold text-gray-900">Statutory Bar Councils</h2>
+        <h2 class="text-xl font-bold text-slate-900">Statutory Bar Councils</h2>
         <p class="mt-1 text-sm text-gray-600">Regulators under the Advocates Act, 1961 (enrolment and discipline).</p>
 
         @if(isset($barCouncils) && $barCouncils->count() > 0)
@@ -82,7 +82,7 @@
                 @foreach($barCouncils as $council)
                     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
                         <div class="flex items-start justify-between">
-                            <h3 class="text-base font-bold text-gray-900">{{ $council->council_name }}</h3>
+                            <h3 class="text-base font-semibold text-slate-900">{{ $council->council_name }}</h3>
                             <span class="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
                                 {{ ucfirst($council->jurisdiction_type) }}
                             </span>
@@ -128,7 +128,7 @@
 
     <!-- Section 2: Bar Associations (Court-Affiliated) -->
     <div class="mt-10">
-        <h2 class="text-xl font-bold text-gray-900">Court-Affiliated Bar Associations</h2>
+        <h2 class="text-xl font-bold text-slate-900">Court-Affiliated Bar Associations</h2>
         <p class="mt-1 text-sm text-gray-600">Voluntary associations of advocates at each court.</p>
 
         @if(isset($barAssociations) && $barAssociations->count() > 0)
@@ -136,7 +136,7 @@
                 @foreach($barAssociations as $assoc)
                     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
                         <div class="flex items-start justify-between">
-                            <h3 class="text-base font-bold text-gray-900">{{ $assoc->association_name }}</h3>
+                            <h3 class="text-base font-semibold text-slate-900">{{ $assoc->association_name }}</h3>
                             <span class="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800">
                                 {{ $assoc->court_type }}
                             </span>

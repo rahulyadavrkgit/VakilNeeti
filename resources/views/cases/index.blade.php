@@ -226,9 +226,22 @@
                             ])->filter()->implode(' · ') ?: 'No case number yet' }}
                         </p>
 
-                        <x-court-info class="mt-2" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
-                                      :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link"
+                        @php
+                            $rowListing = $upcomingDate ? $case->causeListAppearances->first(fn ($listing) => $listing->courtDocument?->listing_date?->isSameDay($tileDate)) : null;
+                            $rowCauseList = $rowListing?->stripData();
+                            $ownDate = $upcomingDate && $nextHearing?->hearing_date?->isSameDay($tileDate);
+                        @endphp
+                        <x-court-info class="mt-2" :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
+                                      :room="$rowListing?->court_room ?: ($nextHearing?->court_room ?: $case->court_room)" :judge="$rowCauseList['judges'] ?? ($nextHearing?->judge_name ?: $case->judge_name)" :vc-link="$rowListing?->vcLink() ?: ($nextHearing?->vc_link ?: $case->vc_link)"
                                       :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $upcomingDate ? $tileDate->toDateString() : null, 'time' => $upcomingDate['time'] ?? null, 'details' => $nextHearing?->hearing_stage]" />
+                        @if($upcomingDate)
+                            <x-hearing-strip :show-room="false" :date="$tileDate->toDateString()" :court="$case->court_name" :room="$nextHearing?->court_room ?: $case->court_room"
+                                             :item="$ownDate ? $nextHearing->item_number : null" :list-total="$ownDate ? $nextHearing->list_total : null"
+                                             :cause-list="$rowCauseList" :case-number="$case->case_number"
+                                             :district="$case->court_level === 'district'"
+                                             :order-url="isset($orders[$case->id]) ? route('cases.documents.download', [$case, $orders[$case->id], 'preview' => 1]) : null"
+                                             :order-date="($orders[$case->id] ?? null)?->created_at?->format('d M Y')" />
+                        @endif
 
                         <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
                             @foreach($case->tags as $caseTag)

@@ -55,7 +55,7 @@
             <span class="text-slate-700">{{ \Illuminate\Support\Str::limit($case->case_title ?: 'Untitled case', 60) }}</span>
         </nav>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
@@ -144,7 +144,6 @@
             </div>
         </div>
 
-        @include('cases.partials.date-sources')
 
         @if(session('success'))
             <div role="status" class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
@@ -161,6 +160,11 @@
             ])->filter());
             $panelNext = $panelDates->filter(fn ($entry) => $entry['date']->toDateString() >= $todayDate)
                 ->sortBy(fn ($entry) => $entry['date']->toDateString().' '.($entry['time'] ?? '99'))->first();
+            $firstListing = $causeListings->first();
+            if ($firstListing && (!$panelNext || $firstListing->courtDocument->listing_date->lt($panelNext['date']))) {
+                $panelNext = ['date' => $firstListing->courtDocument->listing_date, 'time' => null, 'hearing' => null];
+            }
+            $panelListing = $panelNext ? $causeListings->first(fn ($listing) => $listing->courtDocument->listing_date->isSameDay($panelNext['date'])) : null;
             $panelLast = $panelNext ? null : $panelDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
             $nextHearing = $panelNext['hearing'] ?? null;
             $panelTime = $panelNext && $panelNext['time'] ? substr((string) $panelNext['time'], 0, 5) : null;
@@ -194,34 +198,30 @@
                         <p class="font-semibold text-slate-800">No hearing date yet. Add the first date below.</p>
                     @endif
                     <div class="flex flex-wrap items-center gap-2">
-                        <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" :edit-url="route('cases.edit', $case)" />
+
                         @if($nextHearing?->hearing_stage)
                             <span class="text-sm text-slate-600">Purpose: {{ $nextHearing->hearing_stage }}</span>
                         @endif
                     </div>
-                    <x-court-info :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
-                                  :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link"
+                    <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
+                                  :room="$panelListing?->court_room ?: ($nextHearing?->court_room ?: $courtRoom)" :judge="$panelListing?->judge_name ?: ($nextHearing?->judge_name ?: ($case->judge_name ?: $listJudge))" :vc-link="$panelListing?->vcLink() ?: ($nextHearing?->vc_link ?: $vcLink)"
                                   :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $panelNext ? $panelNext['date']->toDateString() : null, 'time' => $panelTime, 'details' => $nextHearing?->hearing_stage]" />
-                    @if(($causeListings ?? collect())->isNotEmpty())
-                        <div id="cause-list" class="scroll-mt-24 space-y-1.5 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2 text-sm">
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">In the Delhi HC cause list</p>
-                            @foreach($causeListings as $listing)
-                                @php $listedOn = $listing->courtDocument->listing_date; @endphp
-                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $listedOn->isToday() ? 'bg-red-600 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">{{ $listedOn->isToday() ? 'Today' : ($listedOn->isTomorrow() ? 'Tomorrow' : $listedOn->format('D, d M')) }}</span>
-                                    <span class="font-semibold tabular-nums text-slate-900">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</span>
-                                    @if($listing->judge_name)
-                                        <span class="min-w-0 truncate text-slate-600">{{ \Illuminate\Support\Str::title(mb_strtolower($listing->judge_name)) }}</span>
-                                    @endif
-                                    <span class="ml-auto flex shrink-0 items-center gap-2">
-                                        @if($listing->vcLink())
-                                            <a href="{{ $listing->vcLink() }}" target="_blank" rel="noopener" class="inline-flex min-h-8 items-center gap-1 rounded-full bg-[#16776e] px-3 text-xs font-bold text-white hover:bg-[#12635c]"><x-icon name="video" :size="14" /> Join VC</a>
-                                        @endif
-                                        <a href="{{ $listing->courtDocument->source_url }}" target="_blank" rel="noopener" class="text-xs font-semibold text-[#16776e] hover:underline" title="{{ $listing->courtDocument->document_label }}">List PDF</a>
-                                    </span>
-                                </div>
-                            @endforeach
+                    @if($panelNext)
+                        <div @if($panelListing) id="cause-list" @endif class="scroll-mt-24">
+                            <x-hearing-strip :date="$panelNext['date']" :show-date="false" :show-room="false" :court="$case->court_name" :room="$nextHearing?->court_room ?: $courtRoom"
+                                :item="$nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing->item_number : null"
+                                :list-total="$nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing->list_total : null"
+                                :cause-list="$panelListing?->stripData()" :district="$case->court_level === 'district'"
+                                :case-number="$case->case_number"
+                                :order-url="$latestOrder ? route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) : null"
+                                :order-date="$latestOrder?->created_at?->format('d M Y')" />
                         </div>
+                    @elseif($latestOrder)
+                        <a class="inline-flex min-h-11 items-center text-sm font-semibold underline" href="{{ route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) }}">Latest saved order · {{ $latestOrder->created_at?->format('d M Y') }}</a>
+                    @endif
+                    @include('cases.partials.date-sources')
+                    @if($case->court_level === 'district' && $case->cnr_number && !auth()->user()->isClerk())
+                        @include('cases.partials.district-list')
                     @endif
                     <div class="flex flex-wrap items-start gap-2 pt-1">
                         <x-quick-next-date :case-id="$case->id" return="case" :open="! $panelNext" :label="$panelNext ? 'Add another date' : 'Add next date'" />
@@ -285,7 +285,7 @@
         <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
 
         <!-- Case Information -->
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h3 class="text-lg font-semibold text-slate-900">Case Information</h3>
 
             <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -405,7 +405,7 @@
         </section>
 
         <!-- Parties -->
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h3 class="text-lg font-semibold text-slate-900">Parties</h3>
 
             <div class="mt-4 overflow-x-auto">
@@ -444,7 +444,7 @@
         </section>
 
         <!-- Orders and Documents -->
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h3 class="text-lg font-semibold text-slate-900">Official Orders and Court Documents</h3>
 
             <p class="mt-2 text-sm text-slate-500">Orders and judgments appear here once added to this case.</p>

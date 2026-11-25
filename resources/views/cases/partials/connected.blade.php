@@ -1,4 +1,4 @@
-<section id="case-connected" data-tab-panel role="tabpanel" aria-labelledby="tab-case-connected" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+<section id="case-connected" data-tab-panel role="tabpanel" aria-labelledby="tab-case-connected" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
     <h3 class="text-lg font-semibold">Connected matters</h3>
     @if($journey['connected'])
         <ul class="mt-1.5 divide-y divide-slate-100">

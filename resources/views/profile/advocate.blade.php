@@ -45,7 +45,7 @@
         @endif
 
         <x-panel class="p-5 sm:p-6">
-            <h2 class="text-lg font-bold text-slate-900">Basic information</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Basic information</h2>
             <div class="mt-5 grid gap-4 sm:grid-cols-2">
                 <label class="text-sm font-medium text-slate-700">
                     Full name <span class="text-red-600">*</span>
@@ -97,7 +97,7 @@
         </x-panel>
 
         <x-panel class="p-5 sm:p-6">
-            <h2 class="text-lg font-bold text-slate-900">Professional information</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Professional information</h2>
             <div class="mt-5 grid gap-4 sm:grid-cols-2">
                 <label class="text-sm font-medium text-slate-700">
                     Years of experience <span class="text-red-600">*</span>
@@ -153,7 +153,7 @@
         </x-panel>
 
         <x-panel id="bar-registration" class="scroll-mt-6 p-5 sm:p-6">
-            <h2 class="text-lg font-bold text-slate-900">Bar Council enrolment</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Bar Council enrolment</h2>
             @if($profile->bar_council_registration_number && ! $profile->bar_number)
                 <p class="mt-1 text-sm text-slate-500">Saved as: <span class="font-semibold text-slate-700">{{ $profile->bar_council_registration_number }}</span>. Enter it in the three parts below.</p>
             @endif
@@ -163,7 +163,7 @@
         </x-panel>
 
         <x-panel class="p-5 sm:p-6">
-            <h2 class="text-lg font-bold text-slate-900">Practice location</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Practice location</h2>
             <div class="mt-5 grid gap-4 sm:grid-cols-2" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
                 <div class="text-sm font-medium text-slate-700">
                     <label for="advocate-region">State / Union Territory <span class="text-red-600">*</span></label>

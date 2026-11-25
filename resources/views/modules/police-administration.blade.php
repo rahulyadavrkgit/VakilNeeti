@@ -156,7 +156,7 @@
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     @foreach($departmentOffices as $office)
                         <div class="rounded-lg border border-indigo-200 bg-white p-4 shadow-sm">
-                            <h3 class="text-base font-bold text-gray-900">{{ $office->office_name }}</h3>
+                            <h3 class="text-base font-semibold text-slate-900">{{ $office->office_name }}</h3>
                             <p class="mt-1 text-xs font-medium text-indigo-700">{{ $office->office_type }}</p>
                             @if($office->official_url)
                                 <div class="mt-3 text-sm">
@@ -176,7 +176,7 @@
         @endif
 
         <div class="mt-8">
-            <h2 class="text-xl font-bold text-gray-900">
+            <h2 class="text-xl font-bold text-slate-900">
                 Police Stations & Units in {{ $selectedState->name }}
             </h2>
 
@@ -185,7 +185,7 @@
                     @foreach($stations as $station)
                         <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
                             <div class="flex items-start justify-between">
-                                <h3 class="text-base font-bold text-gray-900">
+                                <h3 class="text-base font-semibold text-slate-900">
                                     {{ $station->station_name }}
                                 </h3>
                                 @if($station->is_specialist_unit)

@@ -89,7 +89,7 @@
         <div class="grid grid-cols-2 gap-8 border-b py-8">
             <div>
                 <p class="mb-2 text-sm font-semibold uppercase text-slate-500">Bill To</p>
-                <h3 class="text-lg font-bold">
+                <h3 class="text-lg font-semibold text-slate-900">
                     {{ $invoice->client->display_name ?: trim($invoice->client->first_name.' '.$invoice->client->last_name) }}
                 </h3>
                 <p>{{ $invoice->client->address }}</p>
@@ -157,7 +157,7 @@
                     <p class="mt-4 whitespace-pre-line text-sm text-slate-600">{{ $invoice->description }}</p>
                 @endif
             @else
-                <h3 class="mb-4 text-lg font-bold">Description of Services</h3>
+                <h3 class="mb-4 text-lg font-semibold text-slate-900">Description of Services</h3>
                 <p class="whitespace-pre-line text-slate-700">
                     {{ $invoice->description ?: 'Professional legal services' }}
                 </p>
@@ -208,7 +208,7 @@
         </div>
 
         <div class="mt-10 border-t pt-6">
-            <h3 class="mb-4 text-lg font-bold">Payment History</h3>
+            <h3 class="mb-4 text-lg font-semibold text-slate-900">Payment History</h3>
 
             @forelse($invoice->payments as $payment)
                 <div class="flex justify-between border-b py-3">
@@ -228,7 +228,7 @@
 
         @if($invoice->notes)
             <div class="mt-8 border-t pt-6">
-                <h3 class="font-bold">Notes</h3>
+                <h3 class="text-base font-semibold text-slate-900">Notes</h3>
                 <p class="mt-2 whitespace-pre-line text-slate-600">{{ $invoice->notes }}</p>
             </div>
         @endif

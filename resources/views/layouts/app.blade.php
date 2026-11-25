@@ -242,7 +242,11 @@
             </a>
         </div>
 
-        @include('layouts.partials.sidebar-nav')
+        {{-- Computers: the top menu with second menus. Phones: the grouped menu in the Menu sheet. --}}
+        @include('layouts.partials.top-nav')
+        <div class="flex min-h-0 flex-1 flex-col md:hidden">
+            @include('layouts.partials.sidebar-nav')
+        </div>
 
     </aside>
 
@@ -573,13 +577,26 @@
                 </div>
             @else
                 {{-- Log in with email (code by email) or with the mobile number on the account (code by SMS). --}}
-                <div class="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist" aria-label="Log in with">
+                <div class="mb-4 grid grid-cols-3 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist" aria-label="Log in with">
                     <button type="button" role="tab" data-login-via="email" aria-selected="{{ $loginVia === 'email' ? 'true' : 'false' }}"
                             class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Email</button>
+                    <button type="button" role="tab" data-login-via="code" aria-selected="{{ $loginVia === 'code' ? 'true' : 'false' }}"
+                            class="min-h-11 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e]">Email code</button>
                     <button type="button" role="tab" data-login-via="mobile" aria-selected="{{ $loginVia === 'mobile' ? 'true' : 'false' }}"
                             class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Mobile number</button>
                 </div>
-                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4" data-login-form="email" @if($loginVia !== 'email') hidden @endif>
+                <form method="POST" action="{{ route('login.password') }}" class="space-y-4" data-login-form="email" @if($loginVia !== 'email') hidden @endif>
+                    @csrf
+                    <label class="block text-sm font-medium">Email
+                        <input name="email" type="email" autocomplete="username" value="{{ old('email') }}" required class="mt-1 w-full rounded-lg border border-slate-300 p-3">
+                    </label>
+                    <label class="block text-sm font-medium">Password
+                        <input name="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-lg border border-slate-300 p-3">
+                    </label>
+                    <button class="min-h-11 w-full rounded-lg bg-teal-700 font-semibold text-white">Sign in with password</button>
+                    <p class="text-xs text-slate-600">Use Email code if you need to set or reset your password.</p>
+                </form>
+                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4" data-login-form="code" @if($loginVia !== 'code') hidden @endif>
                     @csrf
                     <div>
                         <label for="vn-login-email" class="mb-1 block text-sm font-medium text-slate-700">Email</label>

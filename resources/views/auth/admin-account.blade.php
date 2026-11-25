@@ -32,7 +32,7 @@
 
         @unless(auth()->id() === $account->id)
             <x-panel>
-                <h2 class="font-bold">Account access</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Account access</h2>
                 <p class="mt-1 text-sm text-slate-600">{{ $account->suspended_at ? 'Suspended' : 'Active' }}</p>
                 @if(session('success'))<p role="status" class="my-2 text-sm text-teal-700">{{ session('success') }}</p>@endif
                 <form method="POST" action="{{ route('admin.accounts.access', $account) }}" class="mt-3 grid gap-3 sm:grid-cols-2">
@@ -67,7 +67,7 @@
         @endunless
 
         <x-panel>
-            <h2 class="font-bold">Workspace review</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Workspace review</h2>
             <nav aria-label="Case diagnostics filters" class="mt-2 flex flex-wrap gap-2">
                 @foreach(['' => ['All cases', 'cases'], 'court' => ['Missing court details', 'court'], 'date' => ['Open cases without an upcoming date', 'date']] as $key => [$label, $count])
                     <a href="{{ route('admin.accounts.show', ['account' => $account, 'review' => $key ?: null, 'search' => $search ?: null]) }}"

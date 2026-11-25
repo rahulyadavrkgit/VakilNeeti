@@ -21,7 +21,7 @@
     @endif
 
     <x-panel class="p-5 sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Case</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Case</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                 Case title <span class="text-red-600">*</span>
@@ -69,7 +69,7 @@
     </x-panel>
 
     <x-panel class="p-5 sm:p-6">
-        <h2 class="text-lg font-bold text-slate-900">Court</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Court</h2>
         <div class="mt-4">
             @include('cases.partials.court-picker', ['case' => $case, 'field' => $field, 'label' => 'block text-sm font-medium text-slate-700'])
             @error('court_name') <p class="mt-1 text-sm text-red-700">{{ $message }}</p> @enderror

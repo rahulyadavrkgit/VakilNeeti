@@ -1,5 +1,9 @@
 @php
-    $boards = collect(\App\Http\Controllers\CourtLinksController::boardOptions());
+    // The panel opens on the first board: the Delhi HC live board comes first, as the Supreme Court's data
+    // cannot be reached from the server (it accepts connections from India only).
+    $boards = collect(\App\Http\Controllers\CourtLinksController::boardOptions())
+        ->sortBy(fn (array $board): int => str_contains($board['url'], 'live-board/delhi-high-court') ? 0 : 1)
+        ->values();
 @endphp
 
 <section data-board-picker @if($pageMode ?? false) data-board-page @endif class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="live-boards-heading">

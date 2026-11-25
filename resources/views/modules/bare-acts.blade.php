@@ -13,7 +13,7 @@
     </section>
 
 
-    <section id="central-acts" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section id="central-acts" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h2 class="text-lg font-semibold text-slate-900">Central legislation index</h2>
@@ -28,7 +28,7 @@
     </section>
 
     @foreach($actGroups as $group)
-        <section id="{{ $group['id'] }}" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="{{ $group['id'] }}" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">{{ $group['title'] }}</h2>
             <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @foreach($group['acts'] as $act)
@@ -39,7 +39,7 @@
                     <article data-act-card data-search="{{ $searchText }}"
                              class="rounded-lg border border-slate-200 p-4">
                         <div class="flex items-start justify-between gap-3">
-                            <h3 class="font-semibold text-slate-900">{{ $act['title'] }}</h3>
+                            <h3 class="text-base font-semibold text-slate-900">{{ $act['title'] }}</h3>
                             @if($act['year'])
                                 <span class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{{ $act['year'] }}</span>
                             @endif
@@ -64,7 +64,7 @@
         No Acts match that search. Try another title or topic.
     </p>
 
-    <section id="sources" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section id="sources" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 class="text-lg font-semibold text-slate-900">Official source</h2>
         <p class="mt-1 text-sm text-slate-600">Check the official text and current status on India Code.</p>
         <a href="https://indiacode.gov.in/" target="_blank" rel="noopener noreferrer"

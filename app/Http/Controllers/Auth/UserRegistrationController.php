@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 /**
@@ -31,6 +32,8 @@ class UserRegistrationController extends Controller
 
     /** How long an emailed code works. */
     private const CODE_MINUTES = 10;
+
+    private const SUSPENDED_MESSAGE = 'This account is suspended. Write to support@vakilniti.com if you think this is a mistake.';
 
     private const ACCOUNT_ROLES = [
         'independent_practitioner' => 'Independent practitioner',
@@ -388,6 +391,8 @@ class UserRegistrationController extends Controller
             'full_name' => ['required', 'string', 'max:150'],
             // Optional for now: used for calls, client messages and team invites. Phone sign-in comes later.
             'mobile' => ['nullable', 'string', 'regex:/^\+91[6-9][0-9]{9}$/', 'unique:users,mobile'],
+            // From now on the advocate signs in with the email and this password (a code only as a fallback).
+            'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers(), 'max:72'],
         ];
 
         $accountRole = $request->input('account_role');
@@ -442,7 +447,8 @@ class UserRegistrationController extends Controller
                     'name' => $validated['full_name'],
                     'email' => $pending['email'],
                     'mobile' => $validated['mobile'] ?? null,
-                    'password' => Hash::make(Str::random(64)),
+                    'password' => Hash::make($validated['password']),
+                    'password_set_at' => now(),
                     'email_verified_at' => ! ($pending['otp_bypassed'] ?? false) ? now() : null,
                     'account_type' => $accountType,
                     'account_role' => $validated['account_role'],
@@ -539,9 +545,19 @@ class UserRegistrationController extends Controller
                 ->with('show_login_modal', true);
         }
 
+        // A suspended account gets no code (and no email or SMS is sent).
+        if ($user->suspended_at) {
+            return back()->withErrors(['email' => self::SUSPENDED_MESSAGE], 'login')
+                ->withInput($request->only('email'))
+                ->with('show_login_modal', true);
+        }
+
         if ($this->otpBypassEnabled($email)) {
             Auth::login($user);
             $request->session()->regenerate();
+            if (! $user->is_admin) {
+                $request->session()->put('password_setup_proof', ['id' => $user->id, 'until' => now()->addMinutes(15)->timestamp]);
+            }
 
             return redirect()->intended('/')
                 ->with('auth_login_success', 'Development mode: signed in without the email code.');
@@ -578,6 +594,10 @@ class UserRegistrationController extends Controller
 
         if (! $user) {
             return $fail('No account was found for this number. Log in with your email instead.');
+        }
+
+        if ($user->suspended_at) {
+            return $fail(self::SUSPENDED_MESSAGE);
         }
 
         if ($bypass) {
@@ -617,11 +637,11 @@ class UserRegistrationController extends Controller
             default => null,
         };
 
-        if (! $user) {
+        if (! $user || $user->suspended_at) {
             $request->session()->forget(['login_otp_email', 'login_otp_mobile']);
 
             return redirect()->route('login')
-                ->withErrors(['otp' => 'This code has expired. Ask for a new one.'], 'login')
+                ->withErrors(['otp' => $user ? self::SUSPENDED_MESSAGE : 'This code has expired. Ask for a new one.'], 'login')
                 ->with('show_login_modal', true);
         }
 
@@ -640,6 +660,64 @@ class UserRegistrationController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        // Signing in with a code proves the inbox or phone, so a password can be set or reset without the old one.
+        $request->session()->put('signed_in_with_code_at', now()->timestamp);
+
+        if (! $user->is_admin) {
+            $request->session()->put('password_setup_proof', ['id' => $user->id, 'until' => now()->addMinutes(15)->timestamp]);
+        }
+
+        if (! $user->password_set_at && ! $user->is_admin) {
+            return redirect()->to(route('profile.index').'#password')
+                ->with('auth_login_success', 'Signed in. Set a password now, so next time you sign in with your email and password.');
+        }
+
+        return redirect()->intended('/')->with('auth_login_success', 'Login successful.');
+    }
+
+    /**
+     * Sign in with the email and password. Five wrong tries for an email pause it for 15 minutes.
+     */
+    public function passwordLogin(Request $request): RedirectResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
+        ]);
+        $fail = fn (string $message): RedirectResponse => back()->withErrors(['email' => $message], 'login')
+            ->withInput($request->only('email', 'remember'))
+            ->with('show_login_modal', true);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator, 'login')->withInput($request->only('email', 'remember'))->with('show_login_modal', true);
+        }
+
+        $email = Str::lower(trim($validator->validated()['email']));
+        $key = 'password-login:'.$email;
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return $fail('Too many wrong passwords. Wait '.ceil(RateLimiter::availableIn($key) / 60).' minutes, or use "Email me a code".');
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if ($user?->suspended_at) {
+            return $fail(self::SUSPENDED_MESSAGE);
+        }
+
+        if ($user && ! $user->password_set_at) {
+            return $fail('This account has no password yet. Use "Email me a code", then set a password in Settings.');
+        }
+
+        if (! $user || ! Hash::check($validator->validated()['password'], $user->password)) {
+            RateLimiter::hit($key, 15 * 60);
+
+            return $fail('That email and password do not match.');
+        }
+
+        RateLimiter::clear($key);
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
 
         return redirect()->intended('/')->with('auth_login_success', 'Login successful.');
     }
@@ -647,6 +725,36 @@ class UserRegistrationController extends Controller
     /**
      * Back to the first step, to use a different email or number.
      */
+    public function savePassword(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $data = $request->validateWithBag('passwordSetup', [
+            'current_password' => ['nullable', 'string', 'max:255'],
+            'password' => ['required', 'string', 'confirmed', Password::min(12)->letters()->numbers(), 'max:72'],
+        ]);
+        $proof = $request->session()->get('password_setup_proof');
+        $verifiedRecently = ! $user->is_admin && ($proof['id'] ?? null) === $user->id
+            && ($proof['until'] ?? 0) > now()->timestamp;
+        if (! $verifiedRecently && (! filled($data['current_password'] ?? null) || ! Hash::check($data['current_password'], $user->password))) {
+            return redirect()->to(route('profile.index').'#password')->withErrors([
+                'current_password' => 'Enter your current password, or sign in with a code first to set a new one.',
+            ], 'passwordSetup');
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($data['password']), 'password_set_at' => now(),
+            'remember_token' => Str::random(60), 'admin_access_version' => (int) $user->admin_access_version + 1,
+        ])->save();
+        if (config('session.driver') === 'database') {
+            DB::connection(config('session.connection'))->table(config('session.table'))->where('user_id', $user->id)
+                ->where('id', '<>', $request->session()->getId())->delete();
+        }
+        $request->session()->forget(['password_setup_proof', 'admin_verified']);
+        $request->session()->regenerate(true);
+
+        return redirect()->to(route('profile.index').'#password')->with('password_saved', 'Password saved. You can use it the next time you sign in.');
+    }
+
     public function changeLoginEmail(Request $request): RedirectResponse
     {
         $request->session()->forget(['login_otp_email', 'login_otp_mobile']);

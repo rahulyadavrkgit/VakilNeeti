@@ -30,7 +30,7 @@
         @foreach($courts as $court)
             <li data-filter-item class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                 <div class="min-w-0">
-                    <h2 class="font-semibold text-slate-900">{{ $court['name'] }}</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">{{ $court['name'] }}</h2>
                     <p class="text-sm text-slate-600">{{ $court['seat'] }} · {{ $court['covers'] }}</p>
                 </div>
                 @if($court['seat'] === 'New Delhi')
