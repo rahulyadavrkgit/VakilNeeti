@@ -9,22 +9,8 @@
         $canSetPassword = !auth()->user()->is_admin && (! auth()->user()->password_set_at
             || (($passwordProof['id'] ?? null) === auth()->id() && ($passwordProof['until'] ?? 0) > now()->timestamp));
     @endphp
-    <section id="password" class="mx-auto mb-4 max-w-5xl scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 class="font-bold">{{ auth()->user()->password_set_at ? 'Change password' : 'Set your email sign-in password' }}</h2>
-        @if(session('password_saved'))<p role="status" class="my-2 text-sm text-teal-700">{{ session('password_saved') }}</p>@endif
-        @foreach($errors->passwordSetup->all() as $error)<p role="alert" class="my-2 text-sm text-red-700">{{ $error }}</p>@endforeach
-        <form method="POST" action="{{ route('profile.password.store') }}" class="mt-3 grid gap-3 sm:grid-cols-3">
-            @csrf
-            @unless($canSetPassword)
-                <label class="text-sm font-medium">Current password<input name="current_password" type="password" autocomplete="current-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
-            @endunless
-            <label class="text-sm font-medium">New password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
-            <label class="text-sm font-medium">Confirm password<input name="password_confirmation" type="password" autocomplete="new-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
-            <p class="text-xs text-slate-600 sm:col-span-3">Use at least 8 characters.</p>
-            <button class="min-h-11 justify-self-start rounded-lg bg-teal-700 px-4 font-semibold text-white sm:col-span-3">Save password</button>
-        </form>
-    </section>
-<div class="space-y-6">
+{{-- One centred column for the whole page, the same width as the other section pages. --}}
+<div class="mx-auto max-w-5xl space-y-5">
 
     <x-page-header title="Settings" subtitle="Profile, practice and app settings.">
         <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">{{ __('Complete my profile') }}</a>
@@ -39,6 +25,23 @@
             <a href="{{ route('profile.cv.edit') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white">Open</a>
         </section>
     @endif
+
+    {{-- SIGN-IN PASSWORD --}}
+    <section id="password" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5">
+        <h2 class="text-lg font-semibold text-slate-900">{{ auth()->user()->password_set_at ? __('Change password') : __('Set your email sign-in password') }}</h2>
+        <p class="mt-1 text-sm text-slate-600">{{ __('Sign in with your email and this password. At least 8 characters.') }}</p>
+        @if(session('password_saved'))<p role="status" class="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800">{{ session('password_saved') }}</p>@endif
+        @foreach($errors->passwordSetup->all() as $error)<p role="alert" class="mt-3 text-sm text-red-700">{{ $error }}</p>@endforeach
+        <form method="POST" action="{{ route('profile.password.store') }}" class="mt-4 grid items-end gap-3 {{ $canSetPassword ? 'sm:grid-cols-[1fr_1fr_auto]' : 'sm:grid-cols-[1fr_1fr_1fr_auto]' }}">
+            @csrf
+            @unless($canSetPassword)
+                <label class="text-sm font-medium text-slate-700">{{ __('Current password') }}<input name="current_password" type="password" autocomplete="current-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            @endunless
+            <label class="text-sm font-medium text-slate-700">{{ __('New password') }}<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            <label class="text-sm font-medium text-slate-700">{{ __('Confirm password') }}<input name="password_confirmation" type="password" autocomplete="new-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            <button class="min-h-11 rounded-xl bg-[#16776e] px-5 text-sm font-semibold text-white hover:bg-[#125f58]">{{ __('Save password') }}</button>
+        </form>
+    </section>
 
     {{-- PROFILE INFORMATION --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">
