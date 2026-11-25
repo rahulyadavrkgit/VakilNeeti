@@ -7,6 +7,7 @@ use App\Models\CourtRecordImport;
 use App\Models\LegalCase;
 use App\Models\User;
 use App\Notifications\ReminderNotification;
+use App\Services\AccountDeletion;
 use App\Services\AdminCaseReview;
 use App\Services\RecentSiteErrors;
 use Illuminate\Database\Eloquent\Builder;
@@ -195,6 +196,37 @@ class AdminReviewController extends Controller
         }, 3);
 
         return back()->with('success', 'Account access reviewed.');
+    }
+
+    /**
+     * Delete an account for good (with its workspace, see AccountDeletion). The administrator types the account's
+     * email to confirm; administrators cannot be deleted while they hold that access, nor delete themselves.
+     */
+    public function destroy(Request $request, User $account, AccountDeletion $deletion): RedirectResponse
+    {
+        $data = $request->validate([
+            'confirm_email' => ['required', 'string', 'max:255'],
+            'delete_reason' => ['required', 'string', 'min:8', 'max:400'],
+        ], [
+            'delete_reason.min' => 'Give a reason of at least 8 characters.',
+        ]);
+        abort_if($request->user()->id === $account->id, 403, 'Use another administrator to delete your own account.');
+
+        if ($account->is_admin) {
+            return back()->withErrors(['confirm_email' => 'Remove administrator access from this account first.']);
+        }
+
+        if (strcasecmp(trim($data['confirm_email']), (string) $account->email) !== 0) {
+            return back()->withErrors(['confirm_email' => 'Type the account\'s email exactly as shown to confirm.'])->withInput();
+        }
+
+        $label = $account->name.' <'.$account->email.'>';
+        $summary = $deletion->delete($account);
+        $this->record($request->user()->id, $account->id, 'delete-account', Str::limit(
+            "Deleted {$label}: {$summary['cases']} cases, {$summary['team']} team logins. ".$data['delete_reason'], 500, ''
+        ));
+
+        return redirect()->route('admin.accounts')->with('success', "Account {$label} was deleted.");
     }
 
     public function audit(): View

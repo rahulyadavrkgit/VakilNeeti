@@ -6,6 +6,7 @@
     <div class="mx-auto max-w-5xl space-y-4">
         <x-admin-nav />
         <x-page-header title="Account administration" />
+        @if(session('success'))<p role="status" class="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-900">{{ session('success') }}</p>@endif
         <dl class="grid grid-cols-3 gap-2 rounded-xl border border-slate-200 bg-white p-4">
             <div><dt>Accounts</dt><dd class="text-xl font-bold">{{ $accountCount }}</dd></div>
             <div><dt>Cases</dt><dd class="text-xl font-bold">{{ $caseCount }}</dd></div>

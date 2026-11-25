@@ -519,6 +519,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/reports/{reportId}/resolve', [AdminReviewController::class, 'resolveReport'])->whereNumber('reportId')->name('reports.resolve');
     Route::get('/audit', [AdminReviewController::class, 'audit'])->name('audit');
     Route::post('/accounts/{account}/access', [AdminReviewController::class, 'access'])->name('accounts.access');
+    Route::delete('/accounts/{account}', [AdminReviewController::class, 'destroy'])->name('accounts.destroy');
 });
 
 Route::get('/admin/accounts', [AdminAuthController::class, 'accounts'])

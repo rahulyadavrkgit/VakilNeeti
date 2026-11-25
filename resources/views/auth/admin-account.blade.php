@@ -60,9 +60,42 @@
                     <label class="text-sm font-semibold">Reason
                         <input name="reason" value="{{ old('reason') }}" required minlength="8" maxlength="500" class="mt-1 block min-h-11 w-full rounded-lg border-slate-300">
                     </label>
-                    @foreach($errors->all() as $error)<p role="alert" class="text-sm text-red-700 sm:col-span-2">{{ $error }}</p>@endforeach
+                    @foreach(['action', 'reason'] as $field)
+                        @error($field)<p role="alert" class="text-sm text-red-700 sm:col-span-2">{{ $message }}</p>@enderror
+                    @endforeach
                     <button class="min-h-11 justify-self-start rounded-lg bg-teal-700 px-4 text-sm font-semibold text-white">Apply access change</button>
                 </form>
+
+                {{-- Delete for good: the account, and for a practice owner its whole workspace and team logins. --}}
+                <div class="mt-6 border-t border-red-100 pt-5">
+                    <h3 class="font-semibold text-red-800">Delete account</h3>
+                    <p class="mt-1 text-sm text-slate-600">
+                        @if($account->isTeamMember())
+                            Removes this team member's login. Their work stays in the owner's workspace.
+                        @else
+                            Removes the account and its whole workspace for good: cases, hearings, clients, invoices, documents and team logins. This cannot be undone.
+                        @endif
+                    </p>
+                    @if($account->is_admin)
+                        <p class="mt-2 text-sm text-amber-800">Remove administrator access first.</p>
+                    @else
+                        <form method="POST" action="{{ route('admin.accounts.destroy', $account) }}" data-confirm="Delete {{ $account->email }} for good? This cannot be undone."
+                              class="mt-3 grid gap-3 sm:grid-cols-2">
+                            @csrf
+                            @method('DELETE')
+                            <label class="text-sm font-semibold">Type the email to confirm
+                                <input name="confirm_email" value="{{ old('confirm_email') }}" required autocomplete="off" placeholder="{{ $account->email }}" class="mt-1 block min-h-11 w-full rounded-lg border-slate-300">
+                            </label>
+                            <label class="text-sm font-semibold">Reason
+                                <input name="delete_reason" value="{{ old('delete_reason') }}" required minlength="8" maxlength="400" class="mt-1 block min-h-11 w-full rounded-lg border-slate-300">
+                            </label>
+                            @foreach(['confirm_email', 'delete_reason'] as $field)
+                                @error($field)<p role="alert" class="text-sm text-red-700 sm:col-span-2">{{ $message }}</p>@enderror
+                            @endforeach
+                            <button class="min-h-11 justify-self-start rounded-lg bg-red-700 px-4 text-sm font-semibold text-white hover:bg-red-800">Delete account</button>
+                        </form>
+                    @endif
+                </div>
             </x-panel>
         @endunless
 
