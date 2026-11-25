@@ -96,6 +96,8 @@ class BarRegistrationTest extends TestCase
                 'bar_state_code' => 'up',
                 'bar_number' => '1234',
                 'bar_registration_year' => 2017,
+                'password' => 'advocate-password-42',
+                'password_confirmation' => 'advocate-password-42',
             ])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('cases.find'));

@@ -52,7 +52,7 @@ class QuickNextDateTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['aria-label="Next hearing"', 'Wednesday, 11 March 2026, 10:30', 'For', 'Appellant', 'Purpose: Final arguments', 'Room 37', 'Justice Mehta', 'Join VC', 'Copy VC link', 'Share case details', 'Add another date', 'aria-label="Case workspace"'], false);
+            ->assertSeeInOrder(['For', 'Appellant', 'aria-label="Next hearing"', 'Wednesday, 11 March 2026, 10:30', 'Purpose: Final arguments', 'Room 37', 'Justice Mehta', 'Join VC', 'Copy VC link', 'Share case details', 'Add another date', 'aria-label="Case workspace"'], false);
 
         $noDate = LegalCase::create(['case_title' => 'Never Listed', 'court_name' => 'Saket', 'case_status' => 'pending']);
         $this->get(route('cases.show', $noDate))->assertOk()->assertSee('No hearing date yet. Add the first date below.')->assertSee('Set our side');
