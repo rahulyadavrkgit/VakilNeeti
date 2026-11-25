@@ -107,7 +107,7 @@ TEXT;
         $this->post(route('hearings.store'), ['case_id' => $case->id, 'hearing_date' => '2026-11-25', 'item_number' => '12', 'list_total' => 45, 'return' => 'back'])->assertSessionHasNoErrors();
         $this->assertSame(['12', 45], [CourtHearing::query()->value('item_number'), (int) CourtHearing::query()->value('list_total')]);
 
-        $this->get(route('court-day'))->assertOk()->assertSeeInOrder(['My item', '12', 'Cases in list', '45']);
+        $this->get(route('cases.index', ['hearing_filter' => 'today']))->assertOk()->assertSeeInOrder(['Ram vs Shyam', '12', '45']);
         $this->get(route('cases.show', $case))->assertOk()->assertSee('Item No: 12 of 45');
 
         $this->post(route('hearings.store'), ['case_id' => $case->id, 'hearing_date' => '2026-11-26', 'item_number' => 'twelve'])->assertSessionHasErrors('item_number');
@@ -137,7 +137,7 @@ TEXT;
         $this->assertDatabaseCount('cause_list_appearances', 1);
         $this->assertDatabaseHas('cause_list_appearances', ['legal_case_id' => $case->id, 'item_number' => '12']);
         $this->assertDatabaseMissing('cause_list_appearances', ['legal_case_id' => $other->id]);
-        $this->get(route('court-day', ['date' => '2026-11-25']))->assertOk()->assertSeeInOrder(['My item', '12', 'Cases in list', '3']);
+        $this->get(route('cases.index', ['hearing_filter' => 'today']))->assertOk()->assertSeeInOrder(['12', '3']);
         $this->actingAs($otherUser)->get(route('cases.show', $case))->assertNotFound();
     }
 

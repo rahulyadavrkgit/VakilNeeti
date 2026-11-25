@@ -141,7 +141,7 @@
                 <div class="mt-5 border-t border-slate-100 pt-4">
                     <div class="flex items-center justify-between gap-2">
                         <h5 class="text-sm font-semibold text-slate-800">People at {{ $client->displayName() }}</h5>
-                        <a href="{{ route('clients.create') }}" class="text-xs font-semibold text-[#16776e] hover:underline">+ Add person</a>
+                        <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="text-xs font-semibold text-[#16776e] hover:underline">+ Add person</a>
                     </div>
                     <ul class="mt-2 divide-y divide-slate-100 text-sm">
                         @forelse($client->people as $person)

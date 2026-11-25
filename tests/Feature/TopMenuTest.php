@@ -31,10 +31,11 @@ class TopMenuTest extends TestCase
 
         // The other Cases pages sit in the bar under the header.
         $sectionBar = Str::of($html)->after('class="vn-section-nav')->before('</nav>')->toString();
-        foreach (['My cases', 'Calendar', 'Court day', 'Tasks', 'Find &amp; import'] as $label) {
+        foreach (['My cases', 'Calendar', 'Tasks', 'Find &amp; import'] as $label) {
             $this->assertStringContainsString($label, $sectionBar);
         }
         $this->assertStringNotContainsString('Overview', $sectionBar);
+        $this->assertStringNotContainsString('Court day', $sectionBar);
         $this->assertStringNotContainsString('Hearing history', $sectionBar);
     }
 

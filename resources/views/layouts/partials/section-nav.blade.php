@@ -1,6 +1,7 @@
 {{--
-    The second menu: a bar under the header with the pages of the current section (Cases, Billing, Settings),
-    the same on computers and phones. The main menu links straight to each section's first page.
+    The second menu: a bar under the header with the pages of the current section (Courts, Cases, Billing, Settings),
+    the same on computers and phones. The main menu links straight to each section's first page. Courts is for
+    everyone, signed in or not: on phones it is the way to every court's page (computers also have the Courts menu).
 --}}
 @php
     $user = auth()->user();
@@ -10,11 +11,18 @@
 
     // [section label, [[tab label, url, current?], …]]
     $section = match (true) {
+        $is('courts', 'courts/*', 'tribunals*', 'court-catalogue*') => [__('Courts'), [
+            [__('Supreme Court'), route('courts.supreme-court'), $is('courts/supreme-court*')],
+            [__('Delhi High Court'), route('courts.delhi-high-court'), $is('courts/delhi-high-court*')],
+            [__('High Courts'), route('courts.high-courts'), $is('courts/high-courts*')],
+            [__('Delhi District Courts'), route('courts.delhi-district-courts'), $is('courts/delhi-district-courts*')],
+            [__('Tribunals'), route('tribunals.index'), $is('tribunals*', 'court-catalogue*')],
+            [__('All courts'), route('courts.index'), $is('courts', 'courts/ecourts-services')],
+        ]],
         ! $user => null,
-        $is('cases*', 'today', 'tasks*', 'case-calendar*', 'hearings*') => [__('Cases'), [
+        $is('cases*', 'tasks*', 'case-calendar*', 'hearings*') => [__('Cases'), [
             [__('My cases'), route('cases.index'), $named('cases.index', 'cases.show', 'cases.create', 'cases.edit', 'cases.manual')],
             [__('Calendar'), route('cases.calendar'), $is('case-calendar*', 'hearings*')],
-            [__('Court day'), route('court-day'), $is('today')],
             [__('Tasks'), route('tasks.index'), $is('tasks*')],
             [__('Find & import'), route('cases.find'), $is('cases/find*', 'cases/import*')],
         ]],
@@ -52,4 +60,14 @@
             @endforeach
         </div>
     </nav>
+    <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
+        // Phones: a long bar (Courts) scrolls sideways; bring the current tab into view.
+        (function () {
+            const bar = document.currentScript.previousElementSibling.firstElementChild;
+            const current = bar.querySelector('[aria-current]');
+            if (current && bar.scrollWidth > bar.clientWidth) {
+                bar.scrollLeft = current.offsetLeft - (bar.clientWidth - current.offsetWidth) / 2;
+            }
+        }());
+    </script>
 @endif

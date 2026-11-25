@@ -12,6 +12,7 @@ use App\Models\State;
 use App\Services\CourtBenchMatcher;
 use App\Services\CourtIdentity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -31,10 +32,13 @@ class SheetController extends Controller
     public function nextDate(Request $request): View
     {
         $case = $request->filled('case') ? LegalCase::query()->findOrFail($request->integer('case')) : null;
+        // A day picked on the calendar comes in as ?date=; only a day from today on can be a next date.
+        $date = rescue(fn () => Carbon::createFromFormat('Y-m-d', (string) $request->query('date'))->startOfDay(), null, false);
 
         return view('sheets.next-date', [
             'case' => $case,
             'cases' => $case ? collect() : $this->openCases(),
+            'date' => $date && ($date->isToday() || $date->isFuture()) ? $date->toDateString() : null,
         ]);
     }
 
@@ -46,9 +50,9 @@ class SheetController extends Controller
         ]);
     }
 
-    public function client(): View
+    public function client(Request $request): View
     {
-        return view('sheets.client');
+        return view('sheets.client', ['isCompany' => $request->query('type') === 'company']);
     }
 
     public function case(): View

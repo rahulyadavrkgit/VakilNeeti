@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserRegistrationControllerTest extends TestCase
@@ -33,6 +34,37 @@ class UserRegistrationControllerTest extends TestCase
             'state' => 'Uttar Pradesh',
             'state_code' => '09',
         ]);
+    }
+
+    public function test_signup_ends_with_a_set_your_password_step_and_needs_one(): void
+    {
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
+            ->get(route('register.profile'))->assertOk()
+            ->assertSeeInOrder(['Welcome to VakilNiti!', 'I describe myself as', 'What brings you to VakilNiti?', 'Basic information', 'Set your password', 'Complete signup'])
+            ->assertSee('name="password" required minlength="8" maxlength="72" autocomplete="new-password"', false)
+            ->assertSee('data-onboarding-step="4"', false);
+
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
+            ->post(route('register.profile.submit'), $this->companyPayload(['region' => 'Uttar Pradesh', 'password' => null, 'password_confirmation' => null]))
+            ->assertSessionHasErrors(['password' => 'Choose a password to sign in with next time.']);
+        $this->assertDatabaseMissing('users', ['email' => 'new@example.test']);
+
+        // Only the password was wrong: back on the form, the pop-up reopens on the password step.
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
+            ->from(route('register.profile'))->followingRedirects()
+            ->post(route('register.profile.submit'), $this->companyPayload(['region' => 'Uttar Pradesh', 'password' => 'diary2026', 'password_confirmation' => 'other2026']))
+            ->assertSee('The two passwords do not match.')->assertSee('data-initial-step="4"', false);
+    }
+
+    public function test_a_password_chosen_at_signup_works_for_signing_in(): void
+    {
+        $this->withSession(['verified_registration' => ['email' => 'new@example.test']])
+            ->post(route('register.profile.submit'), $this->companyPayload(['region' => 'Uttar Pradesh', 'password' => 'diary2026', 'password_confirmation' => 'diary2026']))
+            ->assertSessionHasNoErrors();
+
+        $user = User::where('email', 'new@example.test')->firstOrFail();
+        $this->assertNotNull($user->password_set_at);
+        $this->assertTrue(Hash::check('diary2026', $user->password));
     }
 
     public function test_company_registration_rejects_a_state_that_is_not_in_the_official_list(): void

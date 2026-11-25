@@ -27,7 +27,7 @@
     <div class="grid grid-cols-[minmax(0,1fr)_8rem] gap-3">
         <label class="{{ $label }}">
             {{ __('Date') }}
-            <input type="date" name="hearing_date" required min="{{ today()->toDateString() }}" @if($case) autofocus @endif class="{{ $field }}">
+            <input type="date" name="hearing_date" value="{{ $date ?? '' }}" required min="{{ today()->toDateString() }}" @if($case) autofocus @endif class="{{ $field }}">
         </label>
         <label class="{{ $label }}">
             {{ __('Time') }}

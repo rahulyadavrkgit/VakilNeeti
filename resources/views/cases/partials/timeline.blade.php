@@ -127,7 +127,7 @@
                                         <p class="mt-1 text-sm text-slate-600">{{ $hearing->next_action }}</p>
                                     @endif
                                     @if(! $isFuture && $isNext)
-                                        <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="mt-2 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Record what happened and the next date</a>
+                                        <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" data-sheet="{{ route('sheets.next-date', ['case' => $case->id]) }}" class="mt-2 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Record what happened and the next date</a>
                                     @endif
                                 </article>
                             @elseif($entry['kind'] === 'listed')

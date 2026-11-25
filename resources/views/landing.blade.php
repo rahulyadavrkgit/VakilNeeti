@@ -41,7 +41,7 @@
         @foreach([
             ['bell', 'Never miss a next date', "A reminder in the bell before every hearing, task and appointment, and a list of tomorrow's matters."],
             ['building', 'Delhi HC cause list, checked for you', 'Each morning and evening we look for your matters and show the court and item number.'],
-            ['calendar', 'Court day on your phone', "See today's and tomorrow's matters, with VC links and client numbers."],
+            ['calendar', 'Your hearings on your phone', "See today's and tomorrow's matters, with VC links and client numbers."],
             ['board', 'Live display boards', 'See which item is running in your court before you walk in.'],
             ['people', 'Clients and billing', 'Client records, GST invoices, payments, and a link clients open to see their next date.'],
             ['briefcase', 'Juniors and clerks', 'Share your diary with your team. Clerks add dates; billing stays with you.'],

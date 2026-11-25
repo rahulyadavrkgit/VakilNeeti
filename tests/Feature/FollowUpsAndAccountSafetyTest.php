@@ -84,7 +84,7 @@ class FollowUpsAndAccountSafetyTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         $this->getJson(route('api.locations.court-districts', 'UP'))->assertOk()->assertHeader('Cache-Control', 'max-age=86400, public');
-        $this->get(route('court-day'))->assertHeader('Cache-Control', 'no-store, private');
+        $this->get(route('cases.index'))->assertHeader('Cache-Control', 'no-store, private');
     }
 
     public function test_an_unreachable_court_board_is_a_warning_not_a_site_error(): void

@@ -274,6 +274,7 @@ class CourtLinksController extends Controller
             'intro' => 'Official Supreme Court services.',
             'metaDescription' => 'Supreme Court of India quick links: cause list, live physical and web display boards, SuSwagatam e-gate pass and the court calendar.',
             'links' => [
+                ['title' => 'Live display board', 'description' => 'The item running in every court room now.', 'url' => route('courts.live-board', 'supreme-court'), 'icon' => 'board', 'internal' => true],
                 ['title' => 'Court rooms & VC links', 'description' => 'Every court room with its VC link. Join in one tap.', 'url' => route('courts.supreme-court.court-list'), 'icon' => 'screen', 'internal' => true],
                 ...self::SUPREME_COURT,
             ],
@@ -289,6 +290,7 @@ class CourtLinksController extends Controller
             'intro' => 'Official High Court of Delhi services.',
             'metaDescription' => 'Delhi High Court quick links: physical display board, judges roster, daily cause list, e-filing, e-visitor pass, case status, orders, judgements and calendar.',
             'links' => [
+                ['title' => 'Live display board', 'description' => 'The item running in every court room now.', 'url' => route('courts.live-board', 'delhi-high-court'), 'icon' => 'board', 'internal' => true],
                 ['title' => 'Judges list & VC links', 'description' => 'Judges, court rooms, VC links and meeting IDs.', 'url' => route('courts.delhi-high-court.judges'), 'icon' => 'people', 'internal' => true],
                 ...self::DELHI_HIGH_COURT,
             ],

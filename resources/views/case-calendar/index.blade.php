@@ -237,7 +237,7 @@
                                 @forelse($dayEvents as $event)
                                     @include('case-calendar.partials.event', ['event' => $event, 'variant' => 'week'])
                                 @empty
-                                    <a href="{{ route('hearings.create', ['date' => $day->toDateString()]) }}" class="block rounded-lg px-2 py-3 text-center text-xs text-slate-300 hover:bg-slate-50 hover:text-[#16776e]">+ Add</a>
+                                    <a href="{{ route('hearings.create', ['date' => $day->toDateString()]) }}" data-sheet="{{ route('sheets.next-date', ['date' => $day->toDateString()]) }}" class="block rounded-lg px-2 py-3 text-center text-xs text-slate-300 hover:bg-slate-50 hover:text-[#16776e]">+ Add</a>
                                 @endforelse
                             </div>
                         </div>
@@ -255,7 +255,7 @@
                         @if($dayEvents->isEmpty())
                             <div class="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-white/60 px-3 py-2 text-sm">
                                 <span class="text-slate-500"><span class="font-semibold {{ $day->isToday() ? 'text-[#16776e]' : 'text-slate-700' }}">{{ $dayName }}</span> · {{ $day->format('d M') }} · nothing scheduled</span>
-                                <a href="{{ route('hearings.create', ['date' => $day->toDateString()]) }}" class="inline-flex min-h-9 items-center px-2 text-xs font-semibold text-[#16776e]">+ Add</a>
+                                <a href="{{ route('hearings.create', ['date' => $day->toDateString()]) }}" data-sheet="{{ route('sheets.next-date', ['date' => $day->toDateString()]) }}" class="inline-flex min-h-9 items-center px-2 text-xs font-semibold text-[#16776e]">+ Add</a>
                             </div>
                         @else
                             <section class="rounded-2xl border bg-white p-3 shadow-sm {{ $day->isToday() ? 'border-[#16776e] ring-1 ring-[#16776e]/30' : 'border-slate-200' }}">
@@ -285,7 +285,7 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                     @if($events->isEmpty())
                         <p class="text-sm text-slate-500">Nothing scheduled for this day.</p>
-                        <a href="{{ route('hearings.create', ['date' => $date->toDateString()]) }}" class="mt-3 inline-flex text-sm font-semibold text-[#16776e] hover:underline">+ Add a hearing on {{ $date->format('d M') }}</a>
+                        <a href="{{ route('hearings.create', ['date' => $date->toDateString()]) }}" data-sheet="{{ route('sheets.next-date', ['date' => $date->toDateString()]) }}" class="mt-3 inline-flex text-sm font-semibold text-[#16776e] hover:underline">+ Add a hearing on {{ $date->format('d M') }}</a>
                     @else
                         <div class="space-y-2">
                             @foreach($events as $event)

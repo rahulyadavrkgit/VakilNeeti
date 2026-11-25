@@ -21,7 +21,6 @@ use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientManagementController;
 use App\Http\Controllers\ClientsFromCasesController;
-use App\Http\Controllers\CourtDayController;
 use App\Http\Controllers\CourtIntegrationController;
 use App\Http\Controllers\CourtLinksController;
 use App\Http\Controllers\CourtStandSideController;
@@ -70,7 +69,8 @@ Route::get('/', [DashboardController::class, 'index'])
 Route::view('/app', 'app-download')->name('app.download');
 
 // Today's and tomorrow's matters on one page; the phone keeps a copy for court rooms without signal.
-Route::get('/today', CourtDayController::class)->middleware('auth')->name('court-day');
+// Court day was removed: My cases shows today's hearings with the same details.
+Route::permanentRedirect('/today', '/cases?hearing_filter=today');
 
 Route::get('/court-integrations/ecourts', [CourtIntegrationController::class, 'index'])->name('court-integrations.ecourts');
 // Repeated eCourts services (which has the CNR search too).

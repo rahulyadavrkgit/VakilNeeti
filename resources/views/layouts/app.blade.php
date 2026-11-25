@@ -106,9 +106,12 @@
         html.dark .vn-sidebar { background: #0a111d; border-right-color: #1c2a40; }
         html.dark .vn-main-header { background: rgba(13, 21, 36, .92); }
         html.dark .vn-mobile-nav { background: rgba(13, 21, 36, .97); border-top-color: #1f2d44; box-shadow: 0 -8px 28px rgba(0,0,0,.35); }
-        html.dark .vn-mobile-nav a, html.dark .vn-mobile-nav button { color: #93a1b4; }
+        html.dark .vn-mobile-nav a, html.dark .vn-mobile-nav button, html.dark .vn-mobile-nav summary { color: #93a1b4; }
         html.dark .vn-mobile-nav .is-current { color: #6fd0c3; background: #15302f; }
         html.dark .vn-footer { background-color: #0a111d; }
+        html.dark .vn-mobile-nav .vn-courts-panel a { color: #e2e8f0; }
+        html.dark .vn-mobile-nav .vn-courts-panel a.is-current { color: #6fd0c3; background: #15302f; }
+        html.dark .vn-mobile-nav .vn-courts-panel .vn-courts-icon { background: #15302f; color: #6fd0c3; }
         html.dark .vn-event-peek { background: #141f31; border-color: #2a3b56; }
         html.dark img[data-invert-dark] { filter: invert(1) hue-rotate(180deg); }
         .vn-content input:focus, .vn-content select:focus, .vn-content textarea:focus, #vn-auth-dialog input:focus, #vn-auth-dialog select:focus {
@@ -142,9 +145,10 @@
         .vn-sidebar a:focus-visible, .vn-sidebar summary:focus-visible, .vn-content a:focus-visible, button:focus-visible { outline: 3px solid #55b9ad; outline-offset: 2px; }
         @media (max-width: 767px) {
             body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
-            .vn-sidebar { position: fixed; z-index: 60; inset: auto 0 0; width: 100%; max-height: min(80dvh, 42rem); padding-bottom: env(safe-area-inset-bottom); border-radius: 18px 18px 0 0; visibility: hidden; transform: translateY(105%); transition: transform .24s ease; box-shadow: 20px 0 50px rgba(10,25,40,.22); }
+            /* The Menu button sits at the top left; the menu slides in from the left. */
+            .vn-sidebar { position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(86vw, 22rem); height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); border-radius: 0 18px 18px 0; visibility: hidden; transform: translateX(-105%); transition: transform .24s ease; box-shadow: 20px 0 50px rgba(10,25,40,.22); }
             body.vn-menu-open { overflow: hidden; }
-            body.vn-menu-open .vn-sidebar { visibility: visible; transform: translateY(0); }
+            body.vn-menu-open .vn-sidebar { visibility: visible; transform: translateX(0); }
             .vn-sidebar-backdrop { display: block; visibility: hidden; position: fixed; inset: 0; z-index: 55; padding: 0; border: 0; background: rgba(8,20,34,.52); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
             body.vn-menu-open .vn-sidebar-backdrop { visibility: visible; opacity: 1; pointer-events: auto; }
             /* Phones: Home shows the logo; other pages show Back and the page name, like a phone app. */
@@ -155,10 +159,16 @@
             .vn-main-content { padding: 16px 14px 22px; }
             /* 16px fields stop iPhones zooming in when a field is tapped. */
             .vn-main-content input:not([type=checkbox]):not([type=radio]):not([type=file]), .vn-main-content select, .vn-main-content textarea { font-size: 16px; }
-            .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
-            .vn-mobile-nav a, .vn-mobile-nav button { display: flex; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 10px; background: transparent; color: #657386; font-size: 10px; font-weight: 650; text-decoration: none; }
+            .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
+            .vn-mobile-nav a, .vn-mobile-nav button, .vn-mobile-nav summary { display: flex; list-style: none; cursor: pointer; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 10px; background: transparent; color: #657386; font-size: 10px; font-weight: 650; text-decoration: none; }
             .vn-mobile-nav .vn-mobile-icon { font-size: 18px; line-height: 1; }
-            .vn-mobile-nav a, .vn-mobile-nav button { font-size: 11.5px; }
+            .vn-mobile-nav a, .vn-mobile-nav button, .vn-mobile-nav summary { font-size: 11.5px; }
+            .vn-mobile-nav summary::-webkit-details-marker { display: none; }
+            /* The Courts panel above the bottom bar: full-width rows, not the bar's small stacked buttons. */
+            .vn-mobile-nav .vn-courts-panel a { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 52px; padding: 0 12px; color: #1e293b; font-size: 15px; font-weight: 600; }
+            .vn-mobile-nav .vn-courts-panel a.is-current { color: #126c64; background: #e8f4f2; }
+            .vn-mobile-nav .vn-courts-panel .vn-courts-icon { display: flex; height: 36px; width: 36px; align-items: center; justify-content: center; border-radius: 10px; background: #e8f4f2; color: #16776e; }
+            .vn-mobile-nav .vn-courts-panel a.vn-courts-all { min-height: 44px; margin-top: 4px; border-top: 1px solid #eef2f6; border-radius: 0; color: #16776e; font-size: 14px; }
             /* Notch side insets (landscape iPhones) now that the page uses viewport-fit=cover. */
             body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
             /* Header menus open as a full-width panel under the header, so none runs off the screen. */
@@ -285,6 +295,11 @@
                 <a href="{{ route('dashboard') }}" class="mr-2 hidden shrink-0 rounded-lg md:inline-flex lg:mr-3" aria-label="VakilNiti home">
                     <x-brand tone="dark" :size="34" />
                 </a>
+                {{-- Phones: the full menu opens from the top left (computers have the menu in this header). --}}
+                <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the menu') }}" aria-controls="vn-sidebar" aria-expanded="false"
+                        class="{{ $headerIcon }} -ml-1.5 md:hidden">
+                    <x-icon name="menu" :size="22" />
+                </button>
                 <a href="{{ route('dashboard') }}" class="vn-header-brand shrink-0 rounded-lg" aria-label="VakilNiti home">
                     <x-brand :size="32" />
                 </a>
@@ -484,7 +499,7 @@
                                     <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">{{ __('All courts') }}</a></li>
                                     <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">{{ __('Supreme Court') }}</a></li>
                                     <li><a href="{{ route('courts.high-courts') }}" class="{{ $footerLink }}">{{ __('High Courts') }}</a></li>
-                                    <li><a href="{{ route('courts.display-boards') }}" class="{{ $footerLink }}">{{ __('Display boards') }}</a></li>
+                                    <li><a href="{{ route('tribunals.index') }}" class="{{ $footerLink }}">{{ __('Tribunals') }}</a></li>
                                 </ul>
                             </div>
                             <div>
@@ -518,9 +533,27 @@
 <nav class="vn-mobile-nav" aria-label="{{ __('Quick navigation') }}">
     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-current' : '' }}"><x-icon name="home" :size="21" class="vn-mobile-icon" /><span>{{ __('Home') }}</span></a>
     @auth
-        <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*', 'today', 'tasks*', 'case-calendar*', 'hearings*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>{{ __('Cases') }}</span></a>
+        <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*', 'tasks*', 'case-calendar*', 'hearings*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>{{ __('Cases') }}</span></a>
     @endauth
-    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*', 'tribunals*', 'court-catalogue*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></a>
+    {{-- Courts: one tap lists every court; the panel opens above the bar. --}}
+    <details class="vn-profile-menu">
+        <summary class="{{ request()->is('courts*', 'tribunals*', 'court-catalogue*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></summary>
+        <div class="vn-courts-panel fixed inset-x-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+            <p class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Courts') }}</p>
+            @foreach([
+                [__('Supreme Court'), route('courts.supreme-court'), 'pillars', 'courts/supreme-court*'],
+                [__('Delhi High Court'), route('courts.delhi-high-court'), 'building', 'courts/delhi-high-court*'],
+                [__('High Courts'), route('courts.high-courts'), 'building', 'courts/high-courts*'],
+                [__('Delhi District Courts'), route('courts.delhi-district-courts'), 'gavel', 'courts/delhi-district-courts*'],
+                [__('Tribunals'), route('tribunals.index'), 'scale', 'tribunals*'],
+            ] as [$courtLabel, $courtUrl, $courtIcon, $courtPattern])
+                <a href="{{ $courtUrl }}" @if(request()->is($courtPattern)) aria-current="page" class="is-current" @endif>
+                    <span class="vn-courts-icon"><x-icon :name="$courtIcon" :size="19" /></span>{{ $courtLabel }}
+                </a>
+            @endforeach
+            <a href="{{ route('courts.index') }}" class="vn-courts-all">{{ __('All courts and eCourts services') }} &rarr;</a>
+        </div>
+    </details>
     @auth
         <a href="{{ route('notifications.index') }}" class="relative {{ request()->is('notifications*') ? 'is-current' : '' }}" aria-label="{{ __('Alerts') }}{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' '.__('unread') : '' }}">
             <x-icon name="bell" :size="21" class="vn-mobile-icon" /><span>{{ __('Alerts') }}</span>
@@ -532,7 +565,6 @@
         <a href="{{ route('bare-acts.index') }}" class="{{ request()->is('bare-acts*') ? 'is-current' : '' }}"><x-icon name="book" :size="21" class="vn-mobile-icon" /><span>{{ __('Bare Acts') }}</span></a>
         <a href="{{ route('login') }}" data-vn-auth-open="login"><x-icon name="user" :size="21" class="vn-mobile-icon" /><span>{{ __('Log in') }}</span></a>
     @endauth
-    <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the full menu') }}" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>{{ __('Menu') }}</span></button>
 </nav>
 
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">

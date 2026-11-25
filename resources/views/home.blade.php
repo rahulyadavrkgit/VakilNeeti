@@ -44,9 +44,6 @@
                 <a href="{{ route('tasks.index') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 font-semibold {{ $today['tasks'] ? 'bg-[#e6b84a] text-[#142235]' : 'bg-white/10 text-white/80' }}">
                     <span class="tabular-nums">{{ $today['tasks'] }}</span> {{ trans_choice('task due|tasks due', $today['tasks']) }}
                 </a>
-                <a href="{{ route('court-day') }}" class="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 font-semibold text-white hover:bg-white/15" title="{{ __('Today and tomorrow on one page') }}">
-                    <x-icon name="court-day" :size="16" /> {{ __('Court day') }}
-                </a>
             </div>
             @if($today['listed']->isNotEmpty())
                 {{-- Read from the Delhi High Court's published cause lists: where each matter is, and its item number. --}}
@@ -159,7 +156,7 @@
                     <h2 id="upcoming-hearings-heading" class="text-lg font-semibold text-slate-900">{{ __('Upcoming hearings') }}</h2>
                     <div class="flex gap-2">
                         <a href="{{ route('cases.calendar', ['view' => 'week']) }}" class="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('Calendar') }}</a>
-                        <a href="{{ route('hearings.create') }}" class="inline-flex min-h-9 items-center rounded-lg bg-[#16776e] px-3 text-sm font-semibold text-white hover:bg-[#125f58]">{{ __('+ Add hearing') }}</a>
+                        <a href="{{ route('hearings.create') }}" data-sheet="{{ route('sheets.next-date') }}" class="inline-flex min-h-9 items-center rounded-lg bg-[#16776e] px-3 text-sm font-semibold text-white hover:bg-[#125f58]">{{ __('+ Add hearing') }}</a>
                     </div>
                 </div>
 

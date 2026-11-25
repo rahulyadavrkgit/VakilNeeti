@@ -105,8 +105,8 @@ TEXT;
         $this->assertSame([$listed->id], $diary->viewData('cases')->pluck('id')->all());
         $this->assertStringContainsString('Rashtriya Mukti Morcha', $diary->viewData('shareText'));
 
-        // Court day lists it for tomorrow even though no hearing was saved for that day.
-        $this->get(route('court-day'))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Delhi HC cause list', 'Court room', '1', 'My item', '3', 'Join VC']);
+        // My cases shows it for tomorrow, with the cause list details, even though no hearing was saved for that day.
+        $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Join VC', 'Delhi HC cause list', '3']);
 
         $this->actingAs($other)->get(route('dashboard'))->assertOk()->assertDontSee('cause lists');
 

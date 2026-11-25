@@ -13,7 +13,7 @@
     @endif
 
     <x-page-header title="Tasks & Reminders" subtitle="Your work, deadlines and reminders.">
-        <a href="{{ route('tasks.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Create task</a>
+        <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Create task</a>
     </x-page-header>
 
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

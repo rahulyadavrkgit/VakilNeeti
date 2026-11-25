@@ -8,21 +8,23 @@
     $accountRole = old('account_role');
     $companyRoles = ['law_firm', 'commercial_company'];
     $accountType = in_array($accountRole, $companyRoles, true) ? 'company' : 'individual';
-    $initialStep = $errors->has('account_role') ? 1 : (
-        $errors->has('onboarding_features') ||
-        $errors->has('onboarding_features.*') ||
-        $errors->has('onboarding_other') ? 2 : (
-            $errors->any() ? 3 : 0
-        )
-    );
+    // After a failed submit, open the step that holds the first problem.
+    $initialStep = match (true) {
+        $errors->has('account_role') => 1,
+        $errors->has('onboarding_features') || $errors->has('onboarding_features.*') || $errors->has('onboarding_other') => 2,
+        $errors->has('password') && $errors->count() === 1 => 4,
+        $errors->any() => 3,
+        default => 0,
+    };
 @endphp
 
-<div class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-transparent p-3 sm:p-5">
+{{-- Sign-up runs as a pop-up over a dimmed page, one short step at a time. --}}
+<div class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#142235]/70 p-3 backdrop-blur-sm sm:p-5">
     <div role="dialog"
          aria-modal="true"
          aria-labelledby="account-setup-title"
          tabindex="-1"
-         class="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl bg-white px-4 pb-5 pt-12 shadow-2xl sm:max-h-[85vh] sm:p-6 lg:p-7">
+         class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl bg-white px-4 pb-6 pt-5 shadow-2xl sm:p-7">
     
 
     @if($errors->any())
@@ -34,15 +36,15 @@
         </div>
     @endif
 
-    <div class="relative z-10 mx-auto mb-5 flex h-3 w-24 items-center justify-center gap-2"
-     role="progressbar" style="display:flex !important; visibility:visible !important; opacity:1 !important;"
+    <div class="relative z-10 mx-auto mb-6 mt-2 flex items-center justify-center gap-1.5"
+     role="progressbar"
      aria-label="Setup progress"
      aria-valuemin="1"
-     aria-valuemax="4"
+     aria-valuemax="5"
      aria-valuenow="{{ $initialStep + 1 }}">
-    @foreach(range(0, 3) as $step)
+    @foreach(range(0, 4) as $step)
         <span data-progress-segment="{{ $step }}"
-              class="block h-1.5 w-4 shrink-0 rounded-full {{ $step <= $initialStep ? 'bg-amber-500' : 'bg-slate-200' }}">
+              class="block h-1.5 w-10 shrink-0 rounded-full {{ $step <= $initialStep ? 'bg-[#16776e]' : 'bg-slate-200' }}">
         </span>
     @endforeach
 </div>
@@ -53,73 +55,67 @@
         @csrf
         <button type="button" data-back data-top-back hidden
                 aria-label="Go to previous step"
-                class="absolute left-4 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
+                class="absolute left-4 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16776e] focus-visible:ring-offset-2">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M19 12H5m7 7-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
 
-        <section data-onboarding-step="0" class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-9">
-            <div class="mb-3 flex justify-center"><img src="{{ asset('images/logo.svg') }}" alt="VakilNiti" class="h-12 w-auto max-w-[220px] object-contain"></div>
-            <h2 tabindex="-1" class="mt-3 text-xl font-bold text-slate-900">Welcome to VakilNiti</h2>
-            <p class="mx-auto mt-3 max-w-xl text-slate-600">
-                Let's find out how we can help you with your cases.
-            </p>
-            <button type="button" data-next class="mt-6 rounded-lg bg-amber-400 px-8 py-3 font-semibold text-slate-950 hover:bg-amber-300 transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm">
-                Get started
-            </button>
+        @php
+            $roleIcons = ['independent_practitioner' => 'user', 'senior_counsel' => 'scale', 'advocate' => 'people', 'student_intern' => 'book', 'law_firm' => 'building', 'commercial_company' => 'briefcase'];
+            $featureIcons = ['personalized_hearings' => 'calendar', 'daily_orders' => 'document', 'invoices_expenses_documents' => 'receipt', 'judgment_research' => 'search', 'mis_reports' => 'chart', 'other' => 'list'];
+            $tile = 'relative flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white p-4 text-center transition hover:border-[#16776e] has-[:checked]:border-[#16776e] has-[:checked]:bg-teal-50 has-[:checked]:ring-1 has-[:checked]:ring-[#16776e] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#16776e]';
+            $tileIcon = 'flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition';
+            $primary = 'inline-flex min-h-11 items-center justify-center rounded-xl bg-[#16776e] px-8 font-semibold text-white shadow-sm transition hover:bg-[#125f58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16776e] focus-visible:ring-offset-2';
+        @endphp
+
+        <section data-onboarding-step="0" class="py-6 text-center sm:py-10">
+            <img src="{{ asset('images/logo-mark.svg') }}" alt="" class="mx-auto h-20 w-20">
+            <h2 id="account-setup-title" tabindex="-1" class="outline-none mt-5 font-serif text-2xl font-bold text-slate-900">Welcome to VakilNiti!</h2>
+            <p class="mx-auto mt-2 max-w-md text-slate-600">Let's find out how we can help you, in less than a minute.</p>
+            <button type="button" data-next class="{{ $primary }} mt-8">Get started</button>
         </section>
 
         <section data-onboarding-step="1" hidden class="space-y-5">
             <div class="text-center">
-                <h2 tabindex="-1" class="text-2xl font-bold text-slate-900">Which role best describes you?</h2>
-                <p class="mt-2 text-slate-600">Choose the closest match. You can update your practice details later.</p>
+                <h2 tabindex="-1" class="outline-none text-2xl font-bold text-slate-900">I describe myself as</h2>
+                <p class="mt-1.5 text-slate-600">Select the role that applies best to you.</p>
             </div>
             <fieldset>
                 <legend class="sr-only">Choose your role</legend>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     @foreach($accountRoles as $value => $label)
-                        <label class="flex min-h-28 cursor-pointer items-center rounded-xl border border-slate-200 bg-white p-5 transition hover:border-amber-400 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50 has-[:checked]:ring-1 has-[:checked]:ring-amber-500">
-                            <input type="radio" name="account_role" value="{{ $value }}" @checked($accountRole === $value)
-                                   class="mr-3 border-slate-300 text-amber-600 focus:ring-amber-500">
-                            <span>
-                                <span class="block font-semibold text-slate-900">{{ $label }}</span>
-                                <span class="mt-1 block text-sm text-slate-500">
-                                    @if($value === 'law_firm' || $value === 'commercial_company')
-                                        Set up a company workspace and business profile.
-                                    @elseif($value === 'student_intern')
-                                        Create a workspace for learning and legal work experience.
-                                    @else
-                                        Set up your individual advocate profile and practice.
-                                    @endif
-                                </span>
-                            </span>
+                        <label class="group {{ $tile }}">
+                            <input type="radio" name="account_role" value="{{ $value }}" @checked($accountRole === $value) class="sr-only">
+                            <span class="{{ $tileIcon }} group-has-[:checked]:bg-[#16776e] group-has-[:checked]:text-white"><x-icon :name="$roleIcons[$value] ?? 'user'" :size="22" /></span>
+                            <span class="text-sm font-semibold leading-snug text-slate-900">{{ $label }}</span>
                         </label>
                     @endforeach
                 </div>
-                <p data-role-error role="alert" class="mt-3 text-sm text-red-600" hidden>Please choose the role that best describes you.</p>
-                @error('account_role') <span class="mt-2 block text-sm text-red-600">{{ $message }}</span> @enderror
+                <p data-role-error role="alert" class="mt-3 text-center text-sm text-red-600" hidden>Please choose the role that best describes you.</p>
+                @error('account_role') <span class="mt-2 block text-center text-sm text-red-600">{{ $message }}</span> @enderror
             </fieldset>
+            <p class="text-center text-sm text-slate-500">You can always change this later.</p>
             <div class="flex justify-center">
-                
-                <button type="button" data-next class="rounded-lg bg-amber-400 px-6 py-2.5 font-semibold text-slate-950 hover:bg-amber-300 transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm">Continue</button>
+                <button type="button" data-next class="{{ $primary }}">Next</button>
             </div>
         </section>
 
         <section data-onboarding-step="2" hidden class="space-y-5">
             <div class="text-center">
-                <h2 tabindex="-1" class="text-2xl font-bold text-slate-900">What would you like to use?</h2>
-                <p class="mt-2 text-slate-600">Select every feature that is useful to your work.</p>
+                <h2 tabindex="-1" class="outline-none text-2xl font-bold text-slate-900">What brings you to VakilNiti?</h2>
+                <p class="mt-1.5 text-slate-600">Select all the features that apply to you.</p>
             </div>
             <fieldset>
                 <legend class="sr-only">Choose the features you need</legend>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     @foreach($onboardingFeatures as $value => $label)
-                        <label class="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-5 text-center transition hover:border-amber-400 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50 has-[:checked]:ring-1 has-[:checked]:ring-amber-500">
+                        <label class="group {{ $tile }}">
                             <input type="checkbox" name="onboarding_features[]" value="{{ $value }}"
-                                   @checked(in_array($value, (array) old('onboarding_features', []), true))
-                                   class="mb-3 h-5 w-5 rounded border-slate-300 text-amber-600 focus:ring-amber-500">
-                            <span class="font-medium text-slate-800">{{ $label }}</span>
+                                   @checked(in_array($value, (array) old('onboarding_features', []), true)) class="sr-only">
+                            <span class="absolute right-2.5 top-2.5 hidden h-5 w-5 items-center justify-center rounded-full bg-[#16776e] text-white group-has-[:checked]:flex"><x-icon name="check" :size="13" /></span>
+                            <span class="{{ $tileIcon }} group-has-[:checked]:bg-[#16776e] group-has-[:checked]:text-white"><x-icon :name="$featureIcons[$value] ?? 'list'" :size="22" /></span>
+                            <span class="text-sm font-semibold leading-snug text-slate-900">{{ $label }}</span>
                         </label>
                     @endforeach
                 </div>
@@ -129,21 +125,20 @@
                               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">{{ old('onboarding_other') }}</textarea>
                     @error('onboarding_other') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
-                <p data-features-error role="alert" class="mt-3 text-sm text-red-600" hidden>Select at least one feature to continue.</p>
-                @error('onboarding_features') <span class="mt-2 block text-sm text-red-600">{{ $message }}</span> @enderror
-                @error('onboarding_features.*') <span class="mt-2 block text-sm text-red-600">{{ $message }}</span> @enderror
+                <p data-features-error role="alert" class="mt-3 text-center text-sm text-red-600" hidden>Select at least one feature to continue.</p>
+                @error('onboarding_features') <span class="mt-2 block text-center text-sm text-red-600">{{ $message }}</span> @enderror
+                @error('onboarding_features.*') <span class="mt-2 block text-center text-sm text-red-600">{{ $message }}</span> @enderror
             </fieldset>
-            <p class="text-center text-sm text-slate-500">You can adjust your workspace preferences later.</p>
+            <p class="text-center text-sm text-slate-500">You can always change this later.</p>
             <div class="flex justify-center">
-                
-                <button type="button" data-next class="rounded-lg bg-amber-400 px-6 py-2.5 font-semibold text-slate-950 hover:bg-amber-300 transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm">Continue</button>
+                <button type="button" data-next class="{{ $primary }}">Next</button>
             </div>
         </section>
 
         <section data-onboarding-step="3" hidden class="space-y-5">
-            <div>
-                <h2 tabindex="-1" class="text-2xl font-bold text-slate-900">Account information</h2>
-                <p class="mt-2 text-slate-600">Add your account details to set up your workspace.</p>
+            <div class="text-center">
+                <h2 tabindex="-1" class="outline-none text-2xl font-bold text-slate-900">Basic information</h2>
+                <p class="mt-1.5 text-slate-600">Details for an accurate listing of your cases.</p>
             </div>
 
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -263,10 +258,33 @@
             </div>
 
             <div class="flex justify-center">
-                
-                <button type="submit" class="rounded-lg bg-amber-400 px-7 py-3 font-semibold text-slate-950 hover:bg-amber-300 transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm">
-                    Complete signup
-                </button>
+                <button type="button" data-next class="{{ $primary }}">Next</button>
+            </div>
+        </section>
+
+        {{-- Last step: a password, so next time sign-in is email and password, without waiting for a code. --}}
+        <section data-onboarding-step="4" hidden class="space-y-5">
+            <div class="text-center">
+                <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-[#16776e]"><x-icon name="shield" :size="26" /></span>
+                <h2 tabindex="-1" class="outline-none mt-4 text-2xl font-bold text-slate-900">Set your password</h2>
+                <p class="mt-1.5 text-slate-600">Next time, sign in with <span class="font-semibold text-slate-800">{{ $pending['email'] }}</span> and this password. No code needed.</p>
+            </div>
+            <div class="mx-auto grid max-w-sm gap-3">
+                <label class="text-sm font-medium text-slate-700">
+                    Password <span class="text-red-600">*</span>
+                    <input type="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password"
+                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                    @error('password') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
+                </label>
+                <label class="text-sm font-medium text-slate-700">
+                    Confirm password <span class="text-red-600">*</span>
+                    <input type="password" name="password_confirmation" required minlength="8" maxlength="72" autocomplete="new-password"
+                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                </label>
+                <p class="text-xs text-slate-500">At least 8 characters. Forgot it later? Sign in with a code sent to your email.</p>
+            </div>
+            <div class="flex justify-center">
+                <button type="submit" class="{{ $primary }}">Complete signup</button>
             </div>
         </section>
     </form>
@@ -328,7 +346,7 @@
             });
             progressBar.setAttribute('aria-valuenow', String(currentStep + 1));
             progressSegments.forEach(function (segment, stepIndex) {
-                segment.classList.toggle('bg-amber-500', stepIndex <= currentStep);
+                segment.classList.toggle('bg-[#16776e]', stepIndex <= currentStep);
                 segment.classList.toggle('bg-slate-200', stepIndex > currentStep);
             });
             steps[currentStep].querySelector('h2, h3, button')?.focus({ preventScroll: true });
@@ -351,6 +369,16 @@
                     if (!otherInput.disabled && !otherInput.value.trim()) {
                         otherInput.required = true;
                         otherInput.reportValidity();
+                        return;
+                    }
+                }
+
+                // Basic information: every shown field must be valid before the password step.
+                if (currentStep === 3) {
+                    const invalid = Array.from(steps[3].querySelectorAll('input, select, textarea'))
+                        .find(function (field) { return !field.disabled && !field.closest('[hidden]') && !field.checkValidity(); });
+                    if (invalid) {
+                        invalid.reportValidity();
                         return;
                     }
                 }

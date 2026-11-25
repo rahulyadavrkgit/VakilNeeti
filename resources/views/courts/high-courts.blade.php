@@ -16,7 +16,7 @@
             <x-icon name="upload" :size="18" /> e-Filing
         </a>
         <a href="{{ route('courts.display-boards') }}" class="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 hover:border-[#16776e]">
-            <x-icon name="board" :size="18" /> Display boards
+            <x-icon name="board" :size="18" /> High Court display boards
         </a>
     </div>
 

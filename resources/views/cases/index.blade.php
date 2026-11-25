@@ -365,7 +365,7 @@
                     <p class="font-semibold text-slate-800">Your case diary is empty.</p>
                     <p class="mt-1 text-sm text-slate-500">
                         <a href="{{ route('cases.find') }}" class="font-semibold text-[#16776e] hover:underline">Import your cases from eCourts</a>
-                        or <a href="{{ route('cases.manual') }}" class="font-semibold text-[#16776e] hover:underline">add one yourself</a>.
+                        or <a href="{{ route('cases.manual') }}" data-sheet="{{ route('sheets.add-case') }}" class="font-semibold text-[#16776e] hover:underline">add one yourself</a>.
                     </p>
                 @endif
             </li>

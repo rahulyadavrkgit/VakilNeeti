@@ -39,8 +39,8 @@ class MobileLayoutTest extends TestCase
         $sideMenu = substr($html, (int) strpos($html, 'id="vn-nav"'), (int) strpos($html, 'data-filter-empty') - (int) strpos($html, 'id="vn-nav"'));
         $accountMenu = substr($html, (int) strpos($html, 'aria-label="Account menu"'), 4000);
 
-        // Workspace 6, Courts 7, Library 4, More 4. Court day, Tasks and the other Cases pages are in the Cases bar.
-        $this->assertSame(21, substr_count($sideMenu, 'class="vn-nav-link'));
+        // Workspace 6, Courts 6, Library 4, More 4. Tasks and the other Cases pages are in the Cases bar; boards are in each court.
+        $this->assertSame(20, substr_count($sideMenu, 'class="vn-nav-link'));
         $this->assertStringContainsString('href="'.route('tribunals.index').'"', $sideMenu);
         $this->assertStringNotContainsString('Case dashboard', $sideMenu);
         $this->assertStringNotContainsString('eCourts services', $sideMenu);
@@ -48,7 +48,6 @@ class MobileLayoutTest extends TestCase
 
         // Cases pages are tabs inside Cases; settings and appearance in the account menu.
         $this->assertStringContainsString('href="'.route('cases.calendar').'"', $html);
-        $this->assertStringContainsString('href="'.route('court-day').'"', $html);
         $this->assertStringContainsString('data-theme-switch', $accountMenu);
         $this->assertStringContainsString('vn-header-dropdown', $accountMenu);
     }

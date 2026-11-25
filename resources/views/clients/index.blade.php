@@ -11,8 +11,8 @@
 <div class="space-y-6">
     <x-page-header title="Clients" subtitle="People and companies you act for, linked to their cases.">
         <a href="{{ route('clients.from-cases') }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Add from my cases</a>
-        <a href="{{ route('clients.create', ['type' => 'company']) }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Company</a>
-        <a href="{{ route('clients.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Person</a>
+        <a href="{{ route('clients.create', ['type' => 'company']) }}" data-sheet="{{ route('sheets.client', ['type' => 'company']) }}" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Company</a>
+        <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Person</a>
     </x-page-header>
 
     <nav aria-label="Client type" class="-mx-1 flex gap-1 overflow-x-auto border-b border-slate-200 pb-px">
@@ -68,7 +68,7 @@
     @if($clients->isEmpty())
         <div class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
             <p class="font-semibold text-slate-700">No clients found.</p>
-            <p class="mt-1 text-sm text-slate-500"><a href="{{ route('clients.create') }}" class="font-semibold text-[#16776e] hover:underline">Add your first client</a>.</p>
+            <p class="mt-1 text-sm text-slate-500"><a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="font-semibold text-[#16776e] hover:underline">Add your first client</a>.</p>
         </div>
     @else
         <div class="flex items-center justify-between gap-3">

@@ -13,7 +13,6 @@
             <h1 class="text-2xl font-semibold text-slate-900">{{ $title }}</h1>
             <p class="mt-1 text-sm text-slate-600">{{ $intro }}</p>
         </div>
-        <a href="{{ route('courts.display-boards') }}" class="text-sm font-semibold text-[#16776e] hover:underline">All display boards &rarr;</a>
     </div>
 
     @if($showCnrSearch ?? false)

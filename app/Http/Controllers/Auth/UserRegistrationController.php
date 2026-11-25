@@ -391,8 +391,8 @@ class UserRegistrationController extends Controller
             'full_name' => ['required', 'string', 'max:150'],
             // Optional for now: used for calls, client messages and team invites. Phone sign-in comes later.
             'mobile' => ['nullable', 'string', 'regex:/^\+91[6-9][0-9]{9}$/', 'unique:users,mobile'],
-            // From now on the advocate signs in with the email and this password (a code only as a fallback).
-            'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers(), 'max:72'],
+            // Set in the last sign-up step, so the advocate signs in with email and password (a code only as a fallback).
+            'password' => ['required', 'string', 'confirmed', Password::min(8), 'max:72'],
         ];
 
         $accountRole = $request->input('account_role');
@@ -439,6 +439,8 @@ class UserRegistrationController extends Controller
             'region.in' => 'Select a State or Union Territory from the list.',
             'mobile.regex' => 'Enter a 10-digit Indian mobile number, or leave it empty.',
             'mobile.unique' => 'Another account already uses this mobile number.',
+            'password.required' => 'Choose a password to sign in with next time.',
+            'password.confirmed' => 'The two passwords do not match.',
         ]);
         try {
 
@@ -447,8 +449,9 @@ class UserRegistrationController extends Controller
                     'name' => $validated['full_name'],
                     'email' => $pending['email'],
                     'mobile' => $validated['mobile'] ?? null,
-                    'password' => Hash::make($validated['password']),
-                    'password_set_at' => now(),
+                    // Without a chosen password the account gets an unusable random one until it sets its own.
+                    'password' => Hash::make(filled($validated['password'] ?? null) ? $validated['password'] : Str::random(40)),
+                    'password_set_at' => filled($validated['password'] ?? null) ? now() : null,
                     'email_verified_at' => ! ($pending['otp_bypassed'] ?? false) ? now() : null,
                     'account_type' => $accountType,
                     'account_role' => $validated['account_role'],
@@ -513,7 +516,7 @@ class UserRegistrationController extends Controller
         }
 
         return redirect('/')
-            ->with('auth_login_success', 'Your account is ready. Next time, sign in with a code sent to your email.');
+            ->with('auth_login_success', 'Your account is ready. Next time, sign in with your email and password.');
 
     }
 

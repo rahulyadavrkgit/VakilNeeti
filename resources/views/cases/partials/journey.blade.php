@@ -93,5 +93,5 @@
             <button type="submit" class="min-h-11 rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">Link</button>
         </form>
     @endif
-    <a href="{{ route('cases.manual') }}" class="mt-2 inline-block text-xs font-semibold text-[#16776e] hover:underline print:hidden">+ Add the other court's case first</a>
+    <a href="{{ route('cases.manual') }}" data-sheet="{{ route('sheets.add-case') }}" class="mt-2 inline-block text-xs font-semibold text-[#16776e] hover:underline print:hidden">+ Add the other court's case first</a>
 </section>
