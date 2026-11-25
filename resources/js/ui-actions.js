@@ -783,10 +783,18 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
             tab.tabIndex = selected ? 0 : -1;
 
             if (selected) {
-                tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                const bounds = tabList.getBoundingClientRect();
+                const target = tab.getBoundingClientRect();
+
+                // Reveal the tab inside its pill row without moving the page.
+                if (target.left < bounds.left) {
+                    tabList.scrollBy({ left: target.left - bounds.left });
+                } else if (target.right > bounds.right) {
+                    tabList.scrollBy({ left: target.right - bounds.right });
+                }
 
                 if (focus) {
-                    tab.focus();
+                    tab.focus({ preventScroll: true });
                 }
             }
         });
@@ -850,7 +858,7 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
 
     select(
         (fromAddress && panelFor(fromAddress) ? fromAddress : null) || withError?.id || remembered || panels[0].id,
-        { remember: Boolean(fromAddress || withError || remembered) },
+        { remember: false },
     );
 });
 

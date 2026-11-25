@@ -20,7 +20,7 @@
         </div>
     @endif
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <x-panel class="p-5 sm:p-6">
         <h2 class="text-lg font-bold text-slate-900">Case</h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700 sm:col-span-2">
@@ -66,15 +66,21 @@
                 <input name="stage" value="{{ old('stage', $case->stage) }}" maxlength="255" placeholder="e.g. Evidence" class="{{ $field }}">
             </label>
         </div>
-    </section>
+    </x-panel>
 
-    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <x-panel class="p-5 sm:p-6">
         <h2 class="text-lg font-bold text-slate-900">Court</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
-            <label class="text-sm font-medium text-slate-700 sm:col-span-2">
-                Court <span class="text-red-600">*</span>
-                <input name="court_name" value="{{ old('court_name', $case->court_name) }}" required maxlength="255" placeholder="e.g. Principal Judge Family Court, South West, Delhi" class="{{ $field }}">
-            </label>
+        <div class="mt-4">
+            @include('cases.partials.court-picker', ['case' => $case, 'field' => $field, 'label' => 'block text-sm font-medium text-slate-700'])
+            @error('court_name') <p class="mt-1 text-sm text-red-700">{{ $message }}</p> @enderror
+        </div>
+        @php
+            $venueFields = ['court_complex', 'court_room', 'vc_link', 'judge_name'];
+            $venueOpen = collect($venueFields)->contains(fn ($name) => filled(old($name, $case->{$name})) || $errors->has($name));
+        @endphp
+        <details class="mt-3" @if($venueOpen) open @endif>
+            <summary class="min-h-11 cursor-pointer py-3 text-sm font-semibold text-slate-700">Venue and hearing details</summary>
+            <div class="grid gap-4 sm:grid-cols-2">
             <label class="text-sm font-medium text-slate-700">
                 Court complex
                 <input name="court_complex" value="{{ old('court_complex', $case->court_complex) }}" maxlength="255" class="{{ $field }}">
@@ -91,8 +97,9 @@
                 Judge
                 <input name="judge_name" value="{{ old('judge_name', $case->judge_name) }}" maxlength="255" class="{{ $field }}">
             </label>
-        </div>
-    </section>
+            </div>
+        </details>
+    </x-panel>
 
     {{-- Rarely needed details stay folded away; they open when one of them already has a value or an error. --}}
     @php

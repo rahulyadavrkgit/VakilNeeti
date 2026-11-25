@@ -3,7 +3,7 @@
 
     // Few, plain entries: each section's own pages are reached from tabs inside it.
     $groups = [
-        'workspace' => $isActive('/', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
+        'workspace' => $isActive('/', 'today', 'admin', 'admin/*', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
         'courts' => $isActive('courts*', 'court-catalogue*', 'tribunals*', 'court-integrations*'),
         'library' => $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*'),
         'more' => $isActive('police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'),
@@ -17,7 +17,7 @@
     $link = fn (bool $active): string => 'vn-nav-link'.($active ? ' vn-active' : '');
 @endphp
 
-<div class="px-3 pt-4">
+<div data-nav-search class="px-3 pt-4">
     <label class="flex items-center gap-2 rounded-xl bg-white/10 px-3 text-white/80 focus-within:bg-white/15">
         <x-icon name="search" :size="16" class="text-slate-400" />
         <span class="sr-only">{{ __('Find in menu') }}</span>
@@ -26,7 +26,7 @@
     </label>
 </div>
 
-<nav id="vn-nav" class="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="{{ __('Sections') }}">
+<nav id="vn-nav" class="flex-1 overflow-y-auto px-3 py-4" aria-label="{{ __('Sections') }}">
 
     {{-- WORKSPACE --}}
     <details class="vn-nav-group" data-filter-item data-nav-group="workspace" @if($groups['workspace']) open @endif>
@@ -34,10 +34,14 @@
         <div class="vn-nav-items">
             <a href="{{ route('dashboard') }}" class="{{ $link($isActive('/')) }}"><x-icon name="home" :size="18" />{{ __('Home') }}</a>
             @auth
+                <a href="{{ route('court-day') }}" class="{{ $link($isActive('today')) }}"><x-icon name="calendar" :size="18" />{{ __('Court Day') }}</a>
                 <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases*', 'case-dashboard*', 'hearing-history*')) }}"><x-icon name="briefcase" :size="18" />{{ __('Cases') }}</a>
                 <a href="{{ route('cases.calendar') }}" class="{{ $link($isActive('case-calendar*', 'hearings*')) }}"><x-icon name="calendar" :size="18" />{{ __('Calendar') }}</a>
                 <a href="{{ route('tasks.index') }}" class="{{ $link($isActive('tasks*')) }}"><x-icon name="check" :size="18" />{{ __('Tasks') }}</a>
                 <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*', 'client-management*')) }}"><x-icon name="people" :size="18" />{{ __('Clients') }}</a>
+                @if(auth()->user()->is_admin)
+                    <a href="{{ route('admin.overview') }}" class="{{ $link($isActive('admin', 'admin/*')) }}"><x-icon name="people" :size="18" />{{ __('Account administration') }}</a>
+                @endif
                 @unless(auth()->user()->isTeamMember())
                     <a href="{{ route('billing.index') }}" class="{{ $link($isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')) }}"><x-icon name="receipt" :size="18" />{{ __('Billing') }}</a>
                 @endunless
@@ -55,10 +59,11 @@
     <details class="vn-nav-group" data-filter-item data-nav-group="courts" @if($groups['courts']) open @endif>
         <summary class="vn-nav-group-title"><span>{{ __('Courts') }}</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
         <div class="vn-nav-items">
-            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/display-boards', 'courts/ecourts-services', 'courts/live-board*')) }}"><x-icon name="list" :size="18" />{{ __('All courts') }}</a>
-            <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts*')) }}"><x-icon name="gavel" :size="18" />{{ __('Delhi District Courts') }}</a>
-            <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court*')) }}"><x-icon name="building" :size="18" />{{ __('Delhi High Court') }}</a>
+            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/ecourts-services')) }}"><x-icon name="list" :size="18" />{{ __('All courts') }}</a>
             <a href="{{ route('courts.supreme-court') }}" class="{{ $link($isActive('courts/supreme-court*') || request('level') === 'supreme') }}"><x-icon name="pillars" :size="18" />{{ __('Supreme Court') }}</a>
+            <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court*')) }}"><x-icon name="building" :size="18" />{{ __('Delhi High Court') }}</a>
+            <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts*')) }}"><x-icon name="gavel" :size="18" />{{ __('Delhi District Courts') }}</a>
+            <a href="{{ route('courts.display-boards') }}" class="{{ $link($isActive('courts/display-boards', 'courts/live-board*')) }}"><x-icon name="list" :size="18" />{{ __('Display boards') }}</a>
             <a href="{{ route('tribunals.index') }}" class="{{ $link($isActive('tribunals*', 'court-catalogue*')) }}"><x-icon name="scale" :size="18" />{{ __('Tribunals') }}</a>
         </div>
     </details>
@@ -97,21 +102,76 @@
             saved = JSON.parse(localStorage.getItem('vn-nav-groups') || '{}');
         } catch (error) {}
 
-        document.querySelectorAll('[data-nav-group]').forEach(function (group) {
-            const name = group.dataset.navGroup;
-            const isCurrent = group.open;
+        const groups = [...document.querySelectorAll('[data-nav-group]')];
+        const desktop = window.matchMedia('(min-width: 768px)');
+        const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const current = groups.find(group => group.open);
+        let pinned = null;
+        let closeTimer;
 
-            if (!isCurrent && saved[name] === true) {
-                group.open = true;
-            }
-
-            group.addEventListener('toggle', function () {
-                saved[name] = group.open;
-
-                try {
-                    localStorage.setItem('vn-nav-groups', JSON.stringify(saved));
-                } catch (error) {}
+        const showGroup = active => {
+            window.clearTimeout(closeTimer);
+            groups.forEach(group => { group.open = group === active; });
+        };
+        const applyLayout = () => {
+            pinned = null;
+            window.clearTimeout(closeTimer);
+            groups.forEach(group => {
+                group.open = !desktop.matches && (group === current || saved[group.dataset.navGroup] === true);
             });
+        };
+
+        applyLayout();
+        desktop.addEventListener('change', applyLayout);
+
+        groups.forEach(group => {
+            const summary = group.querySelector('summary');
+            group.addEventListener('pointerenter', event => {
+                if (desktop.matches && canHover.matches && event.pointerType === 'mouse') {
+                    if (pinned !== group) pinned = null;
+                    showGroup(group);
+                }
+            });
+
+            group.addEventListener('pointerleave', event => {
+                if (desktop.matches && canHover.matches && event.pointerType === 'mouse' && pinned !== group) {
+                    closeTimer = window.setTimeout(() => {
+                        if (!group.contains(document.activeElement)) group.open = false;
+                    }, 180);
+                }
+            });
+
+            summary.addEventListener('click', event => {
+                if (desktop.matches) {
+                    event.preventDefault();
+                    pinned = pinned === group || (event.detail === 0 && group.open) ? null : group;
+                    showGroup(pinned);
+                }
+            });
+
+            group.addEventListener('keydown', event => {
+                if (desktop.matches && event.key === 'Escape' && group.open) {
+                    pinned = null;
+                    showGroup(null);
+                    summary.focus();
+                }
+            });
+
+            group.addEventListener('toggle', () => {
+                if (!desktop.matches) {
+                    saved[group.dataset.navGroup] = group.open;
+                    try {
+                        localStorage.setItem('vn-nav-groups', JSON.stringify(saved));
+                    } catch (error) {}
+                }
+            });
+        });
+
+        document.addEventListener('click', event => {
+            if (desktop.matches && !event.target.closest('#vn-nav')) {
+                pinned = null;
+                showGroup(null);
+            }
         });
     })();
 </script>

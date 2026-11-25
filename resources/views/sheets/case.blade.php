@@ -27,10 +27,7 @@
             </select>
         </label>
     </div>
-    <label class="{{ $label }}">
-        {{ __('Court') }}
-        <input type="text" name="court_name" required maxlength="255" placeholder="{{ __('Saket Courts, Delhi High Court…') }}" class="{{ $field }}">
-    </label>
+    @include('cases.partials.court-picker', ['case' => null, 'field' => $field, 'label' => $label])
     <div class="flex items-center justify-between gap-3 pt-1">
         <a href="{{ route('cases.find') }}" class="text-sm font-semibold text-[#16776e] hover:underline">{{ __('Import from eCourts') }}</a>
         <button type="submit" class="min-h-11 rounded-xl bg-[#16776e] px-5 text-sm font-semibold text-white hover:bg-[#125f58]">{{ __('Add case') }}</button>

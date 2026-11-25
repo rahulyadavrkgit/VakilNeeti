@@ -23,6 +23,8 @@
 
     <form method="POST" action="{{ route('admin.login.submit') }}" class="mt-6 space-y-4">
         @csrf
+        @php $setup = request()->boolean('setup') || old('setup') === '1'; @endphp
+        @if($setup)<input type="hidden" name="setup" value="1">@endif
 
         <div>
             <label for="email" class="mb-1 block text-sm font-medium text-slate-700">
@@ -34,6 +36,7 @@
                    class="w-full rounded-lg border-slate-300 text-sm">
         </div>
 
+        @unless($setup)
         <div>
             <label for="password" class="mb-1 block text-sm font-medium text-slate-700">
                 Password
@@ -43,16 +46,12 @@
                    class="w-full rounded-lg border-slate-300 text-sm">
         </div>
 
-        <label class="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" name="remember" value="1"
-                   class="rounded border-slate-300">
-            Remember me
-        </label>
-
+        @endunless
         <button type="submit"
                 class="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
-            Sign in
+            Send verification code
         </button>
     </form>
+    <a href="{{ route('admin.login', $setup ? [] : ['setup' => 1]) }}" class="mt-4 inline-flex min-h-11 items-center text-sm font-semibold underline">{{ $setup ? 'Back to administrator sign-in' : 'Set up a newly granted administrator account' }}</a>
 </div>
 @endsection

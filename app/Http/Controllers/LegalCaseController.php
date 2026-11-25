@@ -7,6 +7,8 @@ use App\Models\CauseListAppearance;
 use App\Models\Client;
 use App\Models\CourtStandSide;
 use App\Models\LegalCase;
+use App\Models\Task;
+use App\Services\CourtIdentity;
 use App\Services\HearingShareText;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -20,9 +22,6 @@ class LegalCaseController extends Controller
     private const HEARING_FILTERS = ['all', 'today', 'tomorrow', 'next7', 'next30', 'past', 'no_upcoming'];
 
     /**
-     * The hearing-date chips on the case list. "next30" still works in links but has no chip:
-     * the calendar covers the month, and the chip only repeated "All" for most diaries.
-     *
      * @var array<string, string>
      */
     private const HEARING_CHIPS = [
@@ -30,8 +29,9 @@ class LegalCaseController extends Controller
         'today' => 'Today',
         'tomorrow' => 'Tomorrow',
         'next7' => 'Next 7 days',
+        'next30' => 'Next 30 days',
         'past' => 'Needs review',
-        'no_upcoming' => 'No date yet',
+        'no_upcoming' => 'No date',
     ];
 
     public function index(Request $request): View
@@ -39,12 +39,14 @@ class LegalCaseController extends Controller
         $request->validate([
             'hearing_filter' => ['nullable', Rule::in(self::HEARING_FILTERS)],
             'tag' => ['nullable', 'integer'],
+            'court' => ['nullable', 'regex:/^[A-Z]{2,4}$/'],
         ]);
 
         $cases = $this->filteredCases($request)
             ->with([
                 'parties',
                 'tags',
+                'causeListAppearances.courtDocument:id,listing_date',
                 'hearings' => fn ($hearingQuery) => $hearingQuery->orderBy('next_hearing_date')->orderBy('hearing_time'),
             ])
             ->withCount('hearings')
@@ -64,7 +66,39 @@ class LegalCaseController extends Controller
             'shareText' => $cases->total() > 0 ? $this->shareText($request) : null,
             'hearingFilter' => $request->input('hearing_filter', 'all'),
             'tags' => CaseTag::query()->orderBy('name')->get(),
+            'yourCourts' => $this->yourCourts(),
         ]);
+    }
+
+    /**
+     * The courts this workspace has cases in, grouped by level: "Delhi HC 21", "Jalaun, UP 20"…
+     * Grouped by the court part of the code ("UPJL", "DLHC", "SC"), which is what the court filter uses.
+     *
+     * @return list<array{key: string, level: ?string, state: ?string, district: ?string, count: int}>
+     */
+    private function yourCourts(): array
+    {
+        return LegalCase::query()
+            ->whereNotNull('court_code')
+            ->get(['court_code', 'court_level', 'state_code', 'district'])
+            ->groupBy(fn (LegalCase $case): string => substr((string) $case->court_code, 0, 4))
+            ->map(fn ($group, string $key): array => [
+                'key' => $key,
+                'level' => $group->first()->court_level,
+                'state' => $group->first()->state_code,
+                'district' => $group->pluck('district')->filter()->first(),
+                'count' => $group->count(),
+            ])
+            ->sortByDesc('count')
+            ->sortBy(fn (array $court): int => match ($court['level']) {
+                'supreme' => 0,
+                'high' => 1,
+                'district' => 2,
+                'tribunal' => 3,
+                default => 4,
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -75,6 +109,7 @@ class LegalCaseController extends Controller
         $request->validate([
             'hearing_filter' => ['nullable', Rule::in(self::HEARING_FILTERS)],
             'tag' => ['nullable', 'integer'],
+            'court' => ['nullable', 'regex:/^[A-Z]{2,4}$/'],
         ]);
 
         $cases = $this->filteredCases($request)
@@ -117,7 +152,7 @@ class LegalCaseController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->caseRules());
+        $validated = $this->courtDefaults($request->validate($this->caseRules()));
         $validated['source_type'] = 'manual';
 
         $case = LegalCase::create($validated);
@@ -143,11 +178,18 @@ class LegalCaseController extends Controller
                     ->orderByDesc('next_hearing_date');
             },
             'notes' => fn ($query) => $query->latest(),
+            'causeListAppearances.courtDocument',
             'appointments' => fn ($query) => $query->orderBy('starts_at'),
             'expenses' => fn ($query) => $query->orderByDesc('expense_date'),
             'timeEntries' => fn ($query) => $query->orderByDesc('entry_date'),
             'documents' => fn ($query) => $query->latest(),
         ]);
+
+        $causeListings = CauseListAppearance::upcomingForCases([$case->id]);
+        $savedDate = $case->hearings->flatMap(fn ($hearing) => collect([$hearing->hearing_date, $hearing->next_hearing_date])
+            ->filter()->map(fn ($date) => ['date' => $date, 'hearing' => $hearing]))
+            ->filter(fn (array $entry): bool => $entry['date']->gte(today()))
+            ->sortBy('date')->first();
 
         return view('cases.show', [
             'case' => $case,
@@ -158,7 +200,11 @@ class LegalCaseController extends Controller
             'folderDocuments' => $case->documents->where('folder_id', $currentFolder?->id)->values(),
             'journey' => $case->journey(),
             'standSide' => CourtStandSide::forCase($case),
-            'causeListings' => CauseListAppearance::upcomingForCases([$case->id]),
+            'causeListings' => $causeListings,
+            'savedDate' => $savedDate,
+            'followUpTeam' => CaseFollowUpController::team($case->user_id)->orderBy('name')->get(['id', 'name']),
+            'followUps' => Task::query()->where('case_id', $case->id)->whereNotNull('assigned_to')
+                ->with('assignee:id,name')->orderBy('due_at')->orderBy('id')->get(),
             'linkableCases' => LegalCase::query()
                 ->where('user_id', $case->user_id)
                 ->whereKeyNot($case->id)
@@ -174,7 +220,7 @@ class LegalCaseController extends Controller
 
     public function update(Request $request, LegalCase $case): RedirectResponse
     {
-        $case->update($request->validate($this->caseRules()));
+        $case->update($this->courtDefaults($request->validate($this->caseRules())));
 
         return redirect()
             ->route('cases.show', $case)
@@ -231,6 +277,40 @@ class LegalCaseController extends Controller
     /**
      * @return array<string, list<mixed>>
      */
+    /**
+     * Tidy the court choice: no State for the Supreme Court, no district above district level, and a
+     * proper name for the Supreme Court or a High Court when no bench was typed.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function courtDefaults(array $validated): array
+    {
+        $level = $validated['court_level'] ?? null;
+
+        if (! $level) {
+            return $validated;
+        }
+
+        if ($level === 'supreme') {
+            $validated['state_code'] = null;
+        }
+
+        if ($level !== 'district') {
+            $validated['district'] = null;
+        }
+
+        if ($level !== 'supreme') {
+            $validated['diary_number'] = null;
+        }
+
+        $validated['court_name'] = filled($validated['court_name'] ?? null)
+            ? $validated['court_name']
+            : CourtIdentity::fullName($level, $validated['state_code'] ?? null);
+
+        return $validated;
+    }
+
     private function caseRules(): array
     {
         return [
@@ -239,7 +319,12 @@ class LegalCaseController extends Controller
             'file_number' => ['nullable', 'string', 'max:100'],
             'cnr_number' => ['nullable', 'string', 'max:255'],
             'case_type' => ['nullable', 'string', 'max:255'],
-            'court_name' => ['required', 'string', 'max:255'],
+            // The bench is needed for district courts and tribunals; the Supreme Court and High Courts are named for you.
+            'court_name' => ['required_unless:court_level,supreme,high', 'nullable', 'string', 'max:255'],
+            'court_level' => ['nullable', Rule::in(array_keys(CourtIdentity::LEVELS))],
+            'state_code' => ['nullable', Rule::in(array_keys(CourtIdentity::states()))],
+            'district' => ['nullable', 'string', 'max:100'],
+            'diary_number' => ['nullable', 'string', 'max:30'],
             'court_complex' => ['nullable', 'string', 'max:255'],
             'court_room' => ['nullable', 'string', 'max:100'],
             'vc_link' => ['nullable', 'url:http,https', 'max:500'],
@@ -278,22 +363,38 @@ class LegalCaseController extends Controller
             $heading .= ' · "'.trim((string) $request->input('search')).'"';
         }
 
-        $today = today()->toDateString();
+        $start = $filter === 'tomorrow' ? today()->addDay() : today();
+        $end = match ($filter) {
+            'today', 'tomorrow' => $start,
+            'next7' => $start->copy()->addDays(6),
+            'next30' => $start->copy()->addDays(29),
+            default => null,
+        };
         $items = $this->filteredCases($request)
-            ->with('hearings')
+            ->with(['hearings', 'causeListAppearances.courtDocument:id,listing_date'])
             ->limit(100)
             ->get()
-            ->map(function (LegalCase $case) use ($today): array {
+            ->map(function (LegalCase $case) use ($start, $end): array {
                 // The nearest date on or after today, from either date on a hearing.
+                $listings = $case->causeListAppearances->map(fn (CauseListAppearance $appearance): array => [
+                    'date' => $appearance->courtDocument?->listing_date?->toDateString(),
+                    'time' => null,
+                    'hearing' => null,
+                    'appearance' => $appearance,
+                ]);
                 $nearest = $case->hearings
                     ->flatMap(fn ($hearing) => [
                         ['date' => $hearing->hearing_date?->toDateString(), 'time' => $hearing->hearing_time, 'hearing' => $hearing],
                         ['date' => $hearing->next_hearing_date?->toDateString(), 'time' => null, 'hearing' => $hearing],
                     ])
-                    ->filter(fn (array $entry): bool => $entry['date'] !== null && $entry['date'] >= $today)
+                    ->concat($listings)
+                    ->filter(fn (array $entry): bool => $entry['date'] !== null
+                        && $entry['date'] >= $start->toDateString()
+                        && (! $end || $entry['date'] <= $end->toDateString()))
                     ->sortBy(fn (array $entry): string => $entry['date'].' '.($entry['time'] ?? '99'))
                     ->first();
                 $hearing = $nearest['hearing'] ?? null;
+                $appearance = $nearest['appearance'] ?? null;
 
                 return HearingShareText::fromEvent([
                     'title' => $case->case_title,
@@ -304,9 +405,9 @@ class LegalCaseController extends Controller
                     'time' => isset($nearest['time']) ? substr((string) $nearest['time'], 0, 5) : null,
                     'court' => $case->court_name,
                     'court_complex' => $case->court_complex,
-                    'court_room' => $hearing?->court_room ?: $case->court_room,
-                    'judge_name' => $hearing?->judge_name ?: $case->judge_name,
-                    'vc_link' => $hearing?->vc_link ?: $case->vc_link,
+                    'court_room' => $hearing?->court_room ?: ($appearance?->court_room ?: $case->court_room),
+                    'judge_name' => $hearing?->judge_name ?: ($appearance?->judge_name ?: $case->judge_name),
+                    'vc_link' => $hearing?->vc_link ?: ($appearance?->vcLink() ?: $case->vc_link),
                     'details' => $hearing?->hearing_stage ?: $case->stage,
                 ]);
             })
@@ -332,6 +433,11 @@ class LegalCaseController extends Controller
             $query->where('case_status', $request->input('case_status'));
         }
 
+        // One court ("UPJL" = Jalaun courts, "DLHC" = Delhi High Court, "SC" = Supreme Court).
+        if ($request->filled('court')) {
+            $query->where('court_code', 'like', $request->string('court')->upper()->toString().'%');
+        }
+
         if ($request->filled('tag')) {
             $query->whereHas('tags', fn ($tagQuery) => $tagQuery->where('case_tags.id', (int) $request->input('tag')));
         }
@@ -347,16 +453,29 @@ class LegalCaseController extends Controller
         $upcoming = $onDates($today);
         $dated = fn ($hearings) => $hearings->where(fn ($dates) => $dates->whereNotNull('hearing_date')->orWhereNotNull('next_hearing_date'));
 
+        $listingDates = fn (string $from, ?string $to = null) => fn ($documents) => $documents
+            ->whereDate('listing_date', '>=', $from)
+            ->when($to, fn ($dates) => $dates->whereDate('listing_date', '<=', $to));
+        $inRange = fn (string $from, string $to) => $query->where(fn ($cases) => $cases
+            ->whereHas('hearings', $onDates($from, $to))
+            ->orWhereHas('causeListAppearances.courtDocument', $listingDates($from, $to)));
+        $listed = fn ($documents) => $documents->whereNotNull('listing_date');
+
         match ($hearingFilter ?? $request->input('hearing_filter', 'all')) {
-            'today' => $query->whereHas('hearings', $onDates($today, $today)),
-            'tomorrow' => $query->whereHas('hearings', $onDates(now()->addDay()->toDateString(), now()->addDay()->toDateString())),
+            'today' => $inRange($today, $today),
+            'tomorrow' => $inRange(now()->addDay()->toDateString(), now()->addDay()->toDateString()),
             // Today and the six days after it, so nothing between today and next week is missed.
-            'next7' => $query->whereHas('hearings', $onDates($today, now()->addDays(6)->toDateString())),
-            'next30' => $query->whereHas('hearings', $onDates($today, now()->addDays(29)->toDateString())),
+            'next7' => $inRange($today, now()->addDays(6)->toDateString()),
+            'next30' => $inRange($today, now()->addDays(29)->toDateString()),
             // Had a date, but every date has passed: the case status needs checking.
-            'past' => $query->whereHas('hearings', $dated)->whereDoesntHave('hearings', $upcoming),
+            'past' => $query->whereIn('case_status', ['pending', 'other'])
+                ->where(fn ($cases) => $cases->whereHas('hearings', $dated)->orWhereHas('causeListAppearances.courtDocument', $listed))
+                ->whereDoesntHave('hearings', $upcoming)
+                ->whereDoesntHave('causeListAppearances.courtDocument', $listingDates($today)),
             // Never had a hearing date.
-            'no_upcoming' => $query->whereDoesntHave('hearings', $dated),
+            'no_upcoming' => $query->whereIn('case_status', ['pending', 'other'])
+                ->whereDoesntHave('hearings', $dated)
+                ->whereDoesntHave('causeListAppearances.courtDocument', $listed),
             default => null,
         };
 

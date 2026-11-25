@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class CaseDocumentFoldersTest extends TestCase
@@ -139,8 +140,17 @@ class CaseDocumentFoldersTest extends TestCase
         $this->post(route('cases.documents.store', $case), ['files' => [$this->pdf('top-level.pdf')]]);
         $this->post(route('cases.documents.store', $case), ['folder_id' => $folder->id, 'files' => [$this->pdf('inside.pdf')]]);
 
-        $this->get(route('cases.show', $case))->assertOk()->assertSee('Orders')->assertSee('top-level.pdf')->assertDontSee('inside.pdf');
-        $this->get(route('cases.show', [$case, 'folder' => $folder->id]))->assertOk()->assertSee('inside.pdf')->assertDontSee('top-level.pdf');
+        // The Documents tab shows one folder at a time (the Timeline lists every file by date).
+        $documentsPanel = fn ($response): string => Str::of($response->assertOk()->getContent())->after('id="case-documents"')->before('id="case-expenses"')->toString();
+
+        $topLevel = $documentsPanel($this->get(route('cases.show', $case)));
+        $this->assertStringContainsString('Orders', $topLevel);
+        $this->assertStringContainsString('top-level.pdf', $topLevel);
+        $this->assertStringNotContainsString('inside.pdf', $topLevel);
+
+        $inFolder = $documentsPanel($this->get(route('cases.show', [$case, 'folder' => $folder->id])));
+        $this->assertStringContainsString('inside.pdf', $inFolder);
+        $this->assertStringNotContainsString('top-level.pdf', $inFolder);
     }
 
     private function actingAsOwnerOfCase(): LegalCase

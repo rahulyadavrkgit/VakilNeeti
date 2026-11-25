@@ -2,6 +2,7 @@ import './location-picker.js';
 import './ui-actions.js';
 import './sheet.js';
 import './offline.js';
+import './court-picker.js';
 
 // Large page-specific modules are only downloaded on the pages that use them.
 if (document.getElementById('vn-pdf-annotator')) {

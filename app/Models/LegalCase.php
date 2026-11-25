@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToUser;
 use App\Services\CourtBenchMatcher;
+use App\Services\CourtIdentity;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class LegalCase extends Model
 {
@@ -49,6 +51,71 @@ class LegalCase extends Model
      */
     private const MOVING_SIDES = ['petitioner', 'appellant', 'plaintiff', 'complainant', 'applicant'];
 
+    protected static function booted(): void
+    {
+        // Which court and state the case belongs to: exact from the CNR, otherwise from the advocate's choice or the court's name.
+        static::saving(function (LegalCase $case): void {
+            $courtChanged = $case->isDirty(['cnr_number', 'court_name', 'court_complex']);
+            $choiceChanged = $case->isDirty(['court_level', 'state_code', 'district']);
+
+            if ($case->exists && ! $courtChanged && ! $choiceChanged && $case->court_level) {
+                return;
+            }
+
+            // A changed court name is read again, unless the advocate picked the court level, state or district just now.
+            if ($courtChanged && ! $choiceChanged) {
+                $case->forceFill(['court_level' => null, 'state_code' => null, 'district' => null, 'court_code' => null]);
+            } elseif ($choiceChanged) {
+                $case->court_code = null;
+            }
+
+            app(CourtIdentity::class)->fill($case);
+        });
+
+        // Every case starts as its own matter; linking an appeal to the lower-court case joins the two (CaseLink).
+        static::creating(function (LegalCase $case): void {
+            $case->matter_id ??= self::nextMatterId((int) $case->user_id);
+        });
+    }
+
+    /**
+     * The next free matter number in this workspace: "VN-0001", "VN-0002"…
+     */
+    public static function nextMatterId(int $userId): string
+    {
+        $sequence = DB::transaction(function () use ($userId): int {
+            $workspace = DB::table('users')->where('id', $userId);
+            $workspace->increment('matter_sequence');
+            $sequence = (int) $workspace->value('matter_sequence');
+
+            if ($sequence !== 1) {
+                return $sequence;
+            }
+
+            $highest = static::query()->withoutGlobalScopes()->withTrashed()
+                ->where('user_id', $userId)
+                ->whereNotNull('matter_id')
+                ->pluck('matter_id')
+                ->map(fn (string $id): int => (int) preg_replace('/\D+/', '', $id))
+                ->max() ?? 0;
+
+            $sequence = $highest + 1;
+            $workspace->update(['matter_sequence' => $sequence]);
+
+            return $sequence;
+        }, 3);
+
+        return 'VN-'.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * "Supreme Court", "Allahabad HC", "Jalaun, UP"…: which court this case is in, at a glance.
+     */
+    public function courtLabel(): ?string
+    {
+        return CourtIdentity::label($this->court_level, $this->state_code, $this->district);
+    }
+
     protected $fillable = [
         'case_title',
         'case_number',
@@ -57,6 +124,10 @@ class LegalCase extends Model
         'case_type',
         'court_name',
         'court_complex',
+        'court_level',
+        'state_code',
+        'district',
+        'diary_number',
         'court_room',
         'vc_link',
         'judge_name',
@@ -149,10 +220,14 @@ class LegalCase extends Model
     }
 
     /**
-     * "Supreme Court", "High Court" or "District Court", read from the court name.
+     * "Supreme Court", "High Court", "District Court" or "Tribunal / Commission".
      */
     public function courtLevel(): string
     {
+        if ($this->court_level && isset(CourtIdentity::LEVELS[$this->court_level])) {
+            return CourtIdentity::LEVELS[$this->court_level];
+        }
+
         $court = mb_strtolower((string) $this->court_name);
 
         return match (true) {

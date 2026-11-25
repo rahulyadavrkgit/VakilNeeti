@@ -13,7 +13,7 @@ trait BelongsToUser
             $user = Auth::user();
 
             // A junior or clerk works in the workspace of the advocate who invited them.
-            if ($user && ! $user->is_admin) {
+            if ($user) {
                 $query->where(
                     $query->getModel()->qualifyColumn('user_id'),
                     method_exists($user, 'workspaceId') ? $user->workspaceId() : $user->id

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CaseWorkspaceController extends Controller
 {
@@ -223,12 +224,16 @@ class CaseWorkspaceController extends Controller
             ->with('success', $message);
     }
 
-    public function downloadDocument(LegalCase $case, CaseDocument $document)
+    public function downloadDocument(Request $request, LegalCase $case, CaseDocument $document): StreamedResponse
     {
         abort_unless($document->case_id === $case->id, 404);
 
         $disk = Storage::disk('local');
         abort_unless($disk->exists($document->storage_path), 404);
+
+        if ($request->boolean('preview') && $document->mime_type === 'application/pdf') {
+            return $disk->response($document->storage_path, $document->original_name, ['Content-Type' => 'application/pdf']);
+        }
 
         return $disk->download(
             $document->storage_path,

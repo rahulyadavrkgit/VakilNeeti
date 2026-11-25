@@ -47,6 +47,7 @@ Homestead.yaml
 /.idea/
 /.nova
 /.vscode/
+/.vs/
 /.zed
 **/.DS_Store
 **/Thumbs.db

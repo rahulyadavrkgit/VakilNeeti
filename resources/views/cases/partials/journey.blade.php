@@ -5,15 +5,28 @@
         ['link_id' => null, 'case' => $case, 'current' => true],
         ...array_map(fn ($step) => $step + ['current' => false], $journey['higher']),
     ];
+    $steps = collect($steps)->sortBy(fn (array $step): int => match ($step['case']->court_level) {
+        'supreme' => 0,
+        'high' => 1,
+        'district' => 2,
+        default => 3,
+    })->values()->all();
     $levelTone = fn (string $level) => match ($level) {
         'Supreme Court' => 'bg-[#142235] text-white',
         'High Court' => 'bg-[#16776e] text-white',
         default => 'bg-slate-200 text-slate-800',
     };
+    // Where the matter is now: the highest court in the chain that is still running.
+    $nowIndex = collect($steps)->keys()->filter(fn ($index) => ! $steps[$index]['case']->closed_at && ! in_array($steps[$index]['case']->case_status, ['disposed', 'closed', 'withdrawn', 'transferred'], true))->first();
 @endphp
 
-<section id="case-journey" class="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-    <h3 class="text-lg font-semibold text-slate-900">Case journey</h3>
+<section id="case-journey" data-tab-panel role="tabpanel" aria-labelledby="tab-case-journey" class="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 class="text-lg font-semibold text-slate-900">Case journey</h3>
+        @if($case->matter_id)
+            <span class="text-xs font-semibold text-slate-500" title="One number for this matter in every court it reaches">Matter <span class="font-bold tabular-nums text-slate-800">{{ $case->matter_id }}</span></span>
+        @endif
+    </div>
 
     @if(count($steps) > 1)
         <ol class="mt-4 grid gap-2 md:grid-flow-col md:auto-cols-fr">
@@ -21,7 +34,16 @@
                 @php $stepCase = $step['case']; @endphp
                 <li class="relative min-w-0 rounded-xl border p-3 {{ $step['current'] ? 'border-[#16776e] bg-teal-50/60 ring-1 ring-[#16776e]' : 'border-slate-200' }}">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $levelTone($stepCase->courtLevel()) }}">{{ $stepCase->courtLevel() }}</span>
+                        <span class="flex min-w-0 items-center gap-1.5">
+                            @if($stepCase->courtLabel())
+                                <x-court-badge :level="$stepCase->court_level" :state="$stepCase->state_code" :district="$stepCase->district" />
+                            @else
+                                <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $levelTone($stepCase->courtLevel()) }}">{{ $stepCase->courtLevel() }}</span>
+                            @endif
+                            @if(count($steps) > 1 && $loop->index === $nowIndex)
+                                <span class="shrink-0 rounded-full border border-[#16776e] px-2 py-0.5 text-xs font-bold text-[#16776e]">Now here</span>
+                            @endif
+                        </span>
                         @if($step['link_id'])
                             <form method="POST" action="{{ route('cases.links.destroy', [$case, $step['link_id']]) }}" data-confirm="Unlink this case? Both cases stay saved." class="print:hidden">
                                 @csrf
@@ -42,25 +64,6 @@
                 </li>
             @endforeach
         </ol>
-    @endif
-
-    @if($journey['connected'])
-        <p class="mt-4 text-xs font-bold uppercase tracking-wide text-slate-500">Connected matters</p>
-        <ul class="mt-1.5 divide-y divide-slate-100">
-            @foreach($journey['connected'] as $connected)
-                <li class="flex items-center justify-between gap-3 py-2">
-                    <a href="{{ route('cases.show', $connected['case']) }}" class="min-w-0 truncate text-sm font-semibold text-[#16776e] hover:underline">
-                        {{ $connected['case']->case_number ?: $connected['case']->case_title }}
-                        <span class="font-normal text-slate-500">· {{ $connected['case']->court_name }}</span>
-                    </a>
-                    <form method="POST" action="{{ route('cases.links.destroy', [$case, $connected['link_id']]) }}" data-confirm="Unlink this connected matter?" class="print:hidden">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-xs text-red-700 hover:underline">Unlink</button>
-                    </form>
-                </li>
-            @endforeach
-        </ul>
     @endif
 
     @if($errors->has('linked_case_id') || $errors->has('link_type'))

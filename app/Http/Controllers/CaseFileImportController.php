@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourtHearing;
+use App\Models\CourtRecordImport;
 use App\Models\LegalCase;
+use App\Models\User;
 use App\Services\EcourtsAppExportParser;
 use App\Services\IcsCalendarParser;
 use Illuminate\Http\RedirectResponse;
@@ -50,9 +53,75 @@ class CaseFileImportController extends Controller
         return max(1, intdiv(min($limits), 1024 ** 2));
     }
 
+    private function recordAttempt(string $kind, string $status, ?int $retry, array $extra = []): CourtRecordImport
+    {
+        $parent = CourtRecordImport::retryParent($retry, $kind);
+
+        return CourtRecordImport::create([
+            'source_name' => $kind === 'app' ? 'eCourts app export' : 'Calendar export',
+            'raw_content' => '', 'import_status' => $status,
+            'parsed_data' => array_filter(['method' => $kind, 'retry_of' => $parent?->id]) + $extra,
+        ]);
+    }
+
+    private function markAttempt(CourtRecordImport $attempt, string $status, array $result = []): void
+    {
+        $data = array_merge($attempt->parsed_data ?? [], $result);
+        $attempt->update(['import_status' => $status, 'parsed_data' => $data]);
+        $attempt->auditRetryOutcome(auth()->id());
+    }
+
+    private function attempt(string $method, string $token): ?CourtRecordImport
+    {
+        return CourtRecordImport::query()->where('import_status', 'preview')->where('parsed_data->method', $method)
+            ->where('parsed_data->token_hash', hash('sha256', $token))->first();
+    }
+
+    private function completeAttempt(CourtRecordImport $attempt, array &$counts, array &$entries, \Closure $import): bool
+    {
+        try {
+            return DB::transaction(function () use ($attempt, &$counts, &$entries, $import): bool {
+                $claimed = CourtRecordImport::query()->whereKey($attempt->id)->where('import_status', 'preview')
+                    ->update(['import_status' => 'processing']);
+                if (! $claimed) {
+                    return false;
+                }
+
+                User::query()->whereKey($attempt->user_id)->lockForUpdate()->firstOrFail();
+                $import();
+                $this->markAttempt($attempt, empty($counts['failed']) ? 'imported' : 'partial', ['counts' => $counts, 'entries' => $entries]);
+
+                return true;
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->failPendingAttempt($attempt, 'The save failed and no changes from this attempt were kept.');
+
+            return false;
+        }
+    }
+
+    private function failPendingAttempt(CourtRecordImport $attempt, string $reason): void
+    {
+        DB::transaction(function () use ($attempt, $reason): void {
+            $pending = CourtRecordImport::query()->where('import_status', 'preview')->lockForUpdate()->find($attempt->id);
+            if ($pending) {
+                $this->markAttempt($pending, 'failed', ['reason' => $reason]);
+            }
+        });
+    }
+
+    public function results(CourtRecordImport $import): View
+    {
+        abort_unless(isset($import->parsed_data['counts']), 404);
+
+        return view('cases.import-results', ['import' => $import, 'entries' => $import->parsed_data['entries'] ?? []]);
+    }
+
     public function ecourtsPreview(Request $request, EcourtsAppExportParser $parser): View
     {
-        $request->validate([
+        $validated = $request->validate([
+            'retry' => ['nullable', 'integer', 'min:1'],
             'files' => ['required', 'array', 'min:1', 'max:4'],
             'files.*' => ['file', 'max:5120', 'extensions:txt,json'],
         ], [
@@ -68,6 +137,8 @@ class CaseFileImportController extends Controller
             try {
                 $rows = $rows->merge($parser->parse((string) file_get_contents($file->getRealPath())));
             } catch (\InvalidArgumentException $exception) {
+                $attempt = $this->recordAttempt('app', 'preview', $validated['retry'] ?? null);
+                $this->markAttempt($attempt, 'failed', ['reason' => 'Could not read the eCourts export. Check the file format and upload a corrected export.']);
                 throw ValidationException::withMessages(['files' => $file->getClientOriginalName().': '.$exception->getMessage()]);
             }
         }
@@ -80,6 +151,7 @@ class CaseFileImportController extends Controller
             ->values();
 
         $token = $this->remember('ecourts', $rows->all());
+        $this->recordAttempt('app', 'preview', $validated['retry'] ?? null, ['token_hash' => hash('sha256', $token)]);
 
         return view('cases.import-ecourts-app', [
             'rows' => $rows,
@@ -98,7 +170,12 @@ class CaseFileImportController extends Controller
 
         $rows = collect($this->recall('ecourts', $validated['token']))->keyBy('cnr');
 
-        if ($rows->isEmpty()) {
+        $attempt = $this->attempt('app', $validated['token']);
+        if ($rows->isEmpty() || ! $attempt) {
+            if ($attempt) {
+                $this->failPendingAttempt($attempt, 'The preview expired before saving.');
+            }
+
             return redirect()->route('cases.find', ['method' => 'app'])->withErrors(['files' => 'That upload has expired. Upload the file again.']);
         }
 
@@ -106,12 +183,15 @@ class CaseFileImportController extends Controller
         $updateExisting = (bool) ($validated['update_existing'] ?? false);
         $counts = ['added' => 0, 'updated' => 0, 'skipped' => 0];
 
-        DB::transaction(function () use ($selected, $updateExisting, &$counts): void {
+        $entries = [];
+        $completed = $this->completeAttempt($attempt, $counts, $entries, function () use ($selected, $updateExisting, &$counts, &$entries): void {
             foreach ($selected as $row) {
                 $case = LegalCase::query()->where('cnr_number', $row['cnr'])->first();
+                $reference = $row['case_number'] ?: $row['cnr'];
 
                 if ($case && ! $updateExisting) {
                     $counts['skipped']++;
+                    $entries[] = ['reference' => $reference, 'outcome' => 'Skipped - already in your cases'];
 
                     continue;
                 }
@@ -126,6 +206,7 @@ class CaseFileImportController extends Controller
                 if ($case) {
                     $case->update(array_filter($details, fn ($value) => $value !== null) + ['case_status' => $row['case_status']]);
                     $counts['updated']++;
+                    $entries[] = ['reference' => $reference, 'outcome' => 'Updated'];
                 } else {
                     $case = LegalCase::create($details + [
                         'case_title' => $row['case_title'],
@@ -139,6 +220,7 @@ class CaseFileImportController extends Controller
                         'source_reference' => 'eCourts Services app export',
                     ]);
                     $counts['added']++;
+                    $entries[] = ['reference' => $reference, 'outcome' => 'Added'];
                 }
 
                 $this->syncHearing($case, $row);
@@ -146,6 +228,9 @@ class CaseFileImportController extends Controller
         });
 
         Cache::forget($this->cacheKey('ecourts', $validated['token']));
+        if (! $completed) {
+            return redirect()->route('cases.import.history')->with('error', 'The import did not finish. Check import history before retrying.');
+        }
 
         return redirect()->route('cases.index')->with('success', $this->summary($counts));
     }
@@ -153,6 +238,7 @@ class CaseFileImportController extends Controller
     public function calendarPreview(Request $request, IcsCalendarParser $parser): View
     {
         $validated = $request->validate([
+            'retry' => ['nullable', 'integer', 'min:1'],
             'calendar' => ['required', 'file', 'max:10240', 'extensions:ics,zip'],
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
@@ -167,6 +253,8 @@ class CaseFileImportController extends Controller
         try {
             $events = collect($this->calendarEvents($request->file('calendar'), $parser));
         } catch (\InvalidArgumentException $exception) {
+            $attempt = $this->recordAttempt('calendar', 'preview', $validated['retry'] ?? null);
+            $this->markAttempt($attempt, 'failed', ['reason' => 'Could not read the calendar export. Check the file format and upload a corrected export.']);
             throw ValidationException::withMessages(['calendar' => $exception->getMessage()]);
         }
 
@@ -189,10 +277,13 @@ class CaseFileImportController extends Controller
             ->take(self::MAX_CALENDAR_EVENTS)
             ->values();
 
+        $token = $this->remember('calendar', $events->all());
+        $this->recordAttempt('calendar', 'preview', $validated['retry'] ?? null, ['token_hash' => hash('sha256', $token)]);
+
         return view('cases.import-calendar', [
             'events' => $events,
             'cases' => $cases->sortBy('case_title')->values(),
-            'token' => $this->remember('calendar', $events->all()),
+            'token' => $token,
             'range' => [$validated['from'], $validated['to']],
             'likelyOnly' => $likelyOnly,
         ]);
@@ -208,19 +299,39 @@ class CaseFileImportController extends Controller
 
         $events = $this->recall('calendar', $validated['token']);
 
-        if ($events === []) {
+        $attempt = $this->attempt('calendar', $validated['token']);
+        if ($events === [] || ! $attempt) {
+            if ($attempt) {
+                $this->failPendingAttempt($attempt, 'The preview expired before saving or contained no selected events.');
+            }
+
             return redirect()->route('cases.find', ['method' => 'calendar'])->withErrors(['calendar' => 'That upload has expired. Upload the calendar file again.']);
         }
 
-        $counts = ['cases' => 0, 'hearings' => 0, 'skipped' => 0];
+        $counts = ['cases' => 0, 'hearings' => 0, 'skipped' => 0, 'failed' => 0];
 
-        DB::transaction(function () use ($events, $validated, &$counts): void {
+        $entries = [];
+        $completed = $this->completeAttempt($attempt, $counts, $entries, function () use ($events, $validated, &$counts, &$entries): void {
             $newCases = [];
 
             foreach ($validated['actions'] ?? [] as $index => $action) {
                 $event = $events[$index] ?? null;
 
-                if (! $event || $action === 'skip') {
+                if (! $event) {
+                    $counts['failed']++;
+                    $entries[] = ['reference' => 'Calendar selection', 'outcome' => 'Failed - preview entry unavailable'];
+
+                    continue;
+                }
+                if ($action === 'skip') {
+                    continue;
+                }
+                $reference = $event['date'].' '.$event['title'];
+                if ($action === 'new' && filled($event['uid']) && CourtHearing::query()->where('source_type', 'google_calendar')
+                    ->where('source_reference', $event['uid'])->whereDate('hearing_date', $event['date'])->exists()) {
+                    $counts['skipped']++;
+                    $entries[] = ['reference' => $reference, 'outcome' => 'Skipped - already imported'];
+
                     continue;
                 }
 
@@ -239,8 +350,15 @@ class CaseFileImportController extends Controller
                     $case = LegalCase::query()->find((int) substr($action, 5));
                 }
 
-                if (! $case || $case->hearings()->whereDate('hearing_date', $event['date'])->exists()) {
+                if (! $case) {
+                    $counts['failed']++;
+                    $entries[] = ['reference' => $reference, 'outcome' => 'Failed - selected case unavailable'];
+
+                    continue;
+                }
+                if ($case->hearings()->whereDate('hearing_date', $event['date'])->exists()) {
                     $counts['skipped']++;
+                    $entries[] = ['reference' => $reference, 'outcome' => 'Skipped - hearing already saved on that date'];
 
                     continue;
                 }
@@ -258,15 +376,20 @@ class CaseFileImportController extends Controller
                     'source_reference' => $event['uid'],
                 ]);
                 $counts['hearings']++;
+                $entries[] = ['reference' => $reference, 'outcome' => 'Hearing added'];
             }
         });
 
         Cache::forget($this->cacheKey('calendar', $validated['token']));
+        if (! $completed) {
+            return redirect()->route('cases.import.history')->with('error', 'The import did not finish. Check import history before retrying.');
+        }
 
         $message = trim(
             ($counts['hearings'] === 1 ? '1 hearing added' : "{$counts['hearings']} hearings added")
             .($counts['cases'] ? ', with '.($counts['cases'] === 1 ? '1 new case' : "{$counts['cases']} new cases") : '').'.'
             .($counts['skipped'] ? ' '.$counts['skipped'].' already on those dates were skipped.' : '')
+            .($counts['failed'] ? ' '.$counts['failed'].' could not be saved. Check import history to retry.' : '')
         );
 
         return redirect()->route('cases.calendar', ['view' => 'list'])->with('success', $message);
@@ -356,7 +479,11 @@ class CaseFileImportController extends Controller
             $zip->close();
         }
 
-        if ($events === []) {
+        $attempt = $this->attempt('calendar', $validated['token']);
+        if ($events === [] || ! $attempt) {
+            if ($attempt) {
+                $this->failPendingAttempt($attempt, 'The preview expired before saving or contained no selected events.');
+            }
             throw new \InvalidArgumentException('No calendar events were found in this .zip file.');
         }
 

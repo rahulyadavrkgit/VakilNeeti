@@ -11,6 +11,7 @@
 @section('content')
 <form method="POST" action="{{ route('cases.find.import') }}" id="find-cases-form" data-bulk-form class="mx-auto max-w-6xl space-y-4">
     @csrf
+    @if($retry ?? null)<input type="hidden" name="retry" value="{{ $retry }}">@endif
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-600">

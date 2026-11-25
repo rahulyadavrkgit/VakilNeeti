@@ -46,7 +46,7 @@
                     @forelse ($imports as $import)
                         @php($data = $import->parsed_data ?? [])
                         <tr>
-                            <td class="p-4">{{ $import->source_name }}</td>
+                            <td class="p-4">{{ $import->source_name }}<br><span class="text-xs text-slate-500">Attempt #{{ $import->id }} @if(isset($data['retry_of'])) &middot; Retry of #{{ $data['retry_of'] }} @endif</span></td>
                             <td class="p-4">{{ $data['case_title'] ?? 'Not identified' }}</td>
                             <td class="p-4">
                                 {{ $data['cnr_number'] ?? $data['case_number'] ?? 'Not identified' }}
@@ -57,12 +57,26 @@
                                     <span class="text-green-700 font-medium">Imported</span>
                                 @elseif ($import->import_status === 'duplicate')
                                     <span class="text-amber-700 font-medium">Duplicate</span>
+                                @elseif(in_array($import->import_status, ['failed', 'partial'], true))
+                                    <span class="text-red-700 font-medium">{{ $import->import_status === 'partial' ? 'Partially imported' : 'Failed' }}</span>
+                                    <p>{{ $data['reason'] ?? ($import->import_status === 'partial' ? 'Some selected entries could not be matched to a saved case.' : 'No failure detail recorded.') }}</p>
+                                    @if($import->retryMethod())
+                                        <a class="inline-flex min-h-11 items-center underline" href="{{ route('cases.find', ['method' => $import->retryMethod(), 'retry' => $import->id]) }}">Correct and retry</a>
+                                    @endif
                                 @else
-                                    <span class="text-[#16776e] font-medium">Preview</span>
+                                    <span class="text-[#16776e] font-medium">{{ ucfirst($import->import_status) }}</span>
                                 @endif
                             </td>
+                            @if(isset($data['counts']))
+                                <td class="p-4">
+                                    @foreach($data['counts'] as $kind => $count)<p>{{ ucfirst($kind) }} {{ $count }}</p>@endforeach
+                                    @if(!empty($data['entries']))<a class="inline-flex min-h-11 items-center font-semibold underline" href="{{ route('cases.import.results', $import) }}">View entry results</a>@endif
+                                </td>
+                            @else
                             <td class="p-4">{{ $import->legal_case_id ?? '—' }}</td>
+                            @endif
                         </tr>
+                        @if(filled($import->raw_content))
                         <tr>
                             <td colspan="6" class="px-4 pb-4">
                                 <details>
@@ -75,6 +89,7 @@
                                 </details>
                             </td>
                         </tr>
+                        @endif
                     @empty
                         <tr>
                             <td colspan="6" class="p-6 text-center text-slate-500">

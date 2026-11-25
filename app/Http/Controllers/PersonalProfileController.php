@@ -12,7 +12,7 @@ class PersonalProfileController extends Controller
     public function index()
     {
         $firm = DB::table('firm_profiles')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('is_active', true)
             ->first();
 
@@ -23,7 +23,7 @@ class PersonalProfileController extends Controller
         }
 
         $profile = DB::table('personal_profiles')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('firm_profile_id', $firm->id)
             ->first();
 
@@ -33,7 +33,7 @@ class PersonalProfileController extends Controller
     public function update(Request $request)
     {
         $firm = DB::table('firm_profiles')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('is_active', true)
             ->first();
 
@@ -58,7 +58,7 @@ class PersonalProfileController extends Controller
         ]);
 
         $existing = DB::table('personal_profiles')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('firm_profile_id', $firm->id)
             ->first();
 
@@ -68,7 +68,7 @@ class PersonalProfileController extends Controller
 
         if ($existing) {
             DB::table('personal_profiles')
-                ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+                ->where('user_id', auth()->id())
                 ->where('id', $existing->id)
                 ->update($data);
         } else {
@@ -77,7 +77,7 @@ class PersonalProfileController extends Controller
             $data['created_at'] = now();
 
             DB::table('personal_profiles')
-                ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->insert($data);
+                ->where('user_id', auth()->id())->insert($data);
         }
 
         return redirect()

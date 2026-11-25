@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\State;
 use App\Models\JudicialDistrict;
+use App\Models\State;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class CourtDirectoryController extends Controller
 {
@@ -32,33 +33,24 @@ class CourtDirectoryController extends Controller
 
     public function districts(int $stateId): JsonResponse
     {
-        $state = State::query()
-            ->where('is_active', true)
-            ->findOrFail($stateId);
+        // The districts of a state change rarely: kept for a day on the server and in the browser.
+        $payload = Cache::remember("locations:districts:{$stateId}", 86400, function () use ($stateId): array {
+            $state = State::query()->where('is_active', true)->findOrFail($stateId);
+            $districts = JudicialDistrict::query()
+                ->where('state_id', $state->id)
+                ->where('is_active', true)
+                ->orderBy('district_name')
+                ->get(['id', 'state_id', 'district_name', 'district_code', 'source_url', 'source_status']);
 
-        $districts = JudicialDistrict::query()
-            ->where('state_id', $state->id)
-            ->where('is_active', true)
-            ->orderBy('district_name')
-            ->get([
-                'id',
-                'state_id',
-                'district_name',
-                'district_code',
-                'source_url',
-                'source_status',
-            ]);
+            return [
+                'success' => true,
+                'state' => ['id' => $state->id, 'name' => $state->name, 'code' => $state->code],
+                'data' => $districts->toArray(),
+                'count' => $districts->count(),
+            ];
+        });
 
-        return response()->json([
-            'success' => true,
-            'state' => [
-                'id' => $state->id,
-                'name' => $state->name,
-                'code' => $state->code,
-            ],
-            'data' => $districts,
-            'count' => $districts->count(),
-        ]);
+        return response()->json($payload)->header('Cache-Control', 'public, max-age=86400');
     }
 
     public function establishments(int $districtId): JsonResponse

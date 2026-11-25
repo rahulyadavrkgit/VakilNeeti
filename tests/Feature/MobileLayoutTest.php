@@ -42,7 +42,7 @@ class MobileLayoutTest extends TestCase
         $accountMenu = substr($html, (int) strpos($html, 'aria-label="Account menu"'), 4000);
 
         // Workspace 7, Courts 5, Library 4, More 4: down from 25 entries.
-        $this->assertSame(20, substr_count($sideMenu, 'class="vn-nav-link'));
+        $this->assertSame(22, substr_count($sideMenu, 'class="vn-nav-link'));
         $this->assertStringContainsString('href="'.route('tribunals.index').'"', $sideMenu);
         $this->assertStringNotContainsString('Case dashboard', $sideMenu);
         $this->assertStringNotContainsString('eCourts services', $sideMenu);

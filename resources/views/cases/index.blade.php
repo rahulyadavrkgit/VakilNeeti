@@ -10,9 +10,10 @@
         'past' => 'Every date has passed: check the case status and add the next date',
         'no_upcoming' => 'No hearing date recorded yet',
     ];
+    $chipHints['next30'] = 'Cases with a hearing from today to '.now()->addDays(29)->format('d M');
     $activeHearing = $hearingFilter ?? 'all';
     $chipUrl = fn (string $key) => route('cases.index', array_filter(array_merge(request()->except('page', 'hearing_filter'), ['hearing_filter' => $key === 'all' ? null : $key])));
-    $hasFilters = request()->filled('search') || request()->filled('case_status') || request()->filled('tag') || $activeHearing !== 'all';
+    $hasFilters = request()->filled('search') || request()->filled('case_status') || request()->filled('tag') || request()->filled('court') || $activeHearing !== 'all';
     $field = 'w-full rounded-xl border border-slate-300 bg-white px-3 text-sm focus:border-[#16776e] focus:ring-[#16776e]';
 @endphp
 
@@ -52,7 +53,7 @@
     </div>
 
     {{-- One search box, where to look, and one-tap filters. --}}
-    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <x-panel>
         <form method="GET" action="{{ route('cases.index') }}" role="search" class="space-y-3">
             @if($activeHearing !== 'all')
                 <input type="hidden" name="hearing_filter" value="{{ $activeHearing }}">
@@ -76,16 +77,34 @@
                 </div>
             </div>
 
-            <nav aria-label="Hearing date" class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+            <nav aria-label="Hearing date" class="flex flex-wrap gap-1.5">
                 @foreach($hearingChips as $chipKey => $chipLabel)
                     @php $chipCount = $hearingCounts[$chipKey] ?? 0; @endphp
                     <a href="{{ $chipUrl($chipKey) }}" @if($activeHearing === $chipKey) aria-current="page" @endif @isset($chipHints[$chipKey]) title="{{ $chipHints[$chipKey] }}" @endisset
-                       class="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition {{ $activeHearing === $chipKey ? ($chipKey === 'past' ? 'bg-red-600 text-white' : 'bg-[#16776e] text-white') : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }} {{ $chipCount === 0 && $activeHearing !== $chipKey ? 'opacity-60' : '' }}">
+                       class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition {{ $activeHearing === $chipKey ? ($chipKey === 'past' ? 'bg-red-600 text-white' : 'bg-[#16776e] text-white') : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }} {{ $chipCount === 0 && $activeHearing !== $chipKey ? 'opacity-60' : '' }}">
                         {{ $chipLabel }}
                         <span class="rounded-full px-1.5 text-xs {{ $activeHearing === $chipKey ? 'bg-white/20' : ($chipKey === 'past' && $chipCount ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600') }}">{{ $chipCount }}</span>
                     </a>
                 @endforeach
             </nav>
+
+            @if(count($yourCourts) > 1)
+                {{-- One tap to the cases of one court: Delhi HC, Jalaun, Noida… --}}
+                @php $activeCourt = strtoupper((string) request('court')); @endphp
+                <nav aria-label="Court" class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+                    <a href="{{ route('cases.index', array_filter(request()->except('page', 'court'))) }}" @if($activeCourt === '') aria-current="page" @endif
+                       class="inline-flex min-h-11 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold {{ $activeCourt === '' ? 'bg-[#142235] text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }}">All courts</a>
+                    @foreach($yourCourts as $courtGroup)
+                        @php $isActiveCourt = $activeCourt === $courtGroup['key']; @endphp
+                        <a href="{{ route('cases.index', array_filter(array_merge(request()->except('page'), ['court' => $isActiveCourt ? null : $courtGroup['key']]))) }}" @if($isActiveCourt) aria-current="page" @endif
+                           title="{{ \App\Services\CourtIdentity::stateName($courtGroup['state']) }}"
+                           class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold {{ $isActiveCourt ? 'bg-[#142235] text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-[#16776e]' }}">
+                            {{ \App\Services\CourtIdentity::label($courtGroup['level'], $courtGroup['state'], $courtGroup['district']) ?? $courtGroup['key'] }}
+                            <span class="rounded-full px-1.5 text-xs {{ $isActiveCourt ? 'bg-white/20' : 'bg-slate-100 text-slate-600' }}">{{ $courtGroup['count'] }}</span>
+                        </a>
+                    @endforeach
+                </nav>
+            @endif
 
             <div class="flex flex-wrap items-center gap-2">
                 <label class="sr-only" for="case_status">Status</label>
@@ -123,7 +142,18 @@
                 </span>
             </div>
         </form>
-    </section>
+    </x-panel>
+
+    @if(! $hasFilters && ($hearingCounts['past'] > 0 || $hearingCounts['no_upcoming'] > 0))
+        <aside aria-label="Suggested next step" class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-teal-200 bg-teal-50 p-3 text-sm">
+            <span class="font-semibold text-slate-900">Suggested next step</span>
+            @if($hearingCounts['past'] > 0)
+                <a href="{{ $chipUrl('past') }}" class="inline-flex min-h-11 items-center font-semibold text-teal-900 underline underline-offset-2">Review cases with past dates ({{ $hearingCounts['past'] }})</a>
+            @else
+                <a href="{{ $chipUrl('no_upcoming') }}" class="inline-flex min-h-11 items-center font-semibold text-teal-900 underline underline-offset-2">Check cases without a date ({{ $hearingCounts['no_upcoming'] }})</a>
+            @endif
+        </aside>
+    @endif
 
     {{-- The cases. --}}
     <ul class="space-y-3" aria-label="Cases">
@@ -135,19 +165,24 @@
                     $hearing->hearing_date ? ['date' => \Carbon\Carbon::parse($hearing->hearing_date), 'hearing' => $hearing, 'time' => $hearing->hearing_time] : null,
                     $hearing->next_hearing_date ? ['date' => \Carbon\Carbon::parse($hearing->next_hearing_date), 'hearing' => $hearing, 'time' => null] : null,
                 ])->filter());
+                foreach ($case->causeListAppearances as $appearance) {
+                    if ($appearance->courtDocument?->listing_date) {
+                        $caseDates->push(['date' => $appearance->courtDocument->listing_date, 'hearing' => null, 'time' => null]);
+                    }
+                }
+                $filterStart = $activeHearing === 'tomorrow' ? now()->addDay()->toDateString() : $today;
                 $upcomingDate = $caseDates
-                    ->filter(fn ($entry) => $entry['date']->toDateString() >= $today)
+                    ->filter(fn ($entry) => $entry['date']->toDateString() >= $filterStart)
                     ->sortBy(fn ($entry) => $entry['date']->toDateString().' '.($entry['time'] ?? '99'))
                     ->first();
                 $pastDate = $upcomingDate ? null : $caseDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
                 $nextHearing = $upcomingDate['hearing'] ?? null;
-                $lastPastHearing = $pastDate['hearing'] ?? null;
                 $tileDate = $upcomingDate['date'] ?? $pastDate['date'] ?? null;
                 $tileClass = match (true) {
-                    $nextHearing && $tileDate->isToday() => 'bg-[#16776e] text-white',
-                    $nextHearing && $tileDate->isTomorrow() => 'bg-amber-100 text-amber-900',
-                    (bool) $nextHearing => 'bg-teal-50 text-teal-900',
-                    (bool) $lastPastHearing => 'bg-red-50 text-red-800 ring-1 ring-inset ring-red-200',
+                    $upcomingDate && $tileDate->isToday() => 'bg-[#16776e] text-white',
+                    $upcomingDate && $tileDate->isTomorrow() => 'bg-amber-100 text-amber-900',
+                    (bool) $upcomingDate => 'bg-teal-50 text-teal-900',
+                    (bool) $pastDate => 'bg-red-50 text-red-800 ring-1 ring-inset ring-red-200',
                     default => 'bg-slate-100 text-slate-500',
                 };
                 $statusClass = match ($case->case_status) {
@@ -160,11 +195,11 @@
                 <div class="flex gap-3 sm:gap-4">
                     {{-- Next hearing at a glance. --}}
                     <a href="{{ route('cases.show', $case) }}" class="flex w-16 shrink-0 flex-col items-center justify-center rounded-xl px-1 py-2 text-center {{ $tileClass }}"
-                       title="{{ $nextHearing ? 'Next hearing' : ($lastPastHearing ? 'Last date has passed: check the case status' : 'No hearing date recorded') }}">
+                       title="{{ $upcomingDate ? 'Next hearing' : ($pastDate ? 'Last date has passed: check the case status' : 'No hearing date recorded') }}">
                         @if($tileDate)
-                            <span class="text-xs font-bold uppercase">{{ $nextHearing && $tileDate->isToday() ? 'Today' : ($nextHearing && $tileDate->isTomorrow() ? 'Tmrw' : $tileDate->format('M')) }}</span>
+                            <span class="text-xs font-bold uppercase">{{ $upcomingDate && $tileDate->isToday() ? 'Today' : ($upcomingDate && $tileDate->isTomorrow() ? 'Tmrw' : $tileDate->format('M')) }}</span>
                             <span class="text-xl font-extrabold leading-tight">{{ $tileDate->format('d') }}</span>
-                            <span class="text-[11px] font-semibold">{{ $nextHearing ? ($upcomingDate['time'] ? substr((string) $upcomingDate['time'], 0, 5) : $tileDate->format('Y')) : 'Review' }}</span>
+                            <span class="text-[11px] font-semibold">{{ $upcomingDate ? ($upcomingDate['time'] ? substr((string) $upcomingDate['time'], 0, 5) : $tileDate->format('Y')) : 'Review' }}</span>
                         @else
                             <x-icon name="calendar" :size="20" />
                             <span class="mt-0.5 text-[11px] font-semibold">No date</span>
@@ -180,7 +215,8 @@
                             <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
                         </div>
 
-                        <p class="mt-1 text-xs text-slate-500">
+                        <p class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-500">
+                            <x-court-badge :level="$case->court_level" :state="$case->state_code" :district="$case->district" />
                             {{ collect([
                                 $case->case_number,
                                 $case->cnr_number ? 'CNR '.$case->cnr_number : null,
@@ -192,7 +228,7 @@
 
                         <x-court-info class="mt-2" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
                                       :room="$nextHearing?->court_room ?: $case->court_room" :judge="$nextHearing?->judge_name ?: $case->judge_name" :vc-link="$nextHearing?->vc_link ?: $case->vc_link"
-                                      :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $nextHearing ? $tileDate->toDateString() : null, 'time' => $upcomingDate['time'] ?? null, 'details' => $nextHearing?->hearing_stage]" />
+                                      :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $upcomingDate ? $tileDate->toDateString() : null, 'time' => $upcomingDate['time'] ?? null, 'details' => $nextHearing?->hearing_stage]" />
 
                         <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
                             @foreach($case->tags as $caseTag)
@@ -208,7 +244,7 @@
                                 </form>
                             </span>
                         </div>
-                        @unless($nextHearing)
+                        @unless($upcomingDate)
                             {{-- No date ahead (passed or never set): add it here without leaving the list. --}}
                             <x-quick-next-date class="mt-2" :case-id="$case->id" />
                         @endunless

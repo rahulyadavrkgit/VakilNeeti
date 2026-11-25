@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\CaseFileImportController;
 use App\Models\CourtHearing;
+use App\Models\CourtRecordImport;
 use App\Models\LegalCase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -96,6 +97,23 @@ class CaseFileImportControllerTest extends TestCase
             ->post(route('cases.find.ecourts-app.preview'), ['files' => [UploadedFile::fake()->createWithContent('notes.txt', 'just some notes')]])
             ->assertRedirect(route('cases.find'))
             ->assertSessionHasErrors('files');
+        $failed = CourtRecordImport::query()->sole();
+        $this->assertSame('failed', $failed->import_status);
+        $this->get(route('cases.import.history'))->assertOk()->assertSee('Correct and retry');
+
+        $token = $this->post(route('cases.find.ecourts-app.preview'), [
+            'retry' => $failed->id,
+            'files' => [$this->exportUpload([EcourtsAppExportParserTest::districtRecord()])],
+        ])->assertOk()->viewData('token');
+        $payload = ['token' => $token, 'selected' => ['DLWT010000332007']];
+        $this->post(route('cases.find.ecourts-app.import'), $payload)->assertRedirect(route('cases.index'));
+        $this->post(route('cases.find.ecourts-app.import'), $payload)->assertRedirect();
+        $this->assertSame(1, LegalCase::query()->count());
+        $this->assertSame(['added' => 1, 'updated' => 0, 'skipped' => 0], CourtRecordImport::query()->latest('id')->firstOrFail()->parsed_data['counts']);
+        $this->assertDatabaseHas('admin_audit_entries', ['action' => 'import retry imported']);
+        $attempt = CourtRecordImport::query()->latest('id')->firstOrFail();
+        $this->get(route('cases.import.results', $attempt))->assertOk()->assertSee('Added')->assertSee('608651/2016');
+        $this->actingAs(User::factory()->create())->get(route('cases.import.results', $attempt))->assertNotFound();
     }
 
     public function test_calendar_events_are_matched_to_cases_and_imported_as_hearings(): void
@@ -143,7 +161,7 @@ class CaseFileImportControllerTest extends TestCase
         ])->viewData('token');
 
         $this->post(route('cases.find.calendar.import'), ['token' => $token, 'actions' => ['case:'.$otherCase->id]])
-            ->assertSessionHas('success', '0 hearings added. 1 already on those dates were skipped.');
+            ->assertSessionHas('success', '0 hearings added. 1 could not be saved. Check import history to retry.');
 
         $this->assertSame(0, CourtHearing::withoutGlobalScopes()->count());
     }

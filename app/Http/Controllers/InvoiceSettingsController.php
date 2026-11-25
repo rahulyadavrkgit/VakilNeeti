@@ -11,7 +11,7 @@ class InvoiceSettingsController extends Controller
     private function activeFirm()
     {
         return DB::table('firm_profiles')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('is_active', true)
             ->first();
     }
@@ -27,7 +27,7 @@ class InvoiceSettingsController extends Controller
         }
 
         $settings = DB::table('invoice_settings')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('firm_profile_id', $firm->id)
             ->first();
 
@@ -99,7 +99,7 @@ class InvoiceSettingsController extends Controller
         ]);
 
         DB::table('invoice_settings')
-            ->when(! auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->updateOrInsert(
+            ->where('user_id', auth()->id())->updateOrInsert(
                 ['firm_profile_id' => $firm->id, 'user_id' => auth()->id()],
                 array_merge($data, [
                     'created_at' => DB::raw(

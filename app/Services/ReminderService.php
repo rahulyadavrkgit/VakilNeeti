@@ -112,6 +112,7 @@ class ReminderService
         $tasks = ! $user->preference('remind_tasks') ? collect() : Task::query()
             ->withoutGlobalScope('user_ownership')
             ->where('user_id', $user->workspaceId())
+            ->where(fn ($query) => $query->whereNull('assigned_to')->orWhere('assigned_to', $user->id))
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->whereNotNull('due_at')
             ->where('due_at', '<=', $today->copy()->endOfDay())

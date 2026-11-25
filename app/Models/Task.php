@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
-    use \App\Models\Concerns\BelongsToUser;
+    use BelongsToUser;
+
     protected $fillable = [
+        'assigned_to',
         'client_id',
         'case_id',
         'title',
@@ -24,6 +27,11 @@ class Task extends Model
         'completed_at' => 'datetime',
     ];
 
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
@@ -38,6 +46,6 @@ class Task extends Model
     {
         return $this->due_at !== null
             && $this->due_at->isPast()
-            && !in_array($this->status, ['completed', 'cancelled'], true);
+            && ! in_array($this->status, ['completed', 'cancelled'], true);
     }
 }

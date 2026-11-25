@@ -5,13 +5,15 @@
 
 @section('content')
 <div class="mx-auto max-w-3xl space-y-5" data-court-day data-saved-at="{{ $savedAt->toIso8601String() }}">
-    <x-page-header :title="__('Court day')" :subtitle="__('Matters for today and tomorrow on one page. Open it once with internet and it works without signal in court.')" />
+    <x-page-header :title="__('Court day')" :subtitle="__('Matters for today and tomorrow on one page.')" />
 
     <p data-offline-note hidden class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
         <x-icon name="offline" :size="16" class="mt-0.5" />
-        <span>{{ __('No internet. This is the copy saved at :time. New dates added since then are not shown.', ['time' => $savedAt->translatedFormat('g:i a, d M')]) }}</span>
+        <span>{{ __('Offline. This page was last loaded at :time. Reconnect to refresh.', ['time' => $savedAt->translatedFormat('g:i a, d M')]) }}</span>
     </p>
 
+    @if(session('success'))<p role="status" class="rounded-xl bg-teal-50 p-3 text-sm">{{ session('success') }}</p>@endif
+    @error('message')<p role="alert" class="rounded-xl bg-red-50 p-3 text-sm">{{ $message }}</p>@enderror
     @foreach($days as $day)
         @php $isToday = $day['date']->isToday(); @endphp
         <section aria-labelledby="day-{{ $loop->index }}" class="space-y-2">
@@ -41,8 +43,14 @@
                         </div>
                         <div class="min-w-0 flex-1 space-y-1">
                             <a href="{{ $hearing['url'] }}" class="block text-base font-bold text-slate-900 hover:text-[#16776e] hover:underline">{{ $hearing['title'] }}</a>
-                            @if($hearing['case_number'])
-                                <p class="text-sm text-slate-600">{{ $hearing['case_number'] }}</p>
+                            <p class="flex flex-wrap items-center gap-1.5 text-sm text-slate-600">
+                                <x-court-badge :level="$hearing['court_level'] ?? null" :state="$hearing['state_code'] ?? null" :district="$hearing['district'] ?? null" />
+                                {{ $hearing['case_number'] }}
+                            </p>
+                            @if($listing)
+                                <p class="text-xs text-slate-600">From the cause list @if($listing->courtDocument->fetched_at)&middot; Checked {{ $listing->courtDocument->fetched_at->format('d M, g:i a') }}@endif</p>
+                            @elseif(isset($hearing['date_source']))
+                                <p class="text-xs text-slate-600">{{ $hearing['date_source'] }} @if($hearing['source_updated_at'])&middot; Updated {{ $hearing['source_updated_at']->format('d M, g:i a') }}@endif</p>
                             @endif
                             @if($room || $listing)
                                 <p class="text-base font-bold tabular-nums text-[#16776e]">
@@ -61,12 +69,18 @@
                         </div>
                     </div>
 
-                    @if($vcLink || $hearing['clients']->isNotEmpty())
+                    @if($vcLink || $hearing['clients']->isNotEmpty() || $hearing['case_id'])
                         <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
                             @if($vcLink)
                                 <a href="{{ $vcLink }}" target="_blank" rel="noopener" class="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-[#16776e] px-4 text-sm font-bold text-white hover:bg-[#12635c]">
                                     <x-icon name="video" :size="16" /> {{ __('Join VC') }}
                                 </a>
+                            @endif
+                            @if($hearing['case_id'])
+                                <x-quick-next-date :case-id="$hearing['case_id']" class="min-h-11" />
+                                @if($hearing['order'])
+                                    <a class="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-3 text-sm font-semibold" href="{{ route('cases.documents.download', [$hearing['case_id'], $hearing['order'], 'preview' => 1]) }}" title="{{ $hearing['order']->original_name }}">Open order</a>
+                                @endif
                             @endif
                             @foreach($hearing['clients'] as $client)
                                 @php $phone = $client->mobile ?: $client->phone; @endphp
@@ -77,6 +91,9 @@
                                 @endif
                             @endforeach
                         </div>
+                    @endif
+                    @if($hearing['case_id'])
+                        <x-case-report :case-id="$hearing['case_id']" page="court-day" />
                     @endif
                 </article>
             @empty

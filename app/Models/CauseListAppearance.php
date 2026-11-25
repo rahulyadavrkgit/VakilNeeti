@@ -57,7 +57,7 @@ class CauseListAppearance extends Model
     public static function upcomingForCases(iterable|Builder $caseIds, ?Carbon $until = null): Collection
     {
         return static::query()
-            ->with(['courtDocument:id,listing_date,document_label,source_url', 'legalCase:id,case_title,case_number,court_name'])
+            ->with(['courtDocument:id,listing_date,document_label,source_url,fetched_at', 'legalCase:id,case_title,case_number,court_name,court_level,state_code,district'])
             ->whereIn('legal_case_id', $caseIds instanceof Builder ? $caseIds : collect($caseIds)->all())
             ->whereHas('courtDocument', fn ($documents) => $documents
                 ->whereDate('listing_date', '>=', today())

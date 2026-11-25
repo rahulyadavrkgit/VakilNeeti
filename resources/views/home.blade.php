@@ -99,7 +99,7 @@
                     <x-case-side :side="$nextHearing['appearing_for'] ?? null" :parties="$nextHearing['appearing_for_parties'] ?? null" :edit-url="$nextHearing['case_id'] ? route('cases.edit', $nextHearing['case_id']) : null" />
                 </p>
                 @if($nextHearing['case_number'] || $nextHearing['details'])
-                    <p class="mt-0.5 truncate text-xs text-slate-500">{{ collect([$nextHearing['case_number'], $nextHearing['details']])->filter()->implode(' · ') }}</p>
+                    <p class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500"><x-court-badge :level="$nextHearing['court_level'] ?? null" :state="$nextHearing['state_code'] ?? null" :district="$nextHearing['district'] ?? null" class="shrink-0" /><span class="truncate">{{ collect([$nextHearing['case_number'], $nextHearing['details']])->filter()->implode(' · ') }}</span></p>
                 @endif
                 <x-court-info class="mt-2" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextHearing['court_room'] ?? null" :judge="$nextHearing['judge_name'] ?? null" :vc-link="$nextHearing['vc_link'] ?? null"
                               :share="['title' => $nextHearing['title'], 'case_number' => $nextHearing['case_number'], 'side' => $nextHearing['appearing_for'] ?? null, 'parties' => $nextHearing['appearing_for_parties'] ?? null, 'date' => $nextHearing['date'], 'time' => $nextHearing['time'], 'details' => $nextHearing['details']]" />
@@ -182,7 +182,10 @@
                                     <a href="{{ $event['url'] }}" @if($event['case_id']) data-sheet="{{ route('sheets.case-view', $event['case_id']) }}" @endif class="min-w-0 break-words text-sm font-semibold text-slate-900 hover:text-[#16776e]">{{ $event['title'] }}</a>
                                     <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" :edit-url="$event['case_id'] ? route('cases.edit', $event['case_id']) : null" />
                                 </div>
-                                <p class="truncate text-xs text-slate-500">{{ collect([$event['case_number'], $event['details']])->filter()->implode(' · ') ?: $event['label'] }}</p>
+                                <p class="flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                                    <x-court-badge :level="$event['court_level'] ?? null" :state="$event['state_code'] ?? null" :district="$event['district'] ?? null" class="shrink-0" />
+                                    <span class="truncate">{{ collect([$event['case_number'], $event['details']])->filter()->implode(' · ') ?: __($event['label']) }}</span>
+                                </p>
                                 <x-court-info class="mt-1.5" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['court_room'] ?? null" :judge="$event['judge_name'] ?? null" :vc-link="$event['vc_link'] ?? null"
                                               :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
                             </div>

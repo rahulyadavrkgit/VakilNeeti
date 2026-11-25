@@ -21,6 +21,7 @@
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
     @include('cases.partials.management-nav')
+    <a class="inline-flex min-h-11 items-center text-sm font-semibold text-teal-800 underline" href="{{ route('cases.import.history') }}">Import history and retries</a>
     <p class="text-sm text-slate-600">
         <a href="{{ route('dashboard') }}" class="float-right ml-3 font-semibold text-[#16776e] hover:underline">Skip for now</a>
         Bring your cases in from files and searches you do yourself. VakilNiti never logs in to eCourts or Google for you, and you see every case before it is added.
@@ -46,7 +47,7 @@
     </fieldset>
 
     {{-- eCourts Services app export --}}
-    <form method="POST" action="{{ route('cases.find.ecourts-app.preview') }}" enctype="multipart/form-data" data-switch-panel="method:app" @if($method !== 'app') hidden @endif
+    <form method="POST" action="{{ route('cases.find.ecourts-app.preview', array_filter(['retry' => request('retry')])) }}" enctype="multipart/form-data" data-switch-panel="method:app" @if($method !== 'app') hidden @endif
           class="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         @csrf
         <input type="hidden" name="method" value="app">
@@ -68,7 +69,7 @@
     </form>
 
     {{-- eCourts website, search by bar code and paste --}}
-    <form method="POST" action="{{ route('cases.find.preview') }}" data-switch-panel="method:website" @if($method !== 'website') hidden @endif class="space-y-5">
+    <form method="POST" action="{{ route('cases.find.preview', array_filter(['retry' => request('retry')])) }}" data-switch-panel="method:website" @if($method !== 'website') hidden @endif class="space-y-5">
         @csrf
         <input type="hidden" name="method" value="website">
 
@@ -144,7 +145,7 @@
     </form>
 
     {{-- Google Calendar export --}}
-    <form method="POST" action="{{ route('cases.find.calendar.preview') }}" enctype="multipart/form-data" data-switch-panel="method:calendar" @if($method !== 'calendar') hidden @endif
+    <form method="POST" action="{{ route('cases.find.calendar.preview', array_filter(['retry' => request('retry')])) }}" enctype="multipart/form-data" data-switch-panel="method:calendar" @if($method !== 'calendar') hidden @endif
           class="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         @csrf
         <input type="hidden" name="method" value="calendar">

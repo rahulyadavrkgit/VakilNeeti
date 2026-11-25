@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminReviewController;
 use App\Http\Controllers\AdvocateProfileController;
 use App\Http\Controllers\Api\CourtDirectoryController;
 use App\Http\Controllers\Api\LocationController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\CaseClientController;
 use App\Http\Controllers\CaseDashboardController;
 use App\Http\Controllers\CaseFileImportController;
 use App\Http\Controllers\CaseFinderController;
+use App\Http\Controllers\CaseFollowUpController;
 use App\Http\Controllers\CaseLinkController;
 use App\Http\Controllers\CaseStatusLinkController;
 use App\Http\Controllers\CaseWorkspaceController;
@@ -141,11 +143,17 @@ Route::get('/cases/import', function () {
 Route::post('/cases/import/preview', [OfficialCourtImportController::class, 'preview'])
     ->name('cases.import.preview');
 
+Route::get('/cases/import/results/{import}', [CaseFileImportController::class, 'results'])->name('cases.import.results');
+
 Route::get('/cases/import/history', [OfficialCourtImportController::class, 'history'])
     ->name('cases.import.history');
 
 Route::post('/cases/import/{import}/save', [OfficialCourtImportController::class, 'store'])
     ->name('cases.import.save');
+Route::post('/cases/{case}/follow-ups', [CaseFollowUpController::class, 'store'])->name('cases.follow-ups.store');
+Route::patch('/cases/{case}/follow-ups/{task}', [CaseFollowUpController::class, 'status'])->name('cases.follow-ups.status');
+Route::post('/cases/{case}/report', [CaseFollowUpController::class, 'report'])->middleware('throttle:10,1')->name('cases.report');
+
 Route::post('/cases/{case}/notes', [CaseWorkspaceController::class, 'storeNote'])
     ->whereNumber('case')
     ->name('cases.notes.store');
@@ -288,6 +296,8 @@ Route::prefix('api/court-directory')
     });
 
 // LOCATIONS API (India: States/UTs → districts → cities)
+Route::get('/api/locations/court-districts/{stateCode}', [LocationController::class, 'courtDistricts'])
+    ->where('stateCode', '[A-Za-z]{2}')->name('api.locations.court-districts');
 Route::get(
     '/api/locations/districts/{districtId}/cities',
     [LocationController::class, 'cities']
@@ -488,8 +498,37 @@ Route::post('/admin/login', [AdminAuthController::class, 'login'])
     ->middleware('throttle:5,1')
     ->name('admin.login.submit');
 
-Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
+Route::get('/admin/verify', [AdminAuthController::class, 'showVerification'])->name('admin.verify');
+Route::post('/admin/verify', [AdminAuthController::class, 'verify'])->middleware('throttle:10,1')->name('admin.verify.submit');
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('/', [AdminReviewController::class, 'overview'])->name('overview');
+    Route::get('/review/{finding}', [AdminReviewController::class, 'queue'])->name('review');
+    Route::post('/review/{finding}/{caseId}', [AdminReviewController::class, 'feedback'])->whereNumber('caseId')->name('review.feedback');
+    Route::get('/operations/{kind}', [AdminReviewController::class, 'operations'])->name('operations');
+    Route::post('/review/listing-conflict/{caseId}/notify', [AdminReviewController::class, 'notifyDateConflict'])->whereNumber('caseId')->name('review.notify');
+    Route::post('/operations/imports/{importId}/retry', [AdminReviewController::class, 'retryImport'])->whereNumber('importId')->name('operations.retry');
+    Route::get('/reports', [AdminReviewController::class, 'reports'])->name('reports');
+    Route::post('/reports/{reportId}/resolve', [AdminReviewController::class, 'resolveReport'])->whereNumber('reportId')->name('reports.resolve');
+    Route::get('/audit', [AdminReviewController::class, 'audit'])->name('audit');
+    Route::post('/accounts/{account}/access', [AdminReviewController::class, 'access'])->name('accounts.access');
+});
+
+Route::get('/admin/accounts', [AdminAuthController::class, 'accounts'])
     ->middleware(['auth', 'admin'])
+    ->name('admin.accounts');
+
+Route::get('/admin/accounts/{account}', [AdminAuthController::class, 'account'])
+    ->middleware(['auth', 'admin'])
+    ->name('admin.accounts.show');
+
+Route::get('/admin/accounts/{account}/cases/{caseId}', [AdminAuthController::class, 'caseDetails'])
+    ->whereNumber('caseId')
+    ->middleware(['auth', 'admin'])
+    ->name('admin.accounts.cases.show');
+
+Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
+    ->middleware('auth')
     ->name('admin.logout');
 
 // Temporary first-administrator setup.

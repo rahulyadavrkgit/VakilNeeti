@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourtRecordImport;
 use App\Models\LegalCase;
+use App\Models\User;
 use App\Services\EcourtsResultParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -71,13 +73,17 @@ class CaseFinderController extends Controller
             'level' => ['required', Rule::in(array_keys(self::PORTALS))],
             'court_name' => ['nullable', 'string', 'max:255'],
             'results' => ['required', 'string', 'max:200000'],
+            'retry' => ['nullable', 'integer', 'min:1'],
         ], [
             'results.required' => 'Paste the results you copied from eCourts.',
         ]);
 
+        $retry = CourtRecordImport::retryParent($validated['retry'] ?? null, 'website');
         $rows = $parser->parse($validated['results'], $validated['court_name'] ?? null);
 
         if ($rows === []) {
+            $this->recordPastedAttempt('failed', $retry?->id, ['reason' => 'No case numbers were found in the pasted eCourts results.']);
+
             return back()->withInput()->withErrors([
                 'results' => 'No case numbers were found. Copy the whole results table from eCourts (case numbers look like O.S./123/2019) and paste it again.',
             ]);
@@ -96,12 +102,14 @@ class CaseFinderController extends Controller
             'level' => $validated['level'],
             'portal' => self::PORTALS[$validated['level']],
             'defaultCourt' => $validated['court_name'] ?? null,
+            'retry' => $retry?->id,
         ]);
     }
 
     public function import(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'retry' => ['nullable', 'integer', 'min:1'],
             'cases' => ['required', 'array', 'min:1', 'max:300'],
             'cases.*.selected' => ['nullable', 'boolean'],
             'cases.*.case_title' => ['required', 'string', 'max:255'],
@@ -113,6 +121,7 @@ class CaseFinderController extends Controller
             'cases.*.respondent' => ['nullable', 'string', 'max:200'],
         ]);
 
+        $retry = CourtRecordImport::retryParent($validated['retry'] ?? null, 'website');
         $selected = collect($validated['cases'])->filter(fn (array $case): bool => (bool) ($case['selected'] ?? false))->values();
 
         if ($selected->isEmpty()) {
@@ -122,11 +131,15 @@ class CaseFinderController extends Controller
         $missingCourt = $selected->filter(fn (array $case): bool => blank($case['court_name'] ?? null));
 
         if ($missingCourt->isNotEmpty()) {
-            return redirect()->route('cases.find')->withErrors(['cases' => 'Enter the court for every case you tick ('.$missingCourt->pluck('case_number')->implode(', ').').']);
+            $this->recordPastedAttempt('failed', $retry?->id, ['reason' => 'A selected case did not have a court.']);
+
+            return redirect()->route('cases.find', $retry ? ['method' => 'website', 'retry' => $retry->id] : [])->withErrors(['cases' => 'Enter the court for every case you tick ('.$missingCourt->pluck('case_number')->implode(', ').').']);
         }
 
-        $added = DB::transaction(function () use ($selected): int {
+        $added = DB::transaction(function () use ($selected, $request, $retry): int {
+            User::query()->whereKey($request->user()->workspaceId())->lockForUpdate()->firstOrFail();
             $added = 0;
+            $entries = [];
 
             foreach ($selected as $row) {
                 $cnr = isset($row['cnr_number']) ? strtoupper($row['cnr_number']) : null;
@@ -137,6 +150,8 @@ class CaseFinderController extends Controller
                     ->exists();
 
                 if ($alreadyAdded) {
+                    $entries[] = ['reference' => $row['case_number'], 'outcome' => 'Skipped - already in your cases'];
+
                     continue;
                 }
 
@@ -151,7 +166,13 @@ class CaseFinderController extends Controller
                     'source_reference' => 'Pasted from an eCourts advocate search',
                 ]);
                 $added++;
+                $entries[] = ['reference' => $row['case_number'], 'outcome' => 'Added'];
             }
+
+            $this->recordPastedAttempt('imported', $retry?->id, [
+                'counts' => ['added' => $added, 'updated' => 0, 'skipped' => $selected->count() - $added],
+                'entries' => $entries,
+            ]);
 
             return $added;
         });
@@ -163,5 +184,16 @@ class CaseFinderController extends Controller
             .($skipped ? ' '.($skipped === 1 ? '1 was' : "{$skipped} were").' already in your cases.' : '')
             .($added ? ' Open a case and use Import official record to add its hearings and full details.' : '')
         ));
+    }
+
+    private function recordPastedAttempt(string $status, ?int $retry, array $outcome): void
+    {
+        DB::transaction(function () use ($status, $retry, $outcome): void {
+            $attempt = CourtRecordImport::create([
+                'source_name' => 'Pasted eCourts results', 'raw_content' => '', 'import_status' => $status,
+                'parsed_data' => array_filter(['method' => 'website', 'retry_of' => $retry]) + $outcome,
+            ]);
+            $attempt->auditRetryOutcome(auth()->id());
+        });
     }
 }

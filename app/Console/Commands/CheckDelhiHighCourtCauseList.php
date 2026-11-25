@@ -191,6 +191,7 @@ class CheckDelhiHighCourtCauseList extends Command
             ->whereNull('closed_at')
             ->whereNotNull('user_id')
             ->where(fn ($query) => $query->where('cnr_number', 'like', 'DLHC%')
+                ->orWhere(fn ($chosen) => $chosen->where('court_level', 'high')->where('state_code', 'DL'))
                 ->orWhere('court_name', 'like', '%High Court of Delhi%')
                 ->orWhere('court_name', 'like', '%Delhi High Court%'))
             ->get(['id', 'user_id', 'case_number', 'case_type', 'case_title']);

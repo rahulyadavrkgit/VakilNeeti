@@ -103,13 +103,13 @@ class TaskController extends Controller
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 
-        if (!empty($validated['client_id']) && !empty($validated['case_id'])) {
+        if (! empty($validated['client_id']) && ! empty($validated['case_id'])) {
             $linked = LegalCase::whereKey($validated['case_id'])
                 ->whereHas('parties', function ($query) use ($validated) {
                     $query->where('client_id', $validated['client_id']);
                 })->exists();
 
-            if (!$linked) {
+            if (! $linked) {
                 return back()
                     ->withErrors(['case_id' => 'The selected case is not connected to the selected client.'])
                     ->withInput();
@@ -135,6 +135,7 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
+        $this->authorizeAssignedTask($task);
         $clients = Client::where(function ($query) use ($task) {
             $query->where('status', 'active');
 
@@ -150,6 +151,7 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
+        $this->authorizeAssignedTask($task);
         $validated = $request->validate([
             'client_id' => 'nullable|exists:clients,id',
             'case_id' => 'nullable|exists:legal_cases,id',
@@ -160,13 +162,13 @@ class TaskController extends Controller
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 
-        if (!empty($validated['client_id']) && !empty($validated['case_id'])) {
+        if (! empty($validated['client_id']) && ! empty($validated['case_id'])) {
             $linked = LegalCase::whereKey($validated['case_id'])
                 ->whereHas('parties', function ($query) use ($validated) {
                     $query->where('client_id', $validated['client_id']);
                 })->exists();
 
-            if (!$linked) {
+            if (! $linked) {
                 return back()
                     ->withErrors(['case_id' => 'The selected case is not connected to the selected client.'])
                     ->withInput();
@@ -183,8 +185,14 @@ class TaskController extends Controller
             ->with('success', 'Task updated successfully.');
     }
 
+    private function authorizeAssignedTask(Task $task): void
+    {
+        abort_if($task->assigned_to && ! in_array(auth()->id(), [$task->assigned_to, $task->user_id], true), 403);
+    }
+
     public function destroy(Task $task)
     {
+        $this->authorizeAssignedTask($task);
         $task->delete();
 
         return redirect()->route('tasks.index')

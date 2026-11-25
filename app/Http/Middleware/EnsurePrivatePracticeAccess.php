@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsurePrivatePracticeAccess
@@ -19,6 +20,7 @@ class EnsurePrivatePracticeAccess
         'register',
         'register/*',
         'admin/login',
+        'admin/verify',
         'admin/initial-setup',
         'dashboard-studio/public/*',
 
@@ -72,6 +74,14 @@ class EnsurePrivatePracticeAccess
 
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->user()?->suspended_at) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors(['email' => 'This account is suspended.']);
+        }
+
         // The section directory is public and contains no account-specific records.
         if ($request->path() === '/') {
             return $next($request);

@@ -121,7 +121,7 @@
         @if(session('preferences_success'))
             <p role="status" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{{ session('preferences_success') }}</p>
         @endif
-        <form id="workspace-preferences-form" method="POST" action="{{ route('profile.preferences.update') }}" class="mt-3 flex flex-wrap items-end gap-3">
+        <form method="POST" action="{{ route('profile.preferences.update') }}" class="mt-3 flex flex-wrap items-end gap-3">
             @csrf
             <label class="block min-w-[14rem] text-sm font-medium text-slate-700">
                 Symbol shown on amounts
@@ -401,25 +401,5 @@
 
 </div>
 
-<script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
-    document.addEventListener('DOMContentLoaded', function () {
-        const preferencesForm = document.querySelector('#workspace-preferences-form');
-        if (!preferencesForm) return;
 
-        const otherField = preferencesForm.querySelector('[data-preferences-other]');
-        const otherInput = otherField.querySelector('textarea');
-
-        function toggleOtherField() {
-            const selected = Boolean(preferencesForm.querySelector('input[name="onboarding_features[]"][value="other"]:checked'));
-            otherField.hidden = !selected;
-            otherInput.disabled = !selected;
-            otherInput.required = selected;
-        }
-
-        preferencesForm.querySelectorAll('input[name="onboarding_features[]"]').forEach(function (input) {
-            input.addEventListener('change', toggleOtherField);
-        });
-        toggleOtherField();
-    });
-</script>
 @endsection

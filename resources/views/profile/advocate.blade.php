@@ -44,7 +44,7 @@
             <input type="hidden" name="setup" value="1">
         @endif
 
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <x-panel class="p-5 sm:p-6">
             <h2 class="text-lg font-bold text-slate-900">Basic information</h2>
             <div class="mt-5 grid gap-4 sm:grid-cols-2">
                 <label class="text-sm font-medium text-slate-700">
@@ -94,9 +94,9 @@
                     @error('photo') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </div>
             </div>
-        </section>
+        </x-panel>
 
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <x-panel class="p-5 sm:p-6">
             <h2 class="text-lg font-bold text-slate-900">Professional information</h2>
             <div class="mt-5 grid gap-4 sm:grid-cols-2">
                 <label class="text-sm font-medium text-slate-700">
@@ -150,9 +150,9 @@
                 </label>
 
             </div>
-        </section>
+        </x-panel>
 
-        <section id="bar-registration" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <x-panel id="bar-registration" class="scroll-mt-6 p-5 sm:p-6">
             <h2 class="text-lg font-bold text-slate-900">Bar Council enrolment</h2>
             @if($profile->bar_council_registration_number && ! $profile->bar_number)
                 <p class="mt-1 text-sm text-slate-500">Saved as: <span class="font-semibold text-slate-700">{{ $profile->bar_council_registration_number }}</span>. Enter it in the three parts below.</p>
@@ -160,9 +160,9 @@
             <div class="mt-4">
                 <x-bar-registration-fields :profile="$profile" :state-groups="$stateGroups" :required="$user->account_role !== 'student_intern'" />
             </div>
-        </section>
+        </x-panel>
 
-        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <x-panel class="p-5 sm:p-6">
             <h2 class="text-lg font-bold text-slate-900">Practice location</h2>
             <div class="mt-5 grid gap-4 sm:grid-cols-2" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
                 <div class="text-sm font-medium text-slate-700">
@@ -230,7 +230,7 @@
                     @error('court') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </div>
             </div>
-        </section>
+        </x-panel>
 
         <div class="flex justify-end">
             <button type="submit" class="inline-flex min-h-11 items-center rounded-xl bg-[#238b80] px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-[#16776e]">

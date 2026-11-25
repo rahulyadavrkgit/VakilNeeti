@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\CauseListAppearance;
+use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\User;
+use App\Services\AdminCaseReview;
 use App\Services\DelhiHighCourtCauseList;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -99,10 +101,32 @@ TEXT;
         $this->get(route('cases.show', $listed))->assertOk()->assertSee('id="cause-list"', false)->assertSee('c_25112026.pdf');
         $this->get(route('cases.show', $notListed))->assertOk()->assertDontSee('id="cause-list"', false);
 
+        $diary = $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk();
+        $this->assertSame([$listed->id], $diary->viewData('cases')->pluck('id')->all());
+        $this->assertStringContainsString('Rashtriya Mukti Morcha', $diary->viewData('shareText'));
+
         // Court day lists it for tomorrow even though no hearing was saved for that day.
         $this->get(route('court-day'))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Court 1', 'Item 3', 'Join VC']);
 
         $this->actingAs($other)->get(route('dashboard'))->assertOk()->assertDontSee('In the Delhi HC cause list');
+
+        $this->actingAs($owner);
+        $hearing = CourtHearing::create(['case_id' => $listed->id, 'next_hearing_date' => '2026-11-27']);
+        $review = app(AdminCaseReview::class);
+        $this->assertSame([$listed->id], $review->pending('listing-conflict')->pluck('legal_cases.id')->all());
+        $this->get(route('cases.show', $listed))->assertOk()
+            ->assertSee('These dates differ')->assertSee('27 Nov 2026')->assertSee('25 Nov 2026');
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin)->withSession(['admin_verified' => [
+            'id' => $admin->id, 'version' => 0, 'expires' => now()->addHour()->timestamp,
+        ]]);
+        $this->post(route('admin.review.notify', $listed))->assertRedirect();
+        $this->post(route('admin.review.notify', $listed))->assertRedirect();
+        $this->assertSame(1, $owner->notifications()->where('data->title', 'Check conflicting hearing dates')->count());
+
+        $this->actingAs($owner);
+        $hearing->update(['next_hearing_date' => '2026-11-25']);
+        $this->assertSame(0, $review->pending('listing-conflict')->count());
     }
 
     public function test_the_check_runs_morning_and_evening(): void

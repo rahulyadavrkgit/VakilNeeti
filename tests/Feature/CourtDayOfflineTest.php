@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\CaseDocument;
 use App\Models\CaseParty;
 use App\Models\Client;
 use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CourtDayOfflineTest extends TestCase
@@ -29,7 +31,13 @@ class CourtDayOfflineTest extends TestCase
         $client = Client::create(['client_type' => 'individual', 'first_name' => 'Asha', 'display_name' => 'Asha Sharma', 'mobile' => '+91 98100 12345', 'country' => 'India', 'status' => 'active']);
         CaseParty::create(['case_id' => $today->id, 'client_id' => $client->id, 'party_name' => 'Asha Sharma', 'is_client' => true]);
 
+        Storage::fake('local');
+        Storage::disk('local')->put('case-documents/order.pdf', '%PDF-1.4');
+        $order = CaseDocument::create(['case_id' => $today->id, 'original_name' => 'Court order.pdf',
+            'storage_path' => 'case-documents/order.pdf', 'mime_type' => 'application/pdf', 'size' => 8]);
+
         $response = $this->get(route('court-day'))->assertOk()
+            ->assertSee('Saved by you')->assertSee('Open order')->assertSee('Add next date')->assertSee('Report a problem')
             ->assertHeader('Cache-Control', 'no-store, private')
             ->assertSeeInOrder(['Today', 'Asha vs State', 'Room 214', 'Purpose:', 'Arguments', 'Tomorrow', 'Ravi vs Union', 'Join VC'])
             ->assertSee('href="tel:+919810012345"', false)
@@ -37,18 +45,20 @@ class CourtDayOfflineTest extends TestCase
             ->assertDontSee('Next week matter');
 
         $response->assertSee('data-signed-in="1"', false);
+        $this->get(route('cases.documents.download', [$today, $order, 'preview' => 1]))->assertOk()
+            ->assertHeader('Content-Disposition', 'inline; filename="Court order.pdf"');
 
         $this->actingAs(User::factory()->create())->get(route('court-day'))->assertOk()->assertDontSee('Asha vs State');
     }
 
-    public function test_court_day_needs_sign_in_and_the_offline_worker_only_keeps_chosen_pages(): void
+    public function test_court_day_needs_sign_in_and_the_offline_worker_keeps_no_private_pages(): void
     {
         $this->get(route('court-day'))->assertRedirect();
 
         $worker = file_get_contents(public_path('sw.js'));
-        $this->assertStringContainsString('/^\/today$/', $worker);
+        $this->assertStringNotContainsString('vn-pages', $worker);
         $this->assertStringContainsString("request.method !== 'GET'", $worker);
-        $this->assertStringContainsString('!response.redirected', $worker);
+        $this->assertStringNotContainsString('cache.put(url.pathname', $worker);
 
         $this->get(route('legal.privacy'))->assertSee('data-signed-in="0"', false);
     }

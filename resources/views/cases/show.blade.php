@@ -33,6 +33,8 @@
             $vcLink = $upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link;
             $tabCounts = [
                 'case-history' => $case->hearings->count(),
+                'case-journey' => count($journey['lower']) + count($journey['higher']),
+                'case-connected' => count($journey['connected']),
                 'case-clients' => $linkedClients->count(),
                 'case-notes' => $case->notes->count(),
                 'case-appointments' => $case->appointments->count(),
@@ -61,9 +63,28 @@
                         <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
                         <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" size="lg" :edit-url="route('cases.edit', $case)" />
                     </div>
-                    <p class="mt-1 text-sm text-slate-600">
-                        {{ collect([$case->case_number, $case->cnr_number ? 'CNR '.$case->cnr_number : null, $case->stage ? 'Stage: '.$case->stage : null])->filter()->implode(' · ') ?: 'No case number yet' }}
-                    </p>
+                    {{-- At a glance: which court, the case number, the matter, CNR or diary number and the stage. --}}
+                    <dl class="mt-2 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
+                        <div class="flex flex-wrap items-center gap-2 sm:col-span-2">
+                            <x-court-badge :level="$case->court_level" :state="$case->state_code" :district="$case->district" class="text-sm" />
+                            @if($case->case_number)
+                                <span class="text-base font-bold tabular-nums text-slate-900">{{ $case->case_number }}</span>
+                            @else
+                                <span class="text-slate-400">No case number yet</span>
+                            @endif
+                        </div>
+                        @foreach(array_filter([
+                            'Matter' => $case->matter_id,
+                            'CNR' => $case->cnr_number,
+                            'Diary' => $case->diary_number,
+                            'Stage' => $case->stage,
+                        ]) as $factLabel => $factValue)
+                            <div class="flex gap-2 sm:contents">
+                                <dt class="shrink-0 text-slate-500">{{ $factLabel }}</dt>
+                                <dd class="min-w-0 break-words font-medium text-slate-800">{{ $factValue }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
                 </div>
 
                 <div class="flex flex-wrap gap-2 print:hidden">
@@ -122,6 +143,8 @@
                 </div>
             </div>
         </div>
+
+        @include('cases.partials.date-sources')
 
         @if(session('success'))
             <div role="status" class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
@@ -242,19 +265,24 @@
         </section>
 
         <x-tabs label="Case workspace" :tabs="[
-            'case-overview' => 'Overview',
-            'case-history' => 'Case history',
-            'case-clients' => 'Notify clients',
-            'case-notes' => 'Notes',
-            'case-appointments' => 'Appointments',
+            'case-history' => 'Timeline',
+            'case-connected' => 'Connected matters',
             'case-documents' => 'Documents',
+            'case-notes' => 'Notes',
+            'case-follow-ups' => 'Follow-ups',
+            'case-journey' => 'Court journey',
+            'case-overview' => 'Details',
+            'case-clients' => 'Notify clients',
+            'case-appointments' => 'Appointments',
             'case-expenses' => 'Expenses',
             'case-time' => 'Time entries',
         ]" :counts="$tabCounts" />
 
-        <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
-
         @include('cases.partials.journey')
+        @include('cases.partials.connected')
+        @include('cases.partials.follow-ups')
+
+        <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
 
         <!-- Case Information -->
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -493,90 +521,7 @@
             </div>
         </section>
 
-        <!-- Case Timeline / Hearing History -->
-        <section id="case-history" data-tab-panel role="tabpanel" aria-labelledby="tab-case-history" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h3 class="text-lg font-semibold text-slate-900">Case Timeline & Hearing History</h3>
-                </div>
-                <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" class="text-sm font-semibold text-[#16776e] hover:underline">+ Add hearing</a>
-            </div>
-
-            <div class="mt-5 space-y-4">
-                @forelse($case->hearings as $hearing)
-                    <div class="border-l-2 border-blue-300 pl-4">
-                        <div class="rounded-lg border border-slate-200 p-4">
-
-                            <div class="flex flex-wrap justify-between gap-2">
-                                <p class="font-semibold text-slate-900">
-                                    {{ $hearing->hearing_date?->format('d M Y') ?: 'Hearing date not available' }}
-                                </p>
-                                <span class="flex items-center gap-3 text-xs text-slate-500">
-                                    {{ $hearing->isManual() ? 'Added by you' : 'Imported court record' }}
-                                    @if($hearing->isManual())
-                                        <a href="{{ route('hearings.edit', $hearing) }}" class="font-semibold text-[#16776e] hover:underline">Edit</a>
-                                    @endif
-                                </span>
-                            </div>
-
-                            <div class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                                <div>
-                                    <span class="text-slate-500">Time:</span>
-                                    {{ $hearing->hearing_time
-                                        ? \Carbon\Carbon::parse($hearing->hearing_time)->format('h:i A')
-                                        : 'Not available' }}
-                                </div>
-
-                                <div>
-                                    <span class="text-slate-500">Courtroom:</span>
-                                    {{ $hearing->court_room ?: 'Not available' }}
-                                </div>
-
-                                <div>
-                                    <span class="text-slate-500">Judge:</span>
-                                    {{ $hearing->judge_name ?: 'Not available' }}
-                                </div>
-
-                                @if($hearing->vc_link)
-                                    <div>
-                                        <a href="{{ $hearing->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="font-semibold text-[#16776e] hover:underline">Join VC for this hearing</a>
-                                    </div>
-                                @endif
-
-                                <div>
-                                    <span class="text-slate-500">Stage:</span>
-                                    {{ $hearing->hearing_stage ?: 'Not available' }}
-                                </div>
-
-                                <div>
-                                    <span class="text-slate-500">Next Hearing:</span>
-                                    {{ $hearing->next_hearing_date?->format('d M Y') ?: 'Not available' }}
-                                </div>
-                            </div>
-
-                            @if($hearing->proceedings)
-                                <div class="mt-4 border-t border-slate-100 pt-3">
-                                    <p class="text-xs font-medium uppercase text-slate-500">Proceedings</p>
-                                    <p class="mt-1 whitespace-pre-line text-sm">{{ $hearing->proceedings }}</p>
-                                </div>
-                            @endif
-
-                            @if($hearing->next_action)
-                                <div class="mt-3">
-                                    <p class="text-xs font-medium uppercase text-slate-500">Next Action</p>
-                                    <p class="mt-1 whitespace-pre-line text-sm">{{ $hearing->next_action }}</p>
-                                </div>
-                            @endif
-
-                        </div>
-                    </div>
-                @empty
-                    <p class="rounded-lg bg-slate-50 p-5 text-center text-sm text-slate-500">
-                        No hearing history is currently available for this case.
-                    </p>
-                @endforelse
-            </div>
-        </section>
+        @include('cases.partials.timeline')
 
         <section id="case-notes" data-tab-panel role="tabpanel" aria-labelledby="tab-case-notes" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">

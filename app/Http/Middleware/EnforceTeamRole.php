@@ -30,7 +30,7 @@ class EnforceTeamRole
      * @var list<string>
      */
     private const CLERK_WRITES = [
-        'hearings.store', 'tasks.store', 'tasks.update', 'notifications.read-all',
+        'hearings.store', 'cases.follow-ups.store', 'cases.follow-ups.status', 'cases.report', 'tasks.store', 'tasks.update', 'notifications.read-all',
         'profile.theme.update', 'profile.system-preferences.update', 'profile.calendar-link', 'profile.team.leave', 'logout', 'user.logout',
     ];
 

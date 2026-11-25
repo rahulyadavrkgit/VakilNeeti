@@ -68,13 +68,7 @@
     @stack('structured-data')
     <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
 
-        try {
-            if (localStorage.getItem('vn-sidebar-collapsed') === '1') {
-                document.documentElement.classList.add('vn-sidebar-collapsed');
-            }
-        } catch (error) {}
-
-        // Keep the browser's "install app" offer for our own Install buttons (resources/js/ui-actions.js).
+// Keep the browser's "install app" offer for our own Install buttons (resources/js/ui-actions.js).
         window.addEventListener('beforeinstallprompt', function (event) {
             event.preventDefault();
             window.vnInstallPrompt = event;
@@ -139,25 +133,21 @@
         .vn-main-content { width: 100%; max-width: 1800px; margin-inline: auto; overflow-x: clip; overflow-wrap: break-word; }
         .vn-mobile-nav { display: none; }
         .vn-sidebar-backdrop { display: none; }
-        /* Header: logo on phones (and on computers while the side menu is hidden), page title on computers. */
+        /* Header: logo on phones, page title on desktop. */
         .vn-main-header { border-bottom: 1px solid var(--vn-line); box-shadow: 0 1px 2px rgba(20,34,53,.04); }
         .vn-header-brand, .vn-header-spacer { display: none; }
         .vn-header-title { display: flex; }
-        @media (min-width: 768px) { html.vn-sidebar-collapsed .vn-header-brand { display: inline-flex; margin-right: 6px; } }
         .vn-profile-menu summary::-webkit-details-marker { display: none; }
-        @media (min-width: 768px) {
-            html.vn-sidebar-collapsed .vn-sidebar { display: none; }
-        }
         .vn-nav-link, .vn-main-header button, .vn-main-header a { -webkit-tap-highlight-color: transparent; }
-        .vn-sidebar a:focus-visible, .vn-content a:focus-visible, button:focus-visible { outline: 3px solid #55b9ad; outline-offset: 2px; }
+        .vn-sidebar a:focus-visible, .vn-sidebar summary:focus-visible, .vn-content a:focus-visible, button:focus-visible { outline: 3px solid #55b9ad; outline-offset: 2px; }
         @media (max-width: 767px) {
             body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
-            .vn-sidebar { position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(88vw, 330px); height: 100dvh; transform: translateX(-105%); transition: transform .24s ease; box-shadow: 20px 0 50px rgba(10,25,40,.22); }
-            body.vn-menu-open .vn-sidebar { transform: translateX(0); }
-            .vn-sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 55; padding: 0; border: 0; background: rgba(8,20,34,.52); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-            body.vn-menu-open .vn-sidebar-backdrop { opacity: 1; pointer-events: auto; }
+            .vn-sidebar { position: fixed; z-index: 60; inset: auto 0 0; width: 100%; max-height: min(80dvh, 42rem); padding-bottom: env(safe-area-inset-bottom); border-radius: 18px 18px 0 0; visibility: hidden; transform: translateY(105%); transition: transform .24s ease; box-shadow: 20px 0 50px rgba(10,25,40,.22); }
+            body.vn-menu-open { overflow: hidden; }
+            body.vn-menu-open .vn-sidebar { visibility: visible; transform: translateY(0); }
+            .vn-sidebar-backdrop { display: block; visibility: hidden; position: fixed; inset: 0; z-index: 55; padding: 0; border: 0; background: rgba(8,20,34,.52); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+            body.vn-menu-open .vn-sidebar-backdrop { visibility: visible; opacity: 1; pointer-events: auto; }
             /* Phones: Home shows the logo; other pages show Back and the page name, like a phone app. */
-            .vn-menu-toggle { display: none !important; }
             .vn-header-title { gap: 8px; }
             .vn-main-header.is-home .vn-header-title { display: none; }
             .vn-main-header.is-home .vn-header-brand { display: inline-flex; }
@@ -179,7 +169,6 @@
         }
         @media (max-width: 359px) { .vn-header-brand [data-brand-word] { display: none; } }
         @media (min-width: 768px) and (max-width: 1100px) {
-            .vn-sidebar { width: 250px; }
             .vn-main-content { padding: 22px; }
         }
         @media print {
@@ -189,9 +178,16 @@
             .vn-main-content { padding: 0 !important; }
         }
         /* Sidebar menu: groups with icons (layouts/partials/sidebar-nav). */
-        @media (min-width: 768px) { .vn-sidebar { position: sticky; top: 0; height: 100vh; } }
+        @media (min-width: 768px) {
+            .vn-sidebar { flex-direction: row; width: 100%; height: auto; align-items: center; position: relative; z-index: 42; border-right: 0; }
+            .vn-sidebar [data-nav-search] { display: none; }
+            .vn-sidebar #vn-nav { display: flex; align-items: center; gap: 4px; overflow: visible; padding: 0 12px; }
+            .vn-sidebar .vn-nav-group { position: relative; margin: 0; }
+            .vn-sidebar .vn-nav-group-title { gap: 8px; }
+            .vn-sidebar .vn-nav-items { position: absolute; top: 100%; left: 0; width: 220px; background: var(--vn-ink); border-radius: 12px; padding: 8px; box-shadow: 0 10px 24px #0003; }
+        }
         .vn-nav-group { border-radius: 12px; }
-        .vn-nav-group + .vn-nav-group { margin-top: 6px; }
+        @media (max-width: 767px) { .vn-nav-group + .vn-nav-group { margin-top: 6px; } }
         .vn-nav-group-title { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 6px 12px; border-radius: 9px; color: #91c9c1; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; cursor: pointer; list-style: none; }
         .vn-nav-group-title::-webkit-details-marker, .vn-nav-sub > summary::-webkit-details-marker { display: none; }
         .vn-nav-group-title:hover { background: rgba(255,255,255,.06); }
@@ -236,7 +232,7 @@
 <body class="min-h-screen {{ request()->boolean('embed') ? 'vn-embed' : '' }}" data-signed-in="{{ auth()->check() ? 1 : 0 }}">
 
 <button type="button" class="vn-sidebar-backdrop" id="vn-sidebar-backdrop" aria-label="{{ __('Close navigation') }}"></button>
-<div class="min-h-screen flex">
+<div class="min-h-screen flex flex-col">
 
     <aside id="vn-sidebar" class="vn-sidebar w-72 shrink-0 flex flex-col" aria-label="{{ __('Main navigation') }}">
 
@@ -261,12 +257,7 @@
         @endphp
         <header class="vn-main-header {{ request()->routeIs('dashboard') ? 'is-home' : '' }}">
             <div class="flex h-16 items-center gap-1.5 px-3 sm:gap-2 sm:px-5 lg:px-6">
-                {{-- Computers: show or hide the side menu. Phones use the Menu tab at the bottom. --}}
-                <button type="button" class="vn-menu-toggle {{ $headerIcon }}" id="vn-menu-toggle" aria-label="{{ __('Hide side menu') }}" title="{{ __('Show / hide menu') }}" aria-controls="vn-sidebar" aria-expanded="true">
-                    <x-icon name="sidebar" :size="20" />
-                </button>
-
-                {{-- The logo shows on the phone home screen, and on computers while the side menu is hidden. --}}
+                {{-- The logo shows on the phone home screen. --}}
                 <a href="{{ route('dashboard') }}" class="vn-header-brand shrink-0 rounded-lg" aria-label="VakilNiti home">
                     <x-brand :size="32" />
                 </a>
@@ -477,37 +468,22 @@
     <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*') || request()->is('case-dashboard*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>{{ __('Cases') }}</span></a>
     <a href="{{ route('cases.calendar') }}" class="{{ request()->is('case-calendar*') ? 'is-current' : '' }}"><x-icon name="calendar" :size="21" class="vn-mobile-icon" /><span>{{ __('Calendar') }}</span></a>
     <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></a>
-    <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the full menu') }}" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>{{ __('Menu') }}</span></button>
+    <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the full menu') }}" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>{{ __('More') }}</span></button>
 </nav>
 
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
         const body = document.body;
-        const toggle = document.getElementById('vn-menu-toggle');
         const backdrop = document.getElementById('vn-sidebar-backdrop');
         const more = document.getElementById('vn-mobile-more');
         const sidebar = document.getElementById('vn-sidebar');
         function setMenu(open) {
+            const wasOpen = body.classList.contains('vn-menu-open');
             body.classList.toggle('vn-menu-open', open);
             if (more) more.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open && !wasOpen) sidebar?.querySelector('summary')?.focus({ preventScroll: true });
+            if (!open && wasOpen && window.innerWidth < 768) more?.focus({ preventScroll: true });
         }
-        if (toggle && document.documentElement.classList.contains('vn-sidebar-collapsed')) {
-            toggle.setAttribute('aria-label', 'Show side menu');
-            toggle.setAttribute('aria-expanded', 'false');
-        }
-        if (toggle) toggle.addEventListener('click', () => {
-            if (window.innerWidth >= 768) {
-                const collapsed = document.documentElement.classList.toggle('vn-sidebar-collapsed');
-                toggle.setAttribute('aria-label', collapsed ? 'Show side menu' : 'Hide side menu');
-                toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-                try { localStorage.setItem('vn-sidebar-collapsed', collapsed ? '1' : '0'); } catch (error) {}
-
-                return;
-            }
-
-            setMenu(!body.classList.contains('vn-menu-open'));
-        });
-
         // Close the profile menu on outside click or Escape.
         document.addEventListener('click', (event) => {
             document.querySelectorAll('.vn-profile-menu[open]').forEach((menu) => {

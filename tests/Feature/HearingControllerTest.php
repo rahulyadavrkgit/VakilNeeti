@@ -125,7 +125,7 @@ class HearingControllerTest extends TestCase
         $this->get(route('hearings.edit', $imported))->assertForbidden();
         $this->put(route('hearings.update', $imported), ['case_id' => $case->id, 'hearing_date' => '2026-03-25'])->assertForbidden();
         $this->delete(route('hearings.destroy', $imported))->assertForbidden();
-        $this->get(route('cases.show', $case))->assertSee('Imported court record')->assertDontSee(route('hearings.edit', $imported), false);
+        $this->get(route('cases.show', $case))->assertSee('Imported')->assertDontSee(route('hearings.edit', $imported), false);
     }
 
     public function test_cannot_edit_or_delete_another_users_hearing(): void

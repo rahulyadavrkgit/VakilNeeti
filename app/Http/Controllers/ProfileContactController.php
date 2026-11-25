@@ -11,7 +11,7 @@ class ProfileContactController extends Controller
     private function activeFirm()
     {
         return DB::table('firm_profiles')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('is_active', true)
             ->first();
     }
@@ -20,14 +20,14 @@ class ProfileContactController extends Controller
     {
         $firm = $this->activeFirm();
 
-        if (!$firm) {
+        if (! $firm) {
             return redirect()
                 ->route('firm-profile.index')
                 ->with('error', 'Please create an active Firm Profile first.');
         }
 
         $contacts = DB::table('profile_contacts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('firm_profile_id', $firm->id)
             ->where('is_active', true)
             ->orderBy('contact_type')
@@ -35,7 +35,7 @@ class ProfileContactController extends Controller
             ->get();
 
         $personal = DB::table('personal_profiles')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('firm_profile_id', $firm->id)
             ->first();
 
@@ -46,7 +46,7 @@ class ProfileContactController extends Controller
     {
         $firm = $this->activeFirm();
 
-        if (!$firm) {
+        if (! $firm) {
             return redirect()
                 ->route('firm-profile.index')
                 ->with('error', 'Please create an active Firm Profile first.');
@@ -62,16 +62,16 @@ class ProfileContactController extends Controller
         ]);
 
         DB::table('profile_contacts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))->insert([
-            'user_id' => auth()->id(),
-            'firm_profile_id' => $firm->id,
-            'contact_type' => $validated['contact_type'],
-            'label' => $validated['label'] ?? null,
-            'contact_value' => $validated['contact_value'],
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            ->where('user_id', auth()->id())->insert([
+                'user_id' => auth()->id(),
+                'firm_profile_id' => $firm->id,
+                'contact_type' => $validated['contact_type'],
+                'label' => $validated['label'] ?? null,
+                'contact_value' => $validated['contact_value'],
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
         return redirect()
             ->route('profile.contacts.index')
@@ -82,12 +82,12 @@ class ProfileContactController extends Controller
     {
         $firm = $this->activeFirm();
 
-        if (!$firm) {
+        if (! $firm) {
             return redirect()->route('firm-profile.index');
         }
 
         DB::table('profile_contacts')
-            ->when(!auth()->user()->is_admin, fn ($query) => $query->where('user_id', auth()->id()))
+            ->where('user_id', auth()->id())
             ->where('id', $id)
             ->where('firm_profile_id', $firm->id)
             ->update([

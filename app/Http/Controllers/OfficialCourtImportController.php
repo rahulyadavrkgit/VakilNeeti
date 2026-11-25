@@ -15,11 +15,12 @@ class OfficialCourtImportController extends Controller
     private function extract(string $record, array $labels): ?string
     {
         foreach ($labels as $label) {
-            $pattern = '/(?:^|\r?\n)\s*' . preg_quote($label, '/') .
+            $pattern = '/(?:^|\r?\n)\s*'.preg_quote($label, '/').
                 '\s*[:\-]\s*([^\r\n]+)/i';
 
             if (preg_match($pattern, $record, $matches)) {
                 $value = trim($matches[1]);
+
                 return $value !== '' ? $value : null;
             }
         }
@@ -29,7 +30,7 @@ class OfficialCourtImportController extends Controller
 
     private function normaliseDate(?string $value): ?string
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
@@ -37,7 +38,7 @@ class OfficialCourtImportController extends Controller
 
         foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y'] as $format) {
             try {
-                $date = Carbon::createFromFormat('!' . $format, $value);
+                $date = Carbon::createFromFormat('!'.$format, $value);
 
                 if ($date && $date->format($format) === $value) {
                     return $date->format('Y-m-d');
@@ -148,6 +149,7 @@ class OfficialCourtImportController extends Controller
 
     public function store(Request $request, CourtRecordImport $import)
     {
+        abort_if(isset($import->parsed_data['method']), 404);
         if ($import->import_status === 'imported') {
             return redirect()
                 ->route('cases.import.history')
@@ -198,7 +200,7 @@ class OfficialCourtImportController extends Controller
             $existing = LegalCase::where('cnr_number', $cnr)->first();
         }
 
-        if (!$existing && $caseNumber !== '') {
+        if (! $existing && $caseNumber !== '') {
             $existing = LegalCase::where('case_number', $caseNumber)
                 ->where('court_name', $courtName)
                 ->first();

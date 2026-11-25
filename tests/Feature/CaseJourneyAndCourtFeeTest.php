@@ -31,7 +31,10 @@ class CaseJourneyAndCourtFeeTest extends TestCase
         // Seen from the District Court case, the whole chain appears in order.
         $this->get(route('cases.show', $district))
             ->assertOk()
-            ->assertSeeInOrder(['Case journey', 'District Court', 'CS/1/2024', 'High Court', 'RFA/9/2025', 'Supreme Court', 'SLP(C)/4/2026']);
+            ->assertSeeInOrder(['Case journey', 'Supreme Court', 'Now here', 'SLP(C)/4/2026', 'Delhi HC', 'RFA/9/2025', 'District Court', 'CS/1/2024']);
+
+        // One matter number for the whole chain: the district case's.
+        $this->assertSame([$district->matter_id], LegalCase::query()->pluck('matter_id')->unique()->values()->all());
     }
 
     public function test_connected_matters_are_listed_and_can_be_unlinked(): void

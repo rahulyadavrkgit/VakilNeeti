@@ -41,6 +41,11 @@ class CourtHearing extends Model
         return in_array($this->source_type, [null, '', 'manual', 'google_calendar'], true);
     }
 
+    public function dateSourceLabel(): string
+    {
+        return filled($this->source_type) && $this->source_type !== 'manual' ? 'Imported' : 'Saved by you';
+    }
+
     public function legalCase(): BelongsTo
     {
         return $this->belongsTo(LegalCase::class, 'case_id');
