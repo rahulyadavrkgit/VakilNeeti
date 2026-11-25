@@ -261,16 +261,29 @@ class CaseFileImportController extends Controller
         $cases = LegalCase::query()->get(['id', 'case_title', 'case_number', 'cnr_number', 'court_name']);
         $likelyOnly = (bool) ($validated['likely_only'] ?? false);
 
+        // What is already in the diary: hearing dates per case, and events imported before.
+        $savedDates = CourtHearing::query()->whereIn('case_id', $cases->pluck('id'))->whereNotNull('hearing_date')
+            ->get(['case_id', 'hearing_date'])
+            ->map(fn (CourtHearing $hearing): string => $hearing->case_id.'|'.$hearing->hearing_date->toDateString())
+            ->flip();
+        $importedUids = CourtHearing::query()->where('source_type', 'google_calendar')->whereNotNull('source_reference')
+            ->get(['source_reference', 'hearing_date'])
+            ->map(fn (CourtHearing $hearing): string => $hearing->source_reference.'|'.$hearing->hearing_date?->toDateString())
+            ->flip();
+
         $events = $events
             ->filter(fn (array $event): bool => $event['date'] >= $validated['from'] && $event['date'] <= $validated['to'])
-            ->map(function (array $event) use ($cases): array {
+            ->map(function (array $event) use ($cases, $savedDates, $importedUids): array {
                 $match = $this->matchCase($event, $cases);
                 $likely = $match !== null || $this->looksLikeCourtEvent($event);
+                $alreadySaved = ($match && $savedDates->has($match->id.'|'.$event['date']))
+                    || (filled($event['uid']) && $importedUids->has($event['uid'].'|'.$event['date']));
 
                 return $event + [
                     'matched_case_id' => $match?->id,
                     'likely' => $likely,
-                    'default_action' => $match ? 'case:'.$match->id : ($likely ? 'new' : 'skip'),
+                    'already_saved' => $alreadySaved,
+                    'default_action' => $alreadySaved ? 'skip' : ($match ? 'case:'.$match->id : ($likely ? 'new' : 'skip')),
                 ];
             })
             ->when($likelyOnly, fn (Collection $events) => $events->where('likely', true))
@@ -336,8 +349,9 @@ class CaseFileImportController extends Controller
                 }
 
                 if ($action === 'new') {
-                    $key = Str::lower($event['title']);
-                    $case = $newCases[$key] ??= tap(LegalCase::create([
+                    $key = Str::lower(trim($event['title']));
+                    // A case with this title already in the diary is used, never added a second time.
+                    $case = $newCases[$key] ??= LegalCase::query()->whereRaw('lower(trim(case_title)) = ?', [$key])->first() ?? tap(LegalCase::create([
                         'case_title' => $event['title'],
                         'court_name' => $event['location'] ?: 'Court not recorded',
                         'case_status' => 'pending',
@@ -479,11 +493,7 @@ class CaseFileImportController extends Controller
             $zip->close();
         }
 
-        $attempt = $this->attempt('calendar', $validated['token']);
-        if ($events === [] || ! $attempt) {
-            if ($attempt) {
-                $this->failPendingAttempt($attempt, 'The preview expired before saving or contained no selected events.');
-            }
+        if ($events === []) {
             throw new \InvalidArgumentException('No calendar events were found in this .zip file.');
         }
 

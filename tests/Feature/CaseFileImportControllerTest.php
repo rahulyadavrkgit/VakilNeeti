@@ -149,6 +149,52 @@ class CaseFileImportControllerTest extends TestCase
         $this->assertTrue(CourtHearing::first()->isManual());
     }
 
+    public function test_importing_the_same_calendar_again_adds_nothing_twice(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $upload = fn () => $this->post(route('cases.find.calendar.preview'), [
+            'calendar' => UploadedFile::fake()->createWithContent('work.ics', $this->ics([
+                ['20261204T050000Z', 'Sharma vs State bail', 'Saket Court'],
+                ['20261210T050000Z', 'Sharma vs State bail', 'Saket Court'],
+            ])),
+            'from' => '2026-11-01',
+            'to' => '2027-01-31',
+        ])->assertOk();
+
+        $first = $upload();
+        $this->post(route('cases.find.calendar.import'), ['token' => $first->viewData('token'), 'actions' => $first->viewData('events')->pluck('default_action')->all()]);
+        $this->assertSame(1, LegalCase::where('case_title', 'Sharma vs State bail')->count());
+        $this->assertSame(2, CourtHearing::count());
+
+        // The second time, both events are recognised and set to Skip.
+        $second = $upload()->assertSee('Already in your diary')->assertSee('2 events already in your diary are set to Skip');
+        $this->assertSame(['skip', 'skip'], $second->viewData('events')->pluck('default_action')->all());
+
+        // Even if "New case" is chosen, the case with that title is reused and its saved dates are not added again.
+        $this->post(route('cases.find.calendar.import'), ['token' => $second->viewData('token'), 'actions' => ['new', 'new']]);
+        $this->assertSame(1, LegalCase::where('case_title', 'Sharma vs State bail')->count());
+        $this->assertSame(2, CourtHearing::count());
+    }
+
+    public function test_the_zip_google_calendar_exports_is_read_with_every_calendar_inside(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $path = tempnam(sys_get_temp_dir(), 'gcal');
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::OVERWRITE);
+        $zip->addFromString('court@gmail.com.ics', $this->ics([['20261203T043000Z', 'Sharma vs State bail', 'Saket Court']]));
+        $zip->addFromString('personal@gmail.com.ics', $this->ics([['20261204T050000Z', 'Ravi vs Mohan arguments', 'Tis Hazari']]));
+        $zip->close();
+
+        $response = $this->post(route('cases.find.calendar.preview'), [
+            'calendar' => new UploadedFile($path, 'advocate@gmail.com.ical.zip', 'application/zip', null, true),
+            'from' => '2026-11-01',
+            'to' => '2027-01-31',
+        ])->assertOk()->assertSee('Sharma vs State bail')->assertSee('Ravi vs Mohan arguments');
+
+        $this->assertCount(2, $response->viewData('events'));
+    }
+
     public function test_calendar_import_cannot_attach_hearings_to_another_users_case(): void
     {
         $this->actingAs(User::factory()->create());

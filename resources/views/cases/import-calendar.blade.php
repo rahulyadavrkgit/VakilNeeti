@@ -5,6 +5,7 @@
 
 @php
     $matched = $events->whereNotNull('matched_case_id')->count();
+    $alreadySaved = $events->where('already_saved', true)->count();
     $select = 'w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm';
 @endphp
 
@@ -20,6 +21,9 @@
                 {{ \Illuminate\Support\Carbon::parse($range[0])->format('d M Y') }} and {{ \Illuminate\Support\Carbon::parse($range[1])->format('d M Y') }}{{ $matched ? ', '.$matched.' matched to your cases' : '' }}.
             </p>
             <p class="mt-1">Each event becomes a hearing. Choose its case, make a new case (events with the same title share one case), or skip it.</p>
+            @if($alreadySaved)
+                <p class="mt-1 font-semibold text-slate-700">{{ $alreadySaved }} {{ \Illuminate\Support\Str::plural('event', $alreadySaved) }} already in your diary {{ $alreadySaved === 1 ? 'is' : 'are' }} set to Skip, so nothing is added twice.</p>
+            @endif
         </div>
         <a href="{{ route('cases.find', ['method' => 'calendar']) }}" class="text-sm font-semibold text-[#16776e] hover:underline">&larr; Upload again</a>
     </div>
@@ -32,7 +36,12 @@
                     <span class="text-xs text-slate-500">{{ $event['time'] ?? 'All day' }}</span>
                 </div>
                 <div class="min-w-0 text-sm">
-                    <p class="font-semibold text-slate-900">{{ $event['title'] }}</p>
+                    <p class="font-semibold text-slate-900">
+                        {{ $event['title'] }}
+                        @if($event['already_saved'] ?? false)
+                            <span class="ml-1 whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">Already in your diary</span>
+                        @endif
+                    </p>
                     @if($event['location'])<p class="truncate text-xs text-slate-500">{{ $event['location'] }}</p>@endif
                     @if($event['description'])<p class="truncate text-xs text-slate-500">{{ \Illuminate\Support\Str::limit($event['description'], 140) }}</p>@endif
                 </div>
