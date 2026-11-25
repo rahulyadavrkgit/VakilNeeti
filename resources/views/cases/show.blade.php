@@ -7,30 +7,42 @@
 <div class="space-y-6">
 
         @php
-            $upcomingHearing = $case->hearings
-                ->filter(fn ($hearing) => $hearing->next_hearing_date && \Carbon\Carbon::parse($hearing->next_hearing_date)->startOfDay()->gte(today()))
-                ->sortBy('next_hearing_date')
-                ->first();
-            // The court room in the official court lists, for whatever this case does not record itself.
+            $todayDate = today()->toDateString();
+            $panelDates = $case->hearings->flatMap(fn ($hearing) => collect([
+                $hearing->hearing_date ? ['date' => $hearing->hearing_date, 'time' => $hearing->hearing_time, 'hearing' => $hearing] : null,
+                $hearing->next_hearing_date ? ['date' => $hearing->next_hearing_date, 'time' => null, 'hearing' => $hearing] : null,
+            ])->filter());
+            $panelNext = $panelDates->filter(fn ($entry) => $entry['date']->toDateString() >= $todayDate)
+                ->sortBy(fn ($entry) => [$entry['date']->toDateString(), !$entry['hearing']->hearing_date?->isSameDay($entry['date']), $entry['time'] ?? '99'])->first();
+            $firstListing = $causeListings->first();
+            if ($firstListing && (!$panelNext || $firstListing->courtDocument->listing_date->lt($panelNext['date']))) {
+                $panelNext = ['date' => $firstListing->courtDocument->listing_date, 'time' => null, 'hearing' => null];
+            }
+            $panelListing = $panelNext ? $causeListings->first(fn ($listing) => $listing->courtDocument->listing_date->isSameDay($panelNext['date'])) : null;
+            $panelLast = $panelNext ? null : $panelDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
+            $nextHearing = $panelNext['hearing'] ?? null;
+            $panelTime = $panelNext && $panelNext['time'] ? substr((string) $panelNext['time'], 0, 5) : null;
             $listBench = app(\App\Services\CourtBenchMatcher::class)->find($case->court_name, $case->court_complex, $case->judge_name);
             $listJudge = $listBench?->judgeList()[0]['name'] ?? null;
             $listNote = '<span class="ml-1 text-xs font-normal text-slate-400">(official court list)</span>';
-            $shareText = collect([
-                'Case: '.($case->case_title ?: 'Untitled case'),
-                $case->case_number ? 'Case No: '.$case->case_number : null,
-                $case->appearingForLabel() ? 'Appearing for: '.$case->appearingForLabel() : null,
-                $case->court_name ? 'Court: '.$case->court_name : null,
-                ($upcomingHearing?->court_room ?: $case->court_room ?: $listBench?->court_room) ? 'Court room: '.($upcomingHearing?->court_room ?: $case->court_room ?: $listBench?->court_room) : null,
-                ($upcomingHearing?->judge_name ?: $case->judge_name ?: $listJudge) ? 'Judge: '.($upcomingHearing?->judge_name ?: $case->judge_name ?: $listJudge) : null,
-                'Status: '.ucfirst($case->case_status ?: 'unknown').($case->stage ? ' ('.$case->stage.')' : ''),
-                $upcomingHearing ? 'Next hearing: '.\Carbon\Carbon::parse($upcomingHearing->next_hearing_date)->format('d M Y') : null,
-                ($upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link) ? 'VC link: '.($upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link) : null,
-            ])->filter()->implode("\n");
             $linkedClients = $case->parties->filter(fn ($party) => $party->is_client && $party->client);
             $advocateName = auth()->user()?->name;
-            $courtRoom = $upcomingHearing?->court_room ?: $case->court_room ?: $listBench?->court_room;
-            // A link sent for the next hearing beats the case's usual link.
-            $vcLink = $upcomingHearing?->vc_link ?: $case->vc_link ?: $listBench?->vc_link;
+            $courtRoom = $panelListing?->court_room ?: ($nextHearing?->court_room ?: ($case->court_room ?: $listBench?->court_room));
+            $vcLink = $panelListing?->vcLink() ?: ($nextHearing?->vc_link ?: ($case->vc_link ?: $listBench?->vc_link));
+            $judge = $panelListing?->judge_name ?: ($nextHearing?->judge_name ?: ($case->judge_name ?: $listJudge));
+            $causeList = $panelListing?->stripData();
+            $datedHearing = $panelNext && $nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing : null;
+            $purpose = $nextHearing?->hearing_stage ?: ($panelNext ? $case->stage : null);
+            $item = $causeList['item'] ?? $datedHearing?->item_number;
+            $listTotal = $causeList['total'] ?? $datedHearing?->list_total;
+            $shareText = \App\Services\HearingShareText::single([
+                'title' => $case->case_title, 'case_number' => $case->case_number,
+                'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties,
+                'date' => $panelNext ? $panelNext['date']->toDateString() : null, 'time' => $panelTime,
+                'court' => $case->court_name, 'room' => $courtRoom, 'judge' => $judge, 'vc_link' => $vcLink,
+                'details' => $purpose,
+                'item' => $item, 'list_total' => $listTotal,
+            ])."\nStatus: ".ucfirst($case->case_status ?: 'unknown');
             $tabCounts = [
                 'case-history' => $case->hearings->count(),
                 'case-journey' => count($journey['lower']) + count($journey['higher']),
@@ -55,6 +67,12 @@
             <span class="text-slate-700">{{ \Illuminate\Support\Str::limit($case->case_title ?: 'Untitled case', 60) }}</span>
         </nav>
 
+        @if(session('success'))
+            <div role="status" class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="min-w-0">
@@ -77,7 +95,7 @@
                             'Matter' => $case->matter_id,
                             'CNR' => $case->cnr_number,
                             'Diary' => $case->diary_number,
-                            'Stage' => $case->stage,
+                            'Stage' => $case->stage !== $purpose ? $case->stage : null,
                         ]) as $factLabel => $factValue)
                             <div class="flex gap-2 sm:contents">
                                 <dt class="shrink-0 text-slate-500">{{ $factLabel }}</dt>
@@ -89,7 +107,7 @@
 
                 <div class="flex flex-wrap gap-2 print:hidden">
                     <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                       data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
+                       aria-label="Share case details" data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
                        class="inline-flex items-center gap-1.5 rounded-xl bg-[#25d366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1ebe5b]">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3Z"/></svg>
                         Share case
@@ -142,76 +160,24 @@
                     </form>
                 </div>
             </div>
-        </div>
-
-
-        @if(session('success'))
-            <div role="status" class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        {{-- Next hearing, at the top: when, our side, court, room, judge, VC; copy, share, or add the next date. --}}
-        @php
-            $todayDate = today()->toDateString();
-            $panelDates = $case->hearings->flatMap(fn ($hearing) => collect([
-                $hearing->hearing_date ? ['date' => $hearing->hearing_date, 'time' => $hearing->hearing_time, 'hearing' => $hearing] : null,
-                $hearing->next_hearing_date ? ['date' => $hearing->next_hearing_date, 'time' => null, 'hearing' => $hearing] : null,
-            ])->filter());
-            $panelNext = $panelDates->filter(fn ($entry) => $entry['date']->toDateString() >= $todayDate)
-                ->sortBy(fn ($entry) => $entry['date']->toDateString().' '.($entry['time'] ?? '99'))->first();
-            $firstListing = $causeListings->first();
-            if ($firstListing && (!$panelNext || $firstListing->courtDocument->listing_date->lt($panelNext['date']))) {
-                $panelNext = ['date' => $firstListing->courtDocument->listing_date, 'time' => null, 'hearing' => null];
-            }
-            $panelListing = $panelNext ? $causeListings->first(fn ($listing) => $listing->courtDocument->listing_date->isSameDay($panelNext['date'])) : null;
-            $panelLast = $panelNext ? null : $panelDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
-            $nextHearing = $panelNext['hearing'] ?? null;
-            $panelTime = $panelNext && $panelNext['time'] ? substr((string) $panelNext['time'], 0, 5) : null;
-        @endphp
-        <section aria-label="Next hearing" class="rounded-2xl border p-4 shadow-sm sm:p-5 print:hidden {{ $panelNext ? 'border-teal-200 bg-white' : 'border-red-200 bg-red-50/40' }}">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div class="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:gap-0">
+            <section aria-label="Next hearing" class="mt-5 border-t border-slate-200 pt-4">
+                <div class="min-w-0 space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wide text-[#16776e]">Next hearing</h3>
                     @if($panelNext)
-                        <span class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl text-center {{ $panelNext['date']->isToday() ? 'bg-[#16776e] text-white' : 'bg-teal-50 text-teal-900' }}">
-                            <span class="text-xs font-bold uppercase">{{ $panelNext['date']->isToday() ? 'Today' : ($panelNext['date']->isTomorrow() ? 'Tomorrow' : $panelNext['date']->format('M Y')) }}</span>
-                            <span class="text-3xl font-extrabold leading-none">{{ $panelNext['date']->format('d') }}</span>
-                            <span class="text-xs font-semibold">{{ $panelTime ?? $panelNext['date']->format('D') }}</span>
-                        </span>
-                    @else
-                        <span class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl bg-red-100 text-center text-red-800">
-                            <x-icon name="calendar" :size="22" />
-                            <span class="mt-1 text-xs font-bold uppercase">{{ $panelLast ? 'Date passed' : 'No date' }}</span>
-                        </span>
-                    @endif
-                    <p class="text-sm font-bold text-slate-900 sm:mt-2 sm:text-center sm:text-xs sm:uppercase sm:tracking-wide sm:text-slate-500">Next hearing</p>
-                </div>
-
-                <div class="min-w-0 flex-1 space-y-2">
-                    @if($panelNext)
-                        <p class="text-lg font-semibold text-slate-900">
-                            {{ $panelNext['date']->format('l, d F Y') }}@if($panelTime), {{ $panelTime }}@endif
-                        </p>
+                        <time datetime="{{ $panelNext['date']->toDateString() }}" class="block text-lg font-semibold text-slate-900">{{ $panelNext['date']->format('l, d F Y') }}@if($panelTime), {{ $panelTime }}@endif</time>
                     @elseif($panelLast)
                         <p class="font-semibold text-red-800">The last date ({{ $panelLast['date']->format('d M Y') }}) has passed. Check the case status and add the next date.</p>
                     @else
                         <p class="font-semibold text-slate-800">No hearing date yet. Add the first date below.</p>
                     @endif
-                    <div class="flex flex-wrap items-center gap-2">
-
-                        @if($nextHearing?->hearing_stage)
-                            <span class="text-sm text-slate-600">Purpose: {{ $nextHearing->hearing_stage }}</span>
-                        @endif
-                    </div>
-                    <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
-                                  :room="$panelListing?->court_room ?: ($nextHearing?->court_room ?: $courtRoom)" :judge="$panelListing?->judge_name ?: ($nextHearing?->judge_name ?: ($case->judge_name ?: $listJudge))" :vc-link="$panelListing?->vcLink() ?: ($nextHearing?->vc_link ?: $vcLink)"
-                                  :share="['title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties, 'date' => $panelNext ? $panelNext['date']->toDateString() : null, 'time' => $panelTime, 'details' => $nextHearing?->hearing_stage]" />
+                    @if($purpose)
+                        <p class="text-sm text-slate-600">Purpose: {{ $purpose }}</p>
+                    @endif
+                    <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex" :room="$courtRoom" :judge="$judge" :vc-link="$vcLink" :copy-vc="true" />
                     @if($panelNext)
                         <div @if($panelListing) id="cause-list" @endif class="scroll-mt-24">
-                            <x-hearing-strip :date="$panelNext['date']" :show-date="false" :show-room="false" :court="$case->court_name" :room="$nextHearing?->court_room ?: $courtRoom"
-                                :item="$nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing->item_number : null"
-                                :list-total="$nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing->list_total : null"
-                                :cause-list="$panelListing?->stripData()" :district="$case->court_level === 'district'"
+                            <x-hearing-strip :date="$panelNext['date']" :show-date="false" :show-room="false" :court="$case->court_name" :room="$courtRoom"
+                                :item="$item" :list-total="$listTotal" :cause-list="$causeList" :district="$case->court_level === 'district'"
                                 :case-number="$case->case_number"
                                 :order-url="$latestOrder ? route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) : null"
                                 :order-date="$latestOrder?->created_at?->format('d M Y')" />
@@ -261,8 +227,8 @@
                         </div>
                     @endif
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
         <x-tabs label="Case workspace" :tabs="[
             'case-history' => 'Timeline',

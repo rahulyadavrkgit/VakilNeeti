@@ -128,7 +128,7 @@ class CalendarEventService
                 'judge_name' => $hearing->judge_name ?: $case?->judge_name,
                 'vc_link' => $hearing->vc_link ?: $case?->vc_link,
                 'client_name' => null,
-                'url' => $case ? route('cases.show', $case) : route('hearings.history'),
+                'url' => $case ? route('cases.show', $case) : route('cases.calendar'),
                 'id' => $hearing->id,
             ];
 

@@ -26,7 +26,7 @@ use Illuminate\Notifications\Notifiable;
     'onboarding_features',
     'onboarding_other',
 ])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'public_cv', 'public_cv_username', 'public_cv_published_at'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -46,6 +46,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'onboarding_features' => 'array',
             'preferences' => 'array',
+            'public_cv' => 'array',
+            'public_cv_published_at' => 'datetime',
         ];
     }
 

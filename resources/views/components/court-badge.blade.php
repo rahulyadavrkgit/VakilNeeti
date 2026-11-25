@@ -1,12 +1,12 @@
 @props(['level' => null, 'state' => null, 'district' => null, 'href' => null])
-{{-- Which court a case is in, the same everywhere: navy = Supreme Court, teal = High Court, grey = district, amber = tribunal. --}}
+{{-- Which court a case is in, the same everywhere: navy and gold = Supreme Court, teal = High Court, blue = district, violet = tribunal. --}}
 @php
     $courtLabel = \App\Services\CourtIdentity::label($level, $state, $district);
     $courtTone = match ($level) {
-        'supreme' => 'bg-[#142235] text-white',
+        'supreme' => 'bg-[#142235] text-[#e6b84a]',
         'high' => 'bg-[#16776e] text-white',
-        'tribunal' => 'bg-amber-100 text-amber-900',
-        default => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+        'tribunal' => 'bg-violet-50 text-violet-800 ring-1 ring-inset ring-violet-200',
+        default => 'bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200',
     };
 @endphp
 @if($courtLabel)

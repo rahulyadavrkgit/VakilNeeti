@@ -91,6 +91,6 @@ class CaseSharingTest extends TestCase
         $this->assertSame(1, $lists['today']['count']);
         $this->assertSame(0, $lists['tomorrow']['count']);
         $this->assertStringContainsString('Room 612, main building', $lists['today']['text']);
-        $response->assertSee('Share list')->assertSee('Share Tue 10 Mar hearings', false);
+        $response->assertSee('Share hearings')->assertSee('Share Tue 10 Mar hearings', false);
     }
 }

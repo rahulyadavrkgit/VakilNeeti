@@ -169,7 +169,7 @@
         }
         @media (max-width: 359px) { .vn-header-brand [data-brand-word] { display: none; } }
         @media (min-width: 768px) and (max-width: 1100px) {
-            .vn-main-content { padding: 22px; }
+            .vn-main-content { padding: 18px; }
         }
         @media print {
             [data-tab-panel][hidden] { display: block !important; }
@@ -177,15 +177,25 @@
             body { padding-bottom: 0 !important; background: #fff !important; }
             .vn-main-content { padding: 0 !important; }
         }
-        /* Sidebar menu: groups with icons (layouts/partials/sidebar-nav). */
+        /*
+            Computers: one navy header that stays at the top while the page scrolls: logo, menu, search and actions.
+            The page name and Back sit at the top of the page itself (.vn-page-trail). Phones keep the white app bar,
+            the bottom bar and the Menu sheet (the side menu, which computers do not need).
+        */
         @media (min-width: 768px) {
-            .vn-sidebar { flex-direction: row; width: 100%; height: auto; align-items: center; position: relative; z-index: 42; border-right: 0; }
-            .vn-sidebar [data-nav-search] { display: none; }
-            .vn-sidebar #vn-nav { display: flex; align-items: center; gap: 4px; overflow: visible; padding: 0 12px; }
-            .vn-sidebar .vn-nav-group { position: relative; margin: 0; }
-            .vn-sidebar .vn-nav-group-title { gap: 8px; }
-            .vn-sidebar .vn-nav-items { position: absolute; top: 100%; left: 0; width: 220px; background: var(--vn-ink); border-radius: 12px; padding: 8px; box-shadow: 0 10px 24px #0003; }
+            .vn-sidebar { display: none !important; }
+            .vn-main-header { z-index: 42; background: var(--vn-ink); border-bottom-color: #22344a; backdrop-filter: none; box-shadow: 0 2px 10px rgba(10, 20, 34, .18); }
+            html.dark .vn-main-header { background: #0a111d; border-bottom-color: #1c2a40; }
+            .vn-header-title, .vn-header-spacer, .vn-main-header .vn-header-brand { display: none !important; }
         }
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .vn-main-header [data-brand-word] { display: none; }
+        }
+        .vn-main-content:has(h1) .vn-trail-title { display: none; }
+        .vn-main-content:has(h1) .vn-page-trail:not(:has([data-vn-back])) { display: none !important; }
+        /* Under a section bar, its highlighted tab already names the page. */
+        .vn-section-nav ~ .vn-main-content .vn-trail-title { display: none; }
+        .vn-section-nav ~ .vn-main-content .vn-page-trail:not(:has([data-vn-back])) { display: none !important; }
         .vn-nav-group { border-radius: 12px; }
         @media (max-width: 767px) { .vn-nav-group + .vn-nav-group { margin-top: 6px; } }
         .vn-nav-group-title { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 6px 12px; border-radius: 9px; color: #91c9c1; font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; cursor: pointer; list-style: none; }
@@ -242,8 +252,7 @@
             </a>
         </div>
 
-        {{-- Computers: the top menu with second menus. Phones: the grouped menu in the Menu sheet. --}}
-        @include('layouts.partials.top-nav')
+        {{-- Phones only: the grouped menu in the Menu sheet. Computers have the menu in the header. --}}
         <div class="flex min-h-0 flex-1 flex-col md:hidden">
             @include('layouts.partials.sidebar-nav')
         </div>
@@ -255,57 +264,79 @@
         @php
             $headerUserName = auth()->user()?->name ?? '';
             $headerInitial = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($headerUserName, 0, 1));
-            $headerIcon = 'flex h-11 w-11 md:h-10 md:w-10 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900';
+            // Header buttons: grey on the white phone bar, white on the navy computer header.
+            $headerIconLook = 'h-11 w-11 md:h-10 md:w-10 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 md:text-white/80 md:hover:bg-white/10 md:hover:text-white';
+            $headerIcon = 'flex '.$headerIconLook;
+            $calendarActive = request()->is('case-calendar*', 'hearings*');
+            // Back only where it helps: one record (a case, a client, a board), a form, or a page that names its parent.
+            // Section pages reached from the menu (Cases, Billing, Courts…) need none.
+            $currentRoute = request()->route();
+            $needsBack = ! request()->routeIs('dashboard') && (
+                $__env->hasSection('back-url')
+                || ($currentRoute && $currentRoute->parameters() !== [])
+                || \Illuminate\Support\Str::endsWith((string) $currentRoute?->getName(), ['.show', '.create', '.edit', '.manual'])
+            );
             $headerMenu = 'vn-header-dropdown absolute right-0 z-40 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm shadow-xl shadow-slate-900/10';
             $headerMenuItem = 'flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50';
         @endphp
         <header class="vn-main-header {{ request()->routeIs('dashboard') ? 'is-home' : '' }}">
             <div class="flex h-16 items-center gap-1.5 px-3 sm:gap-2 sm:px-5 lg:px-6">
-                {{-- The logo shows on the phone home screen. --}}
+                {{-- Computers: the logo always leads the header. Phones: it shows on the home screen only. --}}
+                <a href="{{ route('dashboard') }}" class="mr-2 hidden shrink-0 rounded-lg md:inline-flex lg:mr-3" aria-label="VakilNiti home">
+                    <x-brand tone="dark" :size="34" />
+                </a>
                 <a href="{{ route('dashboard') }}" class="vn-header-brand shrink-0 rounded-lg" aria-label="VakilNiti home">
                     <x-brand :size="32" />
                 </a>
+                @include('layouts.partials.top-nav')
 
                 <div class="vn-header-title min-w-0 flex-1 items-center gap-3">
-                    @unless(request()->routeIs('dashboard'))
-                        <x-back-link class="shrink-0" />
-                    @endunless
-                    <h2 class="min-w-0 truncate text-base font-bold text-slate-900 md:text-lg">@yield('page-heading', 'VakilNiti')</h2>
+                    @if($needsBack)
+                        <x-back-link class="shrink-0" :fallback="trim($__env->yieldContent('back-url')) ?: route('dashboard')" />
+                    @endif
+                    <h2 class="min-w-0 truncate text-base font-bold text-slate-900">@yield('page-heading', 'VakilNiti')</h2>
                 </div>
                 <div class="vn-header-spacer flex-1"></div>
 
                 @auth
-                    <form method="GET" action="{{ route('search') }}" role="search" class="mr-1 hidden lg:block">
-                        <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-[#16776e] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#16776e]/15">
-                            <x-icon name="search" :size="17" class="text-slate-400" />
+                    <form method="GET" action="{{ route('search') }}" role="search" class="mr-1 hidden xl:block">
+                        <label class="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 transition focus-within:border-white/40 focus-within:bg-white/15">
+                            <x-icon name="search" :size="17" class="text-white/60" />
                             <span class="sr-only">{{ __('Search cases, clients and invoices') }}</span>
-                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="{{ __('Search cases, judges, rooms, CNR…  (Ctrl K)') }}"
-                                   class="h-10 w-52 border-0 bg-transparent px-0 text-sm focus:ring-0 xl:w-72">
+                            <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="{{ __('Search…  (Ctrl K)') }}"
+                                   class="h-10 w-44 border-0 bg-transparent px-0 text-sm text-white placeholder:text-white/55 focus:ring-0 2xl:w-64">
                         </label>
                     </form>
-                    <a href="{{ route('search') }}" data-search-open aria-label="{{ __('Search') }}" title="{{ __('Search') }} (Ctrl K)" class="{{ $headerIcon }} lg:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
+                    <a href="{{ route('search') }}" data-search-open aria-label="{{ __('Search') }}" title="{{ __('Search') }} (Ctrl K)" class="{{ $headerIcon }} xl:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
                         <x-icon name="search" :size="20" />
                     </a>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="{{ __('Add new') }}" title="{{ __('Add new') }}" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center justify-center gap-1.5 rounded-xl bg-[#16776e] px-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125f58] sm:px-3.5">
-                            <x-icon name="plus" :size="20" /><span class="hidden sm:inline">{{ __('New') }}</span>
+                        <summary aria-label="{{ __('Add new') }}" title="{{ __('Add new') }}" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center justify-center gap-1.5 rounded-xl bg-[#16776e] px-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#125f58] sm:px-3.5 md:px-2.5 xl:px-3.5">
+                            <x-icon name="plus" :size="20" /><span class="hidden sm:inline md:hidden xl:inline">{{ __('New') }}</span>
                         </summary>
                         <div class="{{ $headerMenu }} w-60 py-1.5">
                             <p class="px-4 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Add new') }}</p>
                             <a href="{{ route('hearings.create') }}" data-sheet="{{ route('sheets.next-date') }}" class="{{ $headerMenuItem }}"><x-icon name="calendar" :size="18" class="text-[#16776e]" />{{ __('Hearing / next date') }}</a>
-                            <a href="{{ route('cases.manual') }}" data-sheet="{{ route('sheets.case') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />{{ __('Case') }}</a>
+                            <a href="{{ route('cases.find') }}" data-sheet="{{ route('sheets.add-case') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />{{ __('Case') }}</a>
                             <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="{{ $headerMenuItem }}"><x-icon name="check" :size="18" class="text-[#16776e]" />{{ __('Task') }}</a>
                             <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="{{ $headerMenuItem }}"><x-icon name="people" :size="18" class="text-[#16776e]" />{{ __('Client') }}</a>
                             <a href="{{ route('invoices.create') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-[#16776e]" />{{ __('Invoice') }}</a>
                         </div>
                     </details>
 
-                    <details class="vn-profile-menu relative">
+                    {{-- The calendar one tap away. --}}
+                    <a href="{{ route('cases.calendar') }}" aria-label="{{ __('Calendar') }}" title="{{ __('Calendar') }}" @if($calendarActive) aria-current="page" @endif
+                       class="{{ $headerIcon }} {{ $calendarActive ? 'bg-teal-50 text-[#16776e] md:bg-white/12 md:text-white md:shadow-[inset_0_-2px_0_#e6b84a]' : '' }}">
+                        <x-icon name="calendar" :size="20" />
+                    </a>
+
+                    {{-- Phones have Alerts in the bottom bar. --}}
+                    <details class="vn-profile-menu relative max-md:hidden">
                         <summary aria-label="{{ __('Notifications') }}{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' '.__('unread') : '' }}" title="{{ __('Notifications') }}" class="relative {{ $headerIcon }}">
                             <x-icon name="bell" :size="20" />
                             @if($bellUnreadCount ?? 0)
-                                <span class="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">{{ $bellUnreadCount > 9 ? '9+' : $bellUnreadCount }}</span>
+                                <span class="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white md:ring-[#142235]">{{ $bellUnreadCount > 9 ? '9+' : $bellUnreadCount }}</span>
                             @endif
                         </summary>
                         <div class="{{ $headerMenu }} w-[min(22rem,calc(100vw-1.5rem))]">
@@ -330,10 +361,10 @@
                     </details>
 
                     <details class="vn-profile-menu relative">
-                        <summary aria-label="{{ __('Account menu') }}" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center gap-2 rounded-xl pl-1 pr-1 transition hover:bg-slate-100 xl:pr-2.5">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#142235] text-sm font-bold text-[#e6b84a]">{{ $headerInitial }}</span>
-                            <span class="hidden max-w-32 truncate text-sm font-semibold text-slate-800 xl:block">{{ \Illuminate\Support\Str::of($headerUserName)->before(' ') }}</span>
-                            <x-icon name="chevron" :size="16" class="hidden text-slate-400 xl:block" />
+                        <summary aria-label="{{ __('Account menu') }}" class="flex h-11 md:h-10 shrink-0 cursor-pointer list-none items-center gap-2 rounded-xl pl-1 pr-1 transition hover:bg-slate-100 md:hover:bg-white/10 2xl:pr-2.5">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#142235] text-sm font-bold text-[#e6b84a] md:bg-white/12 md:ring-1 md:ring-white/20">{{ $headerInitial }}</span>
+                            <span class="hidden max-w-32 truncate text-sm font-semibold text-white 2xl:block">{{ \Illuminate\Support\Str::of($headerUserName)->before(' ') }}</span>
+                            <x-icon name="chevron" :size="16" class="hidden text-white/60 2xl:block" />
                         </summary>
                         <div class="{{ $headerMenu }} w-64 py-1.5">
                             <div class="flex items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-2">
@@ -344,6 +375,9 @@
                                 </span>
                             </div>
                             <a href="{{ route('profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="user" :size="18" class="text-slate-500" />{{ __('Settings') }}</a>
+                            @if(auth()->user()->is_admin)
+                                <a href="{{ route('admin.overview') }}" class="{{ $headerMenuItem }}"><x-icon name="shield" :size="18" class="text-slate-500" />{{ __('Account administration') }}</a>
+                            @endif
                             @unless(auth()->user()->isTeamMember())
                                 <a href="{{ route('firm-profile.index') }}" class="{{ $headerMenuItem }}"><x-icon name="building" :size="18" class="text-slate-500" />{{ __(auth()->user()->account_type === 'company' ? 'Firm profile' : 'Office & billing') }}</a>
                             @endunless
@@ -356,22 +390,38 @@
                         </div>
                     </details>
                 @else
-                    <button type="button" data-install-app hidden class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 md:inline-flex">
+                    <button type="button" data-install-app hidden class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white md:inline-flex">
                         <x-icon name="phone" :size="18" /> {{ __('Install app') }}
                     </button>
-                    <a href="{{ route('app.download') }}" class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 lg:inline-flex">
+                    <a href="{{ route('app.download') }}" class="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white lg:inline-flex">
                         <x-icon name="phone" :size="18" /> {{ __('Get the app') }}
                     </a>
                     <button type="button" data-theme-cycle aria-label="{{ __('Switch light or dark') }}" title="{{ __('Light or dark') }}" class="{{ $headerIcon }}">
                         <x-icon name="moon" :size="19" />
                     </button>
-                    <a href="{{ route('login') }}" data-vn-auth-open="login" class="inline-flex h-10 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100 sm:px-3">{{ __('Log in') }}</a>
+                    <a href="{{ route('login') }}" data-vn-auth-open="login" class="inline-flex h-10 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100 sm:px-3 md:text-white md:hover:bg-white/10">{{ __('Log in') }}</a>
                     <a href="{{ route('register') }}" data-vn-auth-open="register" class="inline-flex h-10 items-center whitespace-nowrap rounded-xl bg-[#16776e] px-3 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58] sm:px-3.5">{{ __('Sign up') }}</a>
                 @endauth
             </div>
         </header>
 
-        <main class="vn-content vn-main-content flex-1 p-6">
+        @unless(request()->boolean('embed'))
+            @include('layouts.partials.section-nav')
+        @endunless
+
+        <main class="vn-content vn-main-content flex-1 p-5">
+            {{--
+                Computers: Back (only where needed) and the page name above the page. The name hides when the page
+                has its own title, and the line disappears when it would be empty.
+            --}}
+            @unless(request()->routeIs('dashboard'))
+                <div class="vn-page-trail -mt-2 mb-4 hidden w-full items-center gap-3 md:flex">
+                    @if($needsBack)
+                        <x-back-link class="shrink-0" :fallback="trim($__env->yieldContent('back-url')) ?: route('dashboard')" />
+                    @endif
+                    <span class="vn-trail-title min-w-0 truncate text-sm font-semibold text-slate-600">@yield('page-heading')</span>
+                </div>
+            @endunless
             @if(session('auth_login_success'))
                 <div role="status" class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
                     {{ session('auth_login_success') }}
@@ -383,96 +433,106 @@
                 </div>
             @endif
             @yield('content')
+            <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
+                // Line Back up with the page's own content column (pages use different widths), before the first paint.
+                (function () {
+                    const trail = document.querySelector('.vn-page-trail');
+                    let column = trail ? trail.nextElementSibling : null;
+                    while (column && (column.hasAttribute('role') || column.tagName === 'SCRIPT')) {
+                        column = column.nextElementSibling;
+                    }
+                    if (!column) {
+                        return;
+                    }
+                    const width = getComputedStyle(column).maxWidth;
+                    if (width !== 'none') {
+                        trail.style.maxWidth = width;
+                        trail.style.marginInline = 'auto';
+                    }
+                }());
+            </script>
         </main>
 
-        @php
-            $footerLink = 'text-[#d3dde8] transition hover:text-white hover:underline';
-            $footerHeading = 'mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#e6b84a]';
-        @endphp
-        @auth
-            <p class="vn-footer border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 md:hidden">
-                &copy; {{ date('Y') }} VakilNiti · {{ __('Not legal advice; check the official source') }} ·
-                <a href="{{ route('courts.index') }}" class="font-semibold text-[#16776e]">{{ __('Courts') }}</a> ·
-                <a href="{{ route('bare-acts.index') }}" class="font-semibold text-[#16776e]">{{ __('Bare Acts') }}</a>
-            </p>
-        @endauth
-        <footer class="vn-footer bg-[#142235] text-[#c3cfdc] {{ auth()->check() ? 'max-md:hidden' : '' }}">
-            <div class="mx-auto max-w-6xl px-5 pb-6 pt-10 sm:px-8">
-                <div class="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-                    <div>
-                        <a href="{{ route('dashboard') }}" aria-label="VakilNiti home" class="inline-flex rounded-lg">
-                            <x-brand tone="dark" :size="40" />
-                        </a>
-                        <p class="mt-4 max-w-sm text-sm leading-relaxed">
-                            {{ __('Case diary, hearings, clients and invoices for advocates in India.') }}
-                        </p>
+        {{-- Visitors only: once signed in, the header menu covers everything and the footer would only add length. --}}
+        @guest
+            @php
+                $footerLink = 'text-[#d3dde8] transition hover:text-white hover:underline';
+                $footerHeading = 'mb-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[#e6b84a]';
+            @endphp
+            <footer class="vn-footer bg-[#142235] text-[#c3cfdc]" data-vn-footer>
+                <div class="mx-auto max-w-6xl px-5 py-8 sm:px-8">
+                    <div class="grid gap-8 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))_auto]">
+                        <div class="sm:col-span-3 lg:col-span-1">
+                            <a href="{{ route('dashboard') }}" aria-label="VakilNiti home" class="inline-flex rounded-lg">
+                                <x-brand tone="dark" :size="34" />
+                            </a>
+                            <p class="mt-3 max-w-xs text-sm leading-relaxed">{{ __('Case diary, hearings, clients and invoices for advocates in India.') }}</p>
+                        </div>
 
-                        <p class="{{ $footerHeading }} mt-6">{{ __('Get the app') }}</p>
-                        @include('layouts.partials.app-store-buttons')
-                    </div>
-
-                    <nav class="grid grid-cols-2 gap-x-6 gap-y-8 text-sm sm:grid-cols-3" aria-label="{{ __('Footer') }}">
-                        <div>
-                            <p class="{{ $footerHeading }}">{{ __('Your practice') }}</p>
-                            <ul class="space-y-2.5">
-                                @auth
-                                    <li><a href="{{ route('cases.index') }}" class="{{ $footerLink }}">{{ __('Cases') }}</a></li>
-                                    <li><a href="{{ route('cases.calendar') }}" class="{{ $footerLink }}">{{ __('Calendar') }}</a></li>
-                                    <li><a href="{{ route('clients.index') }}" class="{{ $footerLink }}">{{ __('Clients') }}</a></li>
-                                    @unless(auth()->user()->isTeamMember())
-                                        <li><a href="{{ route('billing.index') }}" class="{{ $footerLink }}">{{ __('Billing') }}</a></li>
-                                    @endunless
-                                    <li><a href="{{ route('profile.index') }}" class="{{ $footerLink }}">{{ __('Settings') }}</a></li>
-                                @else
+                        <nav class="contents" aria-label="{{ __('Footer') }}">
+                            <div>
+                                <p class="{{ $footerHeading }}">{{ __('Get started') }}</p>
+                                <ul class="space-y-1.5 text-sm">
                                     <li><a href="{{ route('register') }}" data-vn-auth-open="register" class="{{ $footerLink }}">{{ __('Create an account') }}</a></li>
                                     <li><a href="{{ route('login') }}" data-vn-auth-open="login" class="{{ $footerLink }}">{{ __('Log in') }}</a></li>
                                     <li><a href="{{ route('app.download') }}" class="{{ $footerLink }}">{{ __('Install on your phone') }}</a></li>
-                                @endauth
-                            </ul>
-                        </div>
-                        <div>
-                            <p class="{{ $footerHeading }}">{{ __('Courts') }}</p>
-                            <ul class="space-y-2.5">
-                                <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">{{ __('All courts') }}</a></li>
-                                <li><a href="{{ route('courts.high-courts') }}" class="{{ $footerLink }}">{{ __('High Courts') }}</a></li>
-                                <li><a href="{{ route('courts.delhi-district-courts') }}" class="{{ $footerLink }}">{{ __('Delhi District Courts') }}</a></li>
-                                <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">{{ __('Supreme Court') }}</a></li>
-                                <li><a href="{{ route('tribunals.index') }}" class="{{ $footerLink }}">{{ __('Tribunals') }}</a></li>
-                                <li><a href="{{ route('courts.display-boards') }}" class="{{ $footerLink }}">{{ __('Display boards') }}</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <p class="{{ $footerHeading }}">{{ __('Library') }}</p>
-                            <ul class="space-y-2.5">
-                                <li><a href="{{ route('bare-acts.index') }}" class="{{ $footerLink }}">{{ __('Bare Acts') }}</a></li>
-                                <li><a href="{{ route('new-criminal-laws.index') }}" class="{{ $footerLink }}">{{ __('New criminal laws') }}</a></li>
-                                <li><a href="{{ route('court-fee.index') }}" class="{{ $footerLink }}">{{ __('Court fee') }}</a></li>
-                                <li><a href="{{ route('miscellaneous-forms.index') }}" class="{{ $footerLink }}">{{ __('Forms') }}</a></li>
-                            </ul>
-                        </div>
-                    </nav>
-                </div>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="{{ $footerHeading }}">{{ __('Courts') }}</p>
+                                <ul class="space-y-1.5 text-sm">
+                                    <li><a href="{{ route('courts.index') }}" class="{{ $footerLink }}">{{ __('All courts') }}</a></li>
+                                    <li><a href="{{ route('courts.supreme-court') }}" class="{{ $footerLink }}">{{ __('Supreme Court') }}</a></li>
+                                    <li><a href="{{ route('courts.high-courts') }}" class="{{ $footerLink }}">{{ __('High Courts') }}</a></li>
+                                    <li><a href="{{ route('courts.display-boards') }}" class="{{ $footerLink }}">{{ __('Display boards') }}</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="{{ $footerHeading }}">{{ __('Library') }}</p>
+                                <ul class="space-y-1.5 text-sm">
+                                    <li><a href="{{ route('bare-acts.index') }}" class="{{ $footerLink }}">{{ __('Bare Acts') }}</a></li>
+                                    <li><a href="{{ route('new-criminal-laws.index') }}" class="{{ $footerLink }}">{{ __('New criminal laws') }}</a></li>
+                                    <li><a href="{{ route('court-fee.index') }}" class="{{ $footerLink }}">{{ __('Court fee') }}</a></li>
+                                    <li><a href="{{ route('miscellaneous-forms.index') }}" class="{{ $footerLink }}">{{ __('Forms') }}</a></li>
+                                </ul>
+                            </div>
+                        </nav>
 
-                <p class="mt-10 text-xs leading-relaxed text-[#b4c2d1]">
-                    {{ __('General information, not legal advice. Check the official source before relying on it. VakilNiti is not affiliated with any court or government body.') }}
-                </p>
+                        <div class="sm:col-span-3 lg:col-span-1">
+                            <p class="{{ $footerHeading }}">{{ __('Get the app') }}</p>
+                            @include('layouts.partials.app-store-buttons')
+                        </div>
+                    </div>
 
-                <div class="mt-6 flex flex-col gap-2 border-t border-white/10 pt-5 text-xs text-[#93a4b7] sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex flex-wrap items-center gap-x-1">&copy; {{ date('Y') }} VakilNiti · <a href="{{ route('legal.privacy') }}" class="hover:text-white hover:underline">{{ __('Privacy') }}</a> · <a href="{{ route('legal.terms') }}" class="hover:text-white hover:underline">{{ __('Terms') }}</a></div>
-                    <p>{{ __('Made in India for Indian advocates') }}</p>
+                    <div class="mt-7 flex flex-col gap-2 border-t border-white/10 pt-4 text-xs text-[#93a4b7] lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+                        <p>&copy; {{ date('Y') }} VakilNiti · <a href="{{ route('legal.privacy') }}" class="hover:text-white hover:underline">{{ __('Privacy') }}</a> · <a href="{{ route('legal.terms') }}" class="hover:text-white hover:underline">{{ __('Terms') }}</a></p>
+                        <p class="leading-relaxed lg:text-right">{{ __('General information, not legal advice. Not affiliated with any court or government body.') }}</p>
+                    </div>
                 </div>
-            </div>
-        </footer>
+            </footer>
+        @endguest
 
     </div>
 </div>
 
 <nav class="vn-mobile-nav" aria-label="{{ __('Quick navigation') }}">
     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'is-current' : '' }}"><x-icon name="home" :size="21" class="vn-mobile-icon" /><span>{{ __('Home') }}</span></a>
-    <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*') || request()->is('case-dashboard*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>{{ __('Cases') }}</span></a>
-    <a href="{{ route('cases.calendar') }}" class="{{ request()->is('case-calendar*') ? 'is-current' : '' }}"><x-icon name="calendar" :size="21" class="vn-mobile-icon" /><span>{{ __('Calendar') }}</span></a>
-    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></a>
-    <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the full menu') }}" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>{{ __('More') }}</span></button>
+    @auth
+        <a href="{{ route('cases.index') }}" class="{{ request()->is('cases*', 'today', 'tasks*', 'case-calendar*', 'hearings*') ? 'is-current' : '' }}"><x-icon name="briefcase" :size="21" class="vn-mobile-icon" /><span>{{ __('Cases') }}</span></a>
+    @endauth
+    <a href="{{ route('courts.index') }}" class="{{ request()->is('courts*', 'tribunals*', 'court-catalogue*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></a>
+    @auth
+        <a href="{{ route('notifications.index') }}" class="relative {{ request()->is('notifications*') ? 'is-current' : '' }}" aria-label="{{ __('Alerts') }}{{ ($bellUnreadCount ?? 0) ? ', '.$bellUnreadCount.' '.__('unread') : '' }}">
+            <x-icon name="bell" :size="21" class="vn-mobile-icon" /><span>{{ __('Alerts') }}</span>
+            @if($bellUnreadCount ?? 0)
+                <span aria-hidden="true" class="absolute left-1/2 top-1 ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">{{ $bellUnreadCount > 9 ? '9+' : $bellUnreadCount }}</span>
+            @endif
+        </a>
+    @else
+        <a href="{{ route('bare-acts.index') }}" class="{{ request()->is('bare-acts*') ? 'is-current' : '' }}"><x-icon name="book" :size="21" class="vn-mobile-icon" /><span>{{ __('Bare Acts') }}</span></a>
+        <a href="{{ route('login') }}" data-vn-auth-open="login"><x-icon name="user" :size="21" class="vn-mobile-icon" /><span>{{ __('Log in') }}</span></a>
+    @endauth
+    <button type="button" id="vn-mobile-more" aria-label="{{ __('Open the full menu') }}" aria-controls="vn-sidebar" aria-expanded="false"><x-icon name="list" :size="21" class="vn-mobile-icon" /><span>{{ __('Menu') }}</span></button>
 </nav>
 
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">

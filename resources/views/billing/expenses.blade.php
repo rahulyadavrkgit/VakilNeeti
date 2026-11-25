@@ -6,7 +6,6 @@
 @section('content')
 @php $field = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2'; @endphp
 <div class="space-y-6">
-    @include('billing.partials.tabs')
 
     @if($errors->any())
         <div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>

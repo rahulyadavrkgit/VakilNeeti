@@ -20,7 +20,6 @@
 
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
-    @include('cases.partials.management-nav')
     <a class="inline-flex min-h-11 items-center text-sm font-semibold text-teal-800 underline" href="{{ route('cases.import.history') }}">Import history and retries</a>
     <p class="text-sm text-slate-600">
         <a href="{{ route('dashboard') }}" class="float-right ml-3 font-semibold text-[#16776e] hover:underline">Skip for now</a>

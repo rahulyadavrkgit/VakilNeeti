@@ -15,7 +15,7 @@ class HearingShareText
     /**
      * One case.
      *
-     * @param  array{title?: ?string, case_number?: ?string, side?: ?string, parties?: ?string, date?: ?string, time?: ?string, court?: ?string, room?: ?string, judge?: ?string, vc_link?: ?string, details?: ?string}  $item
+     * @param  array{title?: ?string, case_number?: ?string, side?: ?string, parties?: ?string, date?: ?string, time?: ?string, court?: ?string, room?: ?string, judge?: ?string, vc_link?: ?string, details?: ?string, item?: ?string, list_total?: ?int}  $item
      */
     public static function single(array $item): string
     {
@@ -27,6 +27,8 @@ class HearingShareText
             $side ? 'We appear for: '.$side : null,
             self::when($item) ? 'Hearing: '.self::when($item) : null,
             self::where($item) ? 'Court: '.self::where($item) : null,
+            ($item['item'] ?? null) ? 'Item: '.$item['item'] : null,
+            ($item['list_total'] ?? null) ? 'Cases in list: '.$item['list_total'] : null,
             ($item['vc_link'] ?? null) ? 'VC link: '.$item['vc_link'] : null,
             ($item['details'] ?? null) ? 'Purpose: '.$item['details'] : null,
         ])->filter()->implode("\n");
@@ -80,9 +82,10 @@ class HearingShareText
      */
     public static function fromEvent(array $event): array
     {
-        $room = $event['court_room'] ?? null;
-        $judge = $event['judge_name'] ?? null;
-        $vcLink = $event['vc_link'] ?? null;
+        $listing = $event['cause_list'] ?? [];
+        $room = $listing['court'] ?? $event['court_room'] ?? null;
+        $judge = $listing['judges'] ?? $event['judge_name'] ?? null;
+        $vcLink = $listing['vc_link'] ?? $event['vc_link'] ?? null;
 
         if (! $room || ! $judge || ! $vcLink) {
             $bench = app(CourtBenchMatcher::class)->find($event['court'] ?? null, $event['court_complex'] ?? null, $judge);
@@ -103,6 +106,8 @@ class HearingShareText
             'judge' => $judge,
             'vc_link' => $vcLink,
             'details' => $event['details'] ?? null,
+            'item' => $listing['item'] ?? $event['item_number'] ?? null,
+            'list_total' => $listing['total'] ?? $event['list_total'] ?? null,
         ];
     }
 

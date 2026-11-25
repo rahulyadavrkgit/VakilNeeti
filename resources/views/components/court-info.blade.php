@@ -1,4 +1,4 @@
-@props(['court' => null, 'room' => null, 'judge' => null, 'vcLink' => null, 'complex' => null, 'designation' => null, 'share' => null, 'live' => null])
+@props(['court' => null, 'room' => null, 'judge' => null, 'vcLink' => null, 'complex' => null, 'designation' => null, 'share' => null, 'live' => null, 'copyVc' => false])
 
 {{--
     Where a matter is heard, at a glance: court, room, judge and the VC link. Wraps on small screens instead of cutting off.
@@ -64,17 +64,19 @@
                 <x-icon name="screen" :size="12" /> Join VC
             </a>
         @endif
-        @if($shareText)
+        @if($shareText || ($copyVc && $vcLink))
             <span class="inline-flex shrink-0 items-center gap-1">
                 @if($vcLink)
                     <button type="button" data-copy="{{ $vcLink }}" title="Copy VC link" aria-label="Copy VC link" class="{{ $iconButton }}">
                         <x-icon name="copy" :size="14" /><span data-copy-label class="sr-only sm:not-sr-only">VC link</span>
                     </button>
                 @endif
+                @if($shareText)
                 <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
                    data-share-text="{{ $shareText }}" data-share-title="{{ $share['title'] ?? 'Case' }}" title="Share case details" aria-label="Share case details" class="{{ $iconButton }}">
                     <x-icon name="share" :size="14" /><span class="sr-only sm:not-sr-only">Share</span>
                 </a>
+                @endif
             </span>
         @endif
     </span>

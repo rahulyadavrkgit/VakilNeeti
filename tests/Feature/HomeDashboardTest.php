@@ -83,7 +83,7 @@ class HomeDashboardTest extends TestCase
         $html = $this->get(route('dashboard'))->assertOk()->getContent();
         $card = substr($html, (int) strpos($html, 'id="next-hearing-heading"'), 6000);
 
-        $this->assertStringContainsString('Next hearing · Tomorrow · 10:30', $card);
+        $this->assertStringContainsString('Next hearing · Wednesday, 11 March 2026 · 10:30', $card);
         foreach (['Meera vs Union', 'Appellant', 'Room 37', 'Justice Dinesh Mehta', 'href="https://dhc.webex.com/meet/court37"'] as $detail) {
             $this->assertStringContainsString($detail, $card);
         }

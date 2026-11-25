@@ -5,14 +5,28 @@
 
 @section('content')
 <div class="space-y-6">
-    @include('billing.partials.tabs')
+
+    <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h2 class="text-xl font-semibold text-slate-900">Payment overdues</h2>
+            <p class="mt-1 text-sm text-slate-600">Review unpaid balances and record payments.</p>
+        </div>
+        <form method="GET" action="{{ route('billing.overdues') }}" role="search" class="w-full sm:w-auto">
+            <label for="overdue-search" class="text-sm font-semibold text-slate-800">Find by client or invoice</label>
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+                <input id="overdue-search" type="search" name="q" maxlength="100" value="{{ $search }}" class="min-h-11 min-w-0 flex-1 rounded-xl border-slate-300">
+                <button class="min-h-11 rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white">Search</button>
+                @if($search !== '')<a href="{{ route('billing.overdues') }}" class="text-sm font-semibold underline">Clear</a>@endif
+            </div>
+        </form>
+    </div>
 
     @foreach([
-        ['title' => 'Pending payments', 'rows' => $pending, 'empty' => 'No overdue invoices without payment.', 'partial' => false],
-        ['title' => 'Partly paid', 'rows' => $partial, 'empty' => 'No partly paid overdue invoices.', 'partial' => true],
+        ['id' => 'pending', 'title' => 'Pending payments', 'rows' => $pending, 'empty' => 'No overdue invoices without payment.', 'partial' => false],
+        ['id' => 'partly-paid', 'title' => 'Partly paid', 'rows' => $partial, 'empty' => 'No partly paid overdue invoices.', 'partial' => true],
     ] as $group)
-        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <h2 class="border-b border-slate-200 px-5 py-4 text-lg font-semibold text-slate-900">{{ $group['title'] }} <span class="text-sm font-normal text-slate-500">({{ $group['rows']->count() }})</span></h2>
+        <section id="{{ $group['id'] }}" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <h2 class="border-b border-slate-200 px-5 py-4 text-lg font-semibold text-slate-900">{{ $group['title'] }} <span class="text-sm font-normal text-slate-500">({{ $group['rows']->total() }})</span></h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-slate-50 text-xs uppercase text-slate-500">
@@ -46,16 +60,17 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="p-6 text-center text-slate-500">{{ $group['empty'] }}</td></tr>
+                            <tr><td colspan="{{ $group['partial'] ? 7 : 6 }}" class="p-6 text-center text-slate-500">{{ $search === '' ? $group['empty'] : 'No matching invoices.' }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            @if($group['rows']->hasPages())<div class="border-t border-slate-200 p-3">{{ $group['rows']->links() }}</div>@endif
         </section>
     @endforeach
 
-    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <h2 class="border-b border-slate-200 px-5 py-4 text-lg font-semibold text-slate-900">Written off <span class="text-sm font-normal text-slate-500">({{ $writtenOff->count() }})</span></h2>
+    <section id="written-off" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <h2 class="border-b border-slate-200 px-5 py-4 text-lg font-semibold text-slate-900">Written off <span class="text-sm font-normal text-slate-500">({{ $writtenOff->total() }})</span></h2>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500">
@@ -81,6 +96,7 @@
                 </tbody>
             </table>
         </div>
+        @if($writtenOff->hasPages())<div class="border-t border-slate-200 p-3">{{ $writtenOff->links() }}</div>@endif
     </section>
 </div>
 @endsection

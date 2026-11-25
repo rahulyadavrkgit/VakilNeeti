@@ -1,6 +1,7 @@
 {{--
-    Computers: one row of direct links; the sections with several pages open a second menu below
-    (click, or hover with a mouse). Phones use the bottom bar and the Menu sheet (sidebar-nav).
+    Computers: one row in the header. Home, Cases, Clients and Billing open their page directly (a section's other
+    pages are in the bar under the header, layouts/partials/section-nav); only Courts and More open a second menu
+    (click, or hover with a mouse). The calendar is an icon beside the bell. Phones use the bottom bar and the Menu sheet.
 --}}
 @php
     $isActive = fn (string ...$patterns): bool => request()->is(...$patterns);
@@ -10,32 +11,19 @@
     // [label, url, active?] or [label, null, active?, [[label, url, active?], …]] for a section with a second menu.
     $items = array_values(array_filter([
         [__('Home'), route('dashboard'), $isActive('/')],
-        $signedIn ? [__('Cases'), null, $isActive('cases*', 'case-dashboard*', 'hearing-history*', 'today', 'tasks*'), [
-            [__('My cases'), route('cases.index'), $isActive('cases', 'cases/*') && ! $isActive('cases/find*', 'cases/import*')],
-            [__('Court day'), route('court-day'), $isActive('today')],
-            [__('Tasks'), route('tasks.index'), $isActive('tasks*')],
-            [__('Hearing history'), route('hearings.history'), $isActive('hearing-history*')],
-            [__('Find & import'), route('cases.find'), $isActive('cases/find*', 'cases/import*')],
-        ]] : null,
-        $signedIn ? [__('Calendar'), route('cases.calendar'), $isActive('case-calendar*', 'hearings*')] : null,
+        $signedIn ? [__('Cases'), route('cases.index'), $isActive('cases*', 'today', 'tasks*', 'case-calendar*', 'hearings*')] : null,
         $signedIn ? [__('Clients'), route('clients.index'), $isActive('clients*', 'client-management*')] : null,
-        $owner ? [__('Billing'), null, $isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*'), [
-            [__('Overview'), route('billing.index'), $isActive('billing*')],
-            [__('Invoices'), route('invoices.index'), $isActive('invoices*')],
-            [__('Payments'), route('payments.index'), $isActive('payments*')],
-            [__('TDS'), route('tds.index'), $isActive('tds*')],
-            [__('Professional tax'), route('professional-tax.index'), $isActive('professional-tax*')],
-        ]] : null,
+        $owner ? [__('Billing'), route('billing.index'), $isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')] : null,
         [__('Courts'), null, $isActive('courts*', 'court-catalogue*', 'tribunals*', 'court-integrations*'), [
-            [__('All courts'), route('courts.index'), $isActive('courts', 'courts/ecourts-services')],
             [__('Supreme Court'), route('courts.supreme-court'), $isActive('courts/supreme-court*')],
             [__('Delhi High Court'), route('courts.delhi-high-court'), $isActive('courts/delhi-high-court*')],
             [__('High Courts'), route('courts.high-courts'), $isActive('courts/high-courts*')],
             [__('Delhi District Courts'), route('courts.delhi-district-courts'), $isActive('courts/delhi-district-courts*')],
-            [__('Display boards'), route('courts.display-boards'), $isActive('courts/display-boards', 'courts/live-board*')],
             [__('Tribunals'), route('tribunals.index'), $isActive('tribunals*', 'court-catalogue*')],
+            [__('Display boards'), route('courts.display-boards'), $isActive('courts/display-boards', 'courts/live-board*')],
+            [__('All courts'), route('courts.index'), $isActive('courts', 'courts/ecourts-services')],
         ]],
-        [__('More'), null, $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*', 'police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*', 'admin', 'admin/*'), array_values(array_filter([
+        [__('More'), null, $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*', 'police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'), [
             [__('Bare Acts'), route('bare-acts.index'), $isActive('bare-acts*')],
             [__('New Criminal Laws'), url('/new-criminal-laws'), $isActive('new-criminal-laws*')],
             [__('Court fee'), url('/court-fee'), $isActive('court-fee*')],
@@ -44,24 +32,26 @@
             [__('Bar associations'), route('bar-associations.index'), $isActive('bar-associations*')],
             [__('PDF annotator'), url('/pdf-annotator'), $isActive('pdf-annotator*')],
             [__('Law data dashboards'), route('dashboard-studio.index'), $isActive('dashboard-studio*')],
-            $signedIn && auth()->user()->is_admin ? [__('Account administration'), route('admin.overview'), $isActive('admin', 'admin/*')] : null,
-        ]))],
+        ]],
     ]));
-    $top = 'inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-lg px-3 text-[15px] font-semibold transition';
+    // Flat items; the current section is marked by a gold bar along the header's bottom edge.
+    $top = 'relative inline-flex h-16 items-center gap-1 whitespace-nowrap px-2.5 text-sm font-semibold transition xl:px-3.5 xl:text-[15px]';
+    $topActive = 'text-white after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#e6b84a]';
+    $topIdle = 'text-white/75 hover:text-white';
 @endphp
 
-<nav class="vn-top-nav hidden min-w-0 flex-1 items-center gap-0.5 md:flex" aria-label="{{ __('Main menu') }}" data-top-nav>
+<nav class="vn-top-nav hidden h-16 min-w-0 flex-1 items-stretch md:flex" aria-label="{{ __('Main menu') }}" data-top-nav>
     @foreach($items as $item)
         @php [$label, $url, $active] = $item; @endphp
         @if($url)
             <a href="{{ $url }}" @if($active) aria-current="page" @endif
-               class="{{ $top }} {{ $active ? 'bg-white/12 text-white' : 'text-white/80 hover:bg-white/8 hover:text-white' }}">{{ $label }}</a>
+               class="{{ $top }} {{ $active ? $topActive : $topIdle }}">{{ $label }}</a>
         @else
             <details class="relative" data-top-menu>
-                <summary class="{{ $top }} cursor-pointer list-none {{ $active ? 'bg-white/12 text-white' : 'text-white/80 hover:bg-white/8 hover:text-white' }}" @if($active) aria-current="true" @endif>
+                <summary class="{{ $top }} cursor-pointer list-none {{ $active ? $topActive : $topIdle }}" @if($active) aria-current="true" @endif>
                     {{ $label }}<x-icon name="chevron" :size="16" class="opacity-70" />
                 </summary>
-                <div class="absolute left-0 top-full z-50 mt-1.5 w-60 rounded-xl border border-white/10 bg-[#142235] p-1.5 shadow-xl shadow-black/25">
+                <div class="absolute left-0 top-full z-50 w-60 rounded-b-xl rounded-tr-xl border border-white/10 bg-[#142235] p-1.5 shadow-xl shadow-black/25">
                     @foreach($item[3] as [$subLabel, $subUrl, $subActive])
                         <a href="{{ $subUrl }}" @if($subActive) aria-current="page" @endif
                            class="flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold {{ $subActive ? 'bg-[#16776e] text-white' : 'text-white/85 hover:bg-white/10 hover:text-white' }}">{{ $subLabel }}</a>

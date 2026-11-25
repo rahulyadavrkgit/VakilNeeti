@@ -6,7 +6,6 @@
 @section('content')
 <div class="space-y-6">
     <x-page-header title="Billing" subtitle="What you have billed, received and are still owed." />
-    @include('billing.partials.tabs')
 
     <div class="flex flex-wrap items-end justify-between gap-3">
         <form method="GET" action="{{ route('billing.index') }}" class="flex flex-wrap items-end gap-2">

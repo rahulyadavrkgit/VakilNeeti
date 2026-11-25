@@ -45,6 +45,7 @@ class EnsurePrivatePracticeAccess
         'privacy',
         'terms',
         'status/*',
+        'cv/*',
         'app',
         'embed-check',
         'sitemap.xml',

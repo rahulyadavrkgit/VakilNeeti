@@ -3,7 +3,7 @@
 
     // Few, plain entries: each section's own pages are reached from tabs inside it.
     $groups = [
-        'workspace' => $isActive('/', 'today', 'admin', 'admin/*', 'search', 'case-dashboard*', 'cases*', 'case-calendar*', 'hearing-history*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
+        'workspace' => $isActive('/', 'today', 'admin', 'admin/*', 'search', 'cases*', 'case-calendar*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
         'courts' => $isActive('courts*', 'court-catalogue*', 'tribunals*', 'court-integrations*'),
         'library' => $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*'),
         'more' => $isActive('police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'),
@@ -34,18 +34,13 @@
         <div class="vn-nav-items">
             <a href="{{ route('dashboard') }}" class="{{ $link($isActive('/')) }}"><x-icon name="home" :size="18" />{{ __('Home') }}</a>
             @auth
-                <a href="{{ route('court-day') }}" class="{{ $link($isActive('today')) }}"><x-icon name="calendar" :size="18" />{{ __('Court Day') }}</a>
-                <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases*', 'case-dashboard*', 'hearing-history*')) }}"><x-icon name="briefcase" :size="18" />{{ __('Cases') }}</a>
+                <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases*', 'today', 'tasks*')) }}"><x-icon name="briefcase" :size="18" />{{ __('Cases') }}</a>
                 <a href="{{ route('cases.calendar') }}" class="{{ $link($isActive('case-calendar*', 'hearings*')) }}"><x-icon name="calendar" :size="18" />{{ __('Calendar') }}</a>
-                <a href="{{ route('tasks.index') }}" class="{{ $link($isActive('tasks*')) }}"><x-icon name="check" :size="18" />{{ __('Tasks') }}</a>
                 <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*', 'client-management*')) }}"><x-icon name="people" :size="18" />{{ __('Clients') }}</a>
-                @if(auth()->user()->is_admin)
-                    <a href="{{ route('admin.overview') }}" class="{{ $link($isActive('admin', 'admin/*')) }}"><x-icon name="people" :size="18" />{{ __('Account administration') }}</a>
-                @endif
                 @unless(auth()->user()->isTeamMember())
                     <a href="{{ route('billing.index') }}" class="{{ $link($isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')) }}"><x-icon name="receipt" :size="18" />{{ __('Billing') }}</a>
                 @endunless
-                <a href="{{ route('profile.index') }}" class="{{ $link($isActive('profile*', 'firm-profile*')) }}"><x-icon name="settings" :size="18" />{{ __('Settings') }}</a>
+                <a href="{{ route('profile.index') }}" class="{{ $link($isActive('profile*', 'firm-profile*', 'admin', 'admin/*')) }}"><x-icon name="settings" :size="18" />{{ __('Settings') }}</a>
             @else
                 <p class="px-3 py-2 text-xs leading-relaxed text-slate-400">
                     <a href="{{ route('login') }}" data-vn-auth-open="login" class="font-semibold text-[#8ed2c8] hover:underline">{{ __('Log in') }}</a>
@@ -59,12 +54,13 @@
     <details class="vn-nav-group" data-filter-item data-nav-group="courts" @if($groups['courts']) open @endif>
         <summary class="vn-nav-group-title"><span>{{ __('Courts') }}</span><x-icon name="chevron" :size="16" class="vn-nav-chevron" /></summary>
         <div class="vn-nav-items">
-            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/ecourts-services')) }}"><x-icon name="list" :size="18" />{{ __('All courts') }}</a>
             <a href="{{ route('courts.supreme-court') }}" class="{{ $link($isActive('courts/supreme-court*') || request('level') === 'supreme') }}"><x-icon name="pillars" :size="18" />{{ __('Supreme Court') }}</a>
             <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court*')) }}"><x-icon name="building" :size="18" />{{ __('Delhi High Court') }}</a>
+            <a href="{{ route('courts.high-courts') }}" class="{{ $link($isActive('courts/high-courts*')) }}"><x-icon name="building" :size="18" />{{ __('High Courts') }}</a>
             <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts*')) }}"><x-icon name="gavel" :size="18" />{{ __('Delhi District Courts') }}</a>
-            <a href="{{ route('courts.display-boards') }}" class="{{ $link($isActive('courts/display-boards', 'courts/live-board*')) }}"><x-icon name="list" :size="18" />{{ __('Display boards') }}</a>
             <a href="{{ route('tribunals.index') }}" class="{{ $link($isActive('tribunals*', 'court-catalogue*')) }}"><x-icon name="scale" :size="18" />{{ __('Tribunals') }}</a>
+            <a href="{{ route('courts.display-boards') }}" class="{{ $link($isActive('courts/display-boards', 'courts/live-board*')) }}"><x-icon name="board" :size="18" />{{ __('Display boards') }}</a>
+            <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/ecourts-services')) }}"><x-icon name="list" :size="18" />{{ __('All courts') }}</a>
         </div>
     </details>
 

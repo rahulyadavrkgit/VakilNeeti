@@ -83,9 +83,9 @@
             <x-module-tile :href="route('courts.delhi-high-court')" icon="building" title="Delhi High Court" description="Display board, roster, cause list, judgements" />
             <x-module-tile :href="route('courts.high-courts')" icon="building" title="All High Courts" description="All 25, with case status and e-filing" />
             <x-module-tile :href="route('courts.delhi-district-courts')" icon="gavel" title="Delhi District Courts" description="All seven court complexes" />
+            <x-module-tile :href="route('tribunals.index')" icon="scale" title="Tribunals" description="Appellate courts and tribunals" />
             <x-module-tile :href="route('courts.display-boards')" icon="board" title="Display boards" description="Live courtroom boards" />
             <x-module-tile :href="route('courts.ecourts-services')" icon="search" title="eCourts services" description="Case status, ePay, eFiling, NJDG" />
-            <x-module-tile :href="route('tribunals.index')" icon="scale" title="Tribunals" description="Appellate courts and tribunals" />
             <p data-filter-empty hidden class="col-span-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Nothing matches your search.</p>
         </nav>
     </section>

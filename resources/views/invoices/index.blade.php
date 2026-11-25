@@ -4,7 +4,6 @@
 @section('content')
 <div class="space-y-6">
 
-        @include('billing.partials.tabs')
 
         <x-page-header class="mt-4" title="Invoices" subtitle="Bills sent to clients, with GST and payments.">
             <a href="{{ route('invoices.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ New invoice</a>

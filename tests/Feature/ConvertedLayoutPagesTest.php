@@ -47,16 +47,26 @@ class ConvertedLayoutPagesTest extends TestCase
             route('clients.activities.create', $client),
             route('invoices.show', $invoice),
             route('payments.show', $payment),
-            route('pdf-annotator.index'),
         ];
 
-        foreach ($pages as $url) {
+        foreach ([...$pages, route('pdf-annotator.index')] as $url) {
             $response = $this->get($url)->assertOk();
             $html = $response->getContent();
 
             $this->assertSame(1, substr_count($html, '<!DOCTYPE html>'), "$url should be a single HTML document");
             $this->assertStringContainsString('id="vn-sidebar"', $html, "$url should use the main layout");
-            $this->assertSame(1, preg_match_all('/<a\s[^>]*data-vn-back/', $html), "$url should have exactly one Back button");
+        }
+
+        // One record or a form: only the layout's Back, once in the phone app bar and once above the page on computers.
+        foreach ($pages as $url) {
+            $html = $this->get($url)->getContent();
+            $this->assertSame(2, preg_match_all('/<a\s[^>]*data-vn-back/', $html), "$url should add no Back button of its own");
+            $this->assertMatchesRegularExpression('/vn-page-trail[^>]*>\s*<a\s[^>]*data-vn-back/', $html, "$url should show Back above the page on computers");
+        }
+
+        // A page reached straight from the menu needs no Back.
+        foreach ([route('pdf-annotator.index'), route('cases.index'), route('billing.index'), route('courts.index')] as $url) {
+            $this->assertSame(0, preg_match_all('/<a\s[^>]*data-vn-back/', $this->get($url)->getContent()), "$url should have no Back button");
         }
     }
 

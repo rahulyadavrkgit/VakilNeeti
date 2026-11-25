@@ -26,7 +26,8 @@ class RecentSiteErrors
         $text = stream_get_contents($handle);
         fclose($handle);
 
-        preg_match_all('/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \w+\.(?:ERROR|CRITICAL|ALERT|EMERGENCY): (.{1,160})/m', (string) $text, $matches, PREG_SET_ORDER);
+        // Lines from test runs ("testing.ERROR") share this file on a developer machine; they are not site errors.
+        preg_match_all('/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (?!testing\.)\w+\.(?:ERROR|CRITICAL|ALERT|EMERGENCY): (.{1,160})/m', (string) $text, $matches, PREG_SET_ORDER);
 
         $messages = [];
 

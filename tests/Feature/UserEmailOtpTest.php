@@ -209,6 +209,51 @@ class UserEmailOtpTest extends TestCase
         $this->get(route('login'))->assertOk()->assertSee('data-login-form="email"', false)->assertSee('data-login-form="mobile"', false);
     }
 
+    public function test_signing_in_with_a_code_or_password_keeps_the_device_signed_in(): void
+    {
+        User::factory()->create(['email' => 'asha@example.test']);
+        $this->post(route('login.submit'), ['email' => 'asha@example.test']);
+        $this->post(route('login.verify.submit'), ['otp' => $this->code])->assertCookie(auth()->guard()->getRecallerName());
+
+        auth()->logout();
+        $user = User::factory()->create(['password_set_at' => now()]);
+        $this->post(route('login.password'), ['email' => $user->email, 'password' => 'password'])
+            ->assertCookie(auth()->guard()->getRecallerName());
+    }
+
+    public function test_an_account_without_a_password_sets_one_without_a_current_password(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->get(route('profile.index'))->assertOk()
+            ->assertSee('Set your email sign-in password')->assertDontSee('name="current_password"', false);
+
+        $this->post(route('profile.password.store'), ['password' => 'short12', 'password_confirmation' => 'short12'])
+            ->assertSessionHasErrors('password', null, 'passwordSetup');
+        $this->post(route('profile.password.store'), ['password' => 'mydiary8', 'password_confirmation' => 'mydiary8'])
+            ->assertSessionHasNoErrors()->assertCookie(auth()->guard()->getRecallerName());
+
+        $this->assertTrue(Hash::check('mydiary8', $user->fresh()->password));
+        $this->assertNotNull($user->fresh()->password_set_at);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_changing_an_existing_password_needs_the_current_one_and_keeps_this_device_signed_in(): void
+    {
+        $user = User::factory()->create(['password_set_at' => now()]);
+        $this->actingAs($user)->get(route('profile.index'))->assertSee('name="current_password"', false);
+
+        $this->post(route('profile.password.store'), ['password' => 'newpass88', 'password_confirmation' => 'newpass88'])
+            ->assertSessionHasErrors('current_password', null, 'passwordSetup');
+        $this->post(route('profile.password.store'), ['current_password' => 'wrong-one', 'password' => 'newpass88', 'password_confirmation' => 'newpass88'])
+            ->assertSessionHasErrors('current_password', null, 'passwordSetup');
+        $this->assertTrue(Hash::check('password', $user->fresh()->password));
+
+        $this->post(route('profile.password.store'), ['current_password' => 'password', 'password' => 'newpass88', 'password_confirmation' => 'newpass88'])
+            ->assertSessionHasNoErrors()->assertCookie(auth()->guard()->getRecallerName());
+        $this->assertTrue(Hash::check('newpass88', $user->fresh()->password));
+        $this->assertAuthenticatedAs($user);
+    }
+
     public function test_the_test_command_reports_a_missing_set_up(): void
     {
         $this->artisan('app:test-login-email', ['email' => 'me@example.test'])->expectsOutputToContain('Sent.')->assertSuccessful();

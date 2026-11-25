@@ -502,7 +502,7 @@ class UserRegistrationController extends Controller
 
         $request->session()->forget('verified_registration');
 
-        Auth::login($user);
+        Auth::login($user, remember: true);
 
         $request->session()->regenerate();
 
@@ -553,7 +553,7 @@ class UserRegistrationController extends Controller
         }
 
         if ($this->otpBypassEnabled($email)) {
-            Auth::login($user);
+            Auth::login($user, remember: true);
             $request->session()->regenerate();
             if (! $user->is_admin) {
                 $request->session()->put('password_setup_proof', ['id' => $user->id, 'until' => now()->addMinutes(15)->timestamp]);
@@ -601,7 +601,7 @@ class UserRegistrationController extends Controller
         }
 
         if ($bypass) {
-            Auth::login($user);
+            Auth::login($user, remember: true);
             $request->session()->regenerate();
 
             return redirect()->intended('/')
@@ -658,7 +658,7 @@ class UserRegistrationController extends Controller
             ? ['mobile_verified_at' => $user->mobile_verified_at ?? now()]
             : ['email_verified_at' => $user->email_verified_at ?? now()])->save();
 
-        Auth::login($user);
+        Auth::login($user, remember: true);
         $request->session()->regenerate();
         // Signing in with a code proves the inbox or phone, so a password can be set or reset without the old one.
         $request->session()->put('signed_in_with_code_at', now()->timestamp);
@@ -716,7 +716,7 @@ class UserRegistrationController extends Controller
         }
 
         RateLimiter::clear($key);
-        Auth::login($user, $request->boolean('remember'));
+        Auth::login($user, remember: true);
         $request->session()->regenerate();
 
         return redirect()->intended('/')->with('auth_login_success', 'Login successful.');
@@ -730,27 +730,33 @@ class UserRegistrationController extends Controller
         $user = $request->user();
         $data = $request->validateWithBag('passwordSetup', [
             'current_password' => ['nullable', 'string', 'max:255'],
-            'password' => ['required', 'string', 'confirmed', Password::min(12)->letters()->numbers(), 'max:72'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8), 'max:72'],
         ]);
+        // Accounts that signed up with an email code have no password to confirm yet.
+        $isFirstPassword = ! $user->password_set_at && ! $user->is_admin;
         $proof = $request->session()->get('password_setup_proof');
         $verifiedRecently = ! $user->is_admin && ($proof['id'] ?? null) === $user->id
             && ($proof['until'] ?? 0) > now()->timestamp;
-        if (! $verifiedRecently && (! filled($data['current_password'] ?? null) || ! Hash::check($data['current_password'], $user->password))) {
+        if (! $isFirstPassword && ! $verifiedRecently
+            && (! filled($data['current_password'] ?? null) || ! Hash::check($data['current_password'], $user->password))) {
             return redirect()->to(route('profile.index').'#password')->withErrors([
-                'current_password' => 'Enter your current password, or sign in with a code first to set a new one.',
+                'current_password' => 'Enter your current password. Forgot it? Sign out, use "Email me a code", then set a new one here.',
             ], 'passwordSetup');
         }
 
         $user->forceFill([
             'password' => Hash::make($data['password']), 'password_set_at' => now(),
+        ] + ($isFirstPassword ? [] : [
             'remember_token' => Str::random(60), 'admin_access_version' => (int) $user->admin_access_version + 1,
-        ])->save();
-        if (config('session.driver') === 'database') {
+        ]))->save();
+        if (! $isFirstPassword && config('session.driver') === 'database') {
             DB::connection(config('session.connection'))->table(config('session.table'))->where('user_id', $user->id)
                 ->where('id', '<>', $request->session()->getId())->delete();
         }
-        $request->session()->forget(['password_setup_proof', 'admin_verified']);
+        $request->session()->forget($isFirstPassword ? ['password_setup_proof'] : ['password_setup_proof', 'admin_verified']);
         $request->session()->regenerate(true);
+        // A changed password rotates the remember token, so renew this device's cookie and keep it signed in.
+        Auth::login($user, remember: true);
 
         return redirect()->to(route('profile.index').'#password')->with('password_saved', 'Password saved. You can use it the next time you sign in.');
     }

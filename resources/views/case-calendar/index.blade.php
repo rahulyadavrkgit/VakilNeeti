@@ -47,15 +47,26 @@
                 @endforeach
             </nav>
 
-            {{-- Send a day's (or the shown period's) hearings with their details: WhatsApp / share sheet, or copy. --}}
+            {{-- Add: a hearing or a task. --}}
             <details class="vn-profile-menu relative">
-                <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-1.5 rounded-lg border border-[#16776e] bg-white px-3 text-sm font-semibold text-[#16776e] hover:bg-teal-50">
-                    <x-icon name="share" :size="16" /> Share list ▾
+                <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-1.5 rounded-lg bg-[#16776e] px-3.5 text-sm font-semibold text-white hover:bg-[#125f58]">
+                    <x-icon name="plus" :size="16" /> Add
+                </summary>
+                <div class="absolute right-0 z-40 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl">
+                    <a href="{{ route('hearings.create') }}" data-sheet="{{ route('sheets.next-date') }}" class="flex min-h-11 items-center gap-2.5 px-4 text-slate-700 hover:bg-slate-50"><x-icon name="calendar" :size="16" class="text-[#16776e]" /> Hearing</a>
+                    <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="flex min-h-11 items-center gap-2.5 px-4 text-slate-700 hover:bg-slate-50"><x-icon name="check" :size="16" class="text-[#16776e]" /> Task</a>
+                </div>
+            </details>
+
+            {{-- Share a day's (or the shown period's) hearings with their details, or print. --}}
+            <details class="vn-profile-menu relative">
+                <summary aria-label="Share or print" title="Share or print" class="inline-flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+                    <x-icon name="share" :size="17" />
                 </summary>
                 <div class="z-40 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-xl max-md:fixed max-md:inset-x-3 max-md:bottom-24 md:absolute md:right-0 md:w-80">
-                    <p class="border-b border-slate-100 px-4 py-2.5 text-xs text-slate-500">Each hearing with our side, time, court, room, judge and VC link.</p>
+                    <p class="px-4 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Share hearings</p>
                     @foreach($shareLists as $shareKey => $shareList)
-                        <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5 last:border-0">
+                        <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5">
                             <span class="min-w-0 flex-1">
                                 <span class="block truncate font-semibold text-slate-800">{{ $shareList['label'] }}</span>
                                 <span class="text-xs text-slate-500">{{ $shareList['count'] }} {{ \Illuminate\Support\Str::plural('hearing', $shareList['count']) }}</span>
@@ -75,20 +86,12 @@
                             @endif
                         </div>
                     @endforeach
+                    <p class="px-4 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Print</p>
+                    <button type="button" data-print class="block min-h-10 w-full px-4 text-left text-slate-700 hover:bg-slate-50">This view</button>
+                    <a href="{{ $calendarUrl(['view' => 'list', 'print' => 1]) }}" class="flex min-h-10 items-center px-4 text-slate-700 hover:bg-slate-50">The month as a list</a>
+                    <a href="{{ $calendarUrl(['view' => 'list', 'print' => 1, 'types' => ['hearing']]) }}" class="flex min-h-10 items-center px-4 pb-1 text-slate-700 hover:bg-slate-50">Hearings only</a>
                 </div>
             </details>
-
-            <details class="relative">
-                <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print ▾</summary>
-                <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg">
-                    <button type="button" data-print class="block w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50">Print this view</button>
-                    <a href="{{ $calendarUrl(['view' => 'list', 'print' => 1]) }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Print as a list (month)</a>
-                    <a href="{{ $calendarUrl(['view' => 'list', 'print' => 1, 'types' => ['hearing']]) }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Print hearings only</a>
-                </div>
-            </details>
-
-            <a href="{{ route('hearings.create') }}" class="inline-flex min-h-10 items-center rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">+ Add hearing</a>
-            <a href="{{ route('tasks.create') }}" class="inline-flex min-h-10 items-center rounded-lg border border-[#16776e] px-4 text-sm font-semibold text-[#16776e] hover:bg-teal-50">+ Task</a>
         </div>
     </div>
 

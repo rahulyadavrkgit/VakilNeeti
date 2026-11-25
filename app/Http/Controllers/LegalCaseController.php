@@ -9,11 +9,17 @@ use App\Models\Client;
 use App\Models\CourtStandSide;
 use App\Models\LegalCase;
 use App\Models\Task;
+use App\Services\CaseListArrangement;
 use App\Services\CourtIdentity;
 use App\Services\HearingShareText;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -35,15 +41,28 @@ class LegalCaseController extends Controller
         'no_upcoming' => 'No date',
     ];
 
-    public function index(Request $request): View
+    public function index(Request $request, CaseListArrangement $arrangement): View
     {
         $request->validate([
             'hearing_filter' => ['nullable', Rule::in(self::HEARING_FILTERS)],
             'tag' => ['nullable', 'integer'],
             'court' => ['nullable', 'regex:/^[A-Z]{2,4}$/'],
+            'list' => ['nullable', Rule::in(['active', 'disposed'])],
+            'arrange' => ['nullable', Rule::in(['date', 'court'])],
         ]);
+        $list = $this->listOf($request);
+        $arrangeBy = $request->input('arrange', 'date');
 
-        $cases = $this->filteredCases($request)
+        // The order depends on each case's dates (hearings and cause list listings), so it is worked out for the
+        // whole matching list, then cut into pages.
+        $order = $arrangement->arrange(
+            $this->filteredCases($request)->with(['hearings', 'causeListAppearances.courtDocument:id,listing_date'])->get(),
+            $list,
+            $arrangeBy,
+        );
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $pageRows = $order->forPage($page, 20)->values();
+        $pageCases = LegalCase::query()
             ->with([
                 'parties',
                 'tags',
@@ -51,8 +70,10 @@ class LegalCaseController extends Controller
                 'hearings' => fn ($hearingQuery) => $hearingQuery->orderBy('next_hearing_date')->orderBy('hearing_time'),
             ])
             ->withCount('hearings')
-            ->orderByDesc('updated_at')
-            ->paginate(20)
+            ->findMany($pageRows->pluck('id'))
+            ->sortBy(fn (LegalCase $case): int => (int) $pageRows->search(fn (array $row): bool => $row['id'] === $case->id))
+            ->values();
+        $cases = (new LengthAwarePaginator($pageCases, $order->count(), 20, $page, ['path' => $request->url()]))
             ->withQueryString();
 
         // How many cases each hearing-date chip would show, with the same search, status and tag.
@@ -62,6 +83,18 @@ class LegalCaseController extends Controller
 
         return view('cases.index', [
             'cases' => $cases,
+            'list' => $list,
+            'arrangeBy' => $arrangeBy,
+            'listCounts' => [
+                'active' => $this->filteredCases($request, 'all', 'active')->count(),
+                'disposed' => $this->filteredCases($request, 'all', 'disposed')->count(),
+            ],
+            // Headings for this page: the case that opens each group, and how many cases the group has in all.
+            'groupHeadings' => $pageRows->groupBy('group')->map(fn (Collection $rows, string $group): array => [
+                'first' => $rows->first()['id'],
+                'label' => $rows->first()['label'],
+                'count' => $order->where('group', $group)->count(),
+            ])->keyBy('first')->all(),
             'orders' => CaseDocument::latestOrdersForCases($cases->pluck('id')),
             'hearingCounts' => $hearingCounts,
             'hearingChips' => self::HEARING_CHIPS,
@@ -261,6 +294,20 @@ class LegalCaseController extends Controller
         return back()->with('success', 'File number saved.');
     }
 
+    /**
+     * The case on one page (PDF): details, parties and every hearing, latest first.
+     */
+    public function download(LegalCase $case): Response
+    {
+        $case->load([
+            'parties',
+            'hearings' => fn ($query) => $query->orderByDesc('hearing_date')->orderByDesc('next_hearing_date'),
+        ]);
+        $name = Str::limit(Str::slug(str_replace(['/', '\\'], '-', $case->case_number ?: $case->case_title ?: 'case')), 80, '') ?: 'case';
+
+        return Pdf::loadView('cases.download', ['case' => $case])->setPaper('a4')->download($name.'.pdf');
+    }
+
     public function attachTag(Request $request, LegalCase $case): RedirectResponse
     {
         $validated = $request->validate(['name' => ['required', 'string', 'max:50']]);
@@ -421,12 +468,21 @@ class LegalCaseController extends Controller
     }
 
     /**
-     * The case list query with the search, status, tag and hearing filters applied.
+     * Which list is shown: running cases ("active", the default) or closed ones ("disposed").
      */
-    private function filteredCases(Request $request, ?string $hearingFilter = null): Builder
+    private function listOf(Request $request): string
+    {
+        return $request->input('list') === 'disposed' ? 'disposed' : 'active';
+    }
+
+    /**
+     * The case list query with the list (active or disposed), search, status, tag and hearing filters applied.
+     */
+    private function filteredCases(Request $request, ?string $hearingFilter = null, ?string $list = null): Builder
     {
         $today = now()->toDateString();
         $query = LegalCase::query();
+        $list ??= $this->listOf($request);
 
         if ($request->filled('search')) {
             $query->search((string) $request->input('search'), (string) $request->input('search_type', 'all'));
@@ -434,6 +490,12 @@ class LegalCaseController extends Controller
 
         if ($request->filled('case_status')) {
             $query->where('case_status', $request->input('case_status'));
+        } elseif ($list === 'disposed') {
+            $query->whereNotNull('case_status')->whereNotIn('case_status', CaseListArrangement::ACTIVE_STATUSES);
+            // Hearing-date filters are for running cases.
+            $hearingFilter = 'all';
+        } else {
+            $query->where(fn (Builder $status) => $status->whereIn('case_status', CaseListArrangement::ACTIVE_STATUSES)->orWhereNull('case_status'));
         }
 
         // One court ("UPJL" = Jalaun courts, "DLHC" = Delhi High Court, "SC" = Supreme Court).

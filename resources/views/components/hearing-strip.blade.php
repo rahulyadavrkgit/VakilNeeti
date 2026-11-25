@@ -15,7 +15,7 @@
     $dark = $tone === 'dark';
 @endphp
 
-@if($myItem || $listTotal || $causeList || $liveRoom || $orderUrl || ($always && $room))
+@if($myItem || $listTotal || $causeList || $liveRoom || $orderUrl || $day || ($always && $room))
     <div {{ $attributes->class(['mt-2 space-y-1.5 rounded-xl border px-3 py-2 text-sm', 'border-white/15 bg-white/5 text-white' => $dark, 'border-slate-200 bg-slate-50 text-slate-800' => !$dark]) }}>
         @if($showDate && $day)
             <p class="font-semibold">{{ $day->format('l, d F Y') }}</p>
@@ -30,7 +30,7 @@
             </p>
         @endif
         <dl class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-            @if($showRoom && !$districtBoard && $room)
+            @if($showRoom && $room)
                 <div class="flex gap-1"><dt>Court room</dt><dd class="font-semibold">{{ preg_replace('/^(court|room)\s*(no\.?)?\s*/i', '', $room) }}</dd></div>
             @endif
             @if($myItem)
@@ -47,6 +47,9 @@
                 </div>
             @endif
         </dl>
+        @if($day && (!$room || !$myItem || !$listTotal))
+            <p class="text-xs {{ $dark ? 'text-white/80' : 'text-slate-600' }}">{{ ucfirst(collect(['court room' => $room, 'item number' => $myItem, 'case total' => $listTotal])->filter(fn ($value) => !filled($value))->keys()->join(', ', ' and ')) }} will appear when available.</p>
+        @endif
         @if(!$districtBoard && $facts)
             <ul class="flex flex-wrap gap-x-3 gap-y-1 text-xs">
                 @foreach(array_unique($facts) as $fact)<li>{{ $fact }}</li>@endforeach

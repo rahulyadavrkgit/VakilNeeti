@@ -56,6 +56,10 @@ class BillingControllerTest extends TestCase
         $this->assertSame([$pending->id], $response->viewData('pending')->pluck('id')->all());
         $this->assertSame([$partial->id], $response->viewData('partial')->pluck('id')->all());
         $response->assertSee('36');
+
+        $filtered = $this->get(route('billing.overdues', ['q' => strtolower($partial->invoice_number)]))->assertOk();
+        $this->assertSame([$partial->id], $filtered->viewData('partial')->pluck('id')->all());
+        $this->assertSame(0, $filtered->viewData('pending')->total());
     }
 
     public function test_write_off_removes_the_balance_and_can_be_undone(): void

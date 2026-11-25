@@ -7,7 +7,6 @@ use App\Services\HearingShareText;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CaseCalendarController extends Controller
@@ -152,58 +151,5 @@ class CaseCalendarController extends Controller
         }
 
         return today();
-    }
-
-    public function history(Request $request)
-    {
-        $query = DB::table('court_hearings as h')
-            ->leftJoin('legal_cases as lc', function ($join) {
-                $join->on('lc.id', '=', 'h.case_id');
-                $join->where('lc.user_id', auth()->user()->workspaceId());
-            })
-            ->where('h.user_id', auth()->user()->workspaceId())
-            ->select(
-                'h.id',
-                'h.case_id',
-                'h.hearing_date',
-                'h.hearing_time',
-                'h.court_room',
-                'h.vc_link as hearing_vc_link',
-                'h.judge_name',
-                'h.hearing_stage',
-                'h.proceedings',
-                'h.next_action',
-                'h.next_hearing_date',
-                'lc.case_title',
-                'lc.case_number',
-                'lc.cnr_number',
-                'lc.court_name',
-                'lc.court_complex',
-                'lc.appearing_for',
-                'lc.appearing_for_parties',
-                'lc.court_room as case_court_room',
-                'lc.judge_name as case_judge_name',
-                'lc.vc_link'
-            );
-
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-
-            $query->where(function ($q) use ($search) {
-                $q->where('lc.case_title', 'like', "%{$search}%")
-                    ->orWhere('lc.case_number', 'like', "%{$search}%")
-                    ->orWhere('lc.cnr_number', 'like', "%{$search}%")
-                    ->orWhere('h.judge_name', 'like', "%{$search}%")
-                    ->orWhere('h.hearing_stage', 'like', "%{$search}%");
-            });
-        }
-
-        $hearings = $query
-            ->orderByDesc('h.hearing_date')
-            ->orderByDesc('h.id')
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('hearing-history.index', compact('hearings'));
     }
 }

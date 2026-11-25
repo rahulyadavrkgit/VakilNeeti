@@ -294,3 +294,22 @@ document.addEventListener('click', (event) => {
         native.addEventListener('click', () => navigator.share({ title, text }).catch(() => {}));
     }
 }, true);
+
+// A step inside the sheet (<form data-sheet-step method="get">): its fields go into the next step's address,
+// which opens in the same sheet. The browser checks required fields first.
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-sheet-step')) {
+        return;
+    }
+
+    event.preventDefault();
+    const url = new URL(form.action, window.location.href);
+    new FormData(form).forEach((value, key) => {
+        if (typeof value === 'string' && value.trim() !== '') {
+            url.searchParams.set(key, value.trim());
+        }
+    });
+    loadInto(url.toString());
+});

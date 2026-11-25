@@ -4,7 +4,6 @@
 @section('content')
 <div class="space-y-6">
 
-        @include('billing.partials.tabs')
 
         <div class="flex justify-end gap-2">
             <a href="{{ route('billing.payments.export') }}"

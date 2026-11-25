@@ -11,6 +11,7 @@ use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -80,14 +81,26 @@ class BillingController extends Controller
         ]);
     }
 
-    public function overdues(): View
+    public function overdues(Request $request): View
     {
-        $overdue = $this->openInvoices()->filter(fn (Invoice $invoice) => $this->isOverdue($invoice))->sortBy('due_date');
+        $search = trim($request->string('q')->limit(100, '')->toString());
+        $matches = fn (Invoice $invoice): bool => $search === ''
+            || Str::contains($invoice->invoice_number, $search, ignoreCase: true)
+            || Str::contains($invoice->client?->displayName() ?? '', $search, ignoreCase: true);
+        $overdue = $this->openInvoices()->filter(fn (Invoice $invoice) => $this->isOverdue($invoice))->filter($matches)->sortBy('due_date');
+        $paginate = function (Collection $invoices, string $pageName, string $section) use ($request): LengthAwarePaginator {
+            $page = LengthAwarePaginator::resolveCurrentPage($pageName);
+
+            return (new LengthAwarePaginator($invoices->forPage($page, 15)->values(), $invoices->count(), 15, $page, [
+                'path' => $request->url(), 'pageName' => $pageName,
+            ]))->withQueryString()->fragment($section);
+        };
 
         return view('billing.overdues', [
-            'pending' => $overdue->filter(fn (Invoice $invoice) => $invoice->amountPaid() <= 0)->values(),
-            'partial' => $overdue->filter(fn (Invoice $invoice) => $invoice->amountPaid() > 0)->values(),
-            'writtenOff' => Invoice::with(['client', 'payments'])->whereNotNull('written_off_at')->latest('written_off_at')->get(),
+            'search' => $search,
+            'pending' => $paginate($overdue->filter(fn (Invoice $invoice) => $invoice->amountPaid() <= 0), 'pending_page', 'pending'),
+            'partial' => $paginate($overdue->filter(fn (Invoice $invoice) => $invoice->amountPaid() > 0), 'partial_page', 'partly-paid'),
+            'writtenOff' => $paginate(Invoice::with(['client', 'payments'])->whereNotNull('written_off_at')->latest('written_off_at')->get()->filter($matches), 'written_off_page', 'written-off'),
         ]);
     }
 

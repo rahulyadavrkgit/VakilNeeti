@@ -6,8 +6,8 @@
 @section('content')
     @php
         $passwordProof = session('password_setup_proof');
-        $canSetPassword = !auth()->user()->is_admin && ($passwordProof['id'] ?? null) === auth()->id()
-            && ($passwordProof['until'] ?? 0) > now()->timestamp;
+        $canSetPassword = !auth()->user()->is_admin && (! auth()->user()->password_set_at
+            || (($passwordProof['id'] ?? null) === auth()->id() && ($passwordProof['until'] ?? 0) > now()->timestamp));
     @endphp
     <section id="password" class="mx-auto mb-4 max-w-5xl scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4">
         <h2 class="font-bold">{{ auth()->user()->password_set_at ? 'Change password' : 'Set your email sign-in password' }}</h2>
@@ -18,9 +18,9 @@
             @unless($canSetPassword)
                 <label class="text-sm font-medium">Current password<input name="current_password" type="password" autocomplete="current-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
             @endunless
-            <label class="text-sm font-medium">New password<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
+            <label class="text-sm font-medium">New password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
             <label class="text-sm font-medium">Confirm password<input name="password_confirmation" type="password" autocomplete="new-password" required class="mt-1 block min-h-11 w-full rounded-lg border-slate-300"></label>
-            <p class="text-xs text-slate-600 sm:col-span-3">Use at least 12 characters, including letters and numbers.</p>
+            <p class="text-xs text-slate-600 sm:col-span-3">Use at least 8 characters.</p>
             <button class="min-h-11 justify-self-start rounded-lg bg-teal-700 px-4 font-semibold text-white sm:col-span-3">Save password</button>
         </form>
     </section>
@@ -29,6 +29,16 @@
     <x-page-header title="Settings" subtitle="Profile, practice and app settings.">
         <a href="{{ route('profile.setup.start') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">{{ __('Complete my profile') }}</a>
     </x-page-header>
+
+    @if(auth()->user()->account_type !== 'company')
+        <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50 p-5">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">Public profile &amp; CV</h2>
+                <p class="text-sm text-slate-600">A one-page profile from your details, to share or download.</p>
+            </div>
+            <a href="{{ route('profile.cv.edit') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white">Open</a>
+        </section>
+    @endif
 
     {{-- PROFILE INFORMATION --}}
     <section class="rounded-xl border border-slate-200 bg-white p-5">

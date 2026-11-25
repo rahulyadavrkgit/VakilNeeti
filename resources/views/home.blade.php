@@ -87,11 +87,11 @@
             @endif
         @endif
         @if($nextHearing ?? null)
-            @php $nextDate = \Illuminate\Support\Carbon::parse($nextHearing['date']); @endphp
+            @php $nextDate = \Illuminate\Support\Carbon::parse($nextHearing['date']); $nextDetails = \App\Services\HearingShareText::fromEvent($nextHearing); @endphp
             <section aria-labelledby="next-hearing-heading" class="mt-3 rounded-2xl bg-white p-3.5 text-slate-900 shadow-sm sm:p-4">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <p id="next-hearing-heading" class="text-xs font-bold uppercase tracking-wide {{ $nextDate->isToday() ? 'text-red-600' : 'text-[#16776e]' }}">
-                        {{ __('Next hearing') }} · {{ $nextDate->isToday() ? __('Today') : ($nextDate->isTomorrow() ? __('Tomorrow') : $nextDate->translatedFormat('D, d M')) }}@if($nextHearing['time']) · {{ $nextHearing['time'] }}@endif
+                        {{ __('Next hearing') }} · {{ $nextDate->translatedFormat('l, d F Y') }}@if($nextHearing['time']) · {{ $nextHearing['time'] }}@endif
                     </p>
                     <a href="{{ $nextHearing['url'] }}" class="text-xs font-semibold text-[#16776e] hover:underline">{{ __('Open case') }} &rarr;</a>
                 </div>
@@ -102,9 +102,9 @@
                 @if($nextHearing['case_number'] || $nextHearing['details'])
                     <p class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500"><x-court-badge :level="$nextHearing['court_level'] ?? null" :state="$nextHearing['state_code'] ?? null" :district="$nextHearing['district'] ?? null" class="shrink-0" /><span class="truncate">{{ collect([$nextHearing['case_number'], $nextHearing['details']])->filter()->implode(' · ') }}</span></p>
                 @endif
-                <x-court-info class="mt-2" :live="false" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextHearing['cause_list']['court'] ?? $nextHearing['court_room'] ?? null" :judge="$nextHearing['cause_list']['judges'] ?? $nextHearing['judge_name'] ?? null" :vc-link="$nextHearing['cause_list']['vc_link'] ?? $nextHearing['vc_link'] ?? null"
-                              :share="['title' => $nextHearing['title'], 'case_number' => $nextHearing['case_number'], 'side' => $nextHearing['appearing_for'] ?? null, 'parties' => $nextHearing['appearing_for_parties'] ?? null, 'date' => $nextHearing['date'], 'time' => $nextHearing['time'], 'details' => $nextHearing['details']]" />
-                <x-hearing-strip :show-room="false" :date="$nextHearing['date']" :court="$nextHearing['court']" :room="$nextHearing['court_room'] ?? null" :item="$nextHearing['item_number'] ?? null" :list-total="$nextHearing['list_total'] ?? null" :cause-list="$nextHearing['cause_list'] ?? null" :case-number="$nextHearing['case_number']" :district="($nextHearing['court_level'] ?? null) === 'district'" :order-url="!empty($nextHearing['order']) ? route('cases.documents.download', [$nextHearing['case_id'], $nextHearing['order'], 'preview' => 1]) : null" :order-date="($nextHearing['order'] ?? null)?->created_at?->format('d M Y')" />
+                <x-court-info class="mt-2" :live="false" :court="$nextHearing['court']" :complex="$nextHearing['court_complex'] ?? null" :room="$nextDetails['room']" :judge="$nextDetails['judge']" :vc-link="$nextDetails['vc_link']"
+                              :share="$nextDetails" />
+                <x-hearing-strip :show-room="false" :show-date="false" :date="$nextHearing['date']" :court="$nextHearing['court']" :room="$nextDetails['room']" :item="$nextHearing['item_number'] ?? null" :list-total="$nextHearing['list_total'] ?? null" :cause-list="$nextHearing['cause_list'] ?? null" :case-number="$nextHearing['case_number']" :district="($nextHearing['court_level'] ?? null) === 'district'" :order-url="!empty($nextHearing['order']) ? route('cases.documents.download', [$nextHearing['case_id'], $nextHearing['order'], 'preview' => 1]) : null" :order-date="($nextHearing['order'] ?? null)?->created_at?->format('d M Y')" />
             </section>
         @endif
         <nav aria-label="{{ __('Quick actions') }}" class="mt-3 grid gap-2 {{ auth()->check() ? 'grid-cols-4' : 'grid-cols-3 sm:grid-cols-6' }}">
@@ -172,14 +172,12 @@
 
                 <ul class="mt-3 divide-y divide-slate-100">
                     @forelse($upcomingHearings as $event)
-                        @php $eventDate = \Illuminate\Support\Carbon::parse($event['date']); @endphp
-                        <li class="flex items-start gap-3 py-3">
-                            <a href="{{ $event['url'] }}" class="flex w-14 shrink-0 flex-col items-center rounded-lg py-1 {{ $eventDate->isToday() ? 'bg-red-600 text-white' : 'bg-teal-50 text-teal-900' }}">
-                                <span class="text-xs font-bold uppercase">{{ $eventDate->isToday() ? __('Today') : ($eventDate->isTomorrow() ? __('Tmrw') : $eventDate->translatedFormat('M')) }}</span>
-                                <span class="text-lg font-bold leading-tight">{{ $eventDate->format('d') }}</span>
-                                @if($event['time'])<span class="text-[11px] font-semibold">{{ $event['time'] }}</span>@endif
-                            </a>
-                            <div class="min-w-0 flex-1">
+                        @php $eventDate = \Illuminate\Support\Carbon::parse($event['date']); $eventDetails = \App\Services\HearingShareText::fromEvent($event); @endphp
+                        <li class="space-y-1.5 py-3">
+                            <time datetime="{{ $eventDate->toDateString() }}" class="block text-xs font-semibold {{ $eventDate->isToday() ? 'text-red-700' : 'text-teal-800' }}">
+                                {{ $eventDate->translatedFormat('l, d F Y') }}@if($event['time']), {{ $event['time'] }}@endif
+                            </time>
+                            <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     <a href="{{ $event['url'] }}" @if($event['case_id']) data-sheet="{{ route('sheets.case-view', $event['case_id']) }}" @endif class="min-w-0 break-words text-sm font-semibold text-slate-900 hover:text-[#16776e]">{{ $event['title'] }}</a>
                                     <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" :edit-url="$event['case_id'] ? route('cases.edit', $event['case_id']) : null" />
@@ -188,9 +186,9 @@
                                     <x-court-badge :level="$event['court_level'] ?? null" :state="$event['state_code'] ?? null" :district="$event['district'] ?? null" class="shrink-0" />
                                     <span class="truncate">{{ collect([$event['case_number'], $event['details']])->filter()->implode(' · ') ?: __($event['label']) }}</span>
                                 </p>
-                                <x-court-info class="mt-1.5" :live="false" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['cause_list']['court'] ?? $event['court_room'] ?? null" :judge="$event['cause_list']['judges'] ?? $event['judge_name'] ?? null" :vc-link="$event['cause_list']['vc_link'] ?? $event['vc_link'] ?? null"
-                                              :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
-                                <x-hearing-strip :show-room="false" :date="$event['date']" :court="$event['court']" :room="$event['court_room'] ?? null" :item="$event['item_number'] ?? null" :list-total="$event['list_total'] ?? null" :cause-list="$event['cause_list'] ?? null" :case-number="$event['case_number']" :district="($event['court_level'] ?? null) === 'district'" :order-url="!empty($event['order']) ? route('cases.documents.download', [$event['case_id'], $event['order'], 'preview' => 1]) : null" :order-date="($event['order'] ?? null)?->created_at?->format('d M Y')" />
+                                <x-court-info class="mt-1.5" :live="false" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$eventDetails['room']" :judge="$eventDetails['judge']" :vc-link="$eventDetails['vc_link']"
+                                              :share="$eventDetails" />
+                                <x-hearing-strip :show-room="false" :show-date="false" :date="$event['date']" :court="$event['court']" :room="$eventDetails['room']" :item="$event['item_number'] ?? null" :list-total="$event['list_total'] ?? null" :cause-list="$event['cause_list'] ?? null" :case-number="$event['case_number']" :district="($event['court_level'] ?? null) === 'district'" :order-url="!empty($event['order']) ? route('cases.documents.download', [$event['case_id'], $event['order'], 'preview' => 1]) : null" :order-date="($event['order'] ?? null)?->created_at?->format('d M Y')" />
                             </div>
                         </li>
                     @empty
@@ -250,7 +248,7 @@
         <x-collection-toolbar target="home-modules" placeholder="Search modules" label="Explore" class="mb-3" />
         <h2 id="explore-heading" class="sr-only">Explore VakilNiti</h2>
         <nav id="home-modules" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" aria-label="Modules">
-            <x-module-tile :href="route('case-dashboard.index')" icon="briefcase" title="Case Management" description="Cases, hearings, tasks" badge="New" />
+            <x-module-tile :href="route('cases.index')" icon="briefcase" title="Case Management" description="Cases, hearings, tasks" badge="New" />
             <x-module-tile :href="url('/pdf-annotator')" icon="pdf" title="PDF Annotator" description="Highlight, search, draw" badge="New" />
             <x-module-tile :href="route('courts.supreme-court')" icon="pillars" title="Supreme Court" description="Court list, boards, e-pass" />
             <x-module-tile :href="route('courts.delhi-high-court')" icon="building" title="Delhi High Court" description="Roster, cause list, orders" />

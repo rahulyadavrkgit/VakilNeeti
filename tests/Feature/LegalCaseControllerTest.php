@@ -127,7 +127,7 @@ class LegalCaseControllerTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSee('https://wa.me/?text='.rawurlencode("Case: Sharma vs State\nCase No: HMA/1/2026"), false)
+            ->assertSee('https://wa.me/?text='.rawurlencode("*Sharma vs State*\nCase no: HMA/1/2026"), false)
             ->assertSee('data-direct-share', false);
     }
 

@@ -48,11 +48,13 @@ class QuickNextDateTest extends TestCase
     public function test_case_page_opens_with_the_next_hearing_panel(): void
     {
         $case = LegalCase::create(['case_title' => 'Meera vs Union', 'court_name' => 'Delhi High Court', 'court_room' => '37', 'judge_name' => 'Justice Mehta', 'appearing_for' => 'appellant', 'vc_link' => 'https://dhc.webex.com/meet/court37', 'case_status' => 'pending']);
-        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-11', 'hearing_time' => '10:30', 'hearing_stage' => 'Final arguments']);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-09', 'next_hearing_date' => '2026-03-11']);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-11', 'hearing_time' => '10:30', 'hearing_stage' => 'Final arguments', 'item_number' => '12', 'list_total' => 34]);
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['For', 'Appellant', 'aria-label="Next hearing"', 'Wednesday, 11 March 2026, 10:30', 'Purpose: Final arguments', 'Room 37', 'Justice Mehta', 'Join VC', 'Copy VC link', 'Share case details', 'Add another date', 'aria-label="Case workspace"'], false);
+            ->assertSeeInOrder(['For', 'Appellant', 'Share case details', 'aria-label="Next hearing"', 'Wednesday, 11 March 2026, 10:30', 'Purpose: Final arguments', 'Room 37', 'Justice Mehta', 'Join VC', 'Copy VC link', 'My item', '12', 'Cases in list', '34', 'Add another date', 'aria-label="Case workspace"'], false)
+            ->assertSee('Item: 12')->assertSee('Cases in list: 34');
 
         $noDate = LegalCase::create(['case_title' => 'Never Listed', 'court_name' => 'Saket', 'case_status' => 'pending']);
         $this->get(route('cases.show', $noDate))->assertOk()->assertSee('No hearing date yet. Add the first date below.')->assertSee('Set our side');
@@ -60,7 +62,7 @@ class QuickNextDateTest extends TestCase
 
     public function test_pages_share_one_header_style(): void
     {
-        foreach (['tasks.index' => 'Tasks &amp; Reminders', 'clients.index' => 'Clients', 'profile.index' => 'Settings', 'billing.index' => 'Billing', 'case-dashboard.index' => 'My Case &amp; Hearing Dashboard'] as $route => $title) {
+        foreach (['tasks.index' => 'Tasks &amp; Reminders', 'clients.index' => 'Clients', 'profile.index' => 'Settings', 'billing.index' => 'Billing'] as $route => $title) {
             $this->get(route($route))->assertOk()->assertSee('<h1 class="text-2xl font-bold tracking-tight text-slate-900">'.$title.'</h1>', false);
         }
     }

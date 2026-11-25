@@ -11,7 +11,6 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\CaseCalendarController;
 use App\Http\Controllers\CaseClientController;
-use App\Http\Controllers\CaseDashboardController;
 use App\Http\Controllers\CaseFileImportController;
 use App\Http\Controllers\CaseFinderController;
 use App\Http\Controllers\CaseFollowUpController;
@@ -48,6 +47,7 @@ use App\Http\Controllers\ProfessionalTaxController;
 use App\Http\Controllers\ProfileContactController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileSetupController;
+use App\Http\Controllers\PublicProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SheetController;
@@ -234,6 +234,9 @@ Route::post('/cases/{case}/reopen', [LegalCaseController::class, 'reopen'])
 Route::patch('/cases/{case}/file-number', [LegalCaseController::class, 'updateFileNumber'])
     ->whereNumber('case')->name('cases.file-number');
 
+Route::get('/cases/{case}/download', [LegalCaseController::class, 'download'])
+    ->whereNumber('case')->middleware('throttle:30,1')->name('cases.download');
+
 Route::post('/cases/{case}/tags', [LegalCaseController::class, 'attachTag'])
     ->whereNumber('case')->name('cases.tags.attach');
 
@@ -312,12 +315,10 @@ Route::get('/court-directory/districts/{districtId}', fn () => redirect()->route
     ->whereNumber('districtId')
     ->name('court-directory.districts.show');
 
-// The older copy of Hearing History now opens the one kept.
-Route::permanentRedirect('/case-management/hearing-history', '/hearing-history')->name('cases.hearing-history');
-
-// Hearing History
-Route::get('/hearing-history', [CaseCalendarController::class, 'history'])
-    ->name('hearings.history');
+// Overview and Hearing history were removed: My cases has the dates, and each case its own timeline of hearings.
+Route::permanentRedirect('/case-management/hearing-history', '/cases');
+Route::permanentRedirect('/hearing-history', '/cases');
+Route::permanentRedirect('/case-dashboard', '/cases');
 // Combined Invoices and Payments
 Route::get('/billing', [BillingController::class, 'index'])
     ->name('billing.index');
@@ -334,8 +335,6 @@ Route::get('/billing/expenses/{expense}/receipt', [BillingController::class, 'do
 Route::get('/billing/payments/export', [BillingController::class, 'exportPayments'])->name('billing.payments.export');
 Route::get('/client-management', [ClientManagementController::class, 'index'])
     ->name('client-management.index');
-Route::get('/case-dashboard', [CaseDashboardController::class, 'index'])
-    ->name('case-dashboard.index');
 Route::get('/profile', [ProfileController::class, 'index'])
     ->name('profile.index');
 Route::post('/profile/preferences', [ProfileController::class, 'updatePreferences'])
@@ -371,6 +370,10 @@ Route::prefix('sheets')->name('sheets.')->controller(SheetController::class)->gr
     Route::get('/task', 'task')->name('task');
     Route::get('/client', 'client')->name('client');
     Route::get('/case', 'case')->name('case');
+    Route::get('/add-case', 'addCase')->name('add-case');
+    Route::get('/add-case/method', 'addCaseMethod')->name('add-case.method');
+    Route::get('/add-case/{method}', 'addCaseSearch')->whereIn('method', array_keys(SheetController::SEARCH_METHODS))->name('add-case.search');
+    Route::get('/add-case/{method}/continue', 'addCaseContinue')->whereIn('method', array_keys(SheetController::SEARCH_METHODS))->name('add-case.continue');
     Route::get('/cases/{case}', 'caseView')->name('case-view');
     Route::get('/clients/{client}', 'clientCard')->name('client-card');
     Route::get('/court', 'court')->name('court');
@@ -652,6 +655,18 @@ Route::middleware('guest')->group(function () {
     Route::post('/login/password', [UserRegistrationController::class, 'passwordLogin'])->middleware('throttle:20,1')->name('login.password');
     Route::post('/login/verify', [UserRegistrationController::class, 'verifyLoginOtp'])->middleware('throttle:10,10')->name('login.verify.submit');
     Route::post('/login/change', [UserRegistrationController::class, 'changeLoginEmail'])->name('login.change');
+});
+
+Route::middleware('auth')->controller(PublicProfileController::class)->group(function (): void {
+    Route::get('/profile/cv', 'edit')->name('profile.cv.edit');
+    Route::put('/profile/cv', 'update')->name('profile.cv.update');
+    Route::get('/profile/cv/preview', 'preview')->name('profile.cv.preview');
+    Route::get('/profile/cv/download', 'download')->middleware('throttle:20,1')->name('profile.cv.download');
+});
+
+Route::prefix('cv/{username}')->where(['username' => '[A-Za-z0-9-]{3,30}'])->controller(PublicProfileController::class)->group(function (): void {
+    Route::get('/', 'show')->name('cv.show');
+    Route::get('/download', 'publicDownload')->middleware('throttle:20,1')->name('cv.download');
 });
 
 Route::post('/profile/password', [UserRegistrationController::class, 'savePassword'])->middleware(['auth', 'throttle:5,10'])->name('profile.password.store');

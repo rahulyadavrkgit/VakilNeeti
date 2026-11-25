@@ -865,6 +865,7 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
     );
 });
 
+
 // Share buttons (data-share-text) open the share preview in resources/js/sheet.js.
 
 // Phone cards for tables (.vn-stack-table): cells take their column heading as a label, and the

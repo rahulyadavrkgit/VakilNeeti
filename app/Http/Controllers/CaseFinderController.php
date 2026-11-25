@@ -9,6 +9,7 @@ use App\Services\EcourtsResultParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -61,9 +62,10 @@ class CaseFinderController extends Controller
         return view('cases.find', [
             'profile' => $profile,
             'portals' => self::PORTALS,
-            'level' => old('level', 'district'),
+            // A court picked in the "Add case" pop-up arrives as ?level=…&court_name=….
+            'level' => array_key_exists($level = old('level', $request->query('level', 'district')), self::PORTALS) ? $level : 'district',
             'method' => in_array($method = old('method', $request->query('method', 'app')), ['app', 'website', 'calendar'], true) ? $method : 'app',
-            'defaultCourt' => old('court_name', $profile?->court),
+            'defaultCourt' => old('court_name', Str::limit((string) $request->query('court_name', $profile?->court), 255, '')),
         ]);
     }
 

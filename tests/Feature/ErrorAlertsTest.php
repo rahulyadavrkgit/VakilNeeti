@@ -46,6 +46,7 @@ class ErrorAlertsTest extends TestCase
             "[{$recent}] production.ERROR: Undefined variable \$case (View: /home/x/show.blade.php) {\"exception\":\"x\"}",
             "[{$recent}] production.CRITICAL: Database went away",
             "[{$recent}] production.INFO: Not an error",
+            "[{$recent}] testing.ERROR: Written by a test run on this machine",
         ])."\n");
 
         $this->artisan('app:error-alerts')->expectsOutputToContain('3 errors; told 2 people')->assertSuccessful();
@@ -61,6 +62,7 @@ class ErrorAlertsTest extends TestCase
         $this->assertStringStartsWith('2× Undefined variable $case', $alert['body']);
         $this->assertStringContainsString('1× Database went away', $alert['body']);
         $this->assertStringNotContainsString('Old problem', $alert['body']);
+        $this->assertStringNotContainsString('test run', $alert['body']);
     }
 
     public function test_a_quiet_day_sends_nothing_and_the_check_runs_every_morning(): void
