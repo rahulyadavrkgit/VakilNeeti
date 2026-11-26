@@ -72,7 +72,7 @@ class CheckCourtCauseLists extends Command
 
             foreach ($documents as $listing) {
                 $found += $recorder->check($provider, $short, $name, $listing, $date, $casesByKey,
-                    fn (string $pdf): array => $reader->entries($recorder->textOf($pdf)),
+                    fn (string $pdf): array => CauseListRecorder::withExcerpts($text = $recorder->textOf($pdf), $reader->entries($text)),
                     fn (string $line) => $this->line($line));
             }
         }

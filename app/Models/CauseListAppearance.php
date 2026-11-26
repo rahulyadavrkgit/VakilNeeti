@@ -128,6 +128,7 @@ class CauseListAppearance extends Model
             'source_url' => $this->courtDocument?->source_url,
             'place' => $this->place(),
             'room_supplementary' => $this->roomSupplementary(),
+            'excerpt' => $this->metadata['excerpt'] ?? null,
         ];
     }
 

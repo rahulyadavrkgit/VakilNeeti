@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CourtDocument extends Model
 {
+    use MassPrunable;
+
+    /**
+     * How long a cause list and the saved cases' entries in it are kept: hearing dates, rooms and items stay with the cases.
+     */
+    public const KEEP_MONTHS = 6;
+
     protected $fillable = [
         'provider_key',
         'court_id',
@@ -62,5 +71,15 @@ class CourtDocument extends Model
             CauseListAppearance::class,
             'court_document_id'
         );
+    }
+
+    /**
+     * Cause lists dated more than KEEP_MONTHS ago (`model:prune`, daily); their entries go with them.
+     *
+     * @return Builder<self>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()->where('list_type', 'cause_list')->whereDate('listing_date', '<', today()->subMonths(self::KEEP_MONTHS));
     }
 }

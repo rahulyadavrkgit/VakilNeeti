@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CourtLinksController;
 use App\Models\CourtBench;
+use App\Models\CourtDocument;
 use App\Models\User;
 use App\Services\CourtBoardEmbedCheck;
 use App\Services\ReminderService;
@@ -59,6 +60,9 @@ Schedule::command('courts:judge-photos')->weeklyOn(0, '05:00')->withoutOverlappi
 
 // A compressed database copy every night, kept for 14 days (storage/app/backups).
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping();
+
+// Cause lists are kept for six months with the saved cases' entries in them; hearing dates stay with the cases.
+Schedule::command('model:prune', ['--model' => [CourtDocument::class]])->dailyAt('03:15')->withoutOverlapping();
 
 Artisan::command('courts:import-benches {file : CSV with court_key, section, court_room, bench, location, judges, designations, roster, vc_link, vc_meeting_id, email, photos; lists separated by a vertical bar} {--replace : Replace the existing list of every court in the file}', function (string $file) {
     if (! is_readable($file)) {

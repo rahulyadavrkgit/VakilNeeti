@@ -116,6 +116,13 @@
                                             :case-number="$case->case_number"
                                             :order-url="$latestOrder ? route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) : null"
                                             :order-date="$latestOrder?->created_at?->format('d M Y')" />
+                                        @if(filled($causeList['excerpt'] ?? null))
+                                            <details class="mt-2 rounded-xl border border-slate-200 bg-white text-sm">
+                                                <summary class="min-h-10 cursor-pointer px-3 py-2 font-semibold text-slate-700">Entry in the cause list</summary>
+                                                <pre class="overflow-x-auto whitespace-pre-wrap wrap-anywhere border-t border-slate-100 px-3 py-2 font-sans text-xs leading-relaxed text-slate-700">{{ $causeList['excerpt'] }}</pre>
+                                                <p class="px-3 pb-2 text-xs text-slate-500">Copied from {{ $causeList['list'] }}. Kept for {{ \App\Models\CourtDocument::KEEP_MONTHS }} months.</p>
+                                            </details>
+                                        @endif
                                     </div>
                                     @if($datedHearing?->proceedings)<p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $datedHearing->proceedings }}</p>@endif
                                     @if($datedHearing?->next_hearing_date)

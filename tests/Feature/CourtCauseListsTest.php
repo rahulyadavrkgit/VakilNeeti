@@ -134,6 +134,28 @@ TEXT;
         }
     }
 
+    public function test_lists_and_the_entries_kept_from_them_go_after_six_months_but_hearings_stay(): void
+    {
+        $this->travelTo('2026-11-27 03:00:00');
+        $this->actingAs(User::factory()->create());
+        app(CauseListRecorder::class)->ensureSource('delhi-high-court', 'High Court of Delhi', 'https://example.test');
+        $case = LegalCase::create(['case_title' => 'Old vs New', 'case_number' => 'RSA/1/2026', 'court_name' => 'High Court of Delhi', 'case_status' => 'pending']);
+        $hearing = CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-05-20', 'court_room' => '23', 'item_number' => '4']);
+        $list = fn (string $key, string $date) => CourtDocument::create(['provider_key' => 'delhi-high-court', 'document_key' => $key, 'listing_date' => $date, 'list_type' => 'cause_list', 'document_label' => 'List '.$date, 'source_url' => 'https://example.test/'.$key.'.pdf']);
+        $old = $list('old', '2026-05-20');
+        $recent = $list('recent', '2026-06-01');
+        foreach ([$old, $recent] as $document) {
+            CauseListAppearance::create(['court_document_id' => $document->id, 'legal_case_id' => $case->id, 'record_key' => 'r'.$document->id, 'item_number' => '4', 'court_room' => '23', 'metadata' => ['excerpt' => '4. RSA 1/2026 OLD Vs. NEW']]);
+        }
+
+        $this->artisan('model:prune', ['--model' => [CourtDocument::class]])->assertSuccessful();
+
+        $this->assertSame([$recent->id], CourtDocument::query()->pluck('id')->all());
+        $this->assertSame([$recent->id], CauseListAppearance::query()->pluck('court_document_id')->all());
+        $this->assertTrue($hearing->fresh()->exists);
+        $this->assertTrue(collect(app(Schedule::class)->events())->contains(fn ($event): bool => str_contains($event->command, 'model:prune') && str_contains($event->command, 'CourtDocument')));
+    }
+
     public function test_the_command_skips_courts_nobody_practises_in_and_is_scheduled(): void
     {
         Http::fake();

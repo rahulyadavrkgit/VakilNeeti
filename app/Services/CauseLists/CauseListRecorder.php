@@ -29,6 +29,12 @@ class CauseListRecorder
     /** A cause list larger than this is not downloaded (the biggest daily lists are about 20 MB). */
     private const MAX_PDF_BYTES = 40_000_000;
 
+    /** At most this many lines of the list are kept for each saved case's entry. */
+    private const EXCERPT_LINES = 12;
+
+    /** Headings that end an entry: a court, bench, judge, VC link or list section. */
+    private const EXCERPT_STOP = "/^(court\s*(no|room)\b|hon[’']?ble\b|click here|https?:|(division|single|full)\s+bench|.*cause\s+list\b|(regular|advance|final|supplementary|fresh)\s+matters\b)/iu";
+
     /**
      * Read one list and record the saved cases in it. Returns how many listings of saved cases were found.
      *
@@ -111,7 +117,7 @@ class CauseListRecorder
                             'match_status' => 'matched',
                             'matched_at' => now(),
                             'metadata' => ['vc_link' => $entry['vc_link'], 'list' => $document->document_label]
-                                + array_intersect_key($entry, ['board_section' => true]) + $place,
+                                + array_filter(array_intersect_key($entry, ['board_section' => true, 'excerpt' => true])) + $place,
                         ],
                     );
                 }
@@ -186,6 +192,57 @@ class CauseListRecorder
     public function textOf(string $pdfContents): string
     {
         return (new Parser)->parseContent($pdfContents)->getText();
+    }
+
+    /**
+     * Each entry with its own lines from the list ("excerpt"): the item's first line up to the next item, connected
+     * matters ("WITH …") included, at most EXCERPT_LINES lines. Kept with a saved case's listing, so the entry can be
+     * read after the court takes the PDF down; the rest of the list is not kept.
+     *
+     * @template TEntry of array{line: int, item: string, item_line?: int, court?: ?string, board_section?: ?string}
+     *
+     * @param  list<TEntry>  $entries
+     * @return list<TEntry&array{excerpt: string}>
+     */
+    public static function withExcerpts(string $text, array $entries): array
+    {
+        $lines = preg_split('/\R/u', $text) ?: [];
+        $place = fn (array $entry): string => ($entry['court'] ?? '').'|'.($entry['board_section'] ?? '').'|'.$entry['item'];
+        $starts = [];
+        $previous = null;
+
+        // One item and the matters heard with it are one block: it starts at the item's own line.
+        foreach (collect($entries)->sortBy('line')->values() as $entry) {
+            if ($previous === null || $place($entry) !== $place($previous)) {
+                // Some lists print the parties above the case number: the item starts there (item_line).
+                $starts[] = ['place' => $place($entry), 'line' => min($entry['item_line'] ?? $entry['line'], $entry['line'])];
+            }
+
+            $previous = $entry;
+        }
+
+        $excerpts = [];
+
+        foreach ($starts as $index => $start) {
+            $end = min(($starts[$index + 1]['line'] ?? PHP_INT_MAX) - 1, $start['line'] + self::EXCERPT_LINES - 1, count($lines));
+            $block = [];
+
+            foreach (array_slice($lines, $start['line'] - 1, max(1, $end - $start['line'] + 1)) as $offset => $line) {
+                $line = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $line)) ?? '');
+
+                // The next court's or section's heading is not part of this entry.
+                if ($offset > 0 && preg_match(self::EXCERPT_STOP, $line)) {
+                    break;
+                }
+
+                if ($line !== '') {
+                    $block[] = $line;
+                }
+            }
+            $excerpts[$start['place']] ??= mb_substr(implode("\n", $block), 0, 1500);
+        }
+
+        return array_map(fn (array $entry): array => $entry + ['excerpt' => $excerpts[$place($entry)] ?? ''], $entries);
     }
 
     /**

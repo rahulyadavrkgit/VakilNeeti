@@ -135,13 +135,17 @@ TEXT;
         $this->assertSame([[$listed->id, '1', '3']], $appearances->map(fn ($appearance) => [$appearance->legal_case_id, $appearance->court_room, $appearance->item_number])->unique()->values()->all());
         $this->assertSame(0, CauseListAppearance::query()->whereIn('legal_case_id', [$notListed->id, $elsewhere->id])->count());
 
+        // Only the case's own lines are kept from the list: its item and the matter heard with it, not the next court.
+        $this->assertSame("3. W.P.(C) 9569/2007 RASHITRYA MUKTI MORCHA VIJAY CHOUDHARY\nWITH W.P.(C) 298/2008 Vs. UOI & ORS.", $appearances->first()->metadata['excerpt']);
+
         $this->assertSame(['Listed Thu, 26 Nov · Delhi HC · Court 1 · Item 3', 'Listed tomorrow · Delhi HC · Court 1 · Item 3'], $owner->notifications()->get()->pluck('data.title')->sort()->values()->all());
 
         $this->get(route('dashboard'))->assertOk()
             ->assertSeeInOrder(['id="hearing-day-2026-11-25"', 'Tomorrow', '25 Nov 2026', 'Rashtriya Mukti Morcha vs UOI', 'W.P.(C)/298/2008', 'Room', 'My item'], false)
             ->assertDontSee('Also in the cause lists')
             ->assertSee('https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt9');
-        $this->get(route('cases.show', $listed))->assertOk()->assertSee('id="cause-list"', false)->assertSee('c_25112026.pdf');
+        $this->get(route('cases.show', $listed))->assertOk()->assertSee('id="cause-list"', false)->assertSee('c_25112026.pdf')
+            ->assertSeeInOrder(['Entry in the cause list', 'WITH W.P.(C) 298/2008 Vs. UOI &amp; ORS.', 'Kept for 6 months.'], false);
         $this->get(route('cases.show', $notListed))->assertOk()->assertDontSee('id="cause-list"', false);
 
         $diary = $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk();

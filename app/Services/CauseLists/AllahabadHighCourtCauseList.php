@@ -64,7 +64,7 @@ class AllahabadHighCourtCauseList
     /**
      * Every listed matter in one court's list: item, case number, court and bench.
      *
-     * @return list<array{key: string, reference: string, item: string, court: ?string, judges: list<string>, vc_link: ?string, line: int}>
+     * @return list<array{key: string, reference: string, item: string, court: ?string, judges: list<string>, vc_link: ?string, line: int, item_line: int}>
      */
     public function entries(string $text): array
     {
@@ -72,6 +72,7 @@ class AllahabadHighCourtCauseList
         $court = null;
         $judges = [];
         $item = null;
+        $itemLine = 0;
         $entries = [];
 
         foreach ($lines as $index => $rawLine) {
@@ -100,6 +101,7 @@ class AllahabadHighCourtCauseList
             // " 12 \tPARTY NAME…" starts an item.
             if (preg_match('/^\s*(\d{1,4})\s*\t/', $rawLine, $match)) {
                 $item = $match[1];
+                $itemLine = $index + 1;
             }
 
             if ($item === null || str_contains(strtoupper($line), 'NOTICE NO')) {
@@ -117,6 +119,7 @@ class AllahabadHighCourtCauseList
                     'judges' => $judges,
                     'vc_link' => null,
                     'line' => $index + 1,
+                    'item_line' => $itemLine,
                 ];
             }
         }

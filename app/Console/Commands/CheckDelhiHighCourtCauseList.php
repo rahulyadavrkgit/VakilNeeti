@@ -52,7 +52,7 @@ class CheckDelhiHighCourtCauseList extends Command
         foreach ($dates as $date) {
             foreach ($causeList->documentsInPage($pages, $date) as $listing) {
                 $found += $recorder->check(self::PROVIDER, 'Delhi HC', 'High Court of Delhi', $listing, $date, $casesByKey,
-                    fn (string $pdf): array => $causeList->entries($causeList->textOf($pdf)),
+                    fn (string $pdf): array => CauseListRecorder::withExcerpts($text = $causeList->textOf($pdf), $causeList->entries($text)),
                     fn (string $line) => $this->line($line));
             }
         }
