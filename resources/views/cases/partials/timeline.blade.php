@@ -96,7 +96,12 @@
                                 <article aria-label="Next hearing" class="{{ $card }} border-teal-200">
                                     <div class="flex flex-wrap items-baseline justify-between gap-1">
                                         <h4 class="font-semibold text-[#16776e]">{{ $date->isToday() ? 'Next hearing · Today' : 'Next hearing' }}</h4>
-                                        @if($panelTime)<span class="text-xs font-medium text-slate-600">{{ $panelTime }}</span>@endif
+                                        <div class="flex flex-wrap gap-x-2 text-xs font-medium text-slate-600">
+                                            @if($nextHearing && ! $nextHearing->isManual())
+                                                <span>{{ $nextHearing->dateSourceLabel() }}</span>
+                                            @endif
+                                            @if($panelTime)<span>{{ $panelTime }}</span>@endif
+                                        </div>
                                     </div>
                                     @if($purpose)<p class="mt-1 text-sm text-slate-700">Purpose: {{ $purpose }}</p>@endif
                                     <div class="mt-1.5">
