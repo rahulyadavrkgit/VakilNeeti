@@ -35,31 +35,40 @@ class HearingShareText
     }
 
     /**
-     * A list of hearings under one heading ("Hearings · Today, Tue 10 Mar").
+     * A list of hearings under one heading ("Hearings · Today, Tue 10 Mar"), each numbered.
      *
      * @param  iterable<array<string, mixed>>  $items
      */
     public static function list(string $heading, iterable $items): string
     {
-        $lines = ['*'.$heading.'*'];
-        $number = 0;
+        $blocks = collect($items)->values()->map(fn (array $item, int $index): string => ($index + 1).'. '.self::entry($item));
 
-        foreach ($items as $item) {
-            $number++;
-            $side = LegalCase::sideLabel($item['side'] ?? null, $item['parties'] ?? null);
-            $lines[] = '';
-            $lines[] = $number.'. '.trim((string) ($item['title'] ?? 'Case')).(($item['case_number'] ?? null) ? ' ('.$item['case_number'].')' : '');
-            $lines[] = collect([$side ? 'For '.$side : null, self::when($item)])->filter()->implode(' · ') ?: null;
-            $lines[] = self::where($item) ?: null;
-            $lines[] = ($item['vc_link'] ?? null) ? 'VC: '.$item['vc_link'] : null;
-            $lines[] = ($item['details'] ?? null) ? 'Purpose: '.$item['details'] : null;
-        }
+        return '*'.$heading."*\n\n".($blocks->isEmpty() ? 'No hearings.' : $blocks->implode("\n\n"));
+    }
 
-        if ($number === 0) {
-            $lines[] = 'No hearings.';
-        }
+    /**
+     * One hearing in the order of the hearing cards: case and side; court, number and stage; judge;
+     * item, supplementary list, room and time; VC link.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public static function entry(array $item): string
+    {
+        $side = LegalCase::sideLabel($item['side'] ?? null, $item['parties'] ?? null);
+        $room = trim((string) ($item['room'] ?? ''));
 
-        return collect($lines)->reject(fn ($line) => $line === null)->implode("\n");
+        return collect([
+            trim((string) ($item['title'] ?? 'Case')).($side ? ' (For '.$side.')' : ''),
+            collect([$item['court'] ?? null, $item['case_number'] ?? null, ($item['details'] ?? null) ?: 'Hearing'])->filter()->implode(' · '),
+            ($item['judge'] ?? null) ?: null,
+            collect([
+                ($item['item'] ?? null) ? 'ITEM '.$item['item'].(($item['list_total'] ?? null) ? ' @ '.$item['list_total'] : '') : null,
+                $item['supplementary'] ?? null,
+                $room !== '' ? 'Court Room '.preg_replace('/^(court|room)\s*(no\.?)?\s*/i', '', $room) : null,
+                ($item['time'] ?? null) ? substr((string) $item['time'], 0, 5) : null,
+            ])->filter()->implode(' · ') ?: null,
+            ($item['vc_link'] ?? null) ? 'VC: '.$item['vc_link'] : null,
+        ])->filter()->implode("\n");
     }
 
     /**
@@ -107,7 +116,8 @@ class HearingShareText
             'vc_link' => $vcLink,
             'details' => $event['details'] ?? null,
             'item' => $listing['item'] ?? $event['item_number'] ?? null,
-            'list_total' => $listing['total'] ?? $event['list_total'] ?? null,
+            'list_total' => $listing['place']['total'] ?? $listing['total'] ?? $event['list_total'] ?? null,
+            'supplementary' => $listing['place']['supplementary'] ?? null,
         ];
     }
 

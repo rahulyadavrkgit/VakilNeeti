@@ -13,6 +13,7 @@ use App\Services\CaseClientLinker;
 use App\Services\CaseListArrangement;
 use App\Services\CourtIdentity;
 use App\Services\HearingShareText;
+use App\Services\TodaysMatters;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,7 @@ use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -43,7 +45,7 @@ class LegalCaseController extends Controller
         'no_upcoming' => 'No date',
     ];
 
-    public function index(Request $request, CaseListArrangement $arrangement): View
+    public function index(Request $request, CaseListArrangement $arrangement, TodaysMatters $todaysMatters): View
     {
         $request->validate([
             'hearing_filter' => ['nullable', Rule::in(self::HEARING_FILTERS)],
@@ -104,6 +106,8 @@ class LegalCaseController extends Controller
             'hearingFilter' => $request->input('hearing_filter', 'all'),
             'tags' => CaseTag::query()->orderBy('name')->get(),
             'yourCourts' => $this->yourCourts(),
+            // Heard today with no next date yet: shown under the "past date" line, each with + Date.
+            'todayWithoutNextDate' => $list === 'active' ? $todaysMatters->withoutNextDate() : [],
         ]);
     }
 
@@ -303,6 +307,32 @@ class LegalCaseController extends Controller
         $case->update($validated);
 
         return back()->with('success', 'File number saved.');
+    }
+
+    /**
+     * "Set our side" pop-up (sheets.case-side): the side we appear for and, optionally, which parties.
+     * The party on our side becomes the case's client, as when the case is edited.
+     */
+    public function updateSide(Request $request, LegalCase $case, CaseClientLinker $clients): RedirectResponse
+    {
+        $validated = $request->validate([
+            'appearing_for' => ['required_without:petitioner_side', 'nullable', Rule::in(array_keys(LegalCase::SIDES))],
+            'appearing_for_parties' => ['nullable', 'string', 'max:255'],
+            'petitioner_side' => ['nullable', Rule::prohibitedIf(blank($case->court_name)), Rule::in(array_keys(CourtStandSide::SIDES))],
+        ], ['appearing_for.required_without' => 'Choose the side you appear for or a court position.']);
+
+        DB::transaction(function () use ($case, $clients, $validated): void {
+            if (isset($validated['appearing_for'])) {
+                $case->update(collect($validated)->only(['appearing_for', 'appearing_for_parties'])->all());
+                $clients->linkOurParty($case);
+            }
+
+            if (isset($validated['petitioner_side'])) {
+                CourtStandSide::saveForCourt($case, $validated['petitioner_side']);
+            }
+        }, 3);
+
+        return back()->with('success', 'Court position and appearance saved.');
     }
 
     /**

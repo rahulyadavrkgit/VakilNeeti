@@ -25,20 +25,38 @@
     @include('courts.partials.breadcrumb', ['current' => $heading])
 
     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">{{ $court['court'] }}</p>
-        <h1 class="mt-1 text-2xl font-semibold text-slate-900">{{ $heading }}</h1>
+        <div class="flex items-start gap-3">
+            @if($judges[0]['photo'] ?? null)
+                <img src="{{ $judges[0]['photo'] }}" alt="" width="40" height="48" class="h-12 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200">
+            @endif
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">{{ $court['court'] }}</p>
+                <h1 class="mt-1 break-words text-2xl font-semibold text-slate-900">{{ $firstJudge ?: ($bench->court_room ?: $court['court']) }}</h1>
+                @if($judges[0]['designation'] ?? null)
+                    <p class="text-sm text-slate-600">{{ $judges[0]['designation'] }}</p>
+                @endif
+            </div>
+            @if($roomNumber)
+                <span class="inline-flex min-h-10 shrink-0 items-center rounded-lg bg-[#142235] px-2.5 text-sm font-semibold text-white">Court {{ $roomNumber }}</span>
+            @endif
+        </div>
         @if($roomPlace || $bench->bench || $bench->location)
             <p class="mt-1 text-sm text-slate-600">{{ collect([$bench->bench, $roomPlace, $bench->location])->filter()->implode(' · ') }}</p>
         @endif
 
-        @if($judges !== [])
+        @if(count($judges) > 1)
             <ul class="mt-4 space-y-2">
-                @foreach($judges as $judge)
-                    <li class="rounded-xl border border-slate-200 px-3 py-2">
-                        <p class="font-semibold text-slate-900">{{ $judge['name'] }}</p>
-                        @if($judge['designation'])
-                            <p class="text-sm text-slate-600">{{ $judge['designation'] }}</p>
+                @foreach(array_slice($judges, 1) as $judge)
+                    <li class="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
+                        @if($judge['photo'])
+                            <img src="{{ $judge['photo'] }}" alt="" width="40" height="48" class="h-12 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200">
                         @endif
+                        <div class="min-w-0">
+                            <p class="font-semibold text-slate-900">{{ $judge['name'] }}</p>
+                            @if($judge['designation'])
+                                <p class="text-sm text-slate-600">{{ $judge['designation'] }}</p>
+                            @endif
+                        </div>
                     </li>
                 @endforeach
             </ul>
@@ -64,10 +82,10 @@
 
         @if($bench->vc_link)
             <div class="mt-4 grid gap-2 sm:grid-cols-2">
-                <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" class="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">
+                <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" class="vn-primary-button flex min-h-9 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold">
                     <x-icon name="screen" :size="18" /> Join VC
                 </a>
-                <button type="button" data-copy="{{ $bench->vc_link }}" class="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:border-[#16776e]">
+                <button type="button" data-copy="{{ $bench->vc_link }}" class="flex min-h-9 items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-800 hover:border-[#16776e]">
                     <x-icon name="copy" :size="18" /><span data-copy-label>Copy VC link</span>
                 </button>
             </div>
@@ -95,6 +113,6 @@
         </section>
     @endif
 
-    <p class="text-xs text-slate-500">From the court's official judges &amp; VC list. Judges move on transfer; check the court's own list before a hearing.</p>
+    <p class="text-xs text-slate-500">From the court's judges &amp; VC list. Judges move on transfer; check the court's own list before a hearing.</p>
 </div>
 @endsection

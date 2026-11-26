@@ -157,6 +157,21 @@
         </a>
     @endif
 
+    @if($todayWithoutNextDate)
+        {{-- Heard today and still without a next date: add it while the day is fresh. --}}
+        <section aria-label="Today's matters without a next date" class="rounded-lg border-l-4 border-[#e6b84a] bg-amber-50 px-3 py-2 text-sm">
+            <p class="font-semibold text-amber-900">{{ trans_choice(':count matter today without a next date|:count matters today without a next date', count($todayWithoutNextDate), ['count' => count($todayWithoutNextDate)]) }}</p>
+            <ul class="mt-1 divide-y divide-amber-100">
+                @foreach($todayWithoutNextDate as $matter)
+                    <li class="flex items-center justify-between gap-2 py-1">
+                        <a href="{{ $matter['url'] }}" data-sheet="{{ route('sheets.case-view', $matter['case_id']) }}" class="min-w-0 truncate text-slate-800 hover:underline">{{ $matter['title'] }}</a>
+                        <a href="{{ route('hearings.create', ['case' => $matter['case_id']]) }}" data-sheet="{{ route('sheets.next-date', ['case' => $matter['case_id']]) }}" class="inline-flex min-h-8 shrink-0 items-center rounded-full bg-[#e6b84a] px-3 text-xs font-bold text-[#142235]">+ Date</a>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
     {{-- Running or closed cases, arranged by date or by court (district; High Court bench). --}}
     @php
         $keep = request()->except('page', 'list', 'arrange', 'hearing_filter');
@@ -188,9 +203,11 @@
     <ul class="space-y-2.5" aria-label="Cases">
         @forelse($cases as $case)
             @if(isset($groupHeadings[$case->id]))
-                <li class="flex items-baseline justify-between gap-3 px-1 pt-2 first:pt-0">
-                    <h2 class="text-sm font-bold text-slate-900">{{ $groupHeadings[$case->id]['label'] }}</h2>
-                    <span class="shrink-0 text-xs font-semibold tabular-nums text-slate-500">{{ $groupHeadings[$case->id]['count'] }} {{ \Illuminate\Support\Str::plural('case', $groupHeadings[$case->id]['count']) }}</span>
+                @php $groupLabel = $groupHeadings[$case->id]['label']; @endphp
+                <li class="flex items-center justify-between gap-3 px-1 pt-2 first:pt-0">
+                    <h2 class="text-sm font-bold text-slate-900">{{ $groupLabel }} <span class="font-semibold tabular-nums text-slate-500">· {{ $groupHeadings[$case->id]['count'] }} {{ \Illuminate\Support\Str::plural('case', $groupHeadings[$case->id]['count']) }}</span></h2>
+                    {{-- Shares this group's cases on the page at once (their cards carry data-day-item). --}}
+                    <x-day-share :heading="'Cases · '.$groupLabel" :group="$groupLabel" />
                 </li>
             @endif
             @php
@@ -240,14 +257,18 @@
                 $rowJudge = $rowCauseList['judges'] ?? ($nextHearing?->judge_name ?: $case->judge_name);
                 $rowVc = $rowListing?->vcLink() ?: ($nextHearing?->vc_link ?: $case->vc_link);
                 $hasListDetails = $rowCauseList || ($ownDate && ($nextHearing->item_number || $nextHearing->list_total)) || isset($orders[$case->id]);
-                $caseShareText = \App\Services\HearingShareText::single([
+                $caseShareItem = [
                     'title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties,
                     'date' => $upcomingDate ? $tileDate->toDateString() : null, 'time' => $upcomingDate['time'] ?? null,
                     'court' => $case->court_name, 'room' => $rowRoom, 'judge' => $rowJudge, 'vc_link' => $rowVc, 'details' => $nextHearing?->hearing_stage,
-                ]);
+                    'item' => $rowCauseList['item'] ?? ($ownDate ? $nextHearing->item_number : null),
+                    'list_total' => $rowCauseList['place']['total'] ?? ($rowCauseList['total'] ?? ($ownDate ? $nextHearing->list_total : null)),
+                    'supplementary' => $rowCauseList['place']['supplementary'] ?? null,
+                ];
+                $caseShareText = \App\Services\HearingShareText::single($caseShareItem);
                 $iconButton = 'inline-flex h-10 w-10 items-center justify-center rounded-lg sm:h-9 sm:w-9 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900';
             @endphp
-            <li class="group rounded-xl border border-l-4 border-slate-200 {{ $cardEdge }} bg-white px-3.5 py-3.5 shadow-sm transition hover:border-teal-300 sm:px-5 sm:py-4">
+            <li data-day-item="{{ $groupLabel ?? '' }}" data-day-text="{{ \App\Services\HearingShareText::entry($caseShareItem) }}" data-card-href="{{ route('cases.show', $case) }}" class="group cursor-pointer rounded-xl border border-l-4 border-slate-200 {{ $cardEdge }} bg-white px-3.5 py-3.5 shadow-sm transition hover:border-teal-300 sm:px-5 sm:py-4">
                 <div class="flex gap-3">
                     {{-- Next hearing (or date of disposal) at a glance. --}}
                     <a href="{{ route('cases.show', $case) }}" class="flex w-16 shrink-0 flex-col items-center justify-center self-start rounded-xl px-1 py-2.5 text-center {{ $tileClass }}"

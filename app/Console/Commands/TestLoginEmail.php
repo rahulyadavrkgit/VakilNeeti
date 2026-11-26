@@ -25,7 +25,7 @@ class TestLoginEmail extends Command
         $error = $mailer->sendOtp((string) $this->argument('email'), '123456', 'Test');
 
         if ($error !== null) {
-            $this->error($error.' The reason MSG91 gave is in storage/logs/laravel.log.');
+            $this->error($error.' The reason MSG91 gave is in the newest file in storage/logs.');
 
             return self::FAILURE;
         }

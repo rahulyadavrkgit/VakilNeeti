@@ -11,6 +11,20 @@ use Illuminate\Support\Str;
 
 class CauseListAppearance extends Model
 {
+    /**
+     * A supplementary list's title in any High Court: "Supplementary Cause List - 2", "Supplementary List No. 3",
+     * "SUPPLEMENTARY LIST". The number, when printed, is the first match.
+     */
+    public const SUPPLEMENTARY = '/supplementary(?:\s+cause)?\s+list(?:\s*(?:no\.?)?\s*[-:]?\s*(\d+))?/i';
+
+    /**
+     * Lists from a High Court: every list source except the Supreme Court and the district courts.
+     */
+    private static function isHighCourtList(?CourtDocument $document): bool
+    {
+        return $document !== null && ! in_array($document->provider_key, ['supreme-court', 'district-court'], true);
+    }
+
     protected $fillable = [
         'court_document_id',
         'legal_case_id',
@@ -112,7 +126,31 @@ class CauseListAppearance extends Model
             'judges' => $this->judge_name ? Str::title(mb_strtolower($this->judge_name)) : null,
             'vc_link' => $this->vcLink(),
             'source_url' => $this->courtDocument?->source_url,
+            'place' => $this->place(),
         ];
+    }
+
+    /**
+     * The item in one short line, as advocates write it: "ITEM 97 @ 114", and for a Delhi High Court
+     * supplementary list "Supple-2 56-70(15)" (its number, item range and count).
+     *
+     * @return array{item: ?string, total: ?int, supplementary: ?string}
+     */
+    public function place(): array
+    {
+        $meta = $this->metadata ?? [];
+        $document = $this->courtDocument;
+        $boardTotal = (int) ($meta['board_total'] ?? 0);
+        $supplementary = null;
+        $total = $boardTotal ?: null;
+
+        if (self::isHighCourtList($document) && preg_match(self::SUPPLEMENTARY, (string) ($document->document_label ?? ''), $number)) {
+            $range = ($meta['board_from'] ?? null) && ($meta['board_to'] ?? null) ? $meta['board_from'].'-'.$meta['board_to'] : null;
+            $supplementary = trim('Supple'.(isset($number[1]) ? '-'.$number[1] : '-').' '.($range ?? '').($boardTotal ? '('.$boardTotal.')' : ''));
+            $total = max($boardTotal, self::courtTotalOn($document, (string) $this->court_room)) ?: null;
+        }
+
+        return ['item' => $this->item_number, 'total' => $total, 'supplementary' => $supplementary];
     }
 
     public function vcLink(): ?string
@@ -156,7 +194,7 @@ class CauseListAppearance extends Model
             ]));
         }
 
-        if ($document?->provider_key === 'delhi-high-court' && preg_match('/supplementary\s+cause\s+list(?:\s*-?\s*(\d+))?/i', $label, $number)) {
+        if (self::isHighCourtList($document) && preg_match(self::SUPPLEMENTARY, $label, $number)) {
             $published = self::supplementaryListsOn($document);
 
             return array_values(array_filter([
@@ -204,17 +242,17 @@ class CauseListAppearance extends Model
      */
     private static function supplementaryListsOn(CourtDocument $document): int
     {
-        return self::supplementaryCountOn((string) $document->listing_date?->toDateString());
+        return self::supplementaryCountOn((string) $document->provider_key, (string) $document->listing_date?->toDateString());
     }
 
-    private static function supplementaryCountOn(string $day): int
+    private static function supplementaryCountOn(string $provider, string $day): int
     {
         return once(fn (): int => CourtDocument::query()
-            ->where('provider_key', 'delhi-high-court')
+            ->where('provider_key', $provider)
             ->whereDate('listing_date', $day)
-            ->where('document_label', 'like', '%Supplementary Cause List%')
+            ->where('document_label', 'like', '%Supplementary%')
             ->pluck('document_label')
-            ->map(fn (string $label): string => preg_match('/supplementary\s+cause\s+list\s*-?\s*(\d+)/i', $label, $matches)
+            ->map(fn (string $label): string => preg_match(self::SUPPLEMENTARY, $label, $matches) && isset($matches[1])
                 ? 'list:'.$matches[1] : Str::squish(Str::lower($label)))
             ->unique()->count());
     }

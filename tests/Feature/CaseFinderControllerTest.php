@@ -75,7 +75,7 @@ class CaseFinderControllerTest extends TestCase
             ['selected' => '0', 'case_title' => 'Skip me', 'case_number' => 'CS/8/2021', 'court_name' => 'Civil Court Lucknow'],
             ['selected' => '1', 'case_title' => 'Mine again', 'case_number' => 'O.S./1/2019', 'court_name' => 'Civil Court Lucknow'],
         ]])->assertRedirect(route('cases.index'))
-            ->assertSessionHas('success', '1 case added. 1 was already in your cases. Open a case and use Import official record to add its hearings and full details.');
+            ->assertSessionHas('success', '1 case added. 1 was already in your cases. Open a case and use Import court record to add its hearings and full details.');
 
         $added = LegalCase::where('case_title', 'Asha vs Ravi')->firstOrFail();
         $this->assertSame($user->id, $added->user_id);

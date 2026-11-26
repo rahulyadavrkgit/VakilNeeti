@@ -1,9 +1,9 @@
-@props(['court' => null, 'room' => null, 'judge' => null, 'vcLink' => null, 'complex' => null, 'designation' => null, 'share' => null, 'live' => null, 'copyVc' => false])
+@props(['court' => null, 'room' => null, 'judge' => null, 'vcLink' => null, 'complex' => null, 'designation' => null, 'share' => null, 'live' => null, 'copyVc' => false, 'judgePhotos' => false, 'photoDistrict' => null])
 
 {{--
     Where a matter is heard, at a glance: court, room, judge and the VC link. Wraps on small screens instead of cutting off.
     With the case's court designation and establishment (`designation`, `complex`), whatever the case lacks is filled
-    from the official court lists (App\Services\CourtBenchMatcher); the case's own entries always win.
+    from the court lists (App\Services\CourtBenchMatcher); the case's own entries always win.
     For a hearing today in a court with a live board in VakilNiti (Supreme Court, Delhi High Court), a chip shows the item
     running in that room now (filled by resources/js/ui-actions.js). `live` forces it on or off; by default it follows `share.date`.
     With `share` (title, case_number, side, parties, date, time, details), it also offers Copy VC link and Share,
@@ -20,7 +20,11 @@
             if (! $vcLink && $bench->vc_link) { $vcLink = $bench->vc_link; $fromList[] = 'vc'; }
         }
     }
-    $listNote = 'From the official court list';
+    $listNote = 'From the court list';
+    // "Allahabad High Court" or "Supreme Court of India" only repeats the court badge shown with every case;
+    // a bench or court name ("2nd Jt C.J.J.D. Mahad", "Saket Courts") adds something and stays.
+    $plainCourtName = (bool) preg_match('/^(the\s+)?(supreme court(\s+of\s+india)?|high court(\s+of\s+[\p{L} &.]+)?|[\p{L} &.]+\s+high court)$/iu', trim((string) $court));
+    $courtLabel = $plainCourtName ? null : $court;
     $room = trim((string) $room);
     $roomLabel = $room !== '' && ! preg_match('/^(court|room)\b/i', $room) ? 'Room '.$room : $room;
     $isToday = $live ?? (is_array($share) && ! empty($share['date']) && rescue(fn () => \Illuminate\Support\Carbon::parse($share['date'])->isToday(), false, false));
@@ -37,11 +41,11 @@
     $chipLink = $courtSheet ? 'href="'.e($courtSheet).'" data-sheet' : '';
     $iconButton = 'inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-white px-2 font-semibold text-slate-600 hover:border-[#16776e] hover:text-[#16776e] [&.is-copied]:border-[#16776e] [&.is-copied]:text-[#16776e]';
 @endphp
-@if($court || $room !== '' || $judge || $vcLink || $shareText)
+@if($courtLabel || $room !== '' || $judge || $vcLink || $shareText)
     <span {{ $attributes->merge(['class' => 'flex min-w-0 flex-wrap items-center gap-1 text-xs']) }}>
-        @if($court)
+        @if($courtLabel)
             <span class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                <x-icon name="building" :size="12" class="shrink-0 text-slate-400" /><span class="truncate">{{ $court }}</span>
+                <x-icon name="building" :size="12" class="shrink-0 text-slate-400" /><span class="truncate">{{ $courtLabel }}</span>
             </span>
         @endif
         @if($room !== '')
@@ -49,7 +53,12 @@
         @endif
         @if($judge)
             <{{ $chipTag }} {!! $chipLink !!} class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200" @if(in_array('judge', $fromList, true)) title="{{ $listNote }}" @endif>
-                <x-icon name="gavel" :size="12" class="shrink-0" /><span class="truncate">{{ $judge }}</span>
+                @if($judgePhotos)
+                    <x-judge-portraits :names="$judge" :district="$photoDistrict" fallback />
+                    <span class="break-words">{{ $judge }}</span>
+                @else
+                    <x-icon name="gavel" :size="12" class="shrink-0" /><span class="truncate">{{ $judge }}</span>
+                @endif
             </{{ $chipTag }}>
         @endif
         @if($liveRoom)

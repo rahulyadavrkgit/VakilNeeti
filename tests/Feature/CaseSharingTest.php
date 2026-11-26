@@ -51,12 +51,16 @@ class CaseSharingTest extends TestCase
             'court_complex' => 'District and Sessions Judge, South-East, Saket, Delhi', 'details' => 'Final arguments',
         ])]);
 
-        $this->assertStringContainsString('*Hearings today*', $text);
-        $this->assertStringContainsString('1. Prahlad vs Sanjay (CS/12/2026)', $text);
-        $this->assertStringContainsString('For Petitioner · Today, Tue 10 Mar, 10:30', $text);
-        $this->assertStringContainsString('District Judge - 05 · Room 612, main building · Judge: Sh. Akash Jain', $text);
-        $this->assertStringContainsString('VC: https://districtcourtdelhi.webex.com/meet/ddc.vc.southeast08', $text);
-        $this->assertStringContainsString('Purpose: Final arguments', $text);
+        // In the order of the hearing cards: case and side; court, number and stage; judge; item and room; VC link.
+        $this->assertSame(implode("\n", [
+            '*Hearings today*',
+            '',
+            '1. Prahlad vs Sanjay (For Petitioner)',
+            'District Judge - 05 · CS/12/2026 · Final arguments',
+            'Sh. Akash Jain',
+            'Court Room 612, main building · 10:30',
+            'VC: https://districtcourtdelhi.webex.com/meet/ddc.vc.southeast08',
+        ]), $text);
     }
 
     public function test_home_rows_offer_copy_vc_link_share_and_set_our_side(): void
@@ -64,7 +68,7 @@ class CaseSharingTest extends TestCase
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSee('data-copy="https://districtcourtdelhi.webex.com/meet/ddc.vc.southeast08"', false)
-            ->assertSee('aria-label="Share case details"', false)
+            ->assertSee('title="Share this hearing"', false)->assertSee('title="Share all hearings of this day"', false)
             ->assertSee('We appear for: Petitioner', false);
     }
 

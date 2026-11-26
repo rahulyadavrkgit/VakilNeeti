@@ -112,7 +112,7 @@
                 </div>
                 <div>
                     <label for="ds-title">Dataset title / description</label>
-                    <input class="ds-input" id="ds-title" name="dataset_title" maxlength="255" placeholder="Official dataset title">
+                    <input class="ds-input" id="ds-title" name="dataset_title" maxlength="255" placeholder="Dataset title">
                 </div>
                 <div>
                     <button class="ds-button" type="submit">Add data source</button>

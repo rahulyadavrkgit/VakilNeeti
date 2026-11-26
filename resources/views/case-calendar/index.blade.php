@@ -306,9 +306,18 @@
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm print:border-0 print:shadow-none">
                     @forelse($eventsByDate as $eventDate => $dayEvents)
                         <div class="border-b border-slate-100 p-4 last:border-0 print:break-inside-avoid print:px-0">
-                            <h3 class="text-sm font-bold {{ $eventDate === today()->toDateString() ? 'text-[#16776e]' : 'text-slate-900' }}">
-                                {{ \Illuminate\Support\Carbon::parse($eventDate)->format('l, d M Y') }}
-                            </h3>
+                            @php
+                                $listDay = \Illuminate\Support\Carbon::parse($eventDate);
+                                $listDayLabel = ($listDay->isToday() ? 'Today' : ($listDay->isTomorrow() ? 'Tomorrow' : $listDay->format('l'))).' · '.$listDay->format('jS M');
+                            @endphp
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <h3 class="text-sm font-bold {{ $eventDate === today()->toDateString() ? 'text-[#16776e]' : 'text-slate-900' }}">
+                                    {{ $listDay->format('l, d M Y') }}
+                                </h3>
+                                @if(collect($dayEvents)->contains(fn ($dayEvent) => ($dayEvent['group'] ?? null) === 'hearing'))
+                                    <x-day-share :heading="'Hearings · '.$listDayLabel" :events="$dayEvents" class="print:hidden" />
+                                @endif
+                            </div>
                             <table class="mt-2 w-full text-left text-sm">
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach($dayEvents as $event)

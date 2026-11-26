@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Search Official Court Records')
+@section('title', 'Search Court Records')
 @section('page-heading', 'Court Case Search')
 
 @section('content')
 <div class="space-y-6">
 
     <div>
-        <h1 class="text-2xl font-bold text-slate-900">Search Official Court Records</h1>
-        <p class="mt-2 text-sm text-slate-600">Find a case on the official court portal, then add it to your diary.</p>
+        <h1 class="text-2xl font-bold text-slate-900">Search Court Records</h1>
+        <p class="mt-2 text-sm text-slate-600">Find a case on the court portal, then add it to your diary.</p>
 
         <a href="{{ route('cases.import') }}"
            class="mt-4 inline-flex rounded-lg bg-[#16776e] px-5 py-3 font-medium text-white hover:bg-[#125f58]">
-            Import Selected Official Case Record
+            Import Selected Case Record
         </a>
         <a href="{{ route('cases.find') }}"
            class="ml-2 mt-4 inline-flex rounded-lg border border-[#16776e] px-5 py-3 font-medium text-[#16776e] hover:bg-teal-50">
@@ -135,9 +135,9 @@
     </section>
 
     <section class="rounded-xl border border-teal-200 bg-teal-50 p-5">
-        <h2 class="font-semibold text-teal-950">Continue to Official Court Search</h2>
+        <h2 class="font-semibold text-teal-950">Continue to Court Search</h2>
 
-        <p class="mt-2 text-sm text-teal-900">Use these details on the official portal; it shows the results and any CAPTCHA.</p>
+        <p class="mt-2 text-sm text-teal-900">Use these details on the portal; it shows the results and any CAPTCHA.</p>
 
         <div class="mt-4 flex flex-wrap gap-3">
 
@@ -174,14 +174,14 @@
             <a href="https://services.ecourts.gov.in/ecourtindia_v6/"
                 target="_blank" rel="noopener noreferrer"
                 class="inline-block mt-4 text-sm font-medium text-[#16776e] hover:underline">
-                Open Official eCourts Services
+                Open eCourts Services
             </a>
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-5">
             <h2 class="text-lg font-semibold text-slate-900">High Court Cause Lists</h2>
             <p class="mt-2 text-sm text-slate-600">
-                Access High Court services and check the relevant court's official listing facilities.
+                Access High Court services and check the relevant court's listing facilities.
             </p>
             <a href="https://hcservices.ecourts.gov.in/hcservices/main.php"
                 target="_blank" rel="noopener noreferrer"

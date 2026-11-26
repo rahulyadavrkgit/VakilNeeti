@@ -123,7 +123,7 @@
                        class="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">
                         Open {{ $portal['label'] }} search &nearr;
                     </a>
-                    <p class="mt-2 text-xs text-slate-500">Opens the official site in a new tab. Come back to this tab when you have copied the results.</p>
+                    <p class="mt-2 text-xs text-slate-500">Opens the site in a new tab. Come back to this tab when you have copied the results.</p>
                 </div>
             @endforeach
         </section>

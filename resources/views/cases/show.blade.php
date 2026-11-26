@@ -4,7 +4,7 @@
 @section('page-heading', 'Case Details')
 
 @section('content')
-<div class="space-y-6">
+<div class="mx-auto w-full max-w-5xl space-y-4">
 
         @php
             $todayDate = today()->toDateString();
@@ -21,17 +21,18 @@
             $panelListing = $panelNext ? $causeListings->first(fn ($listing) => $listing->courtDocument->listing_date->isSameDay($panelNext['date'])) : null;
             $panelLast = $panelNext ? null : $panelDates->sortByDesc(fn ($entry) => $entry['date']->toDateString())->first();
             $nextHearing = $panelNext['hearing'] ?? null;
+            $datedHearing = $panelNext && $nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing : null;
             $panelTime = $panelNext && $panelNext['time'] ? substr((string) $panelNext['time'], 0, 5) : null;
             $listBench = app(\App\Services\CourtBenchMatcher::class)->find($case->court_name, $case->court_complex, $case->judge_name);
             $listJudge = $listBench?->judgeList()[0]['name'] ?? null;
-            $listNote = '<span class="ml-1 text-xs font-normal text-slate-400">(official court list)</span>';
+            $listNote = '<span class="ml-1 text-xs font-normal text-slate-400">(court list)</span>';
             $linkedClients = $case->parties->filter(fn ($party) => $party->is_client && $party->client);
+            $photoDistrict = $case->court_level === 'district' ? $case->district : null;
             $advocateName = auth()->user()?->name;
             $courtRoom = $panelListing?->court_room ?: ($nextHearing?->court_room ?: ($case->court_room ?: $listBench?->court_room));
             $vcLink = $panelListing?->vcLink() ?: ($nextHearing?->vc_link ?: ($case->vc_link ?: $listBench?->vc_link));
             $judge = $panelListing?->judge_name ?: ($nextHearing?->judge_name ?: ($case->judge_name ?: $listJudge));
             $causeList = $panelListing?->stripData();
-            $datedHearing = $panelNext && $nextHearing?->hearing_date?->isSameDay($panelNext['date']) ? $nextHearing : null;
             $purpose = $nextHearing?->hearing_stage ?: ($panelNext ? $case->stage : null);
             $item = $causeList['item'] ?? $datedHearing?->item_number;
             $listTotal = $causeList['total'] ?? $datedHearing?->list_total;
@@ -59,6 +60,9 @@
                 'disposed', 'closed' => 'bg-rose-100 text-rose-700',
                 default => 'bg-slate-100 text-slate-700',
             };
+            $caseAction = 'inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-slate-300 px-2.5 text-sm font-semibold hover:bg-slate-50';
+            $positionUrl = route('sheets.court-position', $case);
+            $activeClientLink = $case->hasActiveStatusLink();
         @endphp
 
         <nav aria-label="Breadcrumb" class="text-sm text-slate-500 print:hidden">
@@ -73,70 +77,102 @@
             </div>
         @endif
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div class="flex flex-wrap items-start justify-between gap-4">
-                <div class="min-w-0">
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4">
+            <div class="grid gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <div class="min-w-0 sm:col-start-1 sm:row-start-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-2xl font-bold text-slate-900">{{ $case->case_title ?: 'Untitled case' }}</h2>
+                        <h2 class="break-words text-xl font-bold text-slate-900 sm:text-2xl">{{ $case->case_title ?: 'Untitled case' }}</h2>
                         <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
-                        <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" size="lg" :edit-url="route('cases.edit', $case)" />
                     </div>
-                    {{-- At a glance: which court, the case number, the matter, CNR or diary number and the stage. --}}
-                    <dl class="mt-2 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
-                        <div class="flex flex-wrap items-center gap-2 sm:col-span-2">
+                    {{-- At a glance, two lines: court, number and bench; then CNR, stage and dates. --}}
+                    @php
+                        $benchName = preg_match('/^(the\s+)?(supreme court(\s+of\s+india)?|high court(\s+of\s+[\p{L} &.]+)?|[\p{L} &.]+\s+high court)$/iu', trim((string) $case->court_name)) ? null : $case->court_name;
+                        $factLine = array_filter([
+                            $case->cnr_number ? 'CNR: '.$case->cnr_number : null,
+                            $case->diary_number ? 'Diary: '.$case->diary_number : null,
+                            $case->stage ? 'Stage: '.$case->stage : null,
+                            $case->filing_date ? 'Filing date: '.$case->filing_date->format('M d, Y') : null,
+                            $case->disposed_on ? 'Disposed: '.$case->disposed_on->format('M d, Y') : null,
+                            $case->matter_id ? 'Matter: '.$case->matter_id : null,
+                        ]);
+                    @endphp
+                    <div class="mt-2 space-y-1 text-sm">
+                        <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <x-court-badge :level="$case->court_level" :state="$case->state_code" :district="$case->district" class="text-sm" />
                             @if($case->case_number)
                                 <span class="text-base font-bold tabular-nums text-slate-900">{{ $case->case_number }}</span>
                             @else
                                 <span class="text-slate-400">No case number yet</span>
                             @endif
-                        </div>
-                        @foreach(array_filter([
-                            'Matter' => $case->matter_id,
-                            'CNR' => $case->cnr_number,
-                            'Diary' => $case->diary_number,
-                            'Stage' => $case->stage !== $purpose ? $case->stage : null,
-                        ]) as $factLabel => $factValue)
-                            <div class="flex gap-2 sm:contents">
-                                <dt class="shrink-0 text-slate-500">{{ $factLabel }}</dt>
-                                <dd class="min-w-0 break-words font-medium text-slate-800">{{ $factValue }}</dd>
-                            </div>
-                        @endforeach
-                    </dl>
+                            @if($benchName)<span class="text-slate-700">• {{ $benchName }}</span>@endif
+                        </p>
+                        @if($factLine)
+                            <p class="text-slate-600">{{ implode(' • ', $factLine) }}</p>
+                        @endif
+                        <details class="relative w-fit max-w-full print:hidden">
+                            <summary class="vn-link min-h-8 cursor-pointer py-1 font-semibold">Petitioner &amp; Respondent Advocates</summary>
+                            <dl class="absolute left-0 z-20 mt-1 grid w-72 max-w-[calc(100vw-4rem)] gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+                                <div>
+                                    <dt class="font-semibold text-slate-900">Petitioner advocate</dt>
+                                    <dd class="mt-0.5 break-words text-slate-700">{{ $case->petitioner_advocate ?: 'Not recorded' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-semibold text-slate-900">Respondent advocate</dt>
+                                    <dd class="mt-0.5 break-words text-slate-700">{{ $case->respondent_advocate ?: 'Not recorded' }}</dd>
+                                </div>
+                            </dl>
+                        </details>
+                        @unless($panelNext)
+                            <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex" :room="$courtRoom" :judge="$judge" :vc-link="$vcLink" :copy-vc="true" :judge-photos="true" :photo-district="$photoDistrict" />
+                        @endunless
+                    </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2 print:hidden">
+                <div class="row-start-1 flex flex-wrap items-start justify-end gap-1.5 sm:col-start-2 print:hidden" aria-label="Case actions" role="group">
                     <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
                        aria-label="Share case details" data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
-                       class="inline-flex items-center gap-1.5 rounded-xl bg-[#25d366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1ebe5b]">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3Z"/></svg>
-                        Share case
+                       class="vn-primary-button inline-flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold">
+                        <x-icon name="share" :size="15" /> Share
                     </a>
-                    <a href="{{ route('cases.edit', $case) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</a>
-                    <button type="button" data-print class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print</button>
+                    <button type="button" data-print class="{{ $caseAction }} text-slate-700">Print</button>
                     @if($case->isClosed())
                         <form method="POST" action="{{ route('cases.reopen', $case) }}">
                             @csrf
-                            <button type="submit" class="rounded-xl border border-[#8fc9c0] bg-[#e8f4f2] px-4 py-2 text-sm font-semibold text-[#16776e] hover:bg-[#d9efeb]">Reopen case</button>
+                            <button type="submit" class="{{ $caseAction }} text-slate-700">Reopen case</button>
                         </form>
                     @else
                         <form method="POST" action="{{ route('cases.close', $case) }}" data-confirm="Close this case? You can reopen it later.">
                             @csrf
-                            <button type="submit" class="rounded-xl bg-[#142235] px-4 py-2 text-sm font-semibold text-white hover:bg-[#20334a]">Close case</button>
+                            <button type="submit" class="{{ $caseAction }} text-red-700">Close case</button>
                         </form>
                     @endif
                 </div>
+
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2 sm:col-span-2">
+                    <div class="grid min-w-0 grid-cols-2 gap-2 text-sm" aria-label="Appearance and position" role="group">
+                        <a href="{{ $positionUrl }}" data-sheet="{{ $positionUrl }}" class="min-w-0 rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50">
+                            <span class="block text-xs text-slate-600">Court position</span>
+                            <span class="vn-link block break-words font-semibold">{{ $standSide ? $standSide['label'].' facing judge' : 'Set position' }}</span>
+                        </a>
+                        <a href="{{ $positionUrl }}" data-sheet="{{ $positionUrl }}" class="min-w-0 rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50">
+                            <span class="block text-xs text-slate-600">We appear for</span>
+                            <span class="vn-link block break-words font-semibold">{{ $case->appearingForLabel() ?? 'Set appearance' }}</span>
+                        </a>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 print:hidden">
+                        <x-quick-next-date :case-id="$case->id" return="case" :open="true" :label="$panelDates->isNotEmpty() || $panelNext ? 'Add another date' : 'Add next date'" />
+                        <a href="{{ route('cases.edit', $case) }}" class="vn-link inline-flex min-h-9 items-center text-sm font-semibold">Edit case</a>
+                    </div>
+                </div>
             </div>
 
-            @include('cases.partials.key-facts')
-
-            <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-slate-100 pt-4 print:hidden">
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-2 print:hidden">
                 <form method="POST" action="{{ route('cases.file-number', $case) }}" class="flex items-center gap-2">
                     @csrf
                     @method('PATCH')
                     <label for="case-file-number" class="text-sm font-semibold text-slate-700">File No.</label>
                     <input id="case-file-number" name="file_number" value="{{ $case->file_number }}" maxlength="100" placeholder="Add"
-                           class="w-36 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm">
+                           class="w-28 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm sm:w-36">
                     <button type="submit" class="text-sm font-semibold text-[#16776e] hover:underline">Save</button>
                 </form>
 
@@ -160,90 +196,23 @@
                     </form>
                 </div>
             </div>
-            <section aria-label="Next hearing" class="mt-5 border-t border-slate-200 pt-4">
-                <div class="min-w-0 space-y-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wide text-[#16776e]">Next hearing</h3>
-                    @if($panelNext)
-                        <time datetime="{{ $panelNext['date']->toDateString() }}" class="block text-lg font-semibold text-slate-900">{{ $panelNext['date']->format('l, d F Y') }}@if($panelTime), {{ $panelTime }}@endif</time>
-                    @elseif($panelLast)
-                        <p class="font-semibold text-red-800">The last date ({{ $panelLast['date']->format('d M Y') }}) has passed. Check the case status and add the next date.</p>
-                    @else
-                        <p class="font-semibold text-slate-800">No hearing date yet. Add the first date below.</p>
-                    @endif
-                    @if($purpose)
-                        <p class="text-sm text-slate-600">Purpose: {{ $purpose }}</p>
-                    @endif
-                    <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex" :room="$courtRoom" :judge="$judge" :vc-link="$vcLink" :copy-vc="true" />
-                    @if($panelNext)
-                        <div @if($panelListing) id="cause-list" @endif class="scroll-mt-24">
-                            <x-hearing-strip :date="$panelNext['date']" :show-date="false" :show-room="false" :court="$case->court_name" :room="$courtRoom"
-                                :item="$item" :list-total="$listTotal" :cause-list="$causeList" :district="$case->court_level === 'district'"
-                                :case-number="$case->case_number"
-                                :order-url="$latestOrder ? route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) : null"
-                                :order-date="$latestOrder?->created_at?->format('d M Y')" />
-                        </div>
-                    @elseif($latestOrder)
-                        <a class="inline-flex min-h-11 items-center text-sm font-semibold underline" href="{{ route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) }}">Latest saved order · {{ $latestOrder->created_at?->format('d M Y') }}</a>
-                    @endif
-                    @include('cases.partials.date-sources')
-                    @if($case->court_level === 'district' && $case->cnr_number && !auth()->user()->isClerk())
-                        @include('cases.partials.district-list')
-                    @endif
-                    <div class="flex flex-wrap items-start gap-2 pt-1">
-                        <x-quick-next-date :case-id="$case->id" return="case" :open="! $panelNext" :label="$panelNext ? 'Add another date' : 'Add next date'" />
-                        @php
-                            $feeCourt = match ($case->courtLevel()) { 'Supreme Court' => 'supreme', 'High Court' => 'high', default => 'district' };
-                        @endphp
-                        <a href="{{ route('court-fee.index', ['court' => $feeCourt]) }}" data-sheet-frame
-                           class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
-                            <x-icon name="calculator" :size="16" /> Court fee
-                        </a>
-                        @unless(auth()->user()->isClerk())
-                            @if(! $case->status_token)
-                                <form method="POST" action="{{ route('cases.status-link.create', $case) }}">
-                                    @csrf
-                                    <button type="submit" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
-                                        <x-icon name="share" :size="16" /> Client link
-                                    </button>
-                                </form>
-                            @endif
-                        @endunless
-                    </div>
-                    @if($case->status_token && ! auth()->user()->isClerk())
-                        @php
-                            $statusUrl = route('case-status.show', $case->status_token);
-                            $statusMessage = "Updates on your case {$case->case_title}: next date, purpose and court are always here:\n{$statusUrl}";
-                        @endphp
-                        <div id="client-link" class="flex flex-wrap items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/60 px-3 py-2 text-sm">
-                            <span class="font-semibold text-slate-800">Client link</span>
-                            <span class="min-w-0 flex-1 truncate text-slate-600" title="{{ $statusUrl }}">{{ $statusUrl }}</span>
-                            <button type="button" data-copy="{{ $statusUrl }}" class="inline-flex min-h-8 items-center gap-1 rounded-full border border-slate-200 bg-white px-3 font-semibold text-slate-700"><x-icon name="copy" :size="14" /><span data-copy-label>Copy</span></button>
-                            <a href="https://wa.me/?text={{ rawurlencode($statusMessage) }}" data-share-text="{{ $statusMessage }}" data-share-title="Case update link" class="inline-flex min-h-8 items-center gap-1 rounded-full bg-[#16776e] px-3 font-semibold text-white"><x-icon name="share" :size="14" /> Send</a>
-                            <form method="POST" action="{{ route('cases.status-link.destroy', $case) }}" data-confirm="Switch off this client link? The old link will stop opening.">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-xs font-semibold text-red-700 hover:underline">Switch off</button>
-                            </form>
-                        </div>
-                    @endif
-                </div>
-            </section>
         </div>
 
         <x-tabs label="Case workspace" :tabs="[
             'case-history' => 'Timeline',
-            'case-connected' => 'Connected matters',
+            'case-overview' => 'Details',
+            'case-clients' => 'Clients',
             'case-documents' => 'Documents',
             'case-notes' => 'Notes',
             'case-follow-ups' => 'Follow-ups',
+            'case-connected' => 'Connected matters',
             'case-journey' => 'Court journey',
-            'case-overview' => 'Details',
-            'case-clients' => 'Notify clients',
             'case-appointments' => 'Appointments',
             'case-expenses' => 'Expenses',
             'case-time' => 'Time entries',
         ]" :counts="$tabCounts" />
 
+        @include('cases.partials.timeline')
         @include('cases.partials.journey')
         @include('cases.partials.connected')
         @include('cases.partials.follow-ups')
@@ -280,7 +249,7 @@
                     <p class="text-xs font-medium uppercase text-slate-500">Court Complex / Establishment</p>
                     <p class="mt-1 font-medium">{{ $case->court_complex ?: 'Not available' }}</p>
                     @if($listBench)
-                        <a href="{{ route('courts.delhi-district-courts.judges', \Illuminate\Support\Str::after($listBench->court_key, 'delhi-district-')) }}" class="mt-1 inline-block text-xs font-semibold text-[#16776e] hover:underline">Found in the official court list &rarr;</a>
+                        <a href="{{ route('courts.delhi-district-courts.judges', \Illuminate\Support\Str::after($listBench->court_key, 'delhi-district-')) }}" class="mt-1 inline-block text-xs font-semibold text-[#16776e] hover:underline">Found in the court list &rarr;</a>
                     @endif
                 </div>
 
@@ -303,7 +272,7 @@
                     <p class="text-xs font-medium uppercase text-slate-500">VC link</p>
                     @if($case->vc_link ?: $listBench?->vc_link)
                         <a href="{{ $case->vc_link ?: $listBench->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="mt-1 block truncate font-medium text-[#16776e] hover:underline">{{ $case->vc_link ?: $listBench->vc_link }}</a>
-                        @if(! $case->vc_link)<p class="text-xs text-slate-400">Official court list</p>@endif
+                        @if(! $case->vc_link)<p class="text-xs text-slate-400">Court list</p>@endif
                     @else
                         <p class="mt-1 font-medium">Not available</p>
                     @endif
@@ -411,14 +380,59 @@
 
         <!-- Orders and Documents -->
         <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <h3 class="text-lg font-semibold text-slate-900">Official Orders and Court Documents</h3>
+            <h3 class="text-lg font-semibold text-slate-900">Orders and Court Documents</h3>
 
             <p class="mt-2 text-sm text-slate-500">Orders and judgments appear here once added to this case.</p>
         </section>
         </div>
 
-        <section id="case-clients" data-tab-panel role="tabpanel" aria-labelledby="tab-case-clients" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-lg font-semibold text-slate-900">Notify clients</h3>
+        <section id="case-clients" data-tab-panel role="tabpanel" aria-labelledby="tab-case-clients" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h3 class="text-lg font-semibold text-slate-900">Clients</h3>
+
+            @unless(auth()->user()->isClerk())
+                <div id="client-link" class="mt-3 scroll-mt-36 rounded-xl border border-teal-200 bg-teal-50/60 p-3 text-sm print:hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h4 class="font-semibold text-slate-900">Client link</h4>
+                            <p class="mt-0.5 text-xs text-slate-600">
+                                @if($activeClientLink)
+                                    Expires {{ $case->status_link_expires_at->format('d M Y, g:i a') }}
+                                @elseif($case->status_token)
+                                    Link expired. Create a new one to share updates.
+                                @else
+                                    Expires 7 days after creation.
+                                @endif
+                            </p>
+                        </div>
+                        @unless($activeClientLink)
+                            <form method="POST" action="{{ route('cases.status-link.create', $case) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#16776e] px-3 font-semibold text-white hover:bg-[#125f58]">
+                                    <x-icon name="share" :size="16" /> Create client link
+                                </button>
+                            </form>
+                        @endunless
+                    </div>
+                    @if($activeClientLink)
+                        @php
+                            $statusUrl = route('case-status.show', $case->status_token);
+                            $statusMessage = "Updates on your case {$case->case_title}: next date, purpose and court. This link is available until {$case->status_link_expires_at->format('d M Y, g:i a')}.\n{$statusUrl}";
+                        @endphp
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <a href="{{ $statusUrl }}" class="vn-link min-w-0 grow basis-full truncate sm:basis-44" title="{{ $statusUrl }}">{{ $statusUrl }}</a>
+                            <button type="button" data-copy="{{ $statusUrl }}" class="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 font-semibold text-slate-700"><x-icon name="copy" :size="14" /><span data-copy-label>Copy</span></button>
+                            <a href="https://wa.me/?text={{ rawurlencode($statusMessage) }}" data-direct-share data-share-text="{{ $statusMessage }}" data-share-title="Case update link" class="inline-flex min-h-9 items-center gap-1 rounded-lg bg-[#16776e] px-3 font-semibold text-white"><x-icon name="share" :size="14" /> Send link</a>
+                            <form method="POST" action="{{ route('cases.status-link.destroy', $case) }}" data-confirm="Switch off this client link? The old link will stop opening.">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="min-h-9 px-1 text-xs font-semibold text-red-700 hover:underline">Switch off</button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            @endunless
+
+            <h4 class="mt-4 text-sm font-semibold text-slate-900">Notify clients</h4>
 
             @if($errors->has('client_id') || $errors->has('name') || $errors->has('mobile') || $errors->has('email'))
                 <div role="alert" class="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -426,7 +440,7 @@
                 </div>
             @endif
 
-            <div class="mt-4 divide-y divide-slate-100">
+            <div class="divide-y divide-slate-100">
                 @forelse($linkedClients as $party)
                     @php
                         $client = $party->client;
@@ -440,6 +454,7 @@
                         </div>
                         <div class="flex flex-wrap items-center gap-2 print:hidden">
                             @if($whatsapp)
+                                <a href="tel:+{{ $whatsapp }}" data-direct-share class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Call</a>
                                 <a href="https://wa.me/{{ $whatsapp }}?text={{ rawurlencode($message) }}" target="_blank" rel="noopener noreferrer" data-direct-share
                                    class="rounded-lg bg-[#25d366] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1ebe5b]">WhatsApp</a>
                             @endif
@@ -459,35 +474,44 @@
                 @endforelse
             </div>
 
-            <div class="mt-4 grid gap-4 border-t border-slate-100 pt-4 lg:grid-cols-2 print:hidden">
-                <form method="POST" action="{{ route('cases.clients.store', $case) }}" class="flex flex-wrap items-end gap-2">
+            <div class="mt-4 space-y-4 border-t border-slate-100 pt-4 print:hidden">
+                <form method="POST" action="{{ route('cases.clients.store', $case) }}" class="max-w-md">
                     @csrf
-                    <label class="min-w-0 flex-1 text-sm font-medium text-slate-700">
-                        Link an existing client
-                        <select name="client_id" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+                    <label for="case-existing-client" class="text-sm font-medium text-slate-700">Link an existing client</label>
+                    <div class="mt-1 flex items-center gap-2">
+                        <select id="case-existing-client" name="client_id" required class="min-h-10 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-sm">
                             <option value="">Select client</option>
                             @foreach($clients as $clientOption)
                                 <option value="{{ $clientOption->id }}">{{ $clientOption->displayName() }}</option>
                             @endforeach
                         </select>
-                    </label>
-                    <button type="submit" class="rounded-lg bg-[#238b80] px-4 py-2 text-sm font-semibold text-white hover:bg-[#16776e]">Link</button>
+                        <button type="submit" class="vn-primary-button min-h-9 rounded-lg px-3 text-sm font-semibold">Link</button>
+                    </div>
                 </form>
 
-                <form method="POST" action="{{ route('cases.clients.store', $case) }}" class="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+                <form method="POST" action="{{ route('cases.clients.store', $case) }}">
                     @csrf
-                    <label class="text-sm font-medium text-slate-700">
-                        New contact
-                        <input name="name" required maxlength="150" placeholder="Name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-                    </label>
-                    <input name="mobile" maxlength="20" inputmode="tel" placeholder="Mobile" aria-label="Mobile" class="rounded-lg border border-slate-300 px-3 py-2">
-                    <input name="email" type="email" maxlength="255" placeholder="Email" aria-label="Email" class="rounded-lg border border-slate-300 px-3 py-2">
-                    <button type="submit" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Add</button>
+                    <fieldset>
+                        <legend class="text-sm font-semibold text-slate-900">New contact</legend>
+                        <div class="mt-1.5 grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)_auto]">
+                            <label class="min-w-0 text-xs font-medium text-slate-700">
+                                Name
+                                <input name="name" required maxlength="150" autocomplete="name" value="{{ old('name') }}" class="mt-1 min-h-10 w-full min-w-0 rounded-lg border border-slate-300 px-2.5 text-sm">
+                            </label>
+                            <label class="min-w-0 text-xs font-medium text-slate-700">
+                                Mobile
+                                <input name="mobile" maxlength="20" inputmode="tel" autocomplete="tel" value="{{ old('mobile') }}" class="mt-1 min-h-10 w-full min-w-0 rounded-lg border border-slate-300 px-2.5 text-sm">
+                            </label>
+                            <label class="min-w-0 text-xs font-medium text-slate-700">
+                                Email
+                                <input name="email" type="email" maxlength="255" autocomplete="email" value="{{ old('email') }}" class="mt-1 min-h-10 w-full min-w-0 rounded-lg border border-slate-300 px-2.5 text-sm">
+                            </label>
+                            <button type="submit" class="{{ $caseAction }} justify-self-start text-slate-700">Add contact</button>
+                        </div>
+                    </fieldset>
                 </form>
             </div>
         </section>
-
-        @include('cases.partials.timeline')
 
         <section id="case-notes" data-tab-panel role="tabpanel" aria-labelledby="tab-case-notes" class="scroll-mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -761,7 +785,11 @@
         </section>
 
 
-        <p class="text-xs text-slate-400">Verify case status and hearings with the court portal.</p>
+        <div class="print:hidden">
+            <p class="text-xs text-slate-400">Verify case status and hearings with the court portal.</p>
+            <x-case-report :case-id="$case->id" page="case-details" />
+            @error('message')<p role="alert" class="text-sm text-red-700">{{ $message }}</p>@enderror
+        </div>
 </div>
 
 {{-- Phones: the four things done most on a case stay one tap away, just above the bottom menu. --}}
@@ -770,7 +798,7 @@
     $barButton = 'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-semibold';
 @endphp
 <div class="h-16 md:hidden print:hidden" aria-hidden="true"></div>
-<nav aria-label="Case actions" class="vn-case-bar fixed inset-x-0 z-40 grid grid-cols-4 gap-1 border-t border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden print:hidden">
+<nav aria-label="Case shortcuts" class="vn-case-bar fixed inset-x-0 z-40 grid grid-cols-3 gap-1 border-t border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden print:hidden">
     <a href="{{ route('hearings.create', ['case' => $case->id]) }}" data-sheet="{{ route('sheets.next-date', ['case' => $case->id]) }}"
        class="{{ $barButton }} bg-[#16776e] text-white">
         <x-icon name="calendar" :size="18" /> Next date
@@ -784,11 +812,6 @@
             <x-icon name="people" :size="18" /> Add client
         </a>
     @endif
-    <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
-       data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
-       class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
-        <x-icon name="share" :size="18" /> Share
-    </a>
     <a href="{{ route('cases.download', $case) }}" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
         <x-icon name="download" :size="18" /> Download
     </a>

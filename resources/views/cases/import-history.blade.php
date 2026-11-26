@@ -8,7 +8,7 @@
 
     <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Official Court Import History</h1>
+            <h1 class="text-2xl font-bold text-slate-800">Court Import History</h1>
             <p class="text-slate-500 mt-2">Original records and their import status.</p>
         </div>
         <a href="{{ route('cases.import') }}"

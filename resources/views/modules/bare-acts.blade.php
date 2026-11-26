@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Bare Acts')
-@section('meta_description', 'Bare Acts of India: Central Acts and the criminal law codes, with links to the official text on India Code.')
+@section('meta_description', 'Bare Acts of India: Central Acts and the criminal law codes, with links to the text on India Code.')
 @section('page-heading', 'Bare Acts')
 
 @section('content')
@@ -9,7 +9,7 @@
     <section id="overview" class="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
         <div class="mb-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-widest text-slate-300">Legal Resources</span></div>
         <h1 class="mt-2 text-2xl font-bold">Bare Acts Library</h1>
-        <p class="mt-2 max-w-3xl text-sm text-slate-300">Common Central Acts, with links to the official India Code.</p>
+        <p class="mt-2 max-w-3xl text-sm text-slate-300">Common Central Acts, with links to the India Code.</p>
     </section>
 
 
@@ -48,11 +48,11 @@
                         @if($legacy)
                             <p class="mt-3 text-xs font-medium text-amber-800">Legacy reference — check applicable transition and savings provisions.</p>
                         @else
-                            <p class="mt-3 text-xs text-slate-500">Check the official text for amendments and commencement.</p>
+                            <p class="mt-3 text-xs text-slate-500">Check the text for amendments and commencement.</p>
                         @endif
                         <a href="https://indiacode.gov.in/" target="_blank" rel="noopener noreferrer"
                            class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">
-                            Find official text on India Code
+                            Find text on India Code
                         </a>
                     </article>
                 @endforeach
@@ -65,8 +65,8 @@
     </p>
 
     <section id="sources" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <h2 class="text-lg font-semibold text-slate-900">Official source</h2>
-        <p class="mt-1 text-sm text-slate-600">Check the official text and current status on India Code.</p>
+        <h2 class="text-lg font-semibold text-slate-900">Source</h2>
+        <p class="mt-1 text-sm text-slate-600">Check the text and current status on India Code.</p>
         <a href="https://indiacode.gov.in/" target="_blank" rel="noopener noreferrer"
            class="mt-4 inline-flex rounded-lg bg-[#16776e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#125f58]">
             Open India Code

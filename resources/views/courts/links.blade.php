@@ -11,7 +11,7 @@
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
             <h1 class="text-2xl font-semibold text-slate-900">{{ $title }}</h1>
-            <p class="mt-1 text-sm text-slate-600">{{ $intro }}</p>
+            @if($intro)<p class="mt-1 text-sm text-slate-600">{{ $intro }}</p>@endif
         </div>
     </div>
 
@@ -50,6 +50,6 @@
         @endforeach
     </nav>
 
-    <p class="text-xs text-slate-500">Official links go to {{ $source }}.</p>
+    <p class="text-xs text-slate-500">Links go to {{ $source }}.</p>
 </div>
 @endsection

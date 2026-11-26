@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
-    <x-page-header id="court-forms" title="Forms & Filing Resources" subtitle="Official filing portals and common practice forms in one place." />
+    <x-page-header id="court-forms" title="Forms & Filing Resources" subtitle="Filing portals and common practice forms in one place." />
 
 
     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -47,17 +47,17 @@
         <p class="mt-2 text-sm text-slate-600">Use the court’s current prescribed form; check filing requirements with the registry.</p>
         <a href="{{ route('courts.index') }}"
            class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">
-            Find an official court directory entry &rarr;
+            Find a court directory entry &rarr;
         </a>
     </section>
 
     <section id="police-rti" class="grid gap-6 md:grid-cols-2">
-        <article data-form-card data-search="police department contacts official directory" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <article data-form-card data-search="police department contacts directory" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">Police and department contacts</h2>
-            <p class="mt-2 text-sm text-slate-600">Locate official police department and headquarters information.</p>
+            <p class="mt-2 text-sm text-slate-600">Locate police department and headquarters information.</p>
             <a href="{{ route('police-administration.index') }}" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Open Police Administration &rarr;</a>
         </article>
-        <article data-form-card data-search="rti right to information application official portal" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <article data-form-card data-search="rti right to information application portal" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">Right to Information (RTI)</h2>
             <p class="mt-2 text-sm text-slate-600">Central authorities: use RTI Online. Others may have State portals.</p>
             <a href="https://rtionline.gov.in/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Open RTI Online &rarr;</a>

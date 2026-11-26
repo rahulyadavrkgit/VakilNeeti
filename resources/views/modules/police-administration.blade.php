@@ -2,7 +2,7 @@
 
 @section('title', 'Police administration')
 @section('page-heading', 'Police administration')
-@section('meta_description', 'Police stations, State police departments, police districts and ranges, and official police portals across India.')
+@section('meta_description', 'Police stations, State police departments, police districts and ranges, and police portals across India.')
 
 @section('content')
 <div class="mx-auto max-w-7xl">
@@ -149,10 +149,10 @@
     </div>
 
     @if($selectedState)
-        <!-- Official State Police Headquarters & Portals Card -->
+        <!-- State Police Headquarters & Portals Card -->
         @if(isset($departmentOffices) && $departmentOffices->count() > 0)
             <div class="mt-6 rounded-xl border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm">
-                <h2 class="text-lg font-bold text-indigo-900">Official Police Headquarters & Portals — {{ $selectedState->name }}</h2>
+                <h2 class="text-lg font-bold text-indigo-900">Police Headquarters & Portals — {{ $selectedState->name }}</h2>
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     @foreach($departmentOffices as $office)
                         <div class="rounded-lg border border-indigo-200 bg-white p-4 shadow-sm">
@@ -161,7 +161,7 @@
                             @if($office->official_url)
                                 <div class="mt-3 text-sm">
                                     <a href="{{ $office->official_url }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 hover:underline">
-                                        Visit Official Portal &nearr;
+                                        Visit Portal &nearr;
                                     </a>
                                 </div>
                             @endif
@@ -241,7 +241,7 @@
             @else
                 <div class="mt-4 rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
                     <p class="text-sm font-medium text-gray-600">No police stations found matching the current selection or search criteria.</p>
-                    <p class="mt-1 text-xs text-gray-500">Official verified station records will appear here as they are imported.</p>
+                    <p class="mt-1 text-xs text-gray-500">Verified station records will appear here as they are imported.</p>
                 </div>
             @endif
         </div>

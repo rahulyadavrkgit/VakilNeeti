@@ -49,7 +49,7 @@
             <input type="number" name="list_total" min="1" max="5000" inputmode="numeric" placeholder="45" class="{{ $field }}">
         </label>
     </div>
-    <p class="text-xs text-slate-500">Room, judge and VC link come from the case and the official court list.</p>
+    <p class="text-xs text-slate-500">Room, judge and VC link come from the case and the court list.</p>
     <div class="flex items-center justify-between gap-3 pt-1">
         <a href="{{ route('hearings.create', array_filter(['case' => $case?->id])) }}" class="text-sm font-semibold text-[#16776e] hover:underline">More details</a>
         <button type="submit" class="min-h-11 rounded-xl bg-[#16776e] px-5 text-sm font-semibold text-white hover:bg-[#125f58]">{{ __('Save date') }}</button>

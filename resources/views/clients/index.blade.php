@@ -108,7 +108,7 @@
         @if($view === 'grid')
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach($clients as $client)
-                    <article class="relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <article data-card-href="{{ route('clients.show', $client) }}" class="relative cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-300">
                         <input type="checkbox" name="ids[]" value="{{ $client->id }}" form="clients-bulk" data-select-item aria-label="Select {{ $client->displayName() }}"
                                class="absolute right-3 top-3 rounded border-slate-300 text-[#238b80]">
                         <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $client->isCompany() ? 'bg-indigo-50 text-indigo-700' : 'bg-[#e8f4f2] text-[#16776e]' }}">{{ $client->isCompany() ? 'Company' : 'Person' }}</span>
@@ -137,7 +137,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($clients as $client)
-                            <tr class="hover:bg-slate-50">
+                            <tr data-card-href="{{ route('clients.show', $client) }}" class="cursor-pointer hover:bg-slate-50">
                                 <td class="p-3" data-stack="corner"><input type="checkbox" name="ids[]" value="{{ $client->id }}" form="clients-bulk" data-select-item aria-label="Select {{ $client->displayName() }}" class="rounded border-slate-300 text-[#238b80]"></td>
                                 <td class="p-3" data-stack="title">
                                     <a href="{{ route('clients.show', $client) }}" data-sheet="{{ route('sheets.client-card', $client) }}" class="font-semibold text-slate-900 hover:text-[#16776e]">{{ $client->displayName() }}</a>

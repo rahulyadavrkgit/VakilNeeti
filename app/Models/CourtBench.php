@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Http\Controllers\CourtLinksController;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -152,8 +153,45 @@ class CourtBench extends Model
      */
     public function judgeList(): array
     {
+        $district = str_starts_with((string) $this->court_key, 'delhi-district-')
+            ? Str::before(Str::after($this->court_key, 'delhi-district-'), '-rouse-avenue-courts')
+            : null;
+
         return array_values(array_filter(array_map(fn ($judge) => is_array($judge)
-            ? ['name' => (string) ($judge['name'] ?? ''), 'designation' => $judge['designation'] ?? null, 'photo' => $judge['photo'] ?? null]
-            : ['name' => (string) $judge, 'designation' => null, 'photo' => null], (array) $this->judges), fn ($judge) => $judge['name'] !== ''));
+            ? ['name' => (string) ($judge['name'] ?? ''), 'designation' => $judge['designation'] ?? null, 'photo' => $judge['photo'] ?? self::photoFor((string) ($judge['name'] ?? ''), $district)]
+            : ['name' => (string) $judge, 'designation' => null, 'photo' => self::photoFor((string) $judge, $district)], (array) $this->judges), fn ($judge) => $judge['name'] !== ''));
+    }
+
+    /**
+     * The file with the judges' photos saved from the courts' own judges pages (`php artisan courts:judge-photos`).
+     */
+    public const PHOTOS_FILE = 'judge-photos.json';
+
+    /**
+     * "Hon'ble Ms. Justice Prathiba M. Singh" and "JUSTICE PRATHIBA M SINGH" → "PRATHIBAMSINGH".
+     */
+    public static function judgeKey(string $name): string
+    {
+        $name = mb_strtoupper(str_replace('’', "'", html_entity_decode($name, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $name = (string) preg_replace("/\b(HON'?BLE|HONOURABLE|THE|CHIEF|ACTING|MR|MRS|MS|DR|SHRI|SH|SMT|JUSTICE|JUDGE)\b\.?/u", ' ', $name);
+
+        return (string) preg_replace('/[^A-Z]/', '', $name);
+    }
+
+    /**
+     * The saved photo of a judge, as a web address, or null.
+     */
+    public static function photoFor(string $name, ?string $district = null): ?string
+    {
+        static $photos = null;
+        $photos ??= rescue(fn () => json_decode((string) Storage::disk('local')->get(self::PHOTOS_FILE), true), [], false) ?: [];
+        $key = self::judgeKey($name);
+        $slug = Str::slug((string) $district);
+        if ($slug !== 'new-delhi') {
+            $slug = Str::beforeLast(Str::after($slug, 'delhi-'), '-delhi');
+        }
+        $path = $photos[$slug !== '' ? $slug.'-'.$key : $key] ?? null;
+
+        return $path ? route('courts.judge-photo', ['photo' => basename($path)], absolute: false) : null;
     }
 }

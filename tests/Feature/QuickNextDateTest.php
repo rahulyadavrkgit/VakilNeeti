@@ -45,7 +45,7 @@ class QuickNextDateTest extends TestCase
         $this->assertSame('2026-03-18', $case->hearings()->latest('id')->first()->next_hearing_date->toDateString());
     }
 
-    public function test_case_page_opens_with_the_next_hearing_panel(): void
+    public function test_case_page_shows_the_next_hearing_in_the_timeline(): void
     {
         $case = LegalCase::create(['case_title' => 'Meera vs Union', 'court_name' => 'Delhi High Court', 'court_room' => '37', 'judge_name' => 'Justice Mehta', 'appearing_for' => 'appellant', 'vc_link' => 'https://dhc.webex.com/meet/court37', 'case_status' => 'pending']);
         CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-09', 'next_hearing_date' => '2026-03-11']);
@@ -53,11 +53,12 @@ class QuickNextDateTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['For', 'Appellant', 'Share case details', 'aria-label="Next hearing"', 'Wednesday, 11 March 2026, 10:30', 'Purpose: Final arguments', 'Room 37', 'Justice Mehta', 'Join VC', 'Copy VC link', 'My item', '12', 'Cases in list', '34', 'Add another date', 'aria-label="Case workspace"'], false)
+            ->assertSeeInOrder(['Share case details', 'Print', 'Close case', 'We appear for', 'Appellant', 'Add another date', 'aria-label="Case workspace"', 'id="case-history"', 'Wednesday, 11 March 2026, 10:30', 'aria-label="Next hearing"', 'Purpose: Final arguments', 'Room 37', 'Justice Mehta', 'Join VC', 'Copy VC link', 'My item', '12', 'of', '34'], false)
+            ->assertDontSee('data-timeline-filter', false)
             ->assertSee('Item: 12')->assertSee('Cases in list: 34');
 
         $noDate = LegalCase::create(['case_title' => 'Never Listed', 'court_name' => 'Saket', 'case_status' => 'pending']);
-        $this->get(route('cases.show', $noDate))->assertOk()->assertSee('No hearing date yet. Add the first date below.')->assertSee('Set our side');
+        $this->get(route('cases.show', $noDate))->assertOk()->assertSee('No hearings or documents yet.')->assertSee('Set appearance');
     }
 
     public function test_pages_share_one_header_style(): void

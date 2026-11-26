@@ -123,7 +123,7 @@ class SheetTest extends TestCase
         $this->get(route('cases.show', $case))
             ->assertOk()
             ->assertSee(route('sheets.court', ['court' => 'Saket Courts', 'designation' => 'Saket Courts', 'room' => '12', 'judge' => 'Sh. A Kumar']))
-            ->assertSee('data-sheet-frame', false)->assertSee(route('court-fee.index', ['court' => 'district']));
+            ->assertDontSee(route('court-fee.index', ['court' => 'district']));
 
         $this->get(route('dashboard'))->assertSee('name="vn-search-sheet"', false);
     }

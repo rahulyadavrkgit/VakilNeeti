@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\CourtBench;
 use App\Models\CourtHearing;
+use App\Models\CourtStandSide;
 use App\Models\Invoice;
 use App\Models\JudicialDistrict;
 use App\Models\LegalCase;
@@ -241,8 +242,27 @@ class SheetController extends Controller
     }
 
     /**
-     * A case at a glance: parties and our side, next date, court, room, judge and VC, client contact.
+     * "Set our side": which side we appear for, and optionally which parties (saved by cases.side).
      */
+    public function caseSide(LegalCase $case): View
+    {
+        return view('sheets.case-side', ['case' => $case, 'sides' => LegalCase::SIDES, 'titleSides' => $case->titleSides()]);
+    }
+
+    /**
+     * Which side we represent and where we stand as we face the judge.
+     */
+    public function courtPosition(LegalCase $case): View
+    {
+        return view('sheets.court-position', [
+            'case' => $case,
+            'standSide' => CourtStandSide::forCase($case),
+            'petitionerSide' => CourtStandSide::petitionerSideFor($case),
+            'sides' => LegalCase::SIDES,
+            'titleSides' => $case->titleSides(),
+        ]);
+    }
+
     public function caseView(LegalCase $case): View
     {
         $case->load(['parties.client', 'hearings' => fn ($hearings) => $hearings->orderByDesc('hearing_date')]);

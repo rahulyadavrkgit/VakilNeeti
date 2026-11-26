@@ -428,6 +428,63 @@
 }
 
 .dark .vn-sheet { background: #141f31; border-color: #2a3b56; }
+
+:root {
+    --vn-link: #1d4ed8;
+}
+
+.dark {
+    --vn-link: #90b8ff;
+}
+
+.vn-link,
+.vn-file-link,
+:is(.vn-content, .vn-sheet, footer) a:any-link:not(:where([role="tab"], [class^="bg-"], [class*=" bg-"], [class~="border"], [class~="border-2"], [class~="text-white"], .vn-primary-button)) {
+    color: var(--vn-link);
+}
+
+.vn-link:hover,
+.vn-file-link:hover,
+:is(.vn-content, .vn-sheet, footer) a:any-link:not(:where([role="tab"], [class^="bg-"], [class*=" bg-"], [class~="border"], [class~="border-2"], [class~="text-white"], .vn-primary-button)):hover {
+    text-decoration: underline;
+}
+
+.vn-primary-button {
+    background-color: var(--vn-accent, #16776e);
+    color: white;
+}
+
+.vn-primary-button:hover {
+    background-color: var(--vn-accent-dark, #125f58);
+}
+
+/* File and external-link indicators share the regular link color. */
+.vn-file-link,
+.vn-content a[href$=".pdf"]:not(:where([class*="bg-"], [class*="border"])) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.vn-file-link::before,
+.vn-content a[href$=".pdf"]:not([class*="bg-"]):not([class*="border"])::before {
+    content: "PDF";
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--vn-link) 12%, transparent);
+    padding: 0 0.3rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--vn-link);
+}
+
+.vn-content a[target="_blank"]:not([href$=".pdf"]):not(.vn-file-link):not([class*="bg-"]):not([class*="border"]):not([class*="rounded"])::after {
+    content: "\2197";
+    margin-left: 0.15rem;
+    font-size: 0.8em;
+}
+
 .dark .vn-toast { background: #e3e9f1; color: #0d1524; }
 
 /* A page shown inside the sheet (?embed=1): only its content, without the menu, header and footer. */

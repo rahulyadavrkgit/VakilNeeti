@@ -24,6 +24,27 @@ class CourtStandSide extends Model
         'petitioner_side',
     ];
 
+    public static function petitionerSideFor(LegalCase $case): ?string
+    {
+        if (blank($case->court_name)) {
+            return null;
+        }
+
+        return self::withoutGlobalScopes()
+            ->where('user_id', $case->user_id)
+            ->where('court_name', $case->court_name)
+            ->value('petitioner_side');
+    }
+
+    public static function saveForCourt(LegalCase $case, string $petitionerSide): void
+    {
+        self::withoutGlobalScopes()->upsert([
+            'user_id' => $case->user_id,
+            'court_name' => $case->court_name,
+            'petitioner_side' => $petitionerSide,
+        ], ['user_id', 'court_name'], ['petitioner_side']);
+    }
+
     /**
      * Where our counsel stands for a case, or null when the court's practice or our side is not recorded.
      *
@@ -31,21 +52,17 @@ class CourtStandSide extends Model
      */
     public static function forCase(LegalCase $case): ?array
     {
-        if (! $case->court_name || ! $case->appearing_for) {
+        if (! $case->appearsForMovingSide() && ! LegalCase::isAnsweringSide($case->appearing_for)) {
             return null;
         }
 
-        $petitionerSide = self::query()
-            ->withoutGlobalScopes()
-            ->where('user_id', $case->user_id)
-            ->where('court_name', $case->court_name)
-            ->value('petitioner_side');
+        $petitionerSide = self::petitionerSideFor($case);
 
         if (! isset(self::SIDES[$petitionerSide])) {
             return null;
         }
 
-        $side = $case->appearsForMovingSide() || $case->appearing_for === 'other'
+        $side = $case->appearsForMovingSide()
             ? $petitionerSide
             : ($petitionerSide === 'left' ? 'right' : 'left');
 

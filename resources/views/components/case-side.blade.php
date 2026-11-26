@@ -1,11 +1,13 @@
-@props(['side' => null, 'parties' => null, 'size' => 'md', 'editUrl' => null])
+@props(['side' => null, 'parties' => null, 'size' => 'md', 'editUrl' => null, 'caseId' => null])
 
 {{--
     "For Petitioner" pill: teal for the side that brought the matter, gold for the answering side.
-    Without a side, and with `edit-url`, a dashed "Set our side" link invites setting it.
+    Without a side, and with `edit-url`, a dashed "Set our side" link invites setting it: in a pop-up
+    (sheets.case-side), with the case's edit page as the fallback.
 --}}
 @php
     $sideLabel = \App\Models\LegalCase::sideLabel($side, $parties);
+    $caseId ??= preg_match('#/cases/(\d+)/edit#', (string) $editUrl, $match) ? (int) $match[1] : null;
     $sizing = match ($size) {
         'lg' => 'gap-1.5 px-3 py-1 text-sm',
         'sm' => 'gap-1 px-2 py-0.5 text-xs',
@@ -20,7 +22,7 @@
         <x-icon name="scale" :size="$iconSize" /><span class="font-medium opacity-75">For</span> {{ $sideLabel }}
     </span>
 @elseif($editUrl)
-    <a href="{{ $editUrl }}" {{ $attributes->merge(['class' => 'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-slate-300 font-semibold text-slate-500 hover:border-[#16776e] hover:text-[#16776e] '.$sizing]) }}
+    <a href="{{ $editUrl }}" @if($caseId) data-sheet="{{ route('sheets.case-side', $caseId) }}" @endif {{ $attributes->merge(['class' => 'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-slate-300 font-semibold text-slate-500 hover:border-[#16776e] hover:text-[#16776e] '.$sizing]) }}
        title="Record which side you appear for">
         <x-icon name="scale" :size="$iconSize" /> Set our side
     </a>

@@ -37,7 +37,7 @@
             </nav>
         @endif
 
-        <label class="sticky top-[4.5rem] z-10 flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-sm focus-within:border-[#16776e]">
+        <label class="sticky top-[calc(var(--vn-header-height)+0.5rem)] z-10 flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-sm focus-within:border-[#16776e]">
             <x-icon name="search" :size="18" class="text-slate-400" />
             <span class="sr-only">Search judge, court no. or matter</span>
             <input type="search" data-filter-list="court-rooms" placeholder="Search judge, court no. or matter (e.g. bail, GST)" class="min-h-12 w-full border-0 bg-transparent px-0 focus:ring-0">
@@ -54,11 +54,7 @@
                             <article data-filter-item class="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                 @php $room = $bench->roomParts(); @endphp
                                 <div class="flex items-start gap-3">
-                                    <a href="{{ $bench->pageUrl() }}" title="This room's own page" class="flex h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#142235] px-2 text-white hover:ring-2 hover:ring-[#16776e]">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-white/70">Court</span>
-                                        <span class="whitespace-nowrap font-extrabold leading-none {{ mb_strlen((string) $room['number']) > 4 ? 'text-sm' : 'text-lg' }}">{{ $room['number'] ?? '—' }}</span>
-                                    </a>
-                                    <div class="min-w-0 flex-1">
+                                    <div class="min-w-0 flex-1 space-y-1">
                                         @if($bench->bench || $bench->location)
                                             <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">{{ collect([$bench->bench, $bench->location])->filter()->implode(' · ') }}</p>
                                         @endif
@@ -81,6 +77,10 @@
                                             </p>
                                         @endif
                                     </div>
+                                    <a href="{{ $bench->pageUrl() }}" title="This room's own page" class="flex h-11 min-w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-[#142235] px-2 text-white hover:ring-2 hover:ring-[#16776e]">
+                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-white/70">Court</span>
+                                        <span class="whitespace-nowrap font-extrabold leading-none {{ mb_strlen((string) $room['number']) > 4 ? 'text-xs' : 'text-base' }}">{{ $room['number'] ?? '—' }}</span>
+                                    </a>
                                 </div>
 
                                 @if($bench->vc_meeting_id || $bench->email)
@@ -121,14 +121,14 @@
                                 <div class="mt-auto flex flex-wrap items-center gap-2 pt-3">
                                     @if($bench->vc_link)
                                         <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                                           class="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-[#142235] px-3.5 text-sm font-semibold text-white hover:bg-[#20334a]">
+                                           class="inline-flex min-h-9 items-center gap-1.5 rounded-lg vn-primary-button px-3 text-sm font-semibold">
                                             <x-icon name="screen" :size="16" /> Join VC
                                         </a>
-                                        <button type="button" data-copy="{{ $bench->vc_link }}" class="min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Copy link</button>
+                                        <button type="button" data-copy="{{ $bench->vc_link }}" class="min-h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Copy link</button>
                                     @else
-                                        <span class="inline-flex min-h-10 items-center rounded-lg border border-dashed border-slate-300 px-3 text-xs font-semibold text-slate-400">VC link coming soon</span>
+                                        <span class="inline-flex min-h-9 items-center rounded-lg border border-dashed border-slate-300 px-3 text-xs font-semibold text-slate-400">VC link coming soon</span>
                                     @endif
-                                    <a href="{{ $causeList }}" rel="noopener noreferrer" class="ml-auto inline-flex min-h-10 items-center text-sm font-semibold text-[#16776e] hover:underline">Cause list</a>
+                                    <a href="{{ $causeList }}" rel="noopener noreferrer" class="ml-auto inline-flex min-h-9 items-center text-sm font-semibold text-[#16776e] hover:underline">Cause list</a>
                                 </div>
                             </article>
                         @endforeach

@@ -1,4 +1,3 @@
-
 <?php
 
 return [
@@ -65,11 +64,11 @@ return [
         'otp_template_id' => env('MSG91_EMAIL_OTP_TEMPLATE'),
     ],
 
-    // AuthKey.io (kept for phone sign-in later): the auth key and the SID of the DLT-approved code template ({#otp#}).
-    'authkey' => [
-        'key' => env('AUTHKEY_API_KEY'),
-        'otp_sid' => env('AUTHKEY_OTP_SID'),
-        'country_code' => env('AUTHKEY_COUNTRY_CODE', '91'),
+    // Push notifications (App\Services\WebPush): keys from `php artisan webpush:keys`; the subject is who to contact.
+    'webpush' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+        'subject' => env('VAPID_SUBJECT', 'mailto:support@vakilniti.com'),
     ],
 
 ];

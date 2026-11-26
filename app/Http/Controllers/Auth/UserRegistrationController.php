@@ -23,7 +23,7 @@ use Illuminate\View\View;
 /**
  * Sign-up with a 6-digit code sent to the person's email (MSG91). Log in with the email or the sign-up mobile
  * number and a password, or with a code sent by email. "Forgot password?" works from either; every code goes by
- * email (free on MSG91). The AuthKey SMS sender (App\Contracts\OtpSmsSender) is kept for when SMS is switched on.
+ * email (free on MSG91); there is no SMS.
  */
 class UserRegistrationController extends Controller
 {
@@ -162,7 +162,7 @@ class UserRegistrationController extends Controller
     }
 
     /**
-     * Whether this number may skip the SMS code: local mode, bypass on, and listed in OTP_BYPASS_NUMBERS ("*" = all).
+     * Whether this number may skip the emailed code: local mode, bypass on, and listed in OTP_BYPASS_NUMBERS ("*" = all).
      */
     private function phoneBypassEnabled(string $mobile): bool
     {

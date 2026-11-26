@@ -16,7 +16,7 @@
     </form>
 
     @if(mb_strlen($query) < 2)
-        <p class="text-sm text-slate-500">Type at least 2 letters. Search finds your cases by title, number, CNR, party, court, judge or court room, the official court rooms (judge or room number), your clients and invoices.</p>
+        <p class="text-sm text-slate-500">Type at least 2 letters. Search finds your cases by title, number, CNR, party, court, judge or court room, the court rooms (judge or room number), your clients and invoices.</p>
     @elseif($total === 0)
         <p class="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Nothing matches "{{ $query }}". Try a case number, CNR, party, judge's name, room number, client name or mobile number.</p>
     @else

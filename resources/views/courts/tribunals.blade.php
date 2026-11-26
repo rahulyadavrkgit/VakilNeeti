@@ -2,11 +2,11 @@
 
 @section('title', 'Tribunals')
 @section('page-heading', 'Tribunals')
-@section('meta_description', 'National tribunals in India with their official websites and e-filing: NCLT, NCLAT, DRT, ITAT, CESTAT, GSTAT, CAT, AFT, NGT, APTEL, TDSAT, consumer commissions and the Railway Claims Tribunal.')
+@section('meta_description', 'National tribunals in India with their websites and e-filing: NCLT, NCLAT, DRT, ITAT, CESTAT, GSTAT, CAT, AFT, NGT, APTEL, TDSAT, consumer commissions and the Railway Claims Tribunal.')
 
 @section('content')
 <div class="mx-auto max-w-5xl space-y-5">
-    <x-page-header title="Tribunals" subtitle="Official websites and e-filing." />
+    <x-page-header title="Tribunals" subtitle="Websites and e-filing." />
 
     <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-[#16776e] sm:max-w-sm">
         <x-icon name="search" :size="16" class="text-slate-400" />

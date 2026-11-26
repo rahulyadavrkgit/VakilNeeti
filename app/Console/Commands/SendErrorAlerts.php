@@ -8,7 +8,6 @@ use App\Services\RecentSiteErrors;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 
 /**
  * Every morning: if the site logged errors in the last 24 hours, put a note in the bell of the people
@@ -32,7 +31,7 @@ class SendErrorAlerts extends Command
 
         $top = collect($errors)->countBy()->sortDesc()->take(3);
         $body = $top->map(fn (int $count, string $message): string => $count.'× '.$message)->implode(' · ');
-        $recipients = $this->recipients();
+        $recipients = User::siteCaretakers();
         $key = 'errors:'.now()->toDateString();
 
         foreach ($recipients as $user) {
@@ -52,17 +51,5 @@ class SendErrorAlerts extends Command
         $this->info(count($errors).' errors; told '.$recipients->count().' '.($recipients->count() === 1 ? 'person' : 'people').'.');
 
         return self::SUCCESS;
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    private function recipients()
-    {
-        $lastTen = fn (string $number): string => substr(preg_replace('/\D+/', '', $number) ?? '', -10);
-        $mobiles = collect(config('services.alerts.mobiles', []))->map($lastTen)->filter()->all();
-
-        return User::query()->get()->filter(fn (User $user): bool => $user->is_admin
-            || ($user->mobile && in_array($lastTen($user->mobile), $mobiles, true)))->values();
     }
 }

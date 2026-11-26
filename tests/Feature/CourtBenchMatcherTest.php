@@ -79,13 +79,13 @@ class CourtBenchMatcherTest extends TestCase
         $this->get(route('cases.index'))
             ->assertOk()
             ->assertSeeInOrder(['District Judge - 05', 'Room 612, main building', 'Sh. Akash Jain', 'Join VC'])
-            ->assertSee('title="From the official court list"', false)
+            ->assertSee('title="From the court list"', false)
             ->assertSee('href="https://districtcourtdelhi.webex.com/meet/ddc.vc.southeast08"', false);
 
         $this->get(route('cases.show', $case))
             ->assertOk()
             ->assertSee('Sh. Akash Jain')
-            ->assertSee('(official court list)', false)
+            ->assertSee('(court list)', false)
             ->assertSee('href="'.route('courts.delhi-district-courts.judges', 'south-east').'"', false);
     }
 

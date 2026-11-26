@@ -140,6 +140,7 @@ class TeamCalendarAndStatusLinkTest extends TestCase
 
         $this->get(route('case-status.show', $token))
             ->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
             ->assertSee('<meta name="robots" content="noindex, nofollow">', false)
             ->assertSeeInOrder(['Asha vs State', 'Next date', 'Tomorrow', '10:30', 'Arguments', 'Room 214', 'Last hearing', '01 Mar 2026', 'Adv. Meera Rao'])
             ->assertDontSee('Private strategy note');
@@ -147,5 +148,36 @@ class TeamCalendarAndStatusLinkTest extends TestCase
         $this->actingAs($user)->delete(route('cases.status-link.destroy', $case))->assertRedirect();
         auth()->logout();
         $this->get(route('case-status.show', $token))->assertNotFound();
+    }
+
+    public function test_client_link_expires_after_seven_days_and_replacement_has_a_new_url(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $case = LegalCase::create(['case_title' => 'Asha vs State', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
+
+        $this->post(route('cases.status-link.create', $case))->assertRedirect();
+        $case->refresh();
+        $token = $case->status_token;
+        $this->assertTrue($case->status_link_expires_at->equalTo(now()->addWeek()));
+        $statusUrl = route('case-status.show', $token);
+
+        $this->travel(6)->days();
+        $this->post(route('cases.status-link.create', $case))->assertRedirect();
+        $this->assertSame($token, $case->fresh()->status_token);
+        $this->get($statusUrl)->assertOk();
+
+        $this->travel(1)->days();
+        auth()->logout();
+        $this->get($statusUrl)->assertNotFound();
+
+        $this->actingAs($user)->get(route('cases.show', $case))
+            ->assertSee('Link expired.')->assertDontSee($statusUrl, false);
+        $this->post(route('cases.status-link.create', $case))->assertRedirect();
+        $newToken = $case->fresh()->status_token;
+        $this->assertNotSame($token, $newToken);
+        auth()->logout();
+        $this->get(route('case-status.show', $newToken))->assertOk();
+        $this->get($statusUrl)->assertNotFound();
     }
 }

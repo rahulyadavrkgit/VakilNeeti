@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 #[Fillable([
     'name',
@@ -148,6 +149,29 @@ class User extends Authenticatable
     public function teamMembers(): HasMany
     {
         return $this->hasMany(self::class, 'team_owner_id');
+    }
+
+    /**
+     * The people who look after the site and get its health alerts: admins, and the accounts whose mobile number
+     * is listed in ERROR_ALERT_MOBILES.
+     *
+     * @return Collection<int, self>
+     */
+    public static function siteCaretakers(): Collection
+    {
+        $lastTen = fn (string $number): string => substr(preg_replace('/\D+/', '', $number) ?? '', -10);
+        $mobiles = collect(config('services.alerts.mobiles', []))->map($lastTen)->filter()->all();
+
+        return self::query()->get()->filter(fn (self $user): bool => $user->is_admin
+            || ($user->mobile && in_array($lastTen($user->mobile), $mobiles, true)))->values();
+    }
+
+    /**
+     * The browsers that get this person's alerts as push notifications.
+     */
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
     }
 
     public function advocateProfile(): HasOne

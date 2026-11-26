@@ -9,7 +9,7 @@
     <div class="mb-6">
         <h1 class="text-2xl font-bold">eCourts Integration</h1>
         <p class="text-gray-600 mt-1">
-            Official District and Subordinate Court Services
+            District and Subordinate Court Services
         </p>
     </div>
 
@@ -39,7 +39,7 @@
     </div>
 
     <div class="bg-white rounded-lg shadow p-5 mb-6">
-        <h2 class="text-lg font-semibold mb-3">Official source</h2>
+        <h2 class="text-lg font-semibold mb-3">Source</h2>
 
         <p class="font-medium">{{ $source->provider_name }}</p>
 
@@ -60,14 +60,14 @@
             rel="noopener noreferrer"
             class="inline-block mt-4 px-4 py-2 rounded bg-[#16776e] text-white"
         >
-            Open Official eCourts Portal
+            Open eCourts Portal
         </a>
 
         <a
             href="{{ route('courts.ecourts-services') }}"
             class="inline-block mt-4 ml-2 px-4 py-2 rounded bg-gray-700 text-white"
         >
-            Search Official Court Records
+            Search Court Records
         </a>
     </div>
 
@@ -78,16 +78,16 @@
 
         <ul class="list-disc ml-5 mt-3 text-sm text-amber-900 space-y-2">
             <li>
-                This source is registered as an official government portal.
+                This source is registered as a government portal.
             </li>
             <li>
                 Live API access has not been configured or verified.
             </li>
             <li>
-                Searches requiring CAPTCHA must be completed through the official portal.
+                Searches requiring CAPTCHA must be completed through the portal.
             </li>
             <li>
-                Imported information must retain its official source and retrieval history.
+                Imported information must retain its source and retrieval history.
             </li>
         </ul>
     </div>

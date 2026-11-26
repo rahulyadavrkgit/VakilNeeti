@@ -13,8 +13,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Quick links to official court services: Supreme Court, Delhi High Court, Delhi District Courts,
@@ -271,7 +273,7 @@ class CourtLinksController extends Controller
         return view('courts.links', [
             'title' => 'Supreme Court of India',
             'heading' => 'Supreme Court',
-            'intro' => 'Official Supreme Court services.',
+            'intro' => null,
             'metaDescription' => 'Supreme Court of India quick links: cause list, live physical and web display boards, SuSwagatam e-gate pass and the court calendar.',
             'links' => [
                 ['title' => 'Live display board', 'description' => 'The item running in every court room now.', 'url' => route('courts.live-board', 'supreme-court'), 'icon' => 'board', 'internal' => true],
@@ -287,7 +289,7 @@ class CourtLinksController extends Controller
         return view('courts.links', [
             'title' => 'Delhi High Court',
             'heading' => 'Delhi High Court',
-            'intro' => 'Official High Court of Delhi services.',
+            'intro' => null,
             'metaDescription' => 'Delhi High Court quick links: physical display board, judges roster, daily cause list, e-filing, e-visitor pass, case status, orders, judgements and calendar.',
             'links' => [
                 ['title' => 'Live display board', 'description' => 'The item running in every court room now.', 'url' => route('courts.live-board', 'delhi-high-court'), 'icon' => 'board', 'internal' => true],
@@ -371,6 +373,16 @@ class CourtLinksController extends Controller
      * One court room's own public page (judge, room, VC link and how to reach the court), so an advocate
      * searching Google for a judge or a room finds it. Old or wrong words in the address lead to the right one.
      */
+    public function judgePhoto(string $photo): StreamedResponse
+    {
+        $disk = Storage::disk('public');
+        $path = 'judges/'.$photo;
+
+        abort_unless($disk->exists($path), 404);
+
+        return $disk->response($path, headers: ['Cache-Control' => 'public, max-age=3600']);
+    }
+
     public function room(CourtBench $bench, ?string $slug = null): View|RedirectResponse
     {
         if ($slug !== $bench->pageSlug()) {

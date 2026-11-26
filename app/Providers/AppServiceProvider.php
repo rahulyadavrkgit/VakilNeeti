@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Contracts\OtpSmsSender;
-use App\Services\AuthKeySmsService;
 use App\Services\CourtBenchMatcher;
 use App\Services\CourtData\CourtDataProviderRegistry;
 use App\Services\ReminderService;
@@ -25,9 +23,6 @@ class AppServiceProvider extends ServiceProvider
 
         // An invited junior or clerk joins the advocate's workspace the first time they sign in.
         Event::listen(Login::class, fn (Login $event) => method_exists($event->user, 'acceptTeamInvite') ? $event->user->acceptTeamInvite() : null);
-
-        // Phone codes (for phone sign-in, planned) go out through AuthKey.io. Email codes use Msg91EmailService.
-        $this->app->bind(OtpSmsSender::class, AuthKeySmsService::class);
 
         $this->app->singleton(
             CourtDataProviderRegistry::class,

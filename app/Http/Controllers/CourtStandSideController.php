@@ -22,10 +22,7 @@ class CourtStandSideController extends Controller
 
         abort_if(blank($case->court_name), 422, 'Add the court name to this case first.');
 
-        CourtStandSide::query()->withoutGlobalScopes()->updateOrCreate(
-            ['user_id' => $case->user_id, 'court_name' => $case->court_name],
-            ['petitioner_side' => $validated['petitioner_side']],
-        );
+        CourtStandSide::saveForCourt($case, $validated['petitioner_side']);
 
         return redirect()->to(route('cases.show', $case).'#case-overview')
             ->with('success', 'Saved for every case in '.$case->court_name.'.');

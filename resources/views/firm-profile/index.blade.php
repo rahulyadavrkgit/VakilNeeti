@@ -100,7 +100,7 @@
                             <x-state-options :groups="$stateGroups" :selected="$firmState" />
                         </select>
                         @if($firmStateIsUnlisted)
-                            <p class="mt-1 text-xs text-amber-700">Saved value "{{ $firm->state }}" is not in the official list. Select it again.</p>
+                            <p class="mt-1 text-xs text-amber-700">Saved value "{{ $firm->state }}" is not in the list. Select it again.</p>
                         @endif
                         @error('state') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>

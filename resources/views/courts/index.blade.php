@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
-    <x-page-header title="Courts" :subtitle="auth()->check() ? 'Your courts first, then official court services.' : 'Official court services, display boards and directories.'" />
+    <x-page-header title="Courts" :subtitle="auth()->check() ? 'Your courts first, then court services.' : 'Court services, display boards and directories.'" />
 
     @auth
         <section aria-labelledby="my-courts-heading" class="space-y-3">

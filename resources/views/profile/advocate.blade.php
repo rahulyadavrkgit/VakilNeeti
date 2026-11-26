@@ -173,7 +173,7 @@
                     </select>
                     @if($hasUnlistedRegion)
                         <span class="mt-1 block text-xs font-normal text-amber-700">
-                            Your saved value "{{ $profile->region }}" is not in the official list. Select your State / Union Territory again.
+                            Your saved value "{{ $profile->region }}" is not in the list. Select your State / Union Territory again.
                         </span>
                     @endif
                     @error('region') <span class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror

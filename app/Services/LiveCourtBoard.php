@@ -13,13 +13,13 @@ use Illuminate\Support\Str;
  * Live court display boards shown inside VakilNiti, read from the data each court publishes for its
  * own public board (the courts do not allow their board pages inside other websites).
  *
- * Every visitor shares one copy, refreshed at most every 30 seconds, so a court's server sees about
- * two requests a minute however many people are watching. When a court cannot be reached, the last
+ * Every visitor shares one copy, refreshed at most every 10 seconds, so a court's server sees about
+ * six requests a minute however many people are watching. When a court cannot be reached, the last
  * good copy is shown and marked as not current.
  */
 class LiveCourtBoard
 {
-    private const FRESH_SECONDS = 30;
+    private const FRESH_SECONDS = 10;
 
     private const USABLE_SECONDS = 300;
 
@@ -68,7 +68,7 @@ class LiveCourtBoard
             return null;
         }
 
-        // Fresh for 30 seconds; after that the copy is still served at once while a new one is fetched
+        // Fresh for 10 seconds; after that the copy is still served at once while a new one is fetched
         // after the response has gone, so no visitor waits for the court (up to 5 minutes old).
         $board = Cache::flexible("live-board:{$court}", [self::FRESH_SECONDS, self::USABLE_SECONDS], function () use ($court): array {
             // After a failure, wait before asking again so no visitor sits through the court's timeout.

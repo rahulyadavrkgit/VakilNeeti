@@ -85,7 +85,7 @@
         <p id="fee-estimate" role="status" aria-live="polite" hidden class="mt-3 rounded-xl bg-teal-50 p-4 text-base font-bold text-[#12645d]"></p>
     </section>
 
-    <p class="text-xs text-slate-500">Fees, slabs and exemptions change by State notification. Check the official law before paying.</p>
+    <p class="text-xs text-slate-500">Fees, slabs and exemptions change by State notification. Check the law before paying.</p>
 </div>
 @endsection
 

@@ -65,6 +65,30 @@ class ErrorAlertsTest extends TestCase
         $this->assertStringNotContainsString('test run', $alert['body']);
     }
 
+    public function test_daily_log_files_are_read_and_older_days_are_skipped(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $today = storage_path('logs/laravel-'.now()->toDateString().'.log');
+        $old = storage_path('logs/laravel-'.now()->subDays(4)->toDateString().'.log');
+        $keep = array_map(fn (string $file): ?string => is_file($file) ? file_get_contents($file) : null, [$today, $old]);
+
+        try {
+            file_put_contents($this->log, '');
+            file_put_contents($today, '['.now()->subHour()->format('Y-m-d H:i:s')."] production.ERROR: Mail server refused\n", FILE_APPEND);
+            file_put_contents($old, '['.now()->subDays(4)->format('Y-m-d H:i:s')."] production.ERROR: Last week's problem\n", FILE_APPEND);
+
+            $this->artisan('app:error-alerts')->assertSuccessful();
+
+            $body = $admin->notifications()->first()?->data['body'] ?? '';
+            $this->assertStringContainsString('Mail server refused', $body);
+            $this->assertStringNotContainsString("Last week's problem", $body);
+        } finally {
+            foreach ([$today, $old] as $index => $file) {
+                $keep[$index] === null ? @unlink($file) : file_put_contents($file, $keep[$index]);
+            }
+        }
+    }
+
     public function test_a_quiet_day_sends_nothing_and_the_check_runs_every_morning(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

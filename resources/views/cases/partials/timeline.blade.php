@@ -37,18 +37,26 @@
             : $entry['kind'].':'.(data_get($entry, 'hearing.id') ?? data_get($entry, 'listing.id') ?? data_get($entry, 'document.id')))
         ->groupBy(fn (array $entry) => $entry['date']->toDateString())
         ->sortKeysDesc();
-    // The item number and bench from the cause list, for the hearing on the same day.
-    $card = 'rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm';
+    if ($panelNext) {
+        $nextDay = $panelNext['date']->toDateString();
+        $nextDayEntries = $days->pull($nextDay, collect())->reject(fn (array $entry): bool => match ($entry['kind']) {
+            'hearing' => $entry['hearing']->id === $datedHearing?->id,
+            'next' => true,
+            'listed' => $panelListing !== null,
+            default => false,
+        });
+        $days->prepend($nextDayEntries->prepend(['kind' => 'upcoming']), $nextDay);
+    }
+
+    $card = 'rounded-lg border border-slate-200 bg-white p-3';
 @endphp
 
-<section id="case-history" data-tab-panel role="tabpanel" aria-labelledby="tab-case-history" class="scroll-mt-24 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm sm:p-5">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <h3 class="text-lg font-semibold text-slate-900">Timeline</h3>
-        <a href="{{ route('hearings.create', ['case' => $case->id, 'return' => 'case']) }}" data-sheet="{{ route('sheets.next-date', ['case' => $case->id]) }}"
-           class="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#16776e] px-3 text-sm font-semibold text-white hover:bg-[#125f58]">
-            <x-icon name="plus" :size="16" /> Add date
-        </a>
-    </div>
+<section id="case-history" data-tab-panel role="tabpanel" aria-labelledby="tab-case-history" class="scroll-mt-24 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm sm:p-4">
+    <h3 class="text-lg font-semibold text-slate-900">Timeline</h3>
+
+    @if(! $panelNext && $panelLast)
+        <p class="mt-2 text-sm text-slate-600">No upcoming hearing. Last date {{ $panelLast['date']->format('d M Y') }}.</p>
+    @endif
 
     @if($undated->isNotEmpty())
         <div class="mt-3 space-y-2">
@@ -65,22 +73,56 @@
     @endif
     @if($days->isEmpty() && $undated->isEmpty())
         <p class="mt-4 rounded-lg bg-slate-50 p-5 text-center text-sm text-slate-500">No hearings or documents yet. Add the next date to start the timeline.</p>
-    @else
-        <ol class="relative mt-5 space-y-5 border-l-2 border-slate-200 pl-5 sm:ml-2">
+    @elseif($days->isNotEmpty())
+        <ol class="mt-3 divide-y divide-slate-200">
             @foreach($days as $day => $dayEntries)
                 @php
                     $date = \Illuminate\Support\Carbon::parse($day);
                     $isFuture = $date->isAfter(today());
+                    $isNextDay = $panelNext && $date->isSameDay($panelNext['date']);
                 @endphp
-                <li class="relative">
-                    <span aria-hidden="true" class="absolute -left-[27px] top-1.5 h-3 w-3 rounded-full border-2 border-white {{ $date->isToday() ? 'bg-red-600' : ($isFuture ? 'bg-[#16776e]' : 'bg-[#142235]') }}"></span>
-                    <p class="inline-flex rounded-full px-3 py-1 text-sm font-bold {{ $date->isToday() ? 'bg-red-600 text-white' : 'bg-[#142235] text-white' }}">
-                        {{ $date->isToday() ? 'Today · ' : '' }}{{ $date->format('l, d F Y') }}
-                    </p>
+                <li class="grid grid-cols-[3.75rem_minmax(0,1fr)] gap-2 py-2 first:pt-0 last:pb-0 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3">
+                    <time datetime="{{ $day }}" aria-label="{{ $date->format('l, d F Y') }}{{ $isNextDay && $panelTime ? ', '.$panelTime : '' }}" class="self-start rounded-lg px-1.5 py-2 text-center tabular-nums {{ $isNextDay ? 'bg-teal-100 text-[#16776e]' : 'bg-slate-100 text-slate-700' }}">
+                        <span class="block text-xs font-medium sm:hidden">{{ $date->format('D') }}</span>
+                        <span class="hidden text-xs font-medium sm:block">{{ $date->format('l') }}</span>
+                        <span class="block text-sm font-bold">{{ $date->format('d M') }}</span>
+                        <span class="block text-xs">{{ $date->format('Y') }}</span>
+                    </time>
 
-                    <div class="mt-2 space-y-2">
+                    <div class="min-w-0 space-y-2">
                         @foreach($dayEntries as $entry)
-                            @if($entry['kind'] === 'hearing' || $entry['kind'] === 'next')
+                            <div>
+                            @if($entry['kind'] === 'upcoming')
+                                <article aria-label="Next hearing" class="{{ $card }} border-teal-200">
+                                    <div class="flex flex-wrap items-baseline justify-between gap-1">
+                                        <h4 class="font-semibold text-[#16776e]">{{ $date->isToday() ? 'Next hearing · Today' : 'Next hearing' }}</h4>
+                                        @if($panelTime)<span class="text-xs font-medium text-slate-600">{{ $panelTime }}</span>@endif
+                                    </div>
+                                    @if($purpose)<p class="mt-1 text-sm text-slate-700">Purpose: {{ $purpose }}</p>@endif
+                                    <div class="mt-1.5">
+                                        <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex" :room="$courtRoom" :judge="$judge" :vc-link="$vcLink" :copy-vc="true" :judge-photos="true" :photo-district="$photoDistrict" />
+                                    </div>
+                                    <div @if($panelListing) id="cause-list" @endif class="scroll-mt-36">
+                                        <x-hearing-strip :date="$panelNext['date']" :show-date="false" :show-room="false" :waiting="false" :court="$case->court_name" :room="$courtRoom"
+                                            :item="$item" :list-total="$listTotal" :cause-list="$causeList" :district="$case->court_level === 'district'"
+                                            :case-number="$case->case_number"
+                                            :order-url="$latestOrder ? route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) : null"
+                                            :order-date="$latestOrder?->created_at?->format('d M Y')" />
+                                    </div>
+                                    @if($datedHearing?->proceedings)<p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $datedHearing->proceedings }}</p>@endif
+                                    @if($datedHearing?->next_hearing_date)
+                                        <p class="mt-1 text-sm text-slate-600">Next date fixed: <strong>{{ $datedHearing->next_hearing_date->format('d M Y') }}</strong>{{ $datedHearing->next_action ? ' · '.$datedHearing->next_action : '' }}</p>
+                                    @elseif($nextHearing?->next_action && $nextHearing->next_action !== $purpose)
+                                        <p class="mt-1 text-sm text-slate-600">{{ $nextHearing->next_action }}</p>
+                                    @endif
+                                    @if($nextHearing?->isManual())<a href="{{ route('hearings.edit', $nextHearing) }}" class="mt-1 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Edit hearing</a>@endif
+
+                                    @php $listedOn = $causeListings->first()?->courtDocument?->listing_date; @endphp
+                                    @if($savedDate && $listedOn && ! $savedDate['date']->isSameDay($listedOn))
+                                        <p class="mt-2 rounded-lg bg-amber-50 p-2 text-sm text-amber-900">These dates differ. Saved date {{ $savedDate['date']->format('d M Y') }}. Cause list {{ $listedOn->format('d M Y') }}. Check the latest court listing before changing your saved date.</p>
+                                    @endif
+                                </article>
+                            @elseif($entry['kind'] === 'hearing' || $entry['kind'] === 'next')
                                 @php
                                     $hearing = $entry['hearing'];
                                     $isNext = $entry['kind'] === 'next';
@@ -113,9 +155,9 @@
                                         </p>
                                     @endif
                                     @if($judges)
-                                        <p class="mt-1 text-sm text-slate-600">Judge(s): {{ $judges }}</p>
+                                        <p class="mt-1 flex flex-wrap items-center gap-1 text-sm text-slate-600"><x-judge-portraits :names="$judges" :district="$photoDistrict" /> <span>Judge(s): {{ $judges }}</span></p>
                                     @endif
-                                    @if(! $isNext && $hearing->vc_link && (! $panelNext || !$date->isSameDay($panelNext['date'])))
+                                    @if(! $isNext && $hearing->vc_link)
                                         <a href="{{ $hearing->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share class="mt-1.5 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Join VC for this hearing</a>
                                     @endif
                                     @if(! $isNext && $hearing->proceedings)
@@ -134,14 +176,12 @@
                                 @php $listing = $entry['listing']; @endphp
                                 <article class="{{ $card }} border-teal-200 bg-teal-50/50">
                                     <p class="font-semibold text-[#16776e]">Listed in the cause list</p>
-                                    <p class="mt-1 text-sm font-semibold text-slate-800">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</p>
-                                    @if($listing->boardFacts())<p class="text-sm text-slate-600">{{ implode(' · ', $listing->boardFacts()) }}</p>@endif
-                                    @if($listing->judge_name)
-                                        <p class="mt-0.5 text-sm text-slate-600">{{ \Illuminate\Support\Str::title(mb_strtolower($listing->judge_name)) }}</p>
-                                    @endif
+                                    {{-- One line: where and which item. The judge is with the hearing above. --}}
+                                    <p class="mt-1 text-sm text-slate-700"><strong class="text-slate-900">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</strong>@if($listing->boardFacts()) · {{ implode(' · ', $listing->boardFacts()) }}@endif</p>
+                                    {{-- The court, item and date are above; the list itself is one PDF link. --}}
                                     <p class="mt-1.5 flex flex-wrap gap-3 text-sm">
                                         @if($listing->vcLink())<a href="{{ $listing->vcLink() }}" target="_blank" rel="noopener" class="font-semibold text-[#16776e] hover:underline">Join VC</a>@endif
-                                        <a href="{{ $listing->courtDocument->source_url }}" target="_blank" rel="noopener" class="font-semibold text-[#16776e] hover:underline">{{ $listing->courtDocument->document_label ?: 'Cause list' }} (PDF)</a>
+                                        <a href="{{ $listing->courtDocument->source_url }}" target="_blank" rel="noopener" title="{{ $listing->courtDocument->document_label }}" class="vn-file-link">Cause list</a>
                                     </p>
                                 </article>
                             @else
@@ -152,6 +192,7 @@
                                     <a href="{{ route('cases.documents.download', [$case, $document]) }}" class="shrink-0 text-sm font-semibold text-[#16776e] hover:underline">Open</a>
                                 </article>
                             @endif
+                            </div>
                         @endforeach
                     </div>
                 </li>

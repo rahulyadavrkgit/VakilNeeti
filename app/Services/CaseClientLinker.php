@@ -12,14 +12,6 @@ use App\Models\LegalCase;
 class CaseClientLinker
 {
     /**
-     * Sides that answer a matter. With these and the moving sides (petitioner, appellant…) the party on our side
-     * can be told; an intervenor or "other" cannot.
-     *
-     * @var list<string>
-     */
-    private const ANSWERING_SIDES = ['respondent', 'defendant', 'accused', 'opposite_party'];
-
-    /**
      * Link the party on our side as the case's client, unless the case already has one or the side is not known.
      */
     public function linkOurParty(LegalCase $case): ?Client
@@ -62,7 +54,7 @@ class CaseClientLinker
      */
     public function ourPartyName(LegalCase $case): ?string
     {
-        $knownSide = fn (string $side): bool => LegalCase::isMovingSide($side) || in_array($side, self::ANSWERING_SIDES, true);
+        $knownSide = fn (string $side): bool => LegalCase::isMovingSide($side) || LegalCase::isAnsweringSide($side);
         $side = (string) $case->appearing_for;
         $moving = LegalCase::isMovingSide($side);
 

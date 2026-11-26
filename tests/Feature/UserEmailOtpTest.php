@@ -27,8 +27,6 @@ class UserEmailOtpTest extends TestCase
 
     private bool $refuse = false;
 
-    private string $smsCode = '';
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -43,13 +41,6 @@ class UserEmailOtpTest extends TestCase
 
         // MSG91 accepts the email; the test reads the code from the request, as the person would from their inbox.
         Http::fake(function (HttpRequest $request) {
-            // Phone log-in: AuthKey.io gets the 4-digit code in the query string.
-            if (str_contains($request->url(), 'api.authkey.io')) {
-                $this->smsCode = (string) ($request->data()['otp'] ?? '');
-
-                return Http::response(['Message' => 'Submitted Successfully', 'LogID' => '1']);
-            }
-
             if ($this->refuse) {
                 return Http::response(['status' => 'fail', 'hasError' => true, 'errors' => ['domain' => ['Domain not verified']]], 422);
             }
@@ -194,7 +185,7 @@ class UserEmailOtpTest extends TestCase
             ->assertRedirect(route('login'))
             ->assertSessionHas('login_otp_mobile', '+919876543210')
             ->assertSessionHas('status', 'We have emailed a 6-digit code to as••••@example.test, the email on this mobile number.');
-        $this->assertSame('', $this->smsCode);
+        Http::assertSentCount(1);
         Http::assertSent(fn (HttpRequest $request) => data_get($request->data(), 'recipients.0.to.0.email') === 'asha.sharma@example.test');
 
         $this->get(route('login'))->assertOk()

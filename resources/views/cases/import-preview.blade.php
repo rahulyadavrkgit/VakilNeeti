@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Review Official Court Record')
+@section('title', 'Review Court Record')
 @section('page-heading', 'Review Court Record')
 
 @section('content')
 <div class="max-w-6xl mx-auto py-8 px-4 space-y-6">
 
     <div>
-        <h1 class="text-2xl font-bold text-slate-900">Review Official Court Record</h1>
+        <h1 class="text-2xl font-bold text-slate-900">Review Court Record</h1>
         <p class="mt-2 text-sm text-slate-600">Check and correct the details. Only confirmed details are saved.</p>
     </div>
 
@@ -22,7 +22,7 @@
     <div class="rounded-xl border border-slate-200 bg-white p-5">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-                <p class="text-xs font-medium uppercase text-slate-500">Official source category</p>
+                <p class="text-xs font-medium uppercase text-slate-500">Source category</p>
                 <p class="mt-1 font-medium text-slate-900">{{ $courtSource }}</p>
             </div>
             <div>
@@ -33,7 +33,7 @@
         @if ($sourceUrl)
             <a href="{{ $sourceUrl }}" target="_blank" rel="noopener noreferrer"
                class="mt-3 inline-block text-sm text-[#16776e] hover:underline">
-                Open original official record
+                Open original record
             </a>
         @endif
     </div>
@@ -174,7 +174,7 @@
     </form>
 
     <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="mb-3 font-semibold text-slate-900">Original Official Record</h2>
+        <h2 class="mb-3 font-semibold text-slate-900">Original Record</h2>
         <pre class="whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-4 text-sm text-slate-700">{{ $officialRecord }}</pre>
     </section>
 

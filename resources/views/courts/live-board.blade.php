@@ -1,7 +1,7 @@
 {{--
     A court's live display board inside VakilNiti, built from the data the court publishes for its own public board
     (App\Services\LiveCourtBoard). A page of its own, without the menu, so the board viewer can show it in a frame;
-    it refreshes itself every 30 seconds. The signed-in person's courts today are highlighted.
+    it refreshes itself every 10 seconds. The signed-in person's courts today are highlighted.
 --}}
 @php
     $statusText = ['running' => 'Running', 'not_in_session' => 'Not in session', 'exhausted' => 'Board over'];
@@ -14,13 +14,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $board['short'] }} live board | VakilNiti</title>
-    <meta name="description" content="{{ $board['name'] }} live display board: the item running in every court, refreshed every 30 seconds.">
+    <meta name="description" content="{{ $board['name'] }} live display board: the item running in every court, refreshed every 10 seconds.">
     <meta name="theme-color" content="#142235">
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-mark.svg') }}">
     @vite(['resources/css/app.css'])
     <style nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         body { background: #f6f5f1; color: #172536; font-family: var(--font-sans), sans-serif; font-variant-numeric: tabular-nums; }
         html.dark body { background: #0d1524; color: #e3e9f1; }
+        .vn-board-item { font-family: "Arial Black", Gadget, var(--font-sans), sans-serif; font-weight: 900; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -53,34 +54,37 @@
         </p>
     @endif
 
-    <ul class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" data-live-rooms>
+    {{-- Coloured like the court's own display board: black, yellow lines, the court number on blue, the item in red. --}}
+    <ul class="vn-court-board mt-3 grid grid-cols-2 gap-1 rounded-xl bg-black p-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" data-live-rooms>
         @forelse($board['rooms'] as $room)
             @php
                 $mine = $myRooms[$room['room']] ?? null;
                 $isRunning = $room['status'] === 'running';
             @endphp
-            <li data-room="{{ $room['room'] }}" data-status="{{ $room['status'] }}"
+            <li data-room="{{ $room['room'] }}" data-label="{{ $room['label'] }}" data-status="{{ $room['status'] }}"
                 @if($mine !== null) data-mine data-my-cases="{{ collect($mine)->pluck('case_number')->filter()->implode('|') }}" @endif
-                class="flex min-w-0 flex-col rounded-xl border bg-white p-3 shadow-sm data-[status=not_in_session]:bg-slate-50 data-[status=not_in_session]:text-slate-400 {{ $mine !== null ? 'border-[#16776e] ring-2 ring-[#16776e]/40' : 'border-slate-200' }}">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $room['label'] }}</span>
+                class="flex min-w-0 flex-col overflow-hidden border border-[#ffd400] bg-black text-white {{ $mine !== null ? 'outline outline-[3px] outline-[#3ee07f]' : '' }}">
+                <div class="flex items-center justify-between gap-2 bg-[#0066ff] px-2.5 py-1">
+                    <span class="text-xs font-extrabold uppercase tracking-wide text-white">{{ $room['label'] }}</span>
                     @if($mine !== null)
-                        <span class="rounded-full bg-[#16776e] px-2 py-0.5 text-[10px] font-bold uppercase text-white">Yours</span>
+                        <span class="rounded-full bg-[#3ee07f] px-2 py-0.5 text-[10px] font-black uppercase text-black">Yours</span>
                     @endif
                 </div>
-                <p class="mt-1 text-3xl font-bold leading-none tabular-nums {{ $isRunning ? 'text-[#142235]' : 'text-slate-300' }}" data-item>{{ $room['item'] ?? '–' }}</p>
-                <p class="mt-1 text-xs font-semibold {{ $isRunning ? 'text-[#16776e]' : 'text-slate-400' }}" data-status-text>{{ $statusText[$room['status']] ?? '' }}</p>
-                <p class="mt-1 break-words text-xs font-medium text-slate-700" data-case @if(! $room['case_number']) hidden @endif>{{ $room['case_number'] }}</p>
-                <p class="line-clamp-2 break-words text-xs text-slate-500" data-parties @if(! $room['parties']) hidden @endif>{{ $room['parties'] }}</p>
-                <p class="mt-1 break-words text-xs italic text-amber-800" data-message @if(! $room['message']) hidden @endif>{{ $room['message'] }}</p>
-                <p class="mt-1 text-xs font-bold text-red-700" data-now-mine hidden>Your case is being heard now</p>
-                @if($mine)
-                    <p class="mt-auto pt-2 text-xs text-teal-800">
-                        @foreach($mine as $case)
-                            <span class="block truncate">{{ $case['title'] }}{{ $case['time'] ? ' · '.$case['time'] : '' }}</span>
-                        @endforeach
-                    </p>
-                @endif
+                <div class="flex min-w-0 flex-1 flex-col px-2.5 pb-2.5 pt-1.5">
+                    <p class="vn-board-item text-4xl leading-none tabular-nums {{ $isRunning ? 'text-[#ff2b2b]' : 'text-white/30' }}" data-item>{{ $room['item'] ?? '–' }}</p>
+                    <p class="mt-1 text-xs font-semibold {{ $isRunning ? 'text-[#ffd400]' : 'text-white/50' }}" data-status-text>{{ $statusText[$room['status']] ?? '' }}</p>
+                    <p class="mt-1 break-words text-xs font-semibold text-white" data-case @if(! $room['case_number']) hidden @endif>{{ $room['case_number'] }}</p>
+                    <p class="line-clamp-2 break-words text-xs text-white/70" data-parties @if(! $room['parties']) hidden @endif>{{ $room['parties'] }}</p>
+                    <p class="mt-1 break-words text-xs italic text-[#ffd400]" data-message @if(! $room['message']) hidden @endif>{{ $room['message'] }}</p>
+                    <p class="mt-1 text-xs font-black text-[#3ee07f]" data-now-mine hidden>Your case is being heard now</p>
+                    @if($mine)
+                        <p class="mt-auto pt-2 text-xs text-[#3ee07f]">
+                            @foreach($mine as $case)
+                                <span class="block truncate">{{ $case['title'] }}{{ $case['time'] ? ' · '.$case['time'] : '' }}</span>
+                            @endforeach
+                        </p>
+                    @endif
+                </div>
             </li>
         @empty
             <li class="col-span-full rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
@@ -116,9 +120,30 @@
             sittingOnly.checked = localStorage.getItem('vn-live-sitting-only') === '1';
         } catch (error) {}
 
+        // Courts ticked in VakilNiti's board panel ("Court 5", "R1"), saved for this board: "R-1", "Court 5" and "5" all match.
+        const roomKey = (text) => String(text || '').toUpperCase().replace(/^\s*(COURT|ROOM)\s*(NO\.?)?/, '').replace(/[^A-Z0-9]/g, '');
+        let onlyRooms = [];
+        const setOnlyRooms = (value) => {
+            onlyRooms = String(value || '').split(/[\s,;]+/).map(roomKey).filter(Boolean);
+        };
+
+        if (window.self !== window.top) {
+            try {
+                setOnlyRooms(JSON.parse(localStorage.getItem('vn-board-rooms:' + root.dataset.liveBoard) || '""'));
+            } catch (error) {}
+            window.addEventListener('message', (event) => {
+                if (event.origin === window.location.origin && event.data?.type === 'vn-board-rooms') {
+                    setOnlyRooms(event.data.rooms);
+                    applySittingOnly();
+                }
+            });
+        }
+
         const applySittingOnly = () => {
             root.querySelectorAll('[data-room]').forEach((tile) => {
-                tile.hidden = sittingOnly.checked && tile.dataset.status === 'not_in_session' && !tile.hasAttribute('data-mine');
+                // Chosen by number ("52") or by the name on the board ("R1", "Court 5").
+                const notChosen = onlyRooms.length > 0 && !onlyRooms.includes(roomKey(tile.dataset.room)) && !onlyRooms.includes(roomKey(tile.dataset.label));
+                tile.hidden = notChosen || (sittingOnly.checked && tile.dataset.status === 'not_in_session' && !tile.hasAttribute('data-mine'));
             });
         };
 
@@ -140,12 +165,12 @@
                 tile.dataset.status = room.status;
                 const item = tile.querySelector('[data-item]');
                 item.textContent = room.item || '–';
-                item.classList.toggle('text-[#142235]', running);
-                item.classList.toggle('text-slate-300', !running);
+                item.classList.toggle('text-[#ff2b2b]', running);
+                item.classList.toggle('text-white/30', !running);
                 const status = tile.querySelector('[data-status-text]');
                 status.textContent = statusText[room.status] || '';
-                status.classList.toggle('text-[#16776e]', running);
-                status.classList.toggle('text-slate-400', !running);
+                status.classList.toggle('text-[#ffd400]', running);
+                status.classList.toggle('text-white/50', !running);
                 setText(tile, '[data-case]', room.case_number);
                 setText(tile, '[data-parties]', room.parties);
                 setText(tile, '[data-message]', room.message);
@@ -189,7 +214,7 @@
             const running = tile.dataset.status === 'running';
             tile.querySelector('[data-now-mine]').hidden = !(running && mine.includes(caseKey(tile.querySelector('[data-case]').textContent)));
         });
-        setInterval(refresh, 30000);
+        setInterval(refresh, 10000);
         document.addEventListener('visibilitychange', refresh);
     })();
 </script>

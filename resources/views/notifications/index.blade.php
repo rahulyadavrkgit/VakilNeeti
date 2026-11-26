@@ -9,6 +9,16 @@
         <div role="status" class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">{{ session('success') }}</div>
     @endif
 
+    {{-- One offer, shown only while this browser has not been asked (resources/js/push.js). --}}
+    <div data-push-offer hidden class="flex flex-wrap items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm">
+        <x-icon name="bell" :size="18" class="shrink-0 text-[#16776e]" />
+        <span class="min-w-0 flex-1 text-teal-900">Get these alerts on this device too, even when VakilNiti is closed.</span>
+        <button type="button" data-push-enable class="min-h-10 rounded-lg bg-[#16776e] px-4 font-semibold text-white hover:bg-[#125f58]">Turn on</button>
+    </div>
+    <p data-push-ios-hint hidden class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+        On iPhone, alerts can pop up once VakilNiti is on your Home Screen: tap Share, then <strong>Add to Home Screen</strong>, and open it from there.
+    </p>
+
     <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-600">Reminders for hearings, appointments, tasks and overdue invoices.</p>
         @if(auth()->user()->unreadNotifications()->exists())

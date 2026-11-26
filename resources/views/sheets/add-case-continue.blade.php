@@ -1,6 +1,6 @@
 {{--
     Add case, step 4: search eCourts with the details entered, then paste the results here to import them.
-    The search runs on the official eCourts site (it asks for a captcha); the pasted table is read by cases.find.preview.
+    The search runs on the eCourts site (it asks for a captcha); the pasted table is read by cases.find.preview.
 --}}
 @php
     $backQuery = ['method' => $method, 'level' => $level, 'court' => $court] + request()->except(['level', 'court']);

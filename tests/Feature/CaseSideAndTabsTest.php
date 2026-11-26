@@ -64,7 +64,7 @@ class CaseSideAndTabsTest extends TestCase
 
         $this->get(route('cases.show', $case))
             ->assertOk()
-            ->assertSeeInOrder(['For', 'Petitioner', 'Next hearing', 'Room 214'])
+            ->assertSeeInOrder(['For', 'Petitioner', 'Room 214', 'Case workspace', 'Client link', 'Notify clients'])
             ->assertSee('href="https://vc.example.in/room214"', false)
             ->assertSee('Join VC')
             ->assertSee('href="tel:+919876543210"', false)

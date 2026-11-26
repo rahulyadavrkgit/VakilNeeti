@@ -45,7 +45,7 @@
                 <p style="color:#64748b;font-size:13px;margin-top:5px;">Review district-level and year-wise case trends.</p>
             </div>
         </div>
-        <p style="color:#64748b;font-size:12px;margin-top:12px;">Figures appear after you connect an official data.gov.in source.</p>
+        <p style="color:#64748b;font-size:12px;margin-top:12px;">Figures appear after you connect a data.gov.in source.</p>
     </div>
 
     <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:25px 0;">

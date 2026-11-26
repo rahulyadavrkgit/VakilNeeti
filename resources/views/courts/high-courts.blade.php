@@ -2,11 +2,11 @@
 
 @section('title', 'High Courts of India')
 @section('page-heading', 'High Courts')
-@section('meta_description', 'All 25 High Courts of India with their seat, the States they cover and official website, plus case status, cause lists and e-filing for every High Court.')
+@section('meta_description', 'All 25 High Courts of India with their seat, the States they cover and website, plus case status, cause lists and e-filing for every High Court.')
 
 @section('content')
 <div class="mx-auto max-w-5xl space-y-5">
-    <x-page-header title="High Courts" subtitle="All 25 High Courts and their official websites." />
+    <x-page-header title="High Courts" subtitle="All 25 High Courts and their websites." />
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <a href="{{ $caseStatus }}" target="_blank" rel="noopener noreferrer" class="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">

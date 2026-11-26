@@ -13,12 +13,37 @@ class RecentSiteErrors
      */
     public function since(Carbon $since): array
     {
-        $file = storage_path('logs/laravel.log');
+        $messages = [];
 
-        if (! is_readable($file)) {
-            return [];
+        foreach ($this->logFilesSince($since) as $file) {
+            array_push($messages, ...$this->errorsIn($file, $since));
         }
 
+        return $messages;
+    }
+
+    /**
+     * The log files that can hold lines from that moment on: one file a day (laravel-2026-11-26.log), or the
+     * single laravel.log, whichever the server writes.
+     *
+     * @return list<string>
+     */
+    private function logFilesSince(Carbon $since): array
+    {
+        $daily = array_filter(
+            glob(storage_path('logs/laravel-*.log')) ?: [],
+            fn (string $file): bool => preg_match('/laravel-(\d{4}-\d{2}-\d{2})\.log$/', $file, $day) === 1 && $day[1] >= $since->toDateString(),
+        );
+        $single = storage_path('logs/laravel.log');
+
+        return array_values(array_filter([...$daily, $single], 'is_readable'));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function errorsIn(string $file, Carbon $since): array
+    {
         // Read only the last 2 MB: a day of errors fits easily, and a very large log stays fast.
         $handle = fopen($file, 'r');
         $size = filesize($file);

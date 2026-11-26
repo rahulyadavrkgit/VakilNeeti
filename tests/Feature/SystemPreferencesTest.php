@@ -79,7 +79,7 @@ class SystemPreferencesTest extends TestCase
         $this->assertSame('dark', $user->fresh()->preference('theme'));
     }
 
-    public function test_home_shows_today_at_a_glance_and_when_the_day_is_cleared(): void
+    public function test_home_shows_today_at_a_glance_and_my_cases_lists_matters_without_a_next_date(): void
     {
         $this->actingAs(User::factory()->create());
         $case = LegalCase::create(['case_title' => 'Asha vs State', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
@@ -89,14 +89,15 @@ class SystemPreferencesTest extends TestCase
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSeeInOrder(['1', 'today', '0', 'tomorrow', '1', 'task due'])
-            ->assertSee('1 matter today without a next date')
-            ->assertDontSee('Day cleared');
+            ->assertDontSee('without a next date');
+
+        // On My cases (under the "past date" line when there is one), with + Date for each.
+        $this->get(route('cases.index'))->assertOk()
+            ->assertSeeInOrder(['1 matter today without a next date', 'Asha vs State', '+ Date']);
 
         CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-04-02']);
 
-        $this->get(route('dashboard'))
-            ->assertSee('Day cleared · every matter today has its next date')
-            ->assertDontSee('without a next date');
+        $this->get(route('cases.index'))->assertOk()->assertDontSee('without a next date');
     }
 
     public function test_rejects_options_that_are_not_offered(): void

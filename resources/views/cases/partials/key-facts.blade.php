@@ -5,12 +5,13 @@
     $contactButton = 'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold';
 @endphp
 
-<details class="mt-4 space-y-2"><summary class="cursor-pointer text-sm font-semibold underline">Court position and client contact</summary><div class="grid gap-2 sm:grid-cols-2">
+{{-- Shown in the "Court position & client" pop-up (sheets.court-position). --}}
+<div class="grid gap-2 sm:grid-cols-2">
     {{-- Where we stand: our side plus the court's practice, recorded once per court. --}}
     <div class="{{ $standSide ? 'min-w-0 rounded-xl bg-[#142235] px-3.5 py-3 text-white' : $fact }} col-span-2 lg:col-span-1">
         @if(! $case->appearing_for)
             <p class="{{ $factLabel }}">Where you stand</p>
-            <a href="{{ route('cases.edit', $case) }}" class="mt-1.5 inline-flex min-h-9 items-center gap-1 rounded-lg border border-dashed border-amber-400 px-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-50 print:hidden">
+            <a href="{{ route('cases.edit', $case) }}" data-sheet="{{ route('sheets.case-side', $case) }}" class="mt-1.5 inline-flex min-h-9 items-center gap-1 rounded-lg border border-dashed border-amber-400 px-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-50 print:hidden">
                 <x-icon name="plus" :size="15" /> Set your side first
             </a>
         @elseif($standSide)
@@ -66,4 +67,4 @@
     </a>
 @endif
 
-</details>
+

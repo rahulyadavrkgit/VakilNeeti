@@ -392,7 +392,7 @@ const boardStore = {
     },
 };
 
-document.querySelectorAll('[data-board-picker]').forEach((picker) => {
+document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) => {
     const select = picker.querySelector('[data-board-select]');
     const search = picker.querySelector('[data-board-search]');
     const frameWrap = picker.querySelector('[data-board-frame-wrap]');
@@ -425,18 +425,22 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
 
         if (!option) {
             name.textContent = 'No board chosen. Use Manage to pick your courts.';
+            comboLabel.textContent = 'No board selected';
             frameWrap.hidden = true;
             blocked.hidden = false;
             picker.querySelector('[data-board-open-actions]').hidden = true;
+            loadRooms(null);
 
             return;
         }
 
         picker.querySelector('[data-board-open-actions]').hidden = false;
         name.textContent = option.dataset.label;
+        comboLabel.textContent = option.dataset.label;
         const embeddable = option.dataset.embeddable === '1';
         frameWrap.hidden = !embeddable;
         blocked.hidden = embeddable;
+        loadRooms(embeddable ? option.value : null);
 
         if (embeddable && frame.src !== option.value) {
             frame.src = option.value;
@@ -445,16 +449,254 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
         boardStore.set('vn-display-board', option.value);
     };
 
-    // An option shows when it is one of the chosen boards and matches the search.
+    const combo = picker.querySelector('[data-board-combo]');
+    const comboToggle = combo.querySelector('[data-board-combo-toggle]');
+    const comboPanel = combo.querySelector('[data-board-combo-panel]');
+    const comboList = combo.querySelector('[data-board-combo-list]');
+    const comboLabel = combo.querySelector('[data-board-combo-label]');
+    const comboEmpty = combo.querySelector('[data-board-combo-empty]');
+    comboPanel.id = `board-dropdown-${pickerIndex}`;
+    comboToggle.setAttribute('aria-controls', comboPanel.id);
+    comboList.id = `board-matches-${pickerIndex}`;
+    search.setAttribute('aria-controls', comboList.id);
+    let matches = [];
+    let activeMatch = -1;
+
+    const highlightMatch = (index, scroll = false) => {
+        matches[activeMatch]?.setAttribute('aria-selected', 'false');
+        activeMatch = index;
+        const match = matches[index];
+
+        if (match) {
+            match.setAttribute('aria-selected', 'true');
+            search.setAttribute('aria-activedescendant', match.id);
+            if (scroll) {
+                match.scrollIntoView({ block: 'nearest' });
+            }
+        } else {
+            search.removeAttribute('aria-activedescendant');
+        }
+    };
+
+    const renderCombo = () => {
+        const terms = search.value.toLowerCase().replace(/\bhc\b/g, 'high court').trim().split(/\s+/).filter(Boolean);
+        matches = [...select.options].filter((option) => terms.every((term) => option.dataset.label.toLowerCase().includes(term)))
+            .map((option, index) => {
+                const item = document.createElement('li');
+                item.id = `${comboList.id}-${index}`;
+                item.dataset.value = option.value;
+                item.setAttribute('role', 'option');
+                item.setAttribute('aria-selected', 'false');
+                item.className = 'cursor-pointer px-3 py-2 text-slate-800 hover:bg-teal-50 aria-selected:bg-teal-50 aria-selected:font-semibold aria-selected:text-[#16776e]';
+                item.textContent = option.dataset.label;
+                return item;
+            });
+        comboList.replaceChildren(...matches);
+        comboList.hidden = matches.length === 0;
+        comboEmpty.hidden = matches.length > 0;
+        highlightMatch(matches.length ? 0 : -1);
+    };
+
+    const setComboOpen = (open) => {
+        comboPanel.hidden = !open;
+        comboToggle.setAttribute('aria-expanded', String(open));
+        search.setAttribute('aria-expanded', String(open));
+        if (open) {
+            renderCombo();
+        } else {
+            search.removeAttribute('aria-activedescendant');
+        }
+    };
+
+    const chooseBoard = (match) => {
+        select.value = match.dataset.value;
+        search.value = '';
+        setComboOpen(false);
+        comboToggle.focus();
+        select.dispatchEvent(new Event('change'));
+    };
+
+    comboToggle.addEventListener('click', () => {
+        const open = comboPanel.hidden;
+        search.value = '';
+        setComboOpen(open);
+        if (open) {
+            search.focus();
+        }
+    });
+    search.addEventListener('input', renderCombo);
+    search.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            setComboOpen(false);
+            comboToggle.focus();
+        } else if (event.key === 'Enter' && !comboPanel.hidden && matches[activeMatch]) {
+            event.preventDefault();
+            chooseBoard(matches[activeMatch]);
+        } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            if (comboPanel.hidden) {
+                setComboOpen(true);
+            } else if (matches.length) {
+                const step = event.key === 'ArrowDown' ? 1 : -1;
+                highlightMatch((activeMatch + step + matches.length) % matches.length, true);
+            }
+        }
+    });
+    comboList.addEventListener('mousedown', (event) => event.preventDefault());
+    comboList.addEventListener('click', (event) => {
+        const choice = event.target.closest('[data-value]');
+        if (choice) {
+            chooseBoard(choice);
+        }
+    });
+    combo.addEventListener('focusout', (event) => {
+        if (!combo.contains(event.relatedTarget)) {
+            setComboOpen(false);
+        }
+    });
+    document.addEventListener('click', (event) => {
+        if (!combo.contains(event.target)) {
+            setComboOpen(false);
+        }
+    });
+
+    // Which courts to show on a live board in VakilNiti: ticked from the board's own list of courts ("Court 5",
+    // "R1"), kept on this device for each board, and sent to the board inside the frame.
+    const roomsPicker = picker.querySelector('[data-board-rooms-picker]');
+    const roomsToggle = roomsPicker?.querySelector('[data-board-rooms-toggle]');
+    const roomsPanel = roomsPicker?.querySelector('[data-board-rooms-panel]');
+    const roomsList = roomsPicker?.querySelector('[data-board-rooms-list]');
+    const roomsLabel = roomsPicker?.querySelector('[data-board-rooms-label]');
+    let roomsBoard = null;
+    let roomsRequest;
+    let chosenRooms = [];
+
+    const boardSlug = (url) => (String(url || '').match(/\/live-board\/([a-z-]+)/) || [])[1] || null;
+    const sendRooms = () => frame.contentWindow?.postMessage({ type: 'vn-board-rooms', rooms: chosenRooms.join(',') }, window.location.origin);
+    const shortName = (label) => String(label).replace(/^\s*court\s+(no\.?\s*)?/i, '');
+    const showRoomsLabel = () => {
+        roomsLabel.textContent = chosenRooms.length ? chosenRooms.map(shortName).join(', ') : 'All courts';
+    };
+    const saveRooms = () => {
+        boardStore.set('vn-board-rooms:' + roomsBoard, chosenRooms.join(','));
+        showRoomsLabel();
+        sendRooms();
+    };
+    const roomsMessage = (text) => {
+        const note = document.createElement('p');
+        note.className = 'col-span-full px-1 py-2 text-slate-500';
+        note.textContent = text;
+        roomsList.replaceChildren(note);
+    };
+
+    const loadRooms = (url) => {
+        const slug = boardSlug(url);
+
+        if (!roomsPicker) {
+            return;
+        }
+
+        if (slug === roomsBoard && slug) {
+            return;
+        }
+
+        roomsRequest?.abort();
+        roomsToggle.disabled = !slug;
+        roomsPanel.hidden = true;
+        roomsToggle.setAttribute('aria-expanded', 'false');
+        roomsBoard = slug;
+        if (!slug) {
+            chosenRooms = [];
+            roomsLabel.textContent = 'Unavailable';
+            return;
+        }
+
+        const request = new AbortController();
+        roomsRequest = request;
+        chosenRooms = String(boardStore.get('vn-board-rooms:' + slug, '')).split(',').filter(Boolean);
+        showRoomsLabel();
+        roomsMessage('Loading the courts…');
+
+        fetch(new URL(url, window.location.origin).pathname.replace(/\/$/, '') + '/data', { headers: { Accept: 'application/json' }, signal: request.signal })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((board) => {
+                if (request.signal.aborted) {
+                    return;
+                }
+
+                if (!board || !board.rooms?.length) {
+                    roomsMessage('The court has not published its courts yet. Try again in a minute.');
+
+                    return;
+                }
+
+                roomsList.replaceChildren(...board.rooms.map((room) => {
+                    const option = document.createElement('label');
+                    option.className = 'flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-1 text-center font-semibold text-slate-700 has-[:checked]:border-[#16776e] has-[:checked]:bg-teal-50 has-[:checked]:text-[#16776e]';
+                    const box = document.createElement('input');
+                    box.type = 'checkbox';
+                    box.value = room.label;
+                    box.className = 'sr-only';
+                    box.checked = chosenRooms.includes(room.label);
+                    option.append(box, document.createTextNode(shortName(room.label)));
+
+                    return option;
+                }));
+            })
+            .catch(() => {
+                if (!request.signal.aborted) {
+                    roomsMessage('The courts could not be loaded. Try again in a minute.');
+                }
+            });
+    };
+
+    if (roomsPicker) {
+        roomsToggle.addEventListener('click', () => {
+            roomsPanel.hidden = !roomsPanel.hidden;
+            roomsToggle.setAttribute('aria-expanded', String(!roomsPanel.hidden));
+        });
+        roomsList.addEventListener('change', () => {
+            chosenRooms = [...roomsList.querySelectorAll('input:checked')].map((box) => box.value);
+            saveRooms();
+        });
+        roomsPicker.querySelector('[data-board-rooms-all]').addEventListener('click', () => {
+            roomsList.querySelectorAll('input').forEach((box) => {
+                box.checked = false;
+            });
+            chosenRooms = [];
+            saveRooms();
+        });
+        const closeRooms = () => {
+            roomsPanel.hidden = true;
+            roomsToggle.setAttribute('aria-expanded', 'false');
+            roomsToggle.focus();
+        };
+        roomsPicker.querySelector('[data-board-rooms-done]').addEventListener('click', closeRooms);
+        roomsPicker.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !roomsPanel.hidden) {
+                event.preventDefault();
+                closeRooms();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if (!roomsPicker.contains(event.target)) {
+                roomsPanel.hidden = true;
+                roomsToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+        frame.addEventListener('load', sendRooms);
+    }
+
+    // The list holds the chosen boards (Manage); the drop-down's search only narrows what it shows.
     const applyFilters = () => {
-        const query = (search?.value || '').trim().toLowerCase();
         const picked = choices.filter((box) => box.checked).map((box) => box.value);
 
         const current = select.value;
         const groups = new Map();
 
         allBoards.forEach(({ group, option }) => {
-            const visible = picked.includes(option.value) && (query === '' || option.textContent.toLowerCase().includes(query));
+            const visible = picked.includes(option.value);
 
             if (visible) {
                 if (!groups.has(group)) {
@@ -474,6 +716,9 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
         }
 
         show();
+        if (!comboPanel.hidden) {
+            renderCombo();
+        }
     };
 
     const saved = boardStore.get('vn-display-board', null);
@@ -551,7 +796,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker) => {
             exitButton.hidden = !box.classList.contains('vn-board-fullscreen');
         }
     });
-    search?.addEventListener('input', applyFilters);
+    search?.addEventListener('input', renderCombo);
     hideButton.addEventListener('click', () => setHidden(hideButton.textContent === 'Hide'));
 
     manageToggle.addEventListener('click', () => {
@@ -681,7 +926,7 @@ if (liveChips.length) {
     };
 
     refreshChips();
-    setInterval(refreshChips, 60000);
+    setInterval(refreshChips, 30000);
     document.addEventListener('visibilitychange', refreshChips);
 }
 
@@ -759,6 +1004,24 @@ document.querySelectorAll('[data-view-toggle]').forEach((button) => {
     });
     showInstallButtons();
 })();
+
+document.addEventListener('change', (event) => {
+    const form = event.target.closest('form[data-court-position]');
+    if (!form || !['appearing_for', 'petitioner_side'].includes(event.target.name)) {
+        return;
+    }
+
+    const party = form.elements.appearing_for.selectedOptions[0]?.dataset.side;
+    const petitionerSide = form.elements.petitioner_side?.value;
+    const preview = form.querySelector('[data-court-position-preview]');
+    if (!party || !petitionerSide) {
+        preview.textContent = 'Choose your party and the petitioner’s side';
+        return;
+    }
+
+    const position = party === 'moving' ? petitionerSide : (petitionerSide === 'left' ? 'right' : 'left');
+    preview.textContent = position === 'left' ? 'Left' : 'Right';
+});
 
 // Tabs (components/tabs): one panel on screen at a time. The open tab is kept in the
 // address (#panel-id) and for this page in the session, so reloads and form redirects come
@@ -893,6 +1156,45 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
+
+// Whole boxes open their page: a card marked data-card-href goes there when clicked anywhere except on its own
+// buttons, links and fields (they keep doing their own thing). Same behaviour for every card on the site.
+document.addEventListener('click', (event) => {
+    const card = event.target.closest('[data-card-href]');
+
+    if (!card || event.defaultPrevented || event.button !== 0 || window.getSelection()?.toString()) {
+        return;
+    }
+
+    if (event.target.closest('a, button, input, select, textarea, label, summary, details, form, [data-sheet], [role="button"]')) {
+        return;
+    }
+
+    if (event.metaKey || event.ctrlKey) {
+        window.open(card.dataset.cardHref, '_blank', 'noopener');
+    } else {
+        window.location.assign(card.dataset.cardHref);
+    }
+});
+
+// "Share day" on My cases: before the share preview opens (resources/js/sheet.js), gather the message from the
+// cards of that day on the page (each card carries data-day-item and its own data-day-text).
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-share-day]');
+
+    if (!button) {
+        return;
+    }
+
+    const texts = [...document.querySelectorAll('[data-day-item]')]
+        .filter((card) => card.dataset.dayItem === button.dataset.shareDay)
+        .map((card) => card.dataset.dayText)
+        .filter(Boolean);
+    const message = ['*' + button.dataset.shareTitle + '*', ...texts.map((text, index) => (index + 1) + '. ' + text)].join('\n\n');
+
+    button.dataset.shareText = message;
+    button.href = 'https://wa.me/?text=' + encodeURIComponent(message);
+}, true);
 
 // Share buttons (data-share-text) open the share preview in resources/js/sheet.js.
 

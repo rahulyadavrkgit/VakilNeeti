@@ -26,7 +26,6 @@ use App\Http\Controllers\CourtStandSideController;
 use App\Http\Controllers\CriminalLawComparisonController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardStudioController;
-use App\Http\Controllers\DistrictCauseListController;
 use App\Http\Controllers\ExternalWebviewController;
 use App\Http\Controllers\FirmProfileController;
 use App\Http\Controllers\HearingController;
@@ -116,6 +115,9 @@ Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->whereUuid('notification')->name('notifications.open');
 Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+Route::get('/notifications/latest', [NotificationController::class, 'latest'])->name('notifications.latest');
+Route::post('/push-subscriptions', [NotificationController::class, 'subscribe'])->middleware('throttle:20,1')->name('push-subscriptions.store');
+Route::delete('/push-subscriptions', [NotificationController::class, 'unsubscribe'])->middleware('throttle:20,1')->name('push-subscriptions.destroy');
 Route::post('/home/profile-banner/hide', [DashboardController::class, 'hideProfileBanner'])->name('home.profile-banner.hide');
 
 /*
@@ -145,7 +147,6 @@ Route::post('/cases/import/{import}/save', [OfficialCourtImportController::class
     ->name('cases.import.save');
 Route::post('/cases/{case}/follow-ups', [CaseFollowUpController::class, 'store'])->name('cases.follow-ups.store');
 Route::patch('/cases/{case}/follow-ups/{task}', [CaseFollowUpController::class, 'status'])->name('cases.follow-ups.status');
-Route::post('/cases/{case}/district-list', [DistrictCauseListController::class, 'store'])->middleware('throttle:10,1')->name('cases.district-list.store');
 
 Route::post('/cases/{case}/report', [CaseFollowUpController::class, 'report'])->middleware('throttle:10,1')->name('cases.report');
 
@@ -225,6 +226,8 @@ Route::post('/cases/{case}/reopen', [LegalCaseController::class, 'reopen'])
 
 Route::patch('/cases/{case}/file-number', [LegalCaseController::class, 'updateFileNumber'])
     ->whereNumber('case')->name('cases.file-number');
+Route::patch('/cases/{case}/side', [LegalCaseController::class, 'updateSide'])
+    ->whereNumber('case')->name('cases.side');
 
 Route::get('/cases/{case}/download', [LegalCaseController::class, 'download'])
     ->whereNumber('case')->middleware('throttle:30,1')->name('cases.download');
@@ -353,6 +356,8 @@ Route::prefix('sheets')->name('sheets.')->controller(SheetController::class)->gr
     Route::get('/add-case/{method}', 'addCaseSearch')->whereIn('method', array_keys(SheetController::SEARCH_METHODS))->name('add-case.search');
     Route::get('/add-case/{method}/continue', 'addCaseContinue')->whereIn('method', array_keys(SheetController::SEARCH_METHODS))->name('add-case.continue');
     Route::get('/cases/{case}', 'caseView')->name('case-view');
+    Route::get('/cases/{case}/side', 'caseSide')->name('case-side');
+    Route::get('/cases/{case}/court-position', 'courtPosition')->name('court-position');
     Route::get('/clients/{client}', 'clientCard')->name('client-card');
     Route::get('/court', 'court')->name('court');
     Route::get('/payment', 'paymentPick')->name('payment-pick');
@@ -525,6 +530,7 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap
 // Courts: quick links to official court services (public).
 Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class)->group(function () {
     Route::get('/', 'index')->name('index');
+    Route::get('/judges/{photo}', 'judgePhoto')->where('photo', '[a-z0-9]+(?:-[a-z0-9]+)*\.jpg')->name('judge-photo');
     Route::get('/supreme-court', 'supremeCourt')->name('supreme-court');
     Route::get('/supreme-court/court-list', 'supremeCourtList')->name('supreme-court.court-list');
     Route::get('/delhi-high-court/judges', 'delhiHighCourtJudges')->name('delhi-high-court.judges');

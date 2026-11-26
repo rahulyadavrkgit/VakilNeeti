@@ -184,7 +184,7 @@ class CaseFinderController extends Controller
         return redirect()->route('cases.index')->with('success', trim(
             ($added === 1 ? '1 case added.' : "{$added} cases added.")
             .($skipped ? ' '.($skipped === 1 ? '1 was' : "{$skipped} were").' already in your cases.' : '')
-            .($added ? ' Open a case and use Import official record to add its hearings and full details.' : '')
+            .($added ? ' Open a case and use Import court record to add its hearings and full details.' : '')
         ));
     }
 

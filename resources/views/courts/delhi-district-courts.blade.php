@@ -50,7 +50,7 @@
         <span class="rounded bg-red-600 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide">New</span> E-Courts Filing Portal
     </a>
 
-    {{-- Delhi at a glance, from the official judges & VC lists. --}}
+    {{-- Delhi at a glance, from the judges & VC lists. --}}
     <dl class="grid grid-cols-4 gap-2 text-center">
         @foreach([['Courts', $totals['courts']], ['Districts', $totals['districts']], ['Complexes', $totals['complexes']], ['Vacant', $totals['vacant']]] as [$label, $value])
             <div class="rounded-2xl border border-slate-200 bg-white px-2 py-3 shadow-sm">
@@ -99,7 +99,7 @@
     </div>
 
     <p class="text-center text-xs text-slate-500">
-        Court counts from each district's official judges &amp; VC list ·
+        Court counts from each district's judges &amp; VC list ·
         <a href="{{ $services['statistics'] }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#16776e] hover:underline">Pending cases (NJDG)</a>
     </p>
 </div>

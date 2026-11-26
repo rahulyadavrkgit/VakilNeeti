@@ -33,8 +33,7 @@ class HomeDashboardTest extends TestCase
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Upcoming hearings')
-            ->assertSeeInOrder(['Asha vs State', 'Ravi vs Union'])
+            ->assertSeeInOrder(['Next hearing', 'Asha vs State', 'After that', 'Ravi vs Union'])
             ->assertDontSee('Too far ahead')
             ->assertSee('1 overdue task');
 
@@ -64,12 +63,14 @@ class HomeDashboardTest extends TestCase
             ->assertSeeInOrder(['Room 505', 'Sh. Dheeraj Mor']);
     }
 
-    public function test_next_hearing_card_skips_hearings_already_started_today_and_offers_join_vc(): void
+    public function test_all_of_todays_hearings_show_together_and_otherwise_the_next_one(): void
     {
         $this->actingAs(User::factory()->create());
-        $started = LegalCase::create(['case_title' => 'Started vs Earlier', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
+        $first = LegalCase::create(['case_title' => 'Started vs Earlier', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
+        $second = LegalCase::create(['case_title' => 'Later vs Today', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
         $next = LegalCase::create([
             'case_title' => 'Meera vs Union',
+            'case_number' => 'W.P.(C)/7/2026',
             'court_name' => 'Delhi High Court',
             'court_room' => '37',
             'judge_name' => 'Justice Dinesh Mehta',
@@ -77,17 +78,30 @@ class HomeDashboardTest extends TestCase
             'vc_link' => 'https://dhc.webex.com/meet/court37',
             'case_status' => 'pending',
         ]);
-        CourtHearing::create(['case_id' => $started->id, 'hearing_date' => '2026-03-10', 'hearing_time' => '08:00']);
+        CourtHearing::create(['case_id' => $first->id, 'hearing_date' => '2026-03-10', 'hearing_time' => '08:00']);
+        CourtHearing::create(['case_id' => $second->id, 'hearing_date' => '2026-03-10', 'hearing_time' => '14:00']);
         CourtHearing::create(['case_id' => $next->id, 'hearing_date' => '2026-03-11', 'hearing_time' => '10:30']);
 
+        // Today: both hearings together in the top card, with one button to share the whole day.
+        $html = $this->get(route('dashboard'))->assertOk()->getContent();
+        $top = substr($html, (int) strpos($html, 'id="next-hearing-heading"'), (int) strpos($html, 'id="upcoming-hearings-heading"') - (int) strpos($html, 'id="next-hearing-heading"'));
+        $this->assertStringContainsString('Today · 10th Mar', $top);
+        $this->assertStringContainsString('2 hearings', $top);
+        $this->assertStringContainsString('Started vs Earlier', $top);
+        $this->assertStringContainsString('Later vs Today', $top);
+        $this->assertStringContainsString('title="Share all hearings of this day"', $top);
+        $this->assertStringNotContainsString('Meera vs Union', $top);
+
+        // A day without hearings: the next one, in the advocates' layout.
+        $this->travelTo('2026-03-10 23:00:00');
+        CourtHearing::query()->whereIn('case_id', [$first->id, $second->id])->delete();
         $html = $this->get(route('dashboard'))->assertOk()->getContent();
         $card = substr($html, (int) strpos($html, 'id="next-hearing-heading"'), 6000);
 
-        $this->assertStringContainsString('Next hearing · Wednesday, 11 March 2026 · 10:30', $card);
-        foreach (['Meera vs Union', 'Appellant', 'Room 37', 'Justice Dinesh Mehta', 'href="https://dhc.webex.com/meet/court37"'] as $detail) {
+        $this->assertStringContainsString('Next hearing · Tomorrow 11th Mar', $card);
+        foreach (['Meera vs Union', 'Appellant', 'W.P.(C)/7/2026', 'Hearing · 10:30', 'Justice Dinesh Mehta', 'Court Room 37', 'href="https://dhc.webex.com/meet/court37"', 'title="Share this hearing"'] as $detail) {
             $this->assertStringContainsString($detail, $card);
         }
-        $this->assertStringNotContainsString('Started vs Earlier', $card);
 
         $this->get(route('dashboard', ['hearing_search' => 'Meera']))->assertOk()->assertDontSee('id="next-hearing-heading"', false);
     }

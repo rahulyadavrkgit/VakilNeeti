@@ -1,4 +1,4 @@
-{{-- Pop-up: the court room for a room or judge chip, from the official judges & VC lists. --}}
+{{-- Pop-up: the court room for a room or judge chip, from the judges & VC lists. --}}
 @php
     $judges = $bench ? $bench->judgeList() : [];
     $roomLabel = $bench?->court_room ?: $room;
@@ -55,5 +55,5 @@
 @if($listUrl)
     <a href="{{ $listUrl }}" class="mt-3 block text-center text-sm font-semibold text-[#16776e] hover:underline">This court's full judges list &rarr;</a>
 @elseif(! $bench)
-    <p class="mt-3 text-xs text-slate-500">This court isn't in the official lists VakilNiti has (Supreme Court, Delhi High Court, Delhi district courts).</p>
+    <p class="mt-3 text-xs text-slate-500">This court isn't in the lists VakilNiti has (Supreme Court, Delhi High Court, Delhi district courts).</p>
 @endif

@@ -52,6 +52,10 @@ Schedule::command('courts:cause-lists allahabad-high-court --when=today')->daily
 
 // Every morning: a note in the bell if the site logged errors yesterday.
 Schedule::command('app:error-alerts')->dailyAt('09:00');
+// Every night, after the evening cause lists: a note (and a push) to the caretakers only if something stopped working.
+Schedule::command('app:self-check')->dailyAt('23:00')->withoutOverlapping();
+// Judges' photos for the court-room lists (Supreme Court, Delhi High Court), refreshed weekly as judges change.
+Schedule::command('courts:judge-photos')->weeklyOn(0, '05:00')->withoutOverlapping();
 
 // A compressed database copy every night, kept for 14 days (storage/app/backups).
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping();

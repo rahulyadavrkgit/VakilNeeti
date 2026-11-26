@@ -53,6 +53,48 @@ self.addEventListener('fetch', (event) => {
     })));
 });
 
+// Push notifications carry no text: VakilNiti only says "there is a new alert", and the alert is fetched here,
+// signed in as the person. A notification is always shown, as phones require for every push.
+self.addEventListener('push', (event) => {
+    event.waitUntil((async () => {
+        let alert = null;
+
+        try {
+            const response = await fetch('/notifications/latest', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+            alert = response.ok && (response.headers.get('Content-Type') || '').includes('json') ? await response.json() : null;
+        } catch {
+            alert = null;
+        }
+
+        await self.registration.showNotification(alert?.title || 'VakilNiti', {
+            body: alert ? alert.body : 'You have a new alert. Tap to open.',
+            tag: alert ? 'vn-' + alert.id : 'vn-alert',
+            icon: '/images/app-icon-192.png',
+            badge: '/images/app-icon-192.png',
+            data: { url: alert?.url || '/notifications' },
+        });
+    })());
+});
+
+// Tapping the notification opens its page, in a VakilNiti window that is already open when there is one.
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const target = new URL(event.notification.data?.url || '/notifications', self.location.origin).href;
+
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        const open = windows.find((client) => sameOrigin(client.url));
+
+        if (open) {
+            await open.focus();
+
+            return open.navigate ? open.navigate(target) : null;
+        }
+
+        return self.clients.openWindow(target);
+    })());
+});
+
 function sameOrigin(url) {
     return new URL(url, self.location.origin).origin === self.location.origin;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Channels\WebPushChannel;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -22,11 +23,13 @@ class ReminderNotification extends Notification
     ) {}
 
     /**
+     * Saved for the Alerts page; also pushed to the person's devices that turned on push notifications.
+     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', WebPushChannel::class];
     }
 
     /**

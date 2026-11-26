@@ -44,8 +44,12 @@
     <meta name="twitter:description" content="{{ $seoDescription }}">
     <meta name="theme-color" content="#142235">
     @auth
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="vn-search-sheet" content="{{ route('sheets.search') }}">
         <meta name="vn-search-page" content="{{ route('search') }}">
+        @if(app(\App\Services\WebPush::class)->isConfigured())
+            <meta name="vn-push-key" content="{{ config('services.webpush.public_key') }}">
+        @endif
     @endauth
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-mark.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" sizes="32x32 48x48">
@@ -130,8 +134,12 @@
         .vn-nav-child { margin-left: 12px; padding-left: 10px; border-left: 1px solid #43556a; }
         .vn-nav-section { padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid #2a3b50; }
 
-        /* Page shell. */
-        .vn-main-header { position: sticky; top: 0; z-index: 25; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); }
+        /*
+            Page shell. The header is 4rem tall, plus the phone's status bar where the page runs under it (iPhone Safari
+            on iOS 26 and the installed app, because of viewport-fit=cover); things that stick under it use the same height.
+        */
+        :root { --vn-header-height: calc(4rem + env(safe-area-inset-top)); scroll-padding-top: calc(var(--vn-header-height) + .5rem); }
+        .vn-main-header { position: sticky; top: 0; z-index: 25; padding-top: env(safe-area-inset-top); background: rgba(255,255,255,.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
         .vn-content { min-width: 0; }
         .vn-main-content { width: 100%; max-width: 1800px; margin-inline: auto; overflow-x: clip; overflow-wrap: break-word; }
         .vn-mobile-nav { display: none; }
@@ -159,7 +167,7 @@
             .vn-main-content { padding: 16px 14px 22px; }
             /* 16px fields stop iPhones zooming in when a field is tapped. */
             .vn-main-content input:not([type=checkbox]):not([type=radio]):not([type=file]), .vn-main-content select, .vn-main-content textarea { font-size: 16px; }
-            .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
+            .vn-mobile-nav { position: fixed; z-index: 45; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); inset: auto 0 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfe6ed; background: rgba(255,255,255,.97); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 -8px 28px rgba(20,34,53,.08); }
             .vn-mobile-nav a, .vn-mobile-nav button, .vn-mobile-nav summary { display: flex; list-style: none; cursor: pointer; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 10px; background: transparent; color: #657386; font-size: 10px; font-weight: 650; text-decoration: none; }
             .vn-mobile-nav .vn-mobile-icon { font-size: 18px; line-height: 1; }
             .vn-mobile-nav a, .vn-mobile-nav button, .vn-mobile-nav summary { font-size: 11.5px; }
@@ -172,7 +180,7 @@
             /* Notch side insets (landscape iPhones) now that the page uses viewport-fit=cover. */
             body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
             /* Header menus open as a full-width panel under the header, so none runs off the screen. */
-            .vn-header-dropdown { position: fixed !important; left: max(.75rem, env(safe-area-inset-left)) !important; right: max(.75rem, env(safe-area-inset-right)) !important; top: 4.25rem; width: auto !important; margin-top: 0 !important; max-height: calc(100dvh - 4.25rem - 88px - env(safe-area-inset-bottom)); overflow-y: auto; }
+            .vn-header-dropdown { position: fixed !important; left: max(.75rem, env(safe-area-inset-left)) !important; right: max(.75rem, env(safe-area-inset-right)) !important; top: calc(var(--vn-header-height) + .25rem); width: auto !important; margin-top: 0 !important; max-height: calc(100dvh - var(--vn-header-height) - .25rem - 88px - env(safe-area-inset-bottom)); overflow-y: auto; }
             /* The page name is already in the header: hide repeats (breadcrumbs, a matching first heading). */
             .vn-main-content nav[aria-label="Breadcrumb"], .vn-dup-title { display: none !important; }
             .vn-mobile-nav .is-current { color: #126c64; background: #e8f4f2; }
@@ -200,7 +208,7 @@
         */
         @media (min-width: 768px) {
             .vn-sidebar { display: none !important; }
-            .vn-main-header { z-index: 42; background: var(--vn-ink); border-bottom-color: #22344a; backdrop-filter: none; box-shadow: 0 2px 10px rgba(10, 20, 34, .18); }
+            .vn-main-header { z-index: 42; background: var(--vn-ink); border-bottom-color: #22344a; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 2px 10px rgba(10, 20, 34, .18); }
             html.dark .vn-main-header { background: #0a111d; border-bottom-color: #1c2a40; }
             .vn-header-title, .vn-header-spacer, .vn-main-header .vn-header-brand { display: none !important; }
         }
@@ -894,7 +902,7 @@
 
 <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
-        // Official websites open inside VakilNiti when they allow it. Sites that forbid being
+        // Websites open inside VakilNiti when they allow it. Sites that forbid being
         // shown inside other websites (most court sites) open in a side window instead, so
         // VakilNiti stays open behind them. Links marked data-direct-share open normally.
         const dialog = document.getElementById('vn-webview-dialog');

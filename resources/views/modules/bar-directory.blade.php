@@ -2,7 +2,7 @@
 
 @section('title', 'Bar directory')
 @section('page-heading', 'Bar directory')
-@section('meta_description', 'Directory of Bar Councils and Bar Associations across India, with official contact links.')
+@section('meta_description', 'Directory of Bar Councils and Bar Associations across India, with contact links.')
 
 @section('content')
 <div class="mx-auto max-w-7xl">
@@ -107,7 +107,7 @@
                         @if($council->official_url)
                             <div class="mt-3">
                                 <a href="{{ $council->official_url }}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-indigo-600 hover:underline">
-                                    Official Website &nearr;
+                                    Website &nearr;
                                 </a>
                             </div>
                         @endif
@@ -166,7 +166,7 @@
                         @if($assoc->official_url)
                             <div class="mt-3">
                                 <a href="{{ $assoc->official_url }}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-indigo-600 hover:underline">
-                                    Official Portal &nearr;
+                                    Portal &nearr;
                                 </a>
                             </div>
                         @endif

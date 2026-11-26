@@ -89,13 +89,25 @@ class CaseJourneyAndCourtFeeTest extends TestCase
         $forPetitioner = $this->makeCase('A vs B', 'District Court Saket', 'CS/1/2024', ['appearing_for' => 'petitioner']);
         $forRespondent = $this->makeCase('C vs D', 'District Court Saket', 'CS/2/2024', ['appearing_for' => 'respondent']);
 
-        $this->get(route('cases.show', $forPetitioner))->assertSee('where does the petitioner', false);
+        // The case page opens it in a pop-up.
+        $this->get(route('cases.show', $forPetitioner))->assertSeeInOrder([
+            'data-sheet="'.route('sheets.court-position', $forPetitioner).'"', 'Court position',
+            'data-sheet="'.route('sheets.court-position', $forPetitioner).'"', 'We appear for',
+        ], false);
+        $this->get(route('sheets.court-position', $forPetitioner))
+            ->assertSee('Choose your party and the petitioner’s side')
+            ->assertDontSee('Link a client');
 
         $this->post(route('cases.stand-side', $forPetitioner), ['petitioner_side' => 'left'])
             ->assertSessionHas('success', 'Saved for every case in District Court Saket.');
 
-        $this->get(route('cases.show', $forPetitioner))->assertSeeInOrder(['YOUR LEFT', 'the judge&#039;s right'], false);
-        $this->get(route('cases.show', $forRespondent))->assertSeeInOrder(['YOUR RIGHT', 'the judge&#039;s left'], false);
+        $this->get(route('cases.show', $forPetitioner))->assertSee('Left facing judge');
+        $this->get(route('cases.show', $forRespondent))->assertSee('Right facing judge');
+
+        $this->patch(route('cases.side', $forPetitioner), ['appearing_for' => 'respondent', 'appearing_for_parties' => '2', 'petitioner_side' => 'right'])
+            ->assertRedirect();
+        $this->get(route('cases.show', $forPetitioner))->assertSeeInOrder(['Left facing judge', 'Respondent No. 2']);
+        $this->get(route('cases.show', $forRespondent))->assertSee('Left facing judge');
 
         $this->post(route('cases.stand-side', $forPetitioner), ['petitioner_side' => 'centre'])->assertSessionHasErrors('petitioner_side');
     }

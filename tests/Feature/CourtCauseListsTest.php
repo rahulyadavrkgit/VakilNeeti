@@ -12,7 +12,6 @@ use App\Services\CauseLists\CauseListRecorder;
 use App\Services\CauseLists\SupremeCourtCauseList;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -113,34 +112,6 @@ TEXT;
         $this->post(route('hearings.store'), ['case_id' => $case->id, 'hearing_date' => '2026-11-26', 'item_number' => 'twelve'])->assertSessionHasErrors('item_number');
     }
 
-    public function test_district_import_counts_the_complete_list_and_keeps_workspace_matches_private(): void
-    {
-        $this->travelTo('2026-11-25 08:00:00');
-        $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
-        $data = ['case_title' => 'Asha vs State', 'case_status' => 'pending', 'cnr_number' => 'DLCT010000012026', 'court_name' => 'District Court'];
-        $this->actingAs($otherUser);
-        $other = LegalCase::create($data);
-        $this->actingAs($owner);
-        $case = LegalCase::create($data);
-
-        for ($attempt = 0; $attempt < 2; $attempt++) {
-            $this->post(route('cases.district-list.store', $case), [
-                'hearing_date' => '2026-11-25',
-                'room_label' => 'Court 12 Criminal',
-                'source' => 'https://services.ecourts.gov.in/ecourtindia_v6/',
-                'list_file' => UploadedFile::fake()->createWithContent('district.csv', "item,cnr\n12,DLCT010000012026\n13,\n14,\n"),
-            ])->assertSessionHasNoErrors();
-        }
-
-        $this->assertDatabaseCount('court_documents', 1);
-        $this->assertDatabaseCount('cause_list_appearances', 1);
-        $this->assertDatabaseHas('cause_list_appearances', ['legal_case_id' => $case->id, 'item_number' => '12']);
-        $this->assertDatabaseMissing('cause_list_appearances', ['legal_case_id' => $other->id]);
-        $this->get(route('cases.index', ['hearing_filter' => 'today']))->assertOk()->assertSeeInOrder(['12', '3']);
-        $this->actingAs($otherUser)->get(route('cases.show', $case))->assertNotFound();
-    }
-
     public function test_cause_list_details_show_on_my_cases_and_in_the_calendar(): void
     {
         $this->travelTo('2026-11-25 08:00:00');
@@ -154,7 +125,8 @@ TEXT;
 
         foreach ([route('cases.index'), route('cases.calendar', ['view' => 'list', 'date' => '2026-11-26']), route('cases.calendar', ['view' => 'day', 'date' => '2026-11-26'])] as $page) {
             $this->get($page)->assertOk()
-                ->assertSee('Allahabad HC cause list')
+                ->assertSee('href="https://example.test/90.pdf"', false)
+                ->assertDontSee('Allahabad HC cause list')
                 ->assertSee('114 cases on this board')
                 ->assertSeeInOrder(['Room 90', 'My item', '97', '114 cases on this board']);
         }

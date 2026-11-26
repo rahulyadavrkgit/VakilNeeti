@@ -51,6 +51,8 @@ class LegalCase extends Model
      */
     private const MOVING_SIDES = ['petitioner', 'appellant', 'plaintiff', 'complainant', 'applicant'];
 
+    private const ANSWERING_SIDES = ['respondent', 'defendant', 'accused', 'opposite_party'];
+
     protected static function booted(): void
     {
         // Which court and state the case belongs to: exact from the CNR, otherwise from the advocate's choice or the court's name.
@@ -152,7 +154,13 @@ class LegalCase extends Model
             'filing_date' => 'date',
             'disposed_on' => 'date',
             'closed_at' => 'datetime',
+            'status_link_expires_at' => 'datetime',
         ];
+    }
+
+    public function hasActiveStatusLink(): bool
+    {
+        return filled($this->status_token) && ($this->status_link_expires_at?->isFuture() ?? false);
     }
 
     /**
@@ -209,6 +217,11 @@ class LegalCase extends Model
     public static function isMovingSide(?string $side): bool
     {
         return in_array($side, self::MOVING_SIDES, true);
+    }
+
+    public static function isAnsweringSide(?string $side): bool
+    {
+        return in_array($side, self::ANSWERING_SIDES, true);
     }
 
     /**

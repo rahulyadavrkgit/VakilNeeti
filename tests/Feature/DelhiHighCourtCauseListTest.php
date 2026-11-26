@@ -95,8 +95,8 @@ TEXT;
         $this->assertSame(['Listed Thu, 26 Nov · Delhi HC · Court 1 · Item 3', 'Listed tomorrow · Delhi HC · Court 1 · Item 3'], $owner->notifications()->get()->pluck('data.title')->sort()->values()->all());
 
         $this->get(route('dashboard'))->assertOk()
-            ->assertSee('In the courts&#039; cause lists', false)->assertSee('Delhi HC · Court 1')
-            ->assertSeeInOrder(['Tomorrow', 'Court 1 · ', 'Item 3', 'Rashtriya Mukti Morcha vs UOI'])
+            ->assertSeeInOrder(['Next hearing · Tomorrow 25th Nov', 'Rashtriya Mukti Morcha vs UOI', 'W.P.(C)/298/2008', 'ITEM 3', 'Court Room 1'])
+            ->assertDontSee('Also in the cause lists')
             ->assertSee('https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt9');
         $this->get(route('cases.show', $listed))->assertOk()->assertSee('id="cause-list"', false)->assertSee('c_25112026.pdf');
         $this->get(route('cases.show', $notListed))->assertOk()->assertDontSee('id="cause-list"', false);
@@ -106,7 +106,7 @@ TEXT;
         $this->assertStringContainsString('Rashtriya Mukti Morcha', $diary->viewData('shareText'));
 
         // My cases shows it for tomorrow, with the cause list details.
-        $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Join VC', 'Delhi HC cause list', '3']);
+        $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Join VC', 'My item', '3', 'c_25112026.pdf']);
 
         // The case had no date ahead, so the first listing became its next date, once, with the room and item.
         $saved = CourtHearing::query()->where('case_id', $listed->id)->get();

@@ -309,6 +309,6 @@ class OfficialCourtImportController extends Controller
 
         return redirect()
             ->route('cases.show', $savedCase)
-            ->with('success', 'Official court record added to My Case Diary.');
+            ->with('success', 'Court record added to My Case Diary.');
     }
 }

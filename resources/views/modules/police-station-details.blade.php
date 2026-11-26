@@ -2,7 +2,7 @@
 
 @section('title', 'Police station details')
 @section('page-heading', 'Police station details')
-@section('meta_description', 'Address, jurisdiction and official contact details of this police station.')
+@section('meta_description', 'Address, jurisdiction and contact details of this police station.')
 
 @section('content')
 <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -92,9 +92,9 @@
                 </dl>
             </div>
 
-            <!-- Official Contact & Officer Details -->
+            <!-- Contact & Officer Details -->
             <div>
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Official Contacts & Leadership</h2>
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Contacts & Leadership</h2>
                 <dl class="mt-3 space-y-2 text-sm text-gray-700">
                     <div>
                         <dt class="font-medium text-gray-900">Station Phone:</dt>
@@ -113,7 +113,7 @@
                         </div>
                     @endif
                     <div>
-                        <dt class="font-medium text-gray-900">Official Email:</dt>
+                        <dt class="font-medium text-gray-900">Email:</dt>
                         <dd class="mt-0.5">
                             @if($station->email)
                                 <a href="mailto:{{ $station->email }}" class="text-indigo-600 hover:underline">{{ $station->email }}</a>
@@ -199,13 +199,13 @@
 
             <!-- Portals & Source Verification -->
             <div class="md:col-span-2 border-t border-gray-100 pt-4">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Official Portals & Source Verification</h2>
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Portals & Source Verification</h2>
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
                     @if($station->official_url)
                         <div>
-                            <span class="font-medium text-gray-900">Official Website:</span>
+                            <span class="font-medium text-gray-900">Website:</span>
                             <a href="{{ $station->official_url }}" target="_blank" rel="noopener noreferrer" class="ml-1 text-indigo-600 hover:underline">
-                                Visit Official Page &nearr;
+                                Visit Page &nearr;
                             </a>
                         </div>
                     @endif
@@ -219,7 +219,7 @@
                     @endif
                     <div>
                         <span class="font-medium text-gray-900">Source:</span>
-                        <span class="text-gray-600">{{ $station->source_name ?? 'Official Police Portal' }}</span>
+                        <span class="text-gray-600">{{ $station->source_name ?? 'Police Portal' }}</span>
                         @if($station->source_url)
                             (<a href="{{ $station->source_url }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">Reference</a>)
                         @endif
