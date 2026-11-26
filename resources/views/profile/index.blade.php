@@ -28,8 +28,8 @@
 
     {{-- SIGN-IN PASSWORD --}}
     <section id="password" class="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-semibold text-slate-900">{{ auth()->user()->password_set_at ? __('Change password') : __('Set your email sign-in password') }}</h2>
-        <p class="mt-1 text-sm text-slate-600">{{ __('Sign in with your email and this password. At least 8 characters.') }}</p>
+        <h2 class="text-lg font-semibold text-slate-900">{{ auth()->user()->password_set_at ? __('Change password') : __('Set your sign-in password') }}</h2>
+        <p class="mt-1 text-sm text-slate-600">{{ __('Sign in with your email or mobile number and this password. At least 8 characters.') }}</p>
         @if(session('password_saved'))<p role="status" class="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800">{{ session('password_saved') }}</p>@endif
         @foreach($errors->passwordSetup->all() as $error)<p role="alert" class="mt-3 text-sm text-red-700">{{ $error }}</p>@endforeach
         <form method="POST" action="{{ route('profile.password.store') }}" class="mt-4 grid items-end gap-3 {{ $canSetPassword ? 'sm:grid-cols-[1fr_1fr_auto]' : 'sm:grid-cols-[1fr_1fr_1fr_auto]' }}">

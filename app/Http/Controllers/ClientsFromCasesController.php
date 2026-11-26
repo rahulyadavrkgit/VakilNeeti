@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\LegalCase;
+use App\Services\CaseClientLinker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -20,15 +21,14 @@ class ClientsFromCasesController extends Controller
         return view('clients.from-cases', ['suggestions' => $this->suggestions()]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CaseClientLinker $linker): RedirectResponse
     {
         $validated = $request->validate([
             'pick' => ['required', 'array', 'max:500'],
             'pick.*' => ['string', 'max:400'],
         ], ['pick.required' => 'Tick at least one name.']);
 
-        $existing = Client::query()->get()->keyBy(fn (Client $client) => mb_strtolower(trim($client->display_name ?: $client->first_name.' '.$client->last_name)));
-        $created = 0;
+        $clientsBefore = Client::query()->count();
         $linked = 0;
 
         foreach ($validated['pick'] as $pick) {
@@ -40,27 +40,12 @@ class ClientsFromCasesController extends Controller
                 continue;
             }
 
-            $key = mb_strtolower($name);
-
-            if (! $existing->has($key)) {
-                $existing->put($key, Client::create([
-                    'client_code' => Client::nextCode(),
-                    'client_type' => 'individual',
-                    'first_name' => $name,
-                    'display_name' => $name,
-                    'country' => 'India',
-                    'status' => 'active',
-                ]));
-                $created++;
-            }
-
-            $client = $existing->get($key);
-
-            if (! $case->parties()->where('client_id', $client->id)->where('is_client', true)->exists()) {
-                $case->parties()->create(['client_id' => $client->id, 'party_name' => $name, 'party_type' => 'Client', 'is_client' => true]);
-                $linked++;
-            }
+            $linksBefore = $case->parties()->where('is_client', true)->count();
+            $linker->link($case, $name);
+            $linked += $case->parties()->where('is_client', true)->count() - $linksBefore;
         }
+
+        $created = Client::query()->count() - $clientsBefore;
 
         return redirect()->route('clients.index')
             ->with('success', "{$created} new ".str('client')->plural($created).' added, '.$linked.' case '.str('link')->plural($linked).' made. Add their mobile numbers to send updates.');

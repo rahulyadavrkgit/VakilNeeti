@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\CourtStandSide;
 use App\Models\LegalCase;
 use App\Models\Task;
+use App\Services\CaseClientLinker;
 use App\Services\CaseListArrangement;
 use App\Services\CourtIdentity;
 use App\Services\HearingShareText;
@@ -186,12 +187,20 @@ class LegalCaseController extends Controller
         return view('cases.form', ['case' => new LegalCase(['case_status' => 'pending'])]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CaseClientLinker $clients): RedirectResponse
     {
         $validated = $this->courtDefaults($request->validate($this->caseRules()));
-        $validated['source_type'] = 'manual';
 
+        // Already in the diary (same CNR, or the same number in the same court): open it instead of adding it twice.
+        if ($existing = LegalCase::alreadyInDiary($validated['cnr_number'] ?? null, $validated['case_number'] ?? null, $validated['court_name'] ?? null)) {
+            return redirect()
+                ->route('cases.show', $existing)
+                ->with('success', 'This case is already in your diary, so it was not added again.');
+        }
+
+        $validated['source_type'] = 'manual';
         $case = LegalCase::create($validated);
+        $clients->linkOurParty($case);
 
         return redirect()
             ->route('cases.show', $case)
@@ -255,9 +264,10 @@ class LegalCaseController extends Controller
         return view('cases.form', ['case' => $case]);
     }
 
-    public function update(Request $request, LegalCase $case): RedirectResponse
+    public function update(Request $request, LegalCase $case, CaseClientLinker $clients): RedirectResponse
     {
         $case->update($this->courtDefaults($request->validate($this->caseRules())));
+        $clients->linkOurParty($case);
 
         return redirect()
             ->route('cases.show', $case)

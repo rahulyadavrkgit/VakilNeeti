@@ -327,6 +327,31 @@ class LegalCase extends Model
     }
 
     /**
+     * The case already in this diary with the same CNR, or the same case number in the same court
+     * (the rule imports and the admin duplicate check use). Spaces and letter case do not matter.
+     */
+    public static function alreadyInDiary(?string $cnr, ?string $caseNumber, ?string $courtName): ?self
+    {
+        $cnr = strtoupper((string) preg_replace('/\s+/', '', (string) $cnr));
+        $squash = fn (?string $value): string => mb_strtolower((string) preg_replace('/\s+/', '', (string) $value));
+        $number = $squash($caseNumber);
+        $court = $squash($courtName);
+
+        if ($cnr === '' && ($number === '' || $court === '')) {
+            return null;
+        }
+
+        return self::query()
+            ->where(fn ($cases) => $cases
+                ->when($cnr !== '', fn ($query) => $query->orWhereRaw('upper(replace(cnr_number, \' \', \'\')) = ?', [$cnr]))
+                ->when($number !== '' && $court !== '', fn ($query) => $query->orWhere(fn ($same) => $same
+                    ->whereRaw('lower(replace(case_number, \' \', \'\')) = ?', [$number])
+                    ->whereRaw('lower(replace(court_name, \' \', \'\')) = ?', [$court]))))
+            ->oldest('id')
+            ->first();
+    }
+
+    /**
      * What a case search can look in. "all" covers every field below.
      *
      * @var array<string, string>

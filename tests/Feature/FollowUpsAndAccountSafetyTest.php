@@ -55,7 +55,7 @@ class FollowUpsAndAccountSafetyTest extends TestCase
 
         $this->post(route('login.submit'), ['email' => 'asha@example.test'])
             ->assertSessionHasErrors(['email' => 'This account is suspended. Write to support@vakilniti.com if you think this is a mistake.'], null, 'login');
-        $this->post(route('login.submit'), ['mobile' => '9876543210'])->assertSessionHasErrors('mobile', null, 'login');
+        $this->post(route('login.submit'), ['login' => '9876543210', 'forgot' => '1'])->assertSessionHasErrors('login', null, 'login');
 
         Http::assertNothingSent();
         $this->assertDatabaseCount('user_registration_otps', 0);

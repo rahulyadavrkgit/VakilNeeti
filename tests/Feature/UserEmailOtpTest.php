@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Msg91EmailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -184,29 +185,109 @@ class UserEmailOtpTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_an_account_with_a_mobile_number_can_still_log_in_by_sms_code(): void
+    public function test_forgot_password_with_the_mobile_number_emails_the_code_without_showing_the_address(): void
     {
-        config(['services.authkey.key' => 'ak-key', 'services.authkey.otp_sid' => '1234']);
-        $user = User::create(['name' => 'Asha', 'email' => 'asha@example.test', 'mobile' => '+919876543210', 'mobile_verified_at' => now(), 'password' => Hash::make('unused')]);
+        // The number was given at sign-up and never confirmed by SMS: the emailed code is what proves the person.
+        $user = User::create(['name' => 'Asha', 'email' => 'asha.sharma@example.test', 'mobile' => '+919876543210', 'password' => Hash::make('old-password'), 'password_set_at' => now()]);
 
-        $this->post(route('login.submit'), ['mobile' => '98765 43210'])
+        $this->post(route('login.submit'), ['login' => '98765 43210', 'password' => '', 'forgot' => '1'])
             ->assertRedirect(route('login'))
-            ->assertSessionHas('login_otp_mobile', '+919876543210');
-        $this->assertMatchesRegularExpression('/^\d{4}$/', $this->smsCode);
+            ->assertSessionHas('login_otp_mobile', '+919876543210')
+            ->assertSessionHas('status', 'We have emailed a 6-digit code to as••••@example.test, the email on this mobile number.');
+        $this->assertSame('', $this->smsCode);
+        Http::assertSent(fn (HttpRequest $request) => data_get($request->data(), 'recipients.0.to.0.email') === 'asha.sharma@example.test');
 
-        $this->get(route('login'))->assertSee('Code from the SMS')->assertSee('pattern="[0-9]{4}"', false);
+        $this->get(route('login'))->assertOk()
+            ->assertSee('as••••@example.test')->assertSee('Code from the email')->assertSee('pattern="[0-9]{6}"', false)
+            ->assertDontSee('asha.sharma@example.test');
 
-        $this->post(route('login.verify.submit'), ['otp' => $this->smsCode])->assertRedirect(route('profile.index').'#password');
+        $this->post(route('login.verify.submit'), ['otp' => $this->code])->assertRedirect(route('profile.index').'#password');
+        $this->assertAuthenticatedAs($user);
+        $this->assertNull($user->fresh()->mobile_verified_at);
+    }
+
+    public function test_password_sign_in_takes_the_email_or_the_mobile_number(): void
+    {
+        $user = User::create(['name' => 'Asha', 'email' => 'asha@example.test', 'mobile' => '+919876543210', 'password' => Hash::make('court-diary-8'), 'password_set_at' => now()]);
+
+        $this->post(route('login.password'), ['login' => '98765 43210', 'password' => 'wrong-one'])
+            ->assertSessionHasErrors(['login' => 'That mobile number and password do not match.'], null, 'login');
+        $this->assertGuest();
+
+        $this->post(route('login.password'), ['login' => '+91 98765-43210', 'password' => 'court-diary-8'])->assertRedirect('/');
+        $this->assertAuthenticatedAs($user);
+
+        auth()->logout();
+        $this->post(route('login.password'), ['login' => 'ASHA@example.test', 'password' => 'court-diary-8'])->assertRedirect('/');
         $this->assertAuthenticatedAs($user);
     }
 
-    public function test_an_unknown_mobile_number_is_pointed_to_email_log_in(): void
+    public function test_the_log_in_box_has_password_and_email_code_and_an_unknown_mobile_stays_on_password(): void
     {
-        $this->post(route('login.submit'), ['mobile' => '9876543210'])
-            ->assertSessionHasErrors(['mobile' => 'No account was found for this number. Log in with your email instead.'], null, 'login')
-            ->assertSessionHas('login_via', 'mobile');
+        $this->get(route('login'))->assertOk()
+            ->assertSee('data-login-form="email"', false)->assertSee('data-login-form="code"', false)
+            ->assertDontSee('data-login-form="mobile"', false)
+            ->assertSee('Email or mobile number');
 
-        $this->get(route('login'))->assertOk()->assertSee('data-login-form="email"', false)->assertSee('data-login-form="mobile"', false);
+        $this->post(route('login.submit'), ['login' => '9876543210', 'forgot' => '1'])
+            ->assertSessionHasErrors(['login' => 'No account uses this mobile number. Log in with your email instead.'], null, 'login')
+            ->assertSessionHas('login_via', 'email');
+        Http::assertNothingSent();
+
+        $this->post(route('login.submit'), ['email' => 'nobody@example.test'])->assertSessionHas('login_via', 'code');
+    }
+
+    public function test_the_mobile_number_given_at_sign_up_logs_in_afterwards(): void
+    {
+        $this->post(route('register.send-otp'), ['email' => 'asha@example.test']);
+        $this->post(route('register.verify.submit'), ['otp' => $this->code]);
+        $this->post(route('register.profile.submit'), [
+            'account_role' => 'independent_practitioner',
+            'password' => 'court-diary-8',
+            'password_confirmation' => 'court-diary-8',
+            'onboarding_features' => ['personalized_hearings'],
+            'full_name' => 'Asha Advocate',
+            'mobile' => '98765 43210',
+            'bar_state' => 'Uttar Pradesh',
+            'bar_state_code' => 'up',
+            'bar_number' => '1234',
+            'bar_registration_year' => 2017,
+        ])->assertRedirect(route('cases.find'));
+        $user = User::where('email', 'asha@example.test')->firstOrFail();
+        auth()->logout();
+
+        // With the password…
+        $this->post(route('login.password'), ['login' => '9876543210', 'password' => 'court-diary-8'])->assertRedirect('/');
+        $this->assertAuthenticatedAs($user);
+        auth()->logout();
+
+        // …and "Forgot password?" with the number sends a code to the email the account was made with.
+        $this->travel(2)->minutes();
+        $this->post(route('login.submit'), ['login' => '98765 43210', 'forgot' => '1'])->assertSessionHasNoErrors();
+        $this->post(route('login.verify.submit'), ['otp' => $this->code])->assertRedirect(route('profile.index').'#password');
+        $this->assertAuthenticatedAs($user);
+        $this->actingAs($user)->get(route('profile.index'))->assertOk()->assertDontSee('Mobile number for signing in');
+    }
+
+    public function test_changing_the_password_signs_out_every_other_device_without_any_setting(): void
+    {
+        config(['session.driver' => 'database']);
+        $user = User::factory()->create(['password' => Hash::make('old-password'), 'password_set_at' => now(), 'remember_token' => 'old-remember-token']);
+        $someoneElse = User::factory()->create();
+        $session = fn (string $id, int $userId): array => ['id' => $id, 'user_id' => $userId, 'ip_address' => '10.0.0.1', 'user_agent' => 'Browser', 'payload' => '', 'last_activity' => now()->subMinutes(5)->timestamp];
+        DB::table('sessions')->insert([$session('phone-session', $user->id), $session('office-session', $user->id), $session('other-person', $someoneElse->id)]);
+
+        // No device list or extra button in Settings: it simply happens with a new password.
+        $this->actingAs($user)->get(route('profile.index'))->assertOk()->assertDontSee('Sign out of all other devices');
+
+        $this->post(route('profile.password.store'), ['current_password' => 'old-password', 'password' => 'new-password-8', 'password_confirmation' => 'new-password-8'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'phone-session']);
+        $this->assertDatabaseMissing('sessions', ['id' => 'office-session']);
+        $this->assertDatabaseHas('sessions', ['id' => 'other-person']);
+        $this->assertNotSame('old-remember-token', $user->fresh()->remember_token);
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_forgot_password_signs_in_with_a_code_and_lets_a_new_password_be_set(): void
@@ -238,7 +319,7 @@ class UserEmailOtpTest extends TestCase
     {
         $user = User::factory()->create();
         $this->actingAs($user)->get(route('profile.index'))->assertOk()
-            ->assertSee('Set your email sign-in password')->assertDontSee('name="current_password"', false);
+            ->assertSee('Set your sign-in password')->assertDontSee('name="current_password"', false);
 
         $this->post(route('profile.password.store'), ['password' => 'short12', 'password_confirmation' => 'short12'])
             ->assertSessionHasErrors('password', null, 'passwordSetup');

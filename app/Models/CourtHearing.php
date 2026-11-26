@@ -45,7 +45,11 @@ class CourtHearing extends Model
 
     public function dateSourceLabel(): string
     {
-        return filled($this->source_type) && $this->source_type !== 'manual' ? 'Imported' : 'Saved by you';
+        return match (true) {
+            $this->source_type === 'cause_list' => "From the court's cause list",
+            filled($this->source_type) && $this->source_type !== 'manual' => 'Imported',
+            default => 'Saved by you',
+        };
     }
 
     public function legalCase(): BelongsTo

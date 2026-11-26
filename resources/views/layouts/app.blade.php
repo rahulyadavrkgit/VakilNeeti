@@ -637,23 +637,22 @@
                 </div>
             @endif
             @php
+                // Codes always go by email. Signing in by mobile shows only a masked address, never the email itself.
                 $loginCodeMobile = session('login_otp_mobile');
-                $loginCodeEmail = $loginCodeMobile ? null : session('login_otp_email');
-                $loginVia = session('login_via') ?? (old('mobile') ? 'mobile' : 'email');
+                $loginCodeEmail = session('login_otp_email');
+                $loginCodeShownEmail = $loginCodeMobile ? session('login_otp_shown_email') : $loginCodeEmail;
+                $loginVia = session('login_via') === 'code' ? 'code' : 'email';
             @endphp
-            @if((session('show_login_otp') && ($loginCodeMobile || $loginCodeEmail)) || $loginCodeMobile || $loginCodeEmail)
+            @if($loginCodeEmail)
                 <p class="mb-4 text-sm text-slate-600">
-                    @if($loginCodeMobile)
-                        Enter the 4-digit code sent by SMS to <strong class="text-slate-900">{{ $loginCodeMobile }}</strong>.
-                    @else
-                        Enter the 6-digit code we emailed to <strong class="text-slate-900">{{ $loginCodeEmail }}</strong>. Check spam if it is not in your inbox.
-                    @endif
+                    Enter the 6-digit code we emailed to <strong class="text-slate-900">{{ $loginCodeShownEmail }}</strong>@if($loginCodeMobile), the email on {{ $loginCodeMobile }}@endif.
+                    Check spam if it is not in your inbox.
                 </p>
                 <form method="POST" action="{{ route('login.verify.submit') }}" class="space-y-4">
                     @csrf
                     <div>
-                        <label for="vn-login-otp" class="mb-1 block text-sm font-medium text-slate-700">{{ $loginCodeMobile ? 'Code from the SMS' : 'Code from the email' }}</label>
-                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{{ '{'.($loginCodeMobile ? 4 : 6).'}' }}" maxlength="{{ $loginCodeMobile ? 4 : 6 }}"
+                        <label for="vn-login-otp" class="mb-1 block text-sm font-medium text-slate-700">Code from the email</label>
+                        <input id="vn-login-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
                                required autocomplete="one-time-code"
                                class="w-full rounded-lg border border-slate-300 p-3 text-center text-xl tracking-widest">
                     </div>
@@ -673,29 +672,28 @@
                     </form>
                     <form method="POST" action="{{ route('login.change') }}">
                         @csrf
-                        <button type="submit" class="text-sm font-semibold text-slate-600 underline">{{ $loginCodeMobile ? 'Use another number or email' : 'Use another email or number' }}</button>
+                        <button type="submit" class="text-sm font-semibold text-slate-600 underline">Use another email or number</button>
                     </form>
                 </div>
             @else
-                {{-- Log in with email (code by email) or with the mobile number on the account (code by SMS). --}}
-                <div class="mb-4 grid grid-cols-3 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist" aria-label="Log in with">
+                {{-- Two ways in: password (with the email or the mobile number), or a code by email. --}}
+                <div class="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-semibold" role="tablist" aria-label="Log in with">
                     <button type="button" role="tab" data-login-via="email" aria-selected="{{ $loginVia === 'email' ? 'true' : 'false' }}"
-                            class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Email</button>
+                            class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Password</button>
                     <button type="button" role="tab" data-login-via="code" aria-selected="{{ $loginVia === 'code' ? 'true' : 'false' }}"
-                            class="min-h-11 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e]">Email code</button>
-                    <button type="button" role="tab" data-login-via="mobile" aria-selected="{{ $loginVia === 'mobile' ? 'true' : 'false' }}"
-                            class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Mobile number</button>
+                            class="min-h-10 rounded-lg text-slate-600 aria-selected:bg-white aria-selected:text-[#16776e] aria-selected:shadow-sm">Email code</button>
                 </div>
                 <form method="POST" action="{{ route('login.password') }}" class="space-y-4" data-login-form="email" @if($loginVia !== 'email') hidden @endif>
                     @csrf
-                    <label class="block text-sm font-medium">Email
-                        <input name="email" type="email" autocomplete="username" value="{{ old('email') }}" required class="mt-1 w-full rounded-lg border border-slate-300 p-3">
+                    <label class="block text-sm font-medium">Email or mobile number
+                        <input name="login" type="text" autocomplete="username" value="{{ old('login', old('email')) }}" required
+                               placeholder="you@example.com or 98765 43210" class="mt-1 w-full rounded-lg border border-slate-300 p-3">
                     </label>
                     <label class="block text-sm font-medium">Password
                         <input name="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-lg border border-slate-300 p-3">
                     </label>
-                    <button class="min-h-11 w-full rounded-lg bg-teal-700 font-semibold text-white">Sign in with password</button>
-                    {{-- Forgot password: the same email gets a sign-in code, then the page to choose a new password. --}}
+                    <button class="min-h-11 w-full rounded-lg bg-[#16776e] font-semibold text-white hover:bg-[#125f58]">Sign in with password</button>
+                    {{-- Forgot password: a sign-in code goes to the account's email, then the page to choose a new password. --}}
                     <p class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
                         <span>No password yet? Use Email code.</span>
                         <button type="submit" formaction="{{ route('login.submit') }}" formnovalidate name="forgot" value="1"
@@ -712,18 +710,6 @@
                     </div>
                     <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
                         Email me a code
-                    </button>
-                </form>
-                <form method="POST" action="{{ route('login.submit') }}" class="space-y-4" data-login-form="mobile" @if($loginVia !== 'mobile') hidden @endif>
-                    @csrf
-                    <div>
-                        <label for="vn-login-mobile" class="mb-1 block text-sm font-medium text-slate-700">Mobile number</label>
-                        <input id="vn-login-mobile" type="tel" name="mobile" value="{{ old('mobile') }}" required
-                               placeholder="10-digit Indian mobile number" autocomplete="tel" inputmode="tel"
-                               class="w-full rounded-lg border border-slate-300 p-3">
-                    </div>
-                    <button type="submit" class="w-full rounded-lg bg-[#16776e] px-4 py-3 font-semibold text-white hover:bg-[#125f58]">
-                        Send code by SMS
                     </button>
                 </form>
             @endif

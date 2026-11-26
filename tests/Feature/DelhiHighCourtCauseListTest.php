@@ -105,13 +105,23 @@ TEXT;
         $this->assertSame([$listed->id], $diary->viewData('cases')->pluck('id')->all());
         $this->assertStringContainsString('Rashtriya Mukti Morcha', $diary->viewData('shareText'));
 
-        // My cases shows it for tomorrow, with the cause list details, even though no hearing was saved for that day.
+        // My cases shows it for tomorrow, with the cause list details.
         $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Join VC', 'Delhi HC cause list', '3']);
+
+        // The case had no date ahead, so the first listing became its next date, once, with the room and item.
+        $saved = CourtHearing::query()->where('case_id', $listed->id)->get();
+        $this->assertSame([['2026-11-25', '1', '3', 'cause_list', $owner->id]], $saved->map(fn ($hearing) => [$hearing->hearing_date->toDateString(), $hearing->court_room, $hearing->item_number, $hearing->source_type, $hearing->user_id])->all());
+        $this->assertSame("From the court's cause list", $saved->first()->dateSourceLabel());
+        $this->assertSame(0, CourtHearing::query()->whereIn('case_id', [$notListed->id, $elsewhere->id])->count());
 
         $this->actingAs($other)->get(route('dashboard'))->assertOk()->assertDontSee('cause lists');
 
+        // When the advocate already has a different date, the list adds nothing and the two dates are flagged.
         $this->actingAs($owner);
+        CourtHearing::query()->where('source_type', 'cause_list')->delete();
         $hearing = CourtHearing::create(['case_id' => $listed->id, 'next_hearing_date' => '2026-11-27']);
+        $this->artisan('courts:delhi-hc-cause-list')->assertSuccessful();
+        $this->assertSame(0, CourtHearing::query()->where('source_type', 'cause_list')->count());
         $review = app(AdminCaseReview::class);
         $this->assertSame([$listed->id], $review->pending('listing-conflict')->pluck('legal_cases.id')->all());
         $this->get(route('cases.show', $listed))->assertOk()
@@ -127,6 +137,27 @@ TEXT;
         $this->actingAs($owner);
         $hearing->update(['next_hearing_date' => '2026-11-25']);
         $this->assertSame(0, $review->pending('listing-conflict')->count());
+    }
+
+    public function test_a_listing_never_replaces_a_date_the_advocate_already_has(): void
+    {
+        $this->travelTo('2026-11-24 20:30:00');
+        $this->actingAs(User::factory()->create());
+        $withDate = LegalCase::create(['case_title' => 'Rashtriya Mukti Morcha vs UOI', 'case_number' => 'W.P.(C)/298/2008', 'case_type' => 'W.P.(C)', 'court_name' => 'High Court of Delhi', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $withDate->id, 'next_hearing_date' => '2026-12-10']);
+        $pastOnly = LegalCase::create(['case_title' => 'Hemant Singh vs Grant Thornton', 'case_number' => 'FAO(COMM)/36/2022', 'case_type' => 'FAO(COMM)', 'court_name' => 'High Court of Delhi', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $pastOnly->id, 'hearing_date' => '2026-10-01']);
+
+        Http::fake([
+            'delhihighcourt.nic.in/web/cause-lists/*' => Http::response($this->listingPage()),
+            'delhihighcourt.nic.in/files/*' => Http::response('%PDF-1.6 test'),
+        ]);
+        $this->partialMock(DelhiHighCourtCauseList::class, fn ($mock) => $mock->shouldReceive('textOf')->andReturn(self::LIST_TEXT));
+        $this->artisan('courts:delhi-hc-cause-list')->assertSuccessful();
+
+        // A date ahead stays as it is; a case whose dates have all passed gets the listing.
+        $this->assertSame(0, CourtHearing::query()->where('case_id', $withDate->id)->where('source_type', 'cause_list')->count());
+        $this->assertSame(['2026-11-25'], CourtHearing::query()->where('case_id', $pastOnly->id)->where('source_type', 'cause_list')->get()->map(fn ($hearing) => $hearing->hearing_date->toDateString())->all());
     }
 
     public function test_the_check_runs_morning_and_evening(): void

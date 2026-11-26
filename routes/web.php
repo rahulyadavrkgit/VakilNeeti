@@ -638,7 +638,6 @@ Route::prefix('cv/{username}')->where(['username' => '[A-Za-z0-9-]{3,30}'])->con
 });
 
 Route::post('/profile/password', [UserRegistrationController::class, 'savePassword'])->middleware(['auth', 'throttle:5,10'])->name('profile.password.store');
-
 Route::post('/user-logout', [UserRegistrationController::class, 'logout'])
     ->middleware('auth')
     ->name('user.logout');

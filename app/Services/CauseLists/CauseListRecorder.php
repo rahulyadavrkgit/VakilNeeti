@@ -5,6 +5,7 @@ namespace App\Services\CauseLists;
 use App\Models\CauseListAppearance;
 use App\Models\CourtDataSource;
 use App\Models\CourtDocument;
+use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\User;
 use App\Notifications\ReminderNotification;
@@ -109,6 +110,7 @@ class CauseListRecorder
 
         foreach ($matches as $entry) {
             foreach ($casesByKey[$entry['key']] as $case) {
+                $this->addListedDate($case, $entry, $date, self::placeOnBoard($boards, $entry)['board_total'] ?: null, (string) $document->document_label);
                 $this->tellOwner($courtShort, $case, $entry, $date);
             }
         }
@@ -211,6 +213,44 @@ class CauseListRecorder
         CourtDataSource::query()->firstOrCreate(['provider_key' => $provider], [
             'provider_name' => $name, 'source_type' => 'cause_list', 'base_url' => $url, 'is_enabled' => true,
         ]);
+    }
+
+    /**
+     * A case listed for today or a later day that has no date ahead in the diary gets this listing as its next
+     * date, with the court room, judges and item from the list. A date the advocate already has is left alone.
+     *
+     * @param  array{id: int, user_id: int, title: string}  $case
+     * @param  array{item: string, court: ?string, judges: list<string>, vc_link: ?string}  $entry
+     */
+    private function addListedDate(array $case, array $entry, Carbon $date, ?int $listTotal, string $listName): void
+    {
+        if ($date->lt(today())) {
+            return;
+        }
+
+        $today = today()->toDateString();
+        $hasDateAhead = CourtHearing::query()->withoutGlobalScopes()
+            ->where('case_id', $case['id'])
+            ->where(fn ($dates) => $dates->where('hearing_date', '>=', $today)->orWhere('next_hearing_date', '>=', $today))
+            ->exists();
+
+        if ($hasDateAhead) {
+            return;
+        }
+
+        $hearing = new CourtHearing([
+            'case_id' => $case['id'],
+            'hearing_date' => $date->toDateString(),
+            'court_room' => $entry['court'],
+            'item_number' => $entry['item'],
+            'list_total' => $listTotal,
+            'judge_name' => implode(' · ', $entry['judges']) ?: null,
+            'vc_link' => $entry['vc_link'],
+            'source_type' => 'cause_list',
+            'source_reference' => mb_substr($listName, 0, 250) ?: null,
+        ]);
+        $hearing->user_id = $case['user_id'];
+        $hearing->save();
     }
 
     /**
