@@ -129,8 +129,7 @@ TEXT;
             $this->get($page)->assertOk()
                 ->assertSee('href="https://example.test/90.pdf"', false)
                 ->assertDontSee('Allahabad HC cause list')
-                ->assertSee('114 cases on this board')
-                ->assertSeeInOrder(['Room 90', 'My item', '97', '114 cases on this board']);
+                ->assertSeeInOrder(['Room No.:', '90', 'My item:', '97 of 114']);
         }
     }
 

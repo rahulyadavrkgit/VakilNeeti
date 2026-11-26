@@ -80,8 +80,7 @@ class CourtBenchMatcherTest extends TestCase
 
         $this->get(route('cases.calendar', ['view' => 'day', 'date' => today()->toDateString()]))
             ->assertOk()
-            ->assertSeeInOrder(['District Judge - 05', 'Room 612, main building', 'Sh. Akash Jain', 'Join VC'])
-            ->assertSee('title="From the court list"', false)
+            ->assertSeeInOrder(['District Judge - 05', 'Sh. Akash Jain', 'Room: <strong class="wrap-anywhere">612, main building</strong>', 'Join VC'], false)
             ->assertSee('href="https://districtcourtdelhi.webex.com/meet/ddc.vc.southeast08"', false);
 
         $this->get(route('cases.show', $case))
@@ -107,7 +106,7 @@ class CourtBenchMatcherTest extends TestCase
         $this->get(route('cases.calendar', ['view' => 'day', 'date' => today()->toDateString()]))
             ->assertOk()
             ->assertSee('Ms. Own Entry')
-            ->assertSee('Room 9')
+            ->assertSee('Room: <strong class="wrap-anywhere">9</strong>', false)
             ->assertDontSee('Sh. Akash Jain')
             ->assertSee('href="https://districtcourtdelhi.webex.com/meet/ddc.vc.southeast08"', false);
     }

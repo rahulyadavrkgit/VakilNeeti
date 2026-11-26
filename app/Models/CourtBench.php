@@ -163,6 +163,18 @@ class CourtBench extends Model
     }
 
     /**
+     * Two letters for a judge when there is no photo: "Hon'ble Mr. Justice Rajneesh Kumar Gupta" → "RG".
+     */
+    public static function initials(string $name): string
+    {
+        $words = collect(preg_split('/[\s.]+/u', $name, -1, PREG_SPLIT_NO_EMPTY))
+            ->reject(fn (string $word): bool => (bool) preg_match("/^(hon[’']?ble|the|mr|ms|mrs|dr|sh|shri|smt|justice|acting|chief|judge)$/iu", $word))
+            ->values();
+
+        return mb_strtoupper(mb_substr((string) $words->first(), 0, 1).($words->count() > 1 ? mb_substr((string) $words->last(), 0, 1) : ''));
+    }
+
+    /**
      * Everyone sitting in the room, in one line: "Hon'ble Mr. Justice A & Hon'ble Ms. Justice B" for a division bench.
      */
     public function judgeNames(): ?string

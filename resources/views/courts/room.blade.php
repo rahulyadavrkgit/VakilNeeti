@@ -27,7 +27,7 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex items-start gap-3">
             @if($judges[0]['photo'] ?? null)
-                <img src="{{ $judges[0]['photo'] }}" alt="" width="56" height="64" class="h-16 w-14 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
+                <img src="{{ $judges[0]['photo'] }}" alt="" width="56" height="64" data-initials="{{ \App\Models\CourtBench::initials($judges[0]['name']) }}" class="h-16 w-14 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
             @endif
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">{{ $court['court'] }}</p>
@@ -49,7 +49,7 @@
                 @foreach(array_slice($judges, 1) as $judge)
                     <li class="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
                         @if($judge['photo'])
-                            <img src="{{ $judge['photo'] }}" alt="" width="40" height="48" class="h-12 w-10 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
+                            <img src="{{ $judge['photo'] }}" alt="" width="40" height="48" data-initials="{{ \App\Models\CourtBench::initials($judge['name']) }}" class="h-12 w-10 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
                         @endif
                         <div class="min-w-0">
                             <p class="font-semibold uppercase text-slate-900">{{ $judge['name'] }}</p>

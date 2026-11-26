@@ -321,6 +321,10 @@
                             <table class="mt-2 w-full text-left text-sm">
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach($dayEvents as $event)
+                                        @if(($event['group'] ?? null) === 'hearing')
+                                            <tr><td colspan="3" class="py-2"><x-hearing-card :event="$event" /></td></tr>
+                                            @continue
+                                        @endif
                                         <tr class="align-top">
                                             <td class="hidden w-16 py-1.5 pr-2 font-semibold text-slate-600 sm:table-cell">{{ $event['time'] ?? '—' }}</td>
                                             <td class="hidden w-28 py-1.5 pr-2 text-xs font-bold uppercase text-slate-500 sm:table-cell">{{ $event['label'] }}</td>

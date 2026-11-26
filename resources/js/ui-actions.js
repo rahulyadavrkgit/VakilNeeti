@@ -1181,6 +1181,23 @@ const watchLoadMore = (marker) => loadMoreObserver?.observe(marker);
 
 document.querySelectorAll('[data-load-more]').forEach(watchLoadMore);
 
+// A judge's photo that does not load (removed from the court's site, offline) gives way to the judge's initials,
+// in the same size and shape, instead of a broken-image icon.
+const showInitials = (image) => {
+    const badge = document.createElement('span');
+    badge.className = `${image.className} inline-flex items-center justify-center bg-slate-100 text-[11px] font-bold text-slate-600`;
+    badge.textContent = image.dataset.initials;
+    badge.setAttribute('aria-hidden', 'true');
+    image.replaceWith(badge);
+};
+
+document.addEventListener('error', (event) => {
+    if (event.target instanceof HTMLImageElement && event.target.matches('img[data-initials]')) {
+        showInitials(event.target);
+    }
+}, true);
+document.querySelectorAll('img[data-initials]').forEach((image) => image.complete && image.naturalWidth === 0 && showInitials(image));
+
 // Whole boxes open their page: a card marked data-card-href goes there when clicked anywhere except on its own
 // buttons, links and fields (they keep doing their own thing). Same behaviour for every card on the site.
 document.addEventListener('click', (event) => {

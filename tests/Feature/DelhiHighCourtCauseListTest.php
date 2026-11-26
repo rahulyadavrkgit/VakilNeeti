@@ -94,6 +94,7 @@ TEXT;
             'document_key' => 'standalone-supplementary',
             'listing_date' => '2026-11-25',
             'document_label' => 'Supplementary Cause List-1',
+            'source_url' => 'https://delhihighcourt.nic.in/files/supplementary-1.pdf',
             'metadata' => ['boards' => ['23' => ['items' => array_map('strval', range(70, 85))]]],
         ]);
         $appearances = CauseListAppearance::query()->with('courtDocument')->get()->keyBy('legal_case_id');

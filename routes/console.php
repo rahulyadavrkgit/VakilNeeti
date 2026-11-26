@@ -61,6 +61,9 @@ Schedule::command('courts:judge-photos')->weeklyOn(0, '05:00')->withoutOverlappi
 // A compressed database copy every night, kept for 14 days (storage/app/backups).
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping();
 
+// Who sits in each Supreme Court room, today and tomorrow (the court's list comes out the evening before).
+Schedule::command('courts:supreme-court-benches')->cron('40 7,20,22 * * *')->withoutOverlapping(30);
+
 // Cause lists are kept for six months with the saved cases' entries in them; hearing dates stay with the cases.
 Schedule::command('model:prune', ['--model' => [CourtDocument::class]])->dailyAt('03:15')->withoutOverlapping();
 

@@ -87,6 +87,19 @@ class HearingShareText
     }
 
     /**
+     * Who sits in a room on the hearing's date. Supreme Court benches change daily: only that day's bench counts
+     * (App\Services\SupremeCourtBenches). Other courts sit by roster, so the roster's judges are given.
+     */
+    public static function roomJudges(?string $court, ?string $room, mixed $date, ?string $rosterJudges): ?string
+    {
+        if (LiveCourtBoard::boardFor($court) === 'supreme-court') {
+            return SupremeCourtBenches::judgesOn($court, $room, $date);
+        }
+
+        return $rosterJudges;
+    }
+
+    /**
      * @param  array<string, mixed>  $event
      * @return array<string, mixed>
      */
@@ -104,9 +117,11 @@ class HearingShareText
             $vcLink = $vcLink ?: $bench?->vc_link;
         }
 
-        // Supreme Court and High Court lists give the room; the court's roster says who sits there.
-        if (! $judge && $room) {
-            $judge = app(CourtBenchMatcher::class)->findRoom($event['court'] ?? null, $room)?->judgeNames();
+        // Supreme Court and High Court lists give the room; who sits there and the room's VC link come from the court.
+        if ((! $judge || ! $vcLink) && $room) {
+            $roomBench = app(CourtBenchMatcher::class)->findRoom($event['court'] ?? null, $room);
+            $vcLink = $vcLink ?: $roomBench?->vc_link;
+            $judge = $judge ?: self::roomJudges($event['court'] ?? null, $room, $event['date'] ?? null, $roomBench?->judgeNames());
         }
 
         return [

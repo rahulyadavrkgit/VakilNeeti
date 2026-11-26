@@ -36,6 +36,9 @@
         </a>
         <template data-event-card>@include('case-calendar.partials.event-card', ['event' => $event])</template>
     </span>
+@elseif(($event['group'] ?? null) === 'hearing')
+    {{-- A hearing looks the same everywhere: the Home card (room, item, Supple, Join VC, Share). --}}
+    <x-hearing-card :event="$event" />
 @else
     <div class="rounded-lg border-l-4 px-3 py-2 text-sm {{ $eventClass }}">
         <span class="flex flex-wrap items-center justify-between gap-2">

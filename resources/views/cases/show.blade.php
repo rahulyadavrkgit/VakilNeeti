@@ -33,7 +33,9 @@
             $courtRoom = $panelListing?->court_room ?: ($nextHearing?->court_room ?: ($case->court_room ?: $listBench?->court_room));
             $vcLink = $panelListing?->vcLink() ?: ($nextHearing?->vc_link ?: ($case->vc_link ?: $listBench?->vc_link));
             $judge = $panelListing?->judge_name ?: ($nextHearing?->judge_name ?: ($case->judge_name ?: $listJudge));
-            $judge = $judge ?: app(\App\Services\CourtBenchMatcher::class)->findRoom($case->court_name, $courtRoom)?->judgeNames();
+            $roomBench = app(\App\Services\CourtBenchMatcher::class)->findRoom($case->court_name, $courtRoom);
+            $vcLink = $vcLink ?: $roomBench?->vc_link;
+            $judge = $judge ?: \App\Services\HearingShareText::roomJudges($case->court_name, $courtRoom, $panelNext['date'] ?? null, $roomBench?->judgeNames());
             $causeList = $panelListing?->stripData();
             $purpose = $nextHearing?->hearing_stage ?: ($panelNext ? $case->stage : null);
             $item = $causeList['item'] ?? $datedHearing?->item_number;

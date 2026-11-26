@@ -52,21 +52,19 @@ class EverydayShortcutsTest extends TestCase
             ->assertDontSee("matchMedia('(max-width: 639px)')", false);
     }
 
-    public function test_case_page_has_a_phone_action_bar_that_calls_the_client(): void
+    public function test_case_page_has_case_actions_and_calls_the_client(): void
     {
         $case = LegalCase::create(['case_title' => 'Ram vs Shyam', 'court_name' => 'Saket Courts', 'case_status' => 'pending']);
 
         $this->get(route('cases.show', $case))->assertOk()
             ->assertSee('aria-label="Case actions"', false)
-            ->assertSee('Add client')
             ->assertSee(route('cases.download', $case), false);
 
         $client = Client::create(['client_type' => 'individual', 'first_name' => 'Ravi', 'mobile' => '98765 43210']);
         $case->parties()->create(['client_id' => $client->id, 'party_name' => 'Ravi', 'is_client' => true]);
 
         $this->get(route('cases.show', $case))->assertOk()
-            ->assertSee('href="tel:+919876543210"', false)
-            ->assertSee('Call client');
+            ->assertSeeInOrder(['id="case-clients"', 'Ravi', 'href="tel:+919876543210"', 'Call'], false);
     }
 
     public function test_empty_alerts_and_tasks_say_what_to_do_next(): void

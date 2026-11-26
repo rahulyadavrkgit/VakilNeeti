@@ -162,7 +162,7 @@ class LiveCourtBoardTest extends TestCase
 
         $this->get(route('cases.calendar', ['view' => 'list', 'date' => '2026-03-10']))
             ->assertOk()
-            ->assertSee('data-live-chip data-source="'.route('courts.live-board.data', 'delhi-high-court').'" data-room="12" data-case-number="W.P.(C) 345/2026"', false)
+            ->assertSeeInOrder(['data-live-chip data-live-item-only', 'data-source="'.route('courts.live-board.data', 'delhi-high-court').'" data-room="12" data-case-number="W.P.(C) 345/2026"'], false)
             ->assertDontSee('data-source="'.route('courts.live-board.data', 'supreme-court').'"', false);
 
         Http::assertNothingSent();

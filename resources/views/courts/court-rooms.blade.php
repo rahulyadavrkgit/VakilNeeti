@@ -66,7 +66,7 @@
                                         @forelse($judges as $judge)
                                             <div class="flex min-w-0 items-start gap-2.5">
                                                 @if($judge['photo'])
-                                                    <img src="{{ $judge['photo'] }}" alt="" width="56" height="64" loading="lazy" class="h-16 w-14 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
+                                                    <img src="{{ $judge['photo'] }}" alt="" width="56" height="64" loading="lazy" data-initials="{{ \App\Models\CourtBench::initials($judge['name']) }}" class="h-16 w-14 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
                                                 @endif
                                                 <div class="min-w-0">
                                                     <a href="{{ $roomUrl }}" class="vn-link block wrap-anywhere text-base font-bold uppercase leading-snug">{{ $judge['name'] }}</a>
