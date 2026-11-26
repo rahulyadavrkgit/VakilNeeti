@@ -308,12 +308,16 @@ document.addEventListener('input', (event) => {
     }
 
     const query = input.value.trim().toLowerCase();
+    const room = query.match(/^(?:(?:court|room)\s*(?:no\.?\s*)?[:.-]?\s*)?(r?\d+)$/i)?.[1];
+    const roomKey = (number) => String(number).toLowerCase().replace(/^(r?)0+(?=\d)/, '$1');
     let shown = 0;
 
     const selector = input.dataset.filterAlso ? `[data-filter-item], ${input.dataset.filterAlso}` : '[data-filter-item]';
 
     list.querySelectorAll(selector).forEach((item) => {
-        const matches = query === '' || item.textContent.toLowerCase().includes(query);
+        const matches = item.hasAttribute('data-filter-room') && room
+            ? roomKey(item.dataset.filterRoom) === roomKey(room)
+            : (item.dataset.filterText ?? item.textContent).toLowerCase().includes(query);
         item.hidden = !matches;
 
         if (matches) {
@@ -325,6 +329,13 @@ document.addEventListener('input', (event) => {
         }
     });
 
+    list.querySelectorAll('[data-filter-group]').forEach((group) => {
+        group.hidden = !group.querySelector('[data-filter-item]:not([hidden])');
+    });
+    const count = list.querySelector('[data-filter-count]');
+    if (count) {
+        count.textContent = shown === 1 ? '1 room' : `${shown} rooms`;
+    }
     list.querySelector('[data-filter-empty]')?.toggleAttribute('hidden', shown > 0);
 });
 
@@ -561,130 +572,86 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         }
     });
 
-    // Which courts to show on a live board in VakilNiti: ticked from the board's own list of courts ("Court 5",
-    // "R1"), kept on this device for each board, and sent to the board inside the frame.
-    const roomsPicker = picker.querySelector('[data-board-rooms-picker]');
-    const roomsToggle = roomsPicker?.querySelector('[data-board-rooms-toggle]');
-    const roomsPanel = roomsPicker?.querySelector('[data-board-rooms-panel]');
-    const roomsList = roomsPicker?.querySelector('[data-board-rooms-list]');
-    const roomsLabel = roomsPicker?.querySelector('[data-board-rooms-label]');
+    const roomsSearch = picker.querySelector('[data-board-rooms-search]');
+    const roomsStatus = picker.querySelector('[data-board-rooms-status]');
     let roomsBoard = null;
     let roomsRequest;
     let chosenRooms = [];
+    let roomLabels = new Map();
 
     const boardSlug = (url) => (String(url || '').match(/\/live-board\/([a-z-]+)/) || [])[1] || null;
     const sendRooms = () => frame.contentWindow?.postMessage({ type: 'vn-board-rooms', rooms: chosenRooms.join(',') }, window.location.origin);
-    const shortName = (label) => String(label).replace(/^\s*court\s+(no\.?\s*)?/i, '');
-    const showRoomsLabel = () => {
-        roomsLabel.textContent = chosenRooms.length ? chosenRooms.map(shortName).join(', ') : 'All courts';
+    const shortName = (name) => String(name).replace(/\b(?:court|room)(?:\s+no\.?)?\s*[:.-]?\s*/gi, '').trim();
+    const roomKey = (name) => shortName(name).toLowerCase().replace(/[-.\s]/g, '').replace(/^(r?)0+(?=\d)/, '$1');
+    const showRoomStatus = (message) => {
+        roomsStatus.textContent = message;
+        roomsStatus.hidden = !message;
     };
-    const saveRooms = () => {
-        boardStore.set('vn-board-rooms:' + roomsBoard, chosenRooms.join(','));
-        showRoomsLabel();
-        sendRooms();
-    };
-    const roomsMessage = (text) => {
-        const note = document.createElement('p');
-        note.className = 'col-span-full px-1 py-2 text-slate-500';
-        note.textContent = text;
-        roomsList.replaceChildren(note);
+
+    const filterRooms = () => {
+        const terms = shortName(roomsSearch.value).toLowerCase().replace(/\br\s+(?=\d)/g, 'r')
+            .split(/[\s,;]+/).filter(Boolean).map(roomKey);
+        const matchingRooms = [...new Set(terms.map((term) => roomLabels.get(term)).filter(Boolean))];
+        const unknownRoom = terms.some((term) => !roomLabels.has(term));
+        showRoomStatus(unknownRoom ? 'Check the court numbers you entered.' : '');
+
+        if (!terms.length || matchingRooms.length) {
+            chosenRooms = matchingRooms;
+            boardStore.set('vn-board-rooms:' + roomsBoard, chosenRooms.join(','));
+            sendRooms();
+        }
     };
 
     const loadRooms = (url) => {
         const slug = boardSlug(url);
 
-        if (!roomsPicker) {
-            return;
-        }
-
-        if (slug === roomsBoard && slug) {
+        if (!roomsSearch || (slug && slug === roomsBoard)) {
             return;
         }
 
         roomsRequest?.abort();
-        roomsToggle.disabled = !slug;
-        roomsPanel.hidden = true;
-        roomsToggle.setAttribute('aria-expanded', 'false');
         roomsBoard = slug;
+        roomLabels = new Map();
+        roomsSearch.disabled = true;
+        roomsSearch.placeholder = slug ? '1, 2, R1' : 'External board';
+        chosenRooms = slug ? String(boardStore.get('vn-board-rooms:' + slug, '')).split(',').filter(Boolean) : [];
+        roomsSearch.value = chosenRooms.map(shortName).join(', ');
+        showRoomStatus('');
+
         if (!slug) {
-            chosenRooms = [];
-            roomsLabel.textContent = 'Unavailable';
             return;
         }
 
         const request = new AbortController();
         roomsRequest = request;
-        chosenRooms = String(boardStore.get('vn-board-rooms:' + slug, '')).split(',').filter(Boolean);
-        showRoomsLabel();
-        roomsMessage('Loading the courts…');
 
         fetch(new URL(url, window.location.origin).pathname.replace(/\/$/, '') + '/data', { headers: { Accept: 'application/json' }, signal: request.signal })
-            .then((response) => (response.ok ? response.json() : null))
+            .then((response) => response.ok ? response.json() : null)
+            .catch(() => null)
             .then((board) => {
                 if (request.signal.aborted) {
                     return;
                 }
 
-                if (!board || !board.rooms?.length) {
-                    roomsMessage('The court has not published its courts yet. Try again in a minute.');
-
+                if (!board?.rooms?.length) {
+                    roomsSearch.placeholder = 'Rooms unavailable';
                     return;
                 }
 
-                roomsList.replaceChildren(...board.rooms.map((room) => {
-                    const option = document.createElement('label');
-                    option.className = 'flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-1 text-center font-semibold text-slate-700 has-[:checked]:border-[#16776e] has-[:checked]:bg-teal-50 has-[:checked]:text-[#16776e]';
-                    const box = document.createElement('input');
-                    box.type = 'checkbox';
-                    box.value = room.label;
-                    box.className = 'sr-only';
-                    box.checked = chosenRooms.includes(room.label);
-                    option.append(box, document.createTextNode(shortName(room.label)));
-
-                    return option;
-                }));
-            })
-            .catch(() => {
-                if (!request.signal.aborted) {
-                    roomsMessage('The courts could not be loaded. Try again in a minute.');
-                }
+                board.rooms.forEach((room) => {
+                    roomLabels.set(roomKey(room.label), room.label);
+                    roomLabels.set(roomKey(room.room), room.label);
+                });
+                roomsSearch.value = chosenRooms.filter((room) => roomLabels.has(roomKey(room))).map(shortName).join(', ');
+                roomsSearch.disabled = false;
+                filterRooms();
             });
     };
 
-    if (roomsPicker) {
-        roomsToggle.addEventListener('click', () => {
-            roomsPanel.hidden = !roomsPanel.hidden;
-            roomsToggle.setAttribute('aria-expanded', String(!roomsPanel.hidden));
-        });
-        roomsList.addEventListener('change', () => {
-            chosenRooms = [...roomsList.querySelectorAll('input:checked')].map((box) => box.value);
-            saveRooms();
-        });
-        roomsPicker.querySelector('[data-board-rooms-all]').addEventListener('click', () => {
-            roomsList.querySelectorAll('input').forEach((box) => {
-                box.checked = false;
-            });
-            chosenRooms = [];
-            saveRooms();
-        });
-        const closeRooms = () => {
-            roomsPanel.hidden = true;
-            roomsToggle.setAttribute('aria-expanded', 'false');
-            roomsToggle.focus();
-        };
-        roomsPicker.querySelector('[data-board-rooms-done]').addEventListener('click', closeRooms);
-        roomsPicker.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && !roomsPanel.hidden) {
-                event.preventDefault();
-                closeRooms();
-            }
-        });
-        document.addEventListener('click', (event) => {
-            if (!roomsPicker.contains(event.target)) {
-                roomsPanel.hidden = true;
-                roomsToggle.setAttribute('aria-expanded', 'false');
-            }
-        });
+    if (roomsSearch) {
+        roomsStatus.id = `board-room-status-${pickerIndex}`;
+        roomsSearch.setAttribute('aria-describedby', roomsStatus.id);
+        roomsSearch.addEventListener('input', filterRooms);
         frame.addEventListener('load', sendRooms);
     }
 
@@ -882,6 +849,12 @@ if (liveChips.length) {
     const fill = (chip, board) => {
         const room = board.rooms.find((item) => item.room === chip.dataset.room);
         const text = chip.querySelector('[data-live-chip-text]');
+        if (chip.hasAttribute('data-live-item-only')) {
+            const item = board.ok && room?.status === 'running' ? room.item : null;
+            text.textContent = item || '*';
+            return;
+        }
+
         // No board to show (the court's data cannot be reached): leave the line as it was.
         chip.hidden = board.rooms.length === 0;
         const isMineNow = room?.status === 'running' && caseKey(chip.dataset.caseNumber) !== null
@@ -916,12 +889,16 @@ if (liveChips.length) {
         sources.forEach((source) => {
             fetch(source, { headers: { Accept: 'application/json' } })
                 .then((response) => (response.ok ? response.json() : null))
+                .catch(() => null)
                 .then((board) => {
-                    if (board) {
-                        liveChips.filter((chip) => chip.dataset.source === source).forEach((chip) => fill(chip, board));
-                    }
-                })
-                .catch(() => {});
+                    liveChips.filter((chip) => chip.dataset.source === source).forEach((chip) => {
+                        if (board) {
+                            fill(chip, board);
+                        } else if (chip.hasAttribute('data-live-item-only')) {
+                            fill(chip, { rooms: [], ok: false });
+                        }
+                    });
+                });
         });
     };
 
@@ -1029,6 +1006,7 @@ document.addEventListener('change', (event) => {
 document.querySelectorAll('[data-tabs]').forEach((tabList) => {
     const tabs = [...tabList.querySelectorAll('[data-tab]')];
     const panels = tabs.map((tab) => document.getElementById(tab.dataset.tab)).filter(Boolean);
+    const mobileScreen = tabList.hasAttribute('data-mobile-tabs') ? window.matchMedia('(width < 64rem)') : null;
 
     if (panels.length === 0) {
         return;
@@ -1038,6 +1016,11 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
     const panelFor = (id) => panels.find((panel) => panel.id === id || (id && panel.querySelector('#' + CSS.escape(id))));
 
     const select = (id, { focus = false, remember = true } = {}) => {
+        if (mobileScreen && !mobileScreen.matches) {
+            panels.forEach((panel) => { panel.hidden = false; });
+            return;
+        }
+
         const panel = panelFor(id) || panels[0];
 
         tabs.forEach((tab) => {
@@ -1101,7 +1084,7 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
         const link = event.target.closest('[data-tab-link], a[href^="#"]');
         const id = link?.dataset.tabLink || link?.getAttribute('href')?.slice(1);
 
-        if (link && !link.hasAttribute('data-tab') && id && panelFor(id)) {
+        if ((!mobileScreen || mobileScreen.matches) && link && !link.hasAttribute('data-tab') && id && panelFor(id)) {
             event.preventDefault();
             select(id);
             tabList.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -1109,20 +1092,25 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
     });
     window.addEventListener('hashchange', () => select(window.location.hash.slice(1), { remember: false }));
 
-    const fromAddress = window.location.hash.slice(1);
-    const withError = panels.find((panel) => panel.querySelector('[role="alert"], [data-field-error]'));
-    let remembered = null;
+    const restoreTab = () => {
+        const fromAddress = window.location.hash.slice(1);
+        const withError = panels.find((panel) => panel.querySelector('[role="alert"], [data-field-error]'));
+        let remembered = null;
 
-    try {
-        remembered = sessionStorage.getItem(storageKey);
-    } catch {
-        remembered = null;
-    }
+        try {
+            remembered = sessionStorage.getItem(storageKey);
+        } catch {
+            // Private browsing: use the address or the default tab.
+        }
 
-    select(
-        (fromAddress && panelFor(fromAddress) ? fromAddress : null) || withError?.id || remembered || panels[0].id,
-        { remember: false },
-    );
+        select(
+            (fromAddress && panelFor(fromAddress) ? fromAddress : null) || withError?.id || remembered || panels[0].id,
+            { remember: false },
+        );
+    };
+
+    mobileScreen?.addEventListener('change', restoreTab);
+    restoreTab();
 });
 
 
@@ -1156,6 +1144,42 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
+
+// Long lists that go on while scrolling (Home's hearings): when the [data-load-more] marker comes into view,
+// the next part is fetched and put in its place; the new part brings its own marker until the last one.
+const loadMore = (marker) => {
+    if (marker.dataset.loading) {
+        return;
+    }
+
+    marker.dataset.loading = '1';
+    const link = marker.innerHTML;
+    marker.textContent = 'Loading more hearings…';
+    // Signed out meanwhile: the answer is the sign-in page, which must not land in the list.
+    fetch(marker.dataset.loadMore, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+        .then((response) => (response.ok && !response.redirected ? response.text() : Promise.reject(response.status)))
+        .then((html) => {
+            const part = document.createRange().createContextualFragment(html);
+            const next = part.querySelector('[data-load-more]');
+            marker.replaceWith(part);
+
+            if (next) {
+                watchLoadMore(next);
+            }
+        })
+        .catch(() => {
+            // The plain link stays, so a tap still opens the rest.
+            marker.innerHTML = link;
+            delete marker.dataset.loading;
+        });
+};
+
+const loadMoreObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries) => entries.forEach((entry) => entry.isIntersecting && loadMore(entry.target)), { rootMargin: '1200px 0px' })
+    : null;
+const watchLoadMore = (marker) => loadMoreObserver?.observe(marker);
+
+document.querySelectorAll('[data-load-more]').forEach(watchLoadMore);
 
 // Whole boxes open their page: a card marked data-card-href goes there when clicked anywhere except on its own
 // buttons, links and fields (they keep doing their own thing). Same behaviour for every card on the site.

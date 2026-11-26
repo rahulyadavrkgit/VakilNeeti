@@ -163,6 +163,14 @@ class CourtBench extends Model
     }
 
     /**
+     * Everyone sitting in the room, in one line: "Hon'ble Mr. Justice A & Hon'ble Ms. Justice B" for a division bench.
+     */
+    public function judgeNames(): ?string
+    {
+        return collect($this->judgeList())->pluck('name')->implode(' & ') ?: null;
+    }
+
+    /**
      * The file with the judges' photos saved from the courts' own judges pages (`php artisan courts:judge-photos`).
      */
     public const PHOTOS_FILE = 'judge-photos.json';

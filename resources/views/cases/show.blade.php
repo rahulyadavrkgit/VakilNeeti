@@ -2,9 +2,10 @@
 
 @section('title', $case->case_title ?: 'Case Details')
 @section('page-heading', 'Case Details')
+@section('back-url', route('cases.index'))
 
 @section('content')
-<div class="mx-auto w-full max-w-5xl space-y-4">
+<div class="mx-auto w-full max-w-5xl space-y-3 sm:space-y-4">
 
         @php
             $todayDate = today()->toDateString();
@@ -32,6 +33,7 @@
             $courtRoom = $panelListing?->court_room ?: ($nextHearing?->court_room ?: ($case->court_room ?: $listBench?->court_room));
             $vcLink = $panelListing?->vcLink() ?: ($nextHearing?->vc_link ?: ($case->vc_link ?: $listBench?->vc_link));
             $judge = $panelListing?->judge_name ?: ($nextHearing?->judge_name ?: ($case->judge_name ?: $listJudge));
+            $judge = $judge ?: app(\App\Services\CourtBenchMatcher::class)->findRoom($case->court_name, $courtRoom)?->judgeNames();
             $causeList = $panelListing?->stripData();
             $purpose = $nextHearing?->hearing_stage ?: ($panelNext ? $case->stage : null);
             $item = $causeList['item'] ?? $datedHearing?->item_number;
@@ -60,7 +62,7 @@
                 'disposed', 'closed' => 'bg-rose-100 text-rose-700',
                 default => 'bg-slate-100 text-slate-700',
             };
-            $caseAction = 'inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-slate-300 px-2.5 text-sm font-semibold hover:bg-slate-50';
+            $caseAction = 'inline-flex min-h-10 w-full items-center rounded-md px-2.5 text-left text-sm font-semibold hover:bg-slate-50';
             $positionUrl = route('sheets.court-position', $case);
             $activeClientLink = $case->hasActiveStatusLink();
         @endphp
@@ -77,97 +79,118 @@
             </div>
         @endif
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4">
-            <div class="grid gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <div class="min-w-0 sm:col-start-1 sm:row-start-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="break-words text-xl font-bold text-slate-900 sm:text-2xl">{{ $case->case_title ?: 'Untitled case' }}</h2>
-                        <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
-                    </div>
-                    {{-- At a glance, two lines: court, number and bench; then CNR, stage and dates. --}}
-                    @php
-                        $benchName = preg_match('/^(the\s+)?(supreme court(\s+of\s+india)?|high court(\s+of\s+[\p{L} &.]+)?|[\p{L} &.]+\s+high court)$/iu', trim((string) $case->court_name)) ? null : $case->court_name;
-                        $factLine = array_filter([
-                            $case->cnr_number ? 'CNR: '.$case->cnr_number : null,
-                            $case->diary_number ? 'Diary: '.$case->diary_number : null,
-                            $case->stage ? 'Stage: '.$case->stage : null,
-                            $case->filing_date ? 'Filing date: '.$case->filing_date->format('M d, Y') : null,
-                            $case->disposed_on ? 'Disposed: '.$case->disposed_on->format('M d, Y') : null,
-                            $case->matter_id ? 'Matter: '.$case->matter_id : null,
-                        ]);
-                    @endphp
-                    <div class="mt-2 space-y-1 text-sm">
-                        <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <x-court-badge :level="$case->court_level" :state="$case->state_code" :district="$case->district" class="text-sm" />
-                            @if($case->case_number)
-                                <span class="text-base font-bold tabular-nums text-slate-900">{{ $case->case_number }}</span>
-                            @else
-                                <span class="text-slate-400">No case number yet</span>
-                            @endif
-                            @if($benchName)<span class="text-slate-700">• {{ $benchName }}</span>@endif
-                        </p>
-                        @if($factLine)
-                            <p class="text-slate-600">{{ implode(' • ', $factLine) }}</p>
-                        @endif
-                        <details class="relative w-fit max-w-full print:hidden">
-                            <summary class="vn-link min-h-8 cursor-pointer py-1 font-semibold">Petitioner &amp; Respondent Advocates</summary>
-                            <dl class="absolute left-0 z-20 mt-1 grid w-72 max-w-[calc(100vw-4rem)] gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-                                <div>
-                                    <dt class="font-semibold text-slate-900">Petitioner advocate</dt>
-                                    <dd class="mt-0.5 break-words text-slate-700">{{ $case->petitioner_advocate ?: 'Not recorded' }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="font-semibold text-slate-900">Respondent advocate</dt>
-                                    <dd class="mt-0.5 break-words text-slate-700">{{ $case->respondent_advocate ?: 'Not recorded' }}</dd>
-                                </div>
-                            </dl>
+        <section aria-label="Case summary" class="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="px-3.5 pt-3.5 sm:px-5 sm:pt-4">
+                <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($case->case_status ?: 'unknown') }}</span>
+                    <div class="ml-auto flex min-w-0 items-center justify-end gap-2 print:hidden" aria-label="Case actions" role="group">
+                        <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                           aria-label="Share case details" data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
+                           class="vn-primary-button inline-flex min-h-10 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold">
+                            <x-icon name="share" :size="15" /> Share
+                        </a>
+                        <details class="vn-profile-menu relative">
+                            <summary class="flex min-h-10 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-300 px-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                                Actions <x-icon name="chevron" :size="14" />
+                            </summary>
+                            <div class="absolute right-0 z-30 mt-1 grid w-40 gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                <button type="button" data-print class="{{ $caseAction }} text-slate-700">Print</button>
+                                <a href="{{ route('cases.edit', $case) }}" class="{{ $caseAction }}">Edit case</a>
+                                <a href="{{ route('cases.download', $case) }}" class="{{ $caseAction }}">Download PDF</a>
+                                @if($case->isClosed())
+                                    <form method="POST" action="{{ route('cases.reopen', $case) }}">
+                                        @csrf
+                                        <button type="submit" class="{{ $caseAction }} text-slate-700">Reopen case</button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('cases.close', $case) }}" data-confirm="Close this case? You can reopen it later.">
+                                        @csrf
+                                        <button type="submit" class="{{ $caseAction }} text-red-700">Close case</button>
+                                    </form>
+                                @endif
+                            </div>
                         </details>
-                        @unless($panelNext)
-                            <x-court-info :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex" :room="$courtRoom" :judge="$judge" :vc-link="$vcLink" :copy-vc="true" :judge-photos="true" :photo-district="$photoDistrict" />
-                        @endunless
                     </div>
                 </div>
-
-                <div class="row-start-1 flex flex-wrap items-start justify-end gap-1.5 sm:col-start-2 print:hidden" aria-label="Case actions" role="group">
-                    <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                       aria-label="Share case details" data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
-                       class="vn-primary-button inline-flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold">
-                        <x-icon name="share" :size="15" /> Share
-                    </a>
-                    <button type="button" data-print class="{{ $caseAction }} text-slate-700">Print</button>
-                    @if($case->isClosed())
-                        <form method="POST" action="{{ route('cases.reopen', $case) }}">
-                            @csrf
-                            <button type="submit" class="{{ $caseAction }} text-slate-700">Reopen case</button>
-                        </form>
-                    @else
-                        <form method="POST" action="{{ route('cases.close', $case) }}" data-confirm="Close this case? You can reopen it later.">
-                            @csrf
-                            <button type="submit" class="{{ $caseAction }} text-red-700">Close case</button>
-                        </form>
+                <h2 class="mt-2 wrap-anywhere text-xl font-bold leading-snug tracking-tight text-slate-900 sm:text-2xl">{{ $case->case_title ?: 'Untitled case' }}</h2>
+                <div class="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm">
+                    @if($case->case_number)
+                        <span class="wrap-anywhere font-bold tabular-nums text-slate-900">{{ $case->case_number }}</span>
                     @endif
+                    <span class="min-w-0 wrap-anywhere text-slate-600">{{ $case->court_name ?: $case->courtLevel() }}</span>
                 </div>
-
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-2 sm:col-span-2">
-                    <div class="grid min-w-0 grid-cols-2 gap-2 text-sm" aria-label="Appearance and position" role="group">
-                        <a href="{{ $positionUrl }}" data-sheet="{{ $positionUrl }}" class="min-w-0 rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50">
-                            <span class="block text-xs text-slate-600">Court position</span>
-                            <span class="vn-link block break-words font-semibold">{{ $standSide ? $standSide['label'].' facing judge' : 'Set position' }}</span>
-                        </a>
-                        <a href="{{ $positionUrl }}" data-sheet="{{ $positionUrl }}" class="min-w-0 rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50">
-                            <span class="block text-xs text-slate-600">We appear for</span>
-                            <span class="vn-link block break-words font-semibold">{{ $case->appearingForLabel() ?? 'Set appearance' }}</span>
-                        </a>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 print:hidden">
-                        <x-quick-next-date :case-id="$case->id" return="case" :open="true" :label="$panelDates->isNotEmpty() || $panelNext ? 'Add another date' : 'Add next date'" />
-                        <a href="{{ route('cases.edit', $case) }}" class="vn-link inline-flex min-h-9 items-center text-sm font-semibold">Edit case</a>
-                    </div>
-                </div>
+                @if($case->cnr_number || $case->diary_number)
+                    <dl class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-600">
+                        @if($case->cnr_number)
+                            <div><dt class="inline font-semibold">CNR</dt> <dd class="inline break-all">{{ $case->cnr_number }}</dd></div>
+                        @endif
+                        @if($case->diary_number)
+                            <div><dt class="inline font-semibold">Diary</dt> <dd class="inline break-all">{{ $case->diary_number }}</dd></div>
+                        @endif
+                    </dl>
+                @endif
+                @unless($panelNext)
+                    <x-court-info class="mt-2" :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex" :room="$courtRoom" :judge="$judge" :vc-link="$vcLink" :copy-vc="true" :judge-photos="true" :photo-district="$photoDistrict" />
+                @endunless
+                <details class="max-w-full text-sm print:hidden">
+                    <summary class="vn-link min-h-9 cursor-pointer py-2 font-semibold">Petitioner &amp; Respondent Advocates</summary>
+                    <dl class="mt-1 grid gap-3 rounded-lg bg-slate-50 p-3 sm:grid-cols-2">
+                        <div>
+                            <dt class="font-semibold text-slate-900">Petitioner advocate</dt>
+                            <dd class="mt-0.5 break-words text-slate-700">{{ $case->petitioner_advocate ?: 'Not recorded' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-slate-900">Respondent advocate</dt>
+                            <dd class="mt-0.5 break-words text-slate-700">{{ $case->respondent_advocate ?: 'Not recorded' }}</dd>
+                        </div>
+                    </dl>
+                </details>
             </div>
 
-            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-2 print:hidden">
-                <form method="POST" action="{{ route('cases.file-number', $case) }}" class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 px-2 py-2 sm:px-3">
+                <div class="grid min-w-0 flex-1 basis-full grid-cols-2 divide-x divide-slate-200 text-sm sm:basis-auto" aria-label="Appearance and position" role="group">
+                    <a href="{{ $positionUrl }}" data-sheet="{{ $positionUrl }}" class="min-w-0 px-2.5 py-1.5 hover:bg-slate-50">
+                        <span class="block text-xs text-slate-600">Court position</span>
+                        <span class="vn-link block break-words font-semibold">{{ $standSide ? $standSide['label'].' facing judge' : 'Set position' }}</span>
+                    </a>
+                    <a href="{{ $positionUrl }}" data-sheet="{{ $positionUrl }}" class="min-w-0 px-2.5 py-1.5 hover:bg-slate-50">
+                        <span class="block text-xs text-slate-600">We appear for</span>
+                        <span class="vn-link block break-words font-semibold">{{ $case->appearingForLabel() ?? 'Set appearance' }}</span>
+                    </a>
+                </div>
+                <div class="ml-auto print:hidden">
+                    <x-quick-next-date :case-id="$case->id" return="case" :open="true" :label="$panelDates->isNotEmpty() || $panelNext ? 'Add another date' : 'Add next date'" />
+                </div>
+            </div>
+        </section>
+
+        <x-tabs label="Case workspace" compact :tabs="[
+            'case-history' => 'Timeline',
+            'case-overview' => 'Details',
+            'case-documents' => 'Documents',
+            'case-clients' => 'Clients',
+            'case-notes' => 'Notes',
+            'case-follow-ups' => 'Follow-ups',
+            'case-connected' => 'Connected matters',
+            'case-journey' => 'Court journey',
+            'case-appointments' => 'Appointments',
+            'case-expenses' => 'Expenses',
+            'case-time' => 'Time entries',
+        ]" :counts="$tabCounts" />
+
+        @include('cases.partials.timeline')
+        @include('cases.partials.journey')
+        @include('cases.partials.connected')
+        @include('cases.partials.follow-ups')
+
+        <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
+
+        <!-- Case Information -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <h3 class="text-lg font-semibold text-slate-900">Case Information</h3>
+
+            <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-slate-100 pt-3 print:hidden">
+                <form method="POST" action="{{ route('cases.file-number', $case) }}" class="flex min-w-0 flex-wrap items-center gap-2">
                     @csrf
                     @method('PATCH')
                     <label for="case-file-number" class="text-sm font-semibold text-slate-700">File No.</label>
@@ -196,34 +219,8 @@
                     </form>
                 </div>
             </div>
-        </div>
 
-        <x-tabs label="Case workspace" :tabs="[
-            'case-history' => 'Timeline',
-            'case-overview' => 'Details',
-            'case-clients' => 'Clients',
-            'case-documents' => 'Documents',
-            'case-notes' => 'Notes',
-            'case-follow-ups' => 'Follow-ups',
-            'case-connected' => 'Connected matters',
-            'case-journey' => 'Court journey',
-            'case-appointments' => 'Appointments',
-            'case-expenses' => 'Expenses',
-            'case-time' => 'Time entries',
-        ]" :counts="$tabCounts" />
-
-        @include('cases.partials.timeline')
-        @include('cases.partials.journey')
-        @include('cases.partials.connected')
-        @include('cases.partials.follow-ups')
-
-        <div id="case-overview" data-tab-panel role="tabpanel" aria-labelledby="tab-case-overview" class="space-y-6">
-
-        <!-- Case Information -->
-        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <h3 class="text-lg font-semibold text-slate-900">Case Information</h3>
-
-            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">CNR Number</p>
@@ -235,6 +232,20 @@
                     <p class="mt-1 font-medium">{{ $case->case_number ?: 'Not available' }}</p>
                 </div>
 
+                @if($case->matter_id)
+                    <div>
+                        <p class="text-xs font-medium uppercase text-slate-500">Matter</p>
+                        <p class="mt-1 font-medium">{{ $case->matter_id }}</p>
+                    </div>
+                @endif
+
+                @if($case->diary_number)
+                    <div>
+                        <p class="text-xs font-medium uppercase text-slate-500">Diary Number</p>
+                        <p class="mt-1 font-medium">{{ $case->diary_number }}</p>
+                    </div>
+                @endif
+
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Case Type</p>
                     <p class="mt-1 font-medium">{{ $case->case_type ?: 'Not available' }}</p>
@@ -243,6 +254,9 @@
                 <div>
                     <p class="text-xs font-medium uppercase text-slate-500">Court</p>
                     <p class="mt-1 font-medium">{{ $case->court_name ?: 'Not available' }}</p>
+                    @if($case->court_level)
+                        <x-court-badge :level="$case->court_level" :state="$case->state_code" :district="$case->district" class="mt-1" />
+                    @endif
                 </div>
 
                 <div>
@@ -792,28 +806,4 @@
         </div>
 </div>
 
-{{-- Phones: the four things done most on a case stay one tap away, just above the bottom menu. --}}
-@php
-    $callableClient = $linkedClients->map->client->first(fn ($client) => $client->whatsappNumber());
-    $barButton = 'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-semibold';
-@endphp
-<div class="h-16 md:hidden print:hidden" aria-hidden="true"></div>
-<nav aria-label="Case shortcuts" class="vn-case-bar fixed inset-x-0 z-40 grid grid-cols-3 gap-1 border-t border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden print:hidden">
-    <a href="{{ route('hearings.create', ['case' => $case->id]) }}" data-sheet="{{ route('sheets.next-date', ['case' => $case->id]) }}"
-       class="{{ $barButton }} bg-[#16776e] text-white">
-        <x-icon name="calendar" :size="18" /> Next date
-    </a>
-    @if($callableClient)
-        <a href="tel:+{{ $callableClient->whatsappNumber() }}" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
-            <x-icon name="phone" :size="18" /> Call client
-        </a>
-    @else
-        <a href="#case-clients" data-tab-link="case-clients" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
-            <x-icon name="people" :size="18" /> Add client
-        </a>
-    @endif
-    <a href="{{ route('cases.download', $case) }}" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
-        <x-icon name="download" :size="18" /> Download
-    </a>
-</nav>
 @endsection

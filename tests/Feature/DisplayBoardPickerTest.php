@@ -22,7 +22,6 @@ class DisplayBoardPickerTest extends TestCase
             ->assertSee('data-board-hide', false)
             ->assertSee('data-board-fullscreen', false)
             ->assertSee('data-board-open="full"', false)
-            ->assertSee('data-view-toggle="home-modules"', false)
             ->assertSee('General information, not legal advice');
 
         $this->actingAs(User::factory()->create())

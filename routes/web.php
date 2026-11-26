@@ -62,6 +62,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])
     ->name('dashboard');
+Route::get('/home/hearings', [DashboardController::class, 'moreHearings'])
+    ->middleware(['auth', 'throttle:120,1'])->name('home.hearings');
 
 Route::view('/app', 'app-download')->name('app.download');
 

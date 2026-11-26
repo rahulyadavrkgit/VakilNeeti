@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CauseListAppearance;
+use App\Models\CourtDocument;
 use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\User;
@@ -67,6 +68,48 @@ TEXT;
         ], $documents);
     }
 
+    public function test_combined_pdf_keeps_advance_and_supplementary_room_counts_separate(): void
+    {
+        $this->travelTo('2026-11-24 20:30:00');
+        $this->actingAs(User::factory()->create());
+        $advance = LegalCase::create(['case_title' => 'Advance matter', 'case_number' => 'RSA/66/2026', 'court_name' => 'High Court of Delhi', 'case_status' => 'pending']);
+        $supplementary = LegalCase::create(['case_title' => 'Supplementary matter', 'case_number' => 'RSA/70/2026', 'court_name' => 'High Court of Delhi', 'case_status' => 'pending']);
+        $unlisted = LegalCase::create(['case_title' => 'Unlisted matter', 'case_number' => 'RSA/90/2026', 'court_name' => 'High Court of Delhi', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $unlisted->id, 'hearing_date' => '2026-11-25']);
+
+        $text = "25.11.2026\tADVANCE CAUSE LIST\t224\nCOURT NO.23\n";
+        $text .= implode("\n", array_map(fn (int $item): string => "{$item}. RSA-{$item}/2026", range(1, 69)));
+        $text .= "\n25.11.2026\tSUPPLEMENTARY CAUSE LIST\t111\nCOURT NO.23\n";
+        $text .= implode("\n", array_map(fn (int $item): string => "{$item}. RSA-{$item}/2026", range(70, 85)));
+        Http::fake([
+            'delhihighcourt.nic.in/web/cause-lists/*' => Http::response($this->listingPage()),
+            'delhihighcourt.nic.in/files/*' => Http::response('%PDF-1.6 test'),
+        ]);
+        $this->partialMock(DelhiHighCourtCauseList::class, fn ($mock) => $mock->shouldReceive('textOf')->andReturn($text));
+
+        $this->artisan('courts:delhi-hc-cause-list', ['--date' => '2026-11-25'])->expectsOutputToContain('Found 2 listings')->assertSuccessful();
+
+        CourtDocument::create([
+            'provider_key' => 'delhi-high-court',
+            'document_key' => 'standalone-supplementary',
+            'listing_date' => '2026-11-25',
+            'document_label' => 'Supplementary Cause List-1',
+            'metadata' => ['boards' => ['23' => ['items' => array_map('strval', range(70, 85))]]],
+        ]);
+        $appearances = CauseListAppearance::query()->with('courtDocument')->get()->keyBy('legal_case_id');
+        $this->assertSame(['item' => '66', 'total' => 69, 'supplementary' => null], $appearances[$advance->id]->place());
+        $this->assertSame('16 items · 70–85', $appearances[$advance->id]->roomSupplementary());
+        $this->assertSame(16, $appearances[$supplementary->id]->metadata['board_total']);
+        $this->assertStringContainsString('70-85(16)', $appearances[$supplementary->id]->place()['supplementary']);
+
+        $this->get(route('dashboard'))->assertOk()
+            ->assertSeeInOrder(['Advance matter', 'Room No.', '23', 'My item', '66 of 69', 'Curr. item', '*', 'Supple.', '16 items · 70–85'])
+            ->assertDontSee('data-live-item-only', false);
+        $this->get(route('cases.show', $unlisted))->assertOk()
+            ->assertSeeInOrder(['Room No.', 'My item', 'Curr. item', '*', 'Supple.'])
+            ->assertDontSee('Item pending');
+    }
+
     public function test_listed_cases_show_on_home_and_the_case_page_with_one_bell_note(): void
     {
         $this->travelTo('2026-11-24 20:30:00');
@@ -95,7 +138,7 @@ TEXT;
         $this->assertSame(['Listed Thu, 26 Nov · Delhi HC · Court 1 · Item 3', 'Listed tomorrow · Delhi HC · Court 1 · Item 3'], $owner->notifications()->get()->pluck('data.title')->sort()->values()->all());
 
         $this->get(route('dashboard'))->assertOk()
-            ->assertSeeInOrder(['Next hearing · Tomorrow 25th Nov', 'Rashtriya Mukti Morcha vs UOI', 'W.P.(C)/298/2008', 'ITEM 3', 'Court Room 1'])
+            ->assertSeeInOrder(['id="hearing-day-2026-11-25"', 'Tomorrow', '25 Nov 2026', 'Rashtriya Mukti Morcha vs UOI', 'W.P.(C)/298/2008', 'Room', 'My item'], false)
             ->assertDontSee('Also in the cause lists')
             ->assertSee('https://dhcvirtualcourt.webex.com/meet/dhcvirtualcourt9');
         $this->get(route('cases.show', $listed))->assertOk()->assertSee('id="cause-list"', false)->assertSee('c_25112026.pdf');
@@ -105,8 +148,8 @@ TEXT;
         $this->assertSame([$listed->id], $diary->viewData('cases')->pluck('id')->all());
         $this->assertStringContainsString('Rashtriya Mukti Morcha', $diary->viewData('shareText'));
 
-        // My cases shows it for tomorrow, with the cause list details.
-        $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI', 'Join VC', 'My item', '3', 'c_25112026.pdf']);
+        // My cases shows it for tomorrow; the room, item and cause list stay with the hearing on Home.
+        $this->get(route('cases.index', ['hearing_filter' => 'tomorrow']))->assertOk()->assertSeeInOrder(['Tomorrow', 'Rashtriya Mukti Morcha vs UOI'])->assertDontSee('My item');
 
         // The case had no date ahead, so the first listing became its next date, once, with the room and item.
         $saved = CourtHearing::query()->where('case_id', $listed->id)->get();

@@ -29,6 +29,7 @@ class HearingShareText
             self::where($item) ? 'Court: '.self::where($item) : null,
             ($item['item'] ?? null) ? 'Item: '.$item['item'] : null,
             ($item['list_total'] ?? null) ? 'Cases in list: '.$item['list_total'] : null,
+            ($item['supplementary'] ?? null) ? 'Supple: '.$item['supplementary'] : null,
             ($item['vc_link'] ?? null) ? 'VC link: '.$item['vc_link'] : null,
             ($item['details'] ?? null) ? 'Purpose: '.$item['details'] : null,
         ])->filter()->implode("\n");
@@ -63,7 +64,7 @@ class HearingShareText
             ($item['judge'] ?? null) ?: null,
             collect([
                 ($item['item'] ?? null) ? 'ITEM '.$item['item'].(($item['list_total'] ?? null) ? ' @ '.$item['list_total'] : '') : null,
-                $item['supplementary'] ?? null,
+                ($item['supplementary'] ?? null) ? 'Supple: '.$item['supplementary'] : null,
                 $room !== '' ? 'Court Room '.preg_replace('/^(court|room)\s*(no\.?)?\s*/i', '', $room) : null,
                 ($item['time'] ?? null) ? substr((string) $item['time'], 0, 5) : null,
             ])->filter()->implode(' · ') ?: null,
@@ -103,6 +104,11 @@ class HearingShareText
             $vcLink = $vcLink ?: $bench?->vc_link;
         }
 
+        // Supreme Court and High Court lists give the room; the court's roster says who sits there.
+        if (! $judge && $room) {
+            $judge = app(CourtBenchMatcher::class)->findRoom($event['court'] ?? null, $room)?->judgeNames();
+        }
+
         return [
             'title' => $event['title'] ?? null,
             'case_number' => $event['case_number'] ?? null,
@@ -117,7 +123,7 @@ class HearingShareText
             'details' => $event['details'] ?? null,
             'item' => $listing['item'] ?? $event['item_number'] ?? null,
             'list_total' => $listing['place']['total'] ?? $listing['total'] ?? $event['list_total'] ?? null,
-            'supplementary' => $listing['place']['supplementary'] ?? null,
+            'supplementary' => $listing['room_supplementary'] ?? $listing['place']['supplementary'] ?? null,
         ];
     }
 

@@ -1,6 +1,6 @@
 {{--
     The second menu: a bar under the header with the pages of the current section (Courts, Cases, Billing, Settings),
-    the same on computers and phones. The main menu links straight to each section's first page. Courts is for
+    with a separate workspace tab bar on the phone case page. The main menu links to each section's first page. Courts is for
     everyone, signed in or not: on phones it is the way to every court's page (computers also have the Courts menu).
 --}}
 @php
@@ -50,7 +50,7 @@
 @endphp
 
 @if($section)
-    <nav aria-label="{{ $section[0] }}" class="vn-section-nav border-b border-slate-200 bg-white print:hidden">
+    <nav aria-label="{{ $section[0] }}" class="vn-section-nav border-b border-slate-200 bg-white print:hidden {{ $named('cases.show') ? 'hidden md:block' : '' }}">
         <div class="flex overflow-x-auto px-1.5 [scrollbar-width:none] sm:px-3 lg:px-4">
             @foreach($section[1] as [$label, $url, $current])
                 <a href="{{ $url }}" @if($current) aria-current="page" @endif

@@ -45,11 +45,11 @@
     <span {{ $attributes->merge(['class' => 'flex min-w-0 flex-wrap items-center gap-1 text-xs']) }}>
         @if($courtLabel)
             <span class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                <x-icon name="building" :size="12" class="shrink-0 text-slate-400" /><span class="truncate">{{ $courtLabel }}</span>
+                <x-icon name="building" :size="12" class="shrink-0 text-slate-400" /><span class="{{ $judgePhotos ? 'wrap-anywhere' : 'truncate' }}">{{ $courtLabel }}</span>
             </span>
         @endif
         @if($room !== '')
-            <{{ $chipTag }} {!! $chipLink !!} class="inline-flex shrink-0 items-center rounded-full bg-[#142235] px-2 py-0.5 font-semibold text-white" @if(in_array('room', $fromList, true)) title="{{ $listNote }}" @endif>{{ $roomLabel }}</{{ $chipTag }}>
+            <{{ $chipTag }} {!! $chipLink !!} class="inline-flex min-w-0 max-w-full items-center rounded-full bg-[#142235] px-2 py-0.5 font-semibold text-white" @if(in_array('room', $fromList, true)) title="{{ $listNote }}" @endif><span class="wrap-anywhere">{{ $roomLabel }}</span></{{ $chipTag }}>
         @endif
         @if($judge)
             <{{ $chipTag }} {!! $chipLink !!} class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-900 ring-1 ring-inset ring-amber-200" @if(in_array('judge', $fromList, true)) title="{{ $listNote }}" @endif>

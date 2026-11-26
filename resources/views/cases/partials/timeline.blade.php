@@ -51,8 +51,8 @@
     $card = 'rounded-lg border border-slate-200 bg-white p-3';
 @endphp
 
-<section id="case-history" data-tab-panel role="tabpanel" aria-labelledby="tab-case-history" class="scroll-mt-24 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm sm:p-4">
-    <h3 class="text-lg font-semibold text-slate-900">Timeline</h3>
+<section id="case-history" data-tab-panel role="tabpanel" aria-labelledby="tab-case-history" class="scroll-mt-28 sm:rounded-xl sm:border sm:border-slate-200 sm:bg-slate-50 sm:p-4 sm:shadow-sm">
+    <h3 class="sr-only">Timeline</h3>
 
     @if(! $panelNext && $panelLast)
         <p class="mt-2 text-sm text-slate-600">No upcoming hearing. Last date {{ $panelLast['date']->format('d M Y') }}.</p>
@@ -64,6 +64,10 @@
                 <article class="{{ $card }}">
                     <h4 class="font-semibold">Hearing date not available</h4>
                     <p class="text-sm">{{ $hearing->dateSourceLabel() }} @if($hearing->judge_name || $hearing->court_room)&middot; {{ $hearing->judge_name ?: $hearing->court_room }}@endif</p>
+                    @if(in_array($case->court_level, ['high', 'district'], true))
+                        <x-hearing-strip :show-date="false" :show-room="false" :court="$case->court_name" :room="$hearing->court_room"
+                            :item="$hearing->item_number" :list-total="$hearing->list_total" :high-court="$case->court_level === 'high'" :district="$case->court_level === 'district'" />
+                    @endif
                     @if($hearing->proceedings)<p class="whitespace-pre-line text-sm">{{ $hearing->proceedings }}</p>@endif
                     @if($hearing->next_action)<p class="text-sm"><strong>Next action</strong> {{ $hearing->next_action }}</p>@endif
                     @if($hearing->isManual())<a class="inline-flex min-h-11 items-center text-sm underline" href="{{ route('hearings.edit', $hearing) }}">Edit hearing</a>@endif
@@ -74,19 +78,18 @@
     @if($days->isEmpty() && $undated->isEmpty())
         <p class="mt-4 rounded-lg bg-slate-50 p-5 text-center text-sm text-slate-500">No hearings or documents yet. Add the next date to start the timeline.</p>
     @elseif($days->isNotEmpty())
-        <ol class="mt-3 divide-y divide-slate-200">
+        <ol class="space-y-4 sm:divide-y sm:divide-slate-200">
             @foreach($days as $day => $dayEntries)
                 @php
                     $date = \Illuminate\Support\Carbon::parse($day);
                     $isFuture = $date->isAfter(today());
                     $isNextDay = $panelNext && $date->isSameDay($panelNext['date']);
                 @endphp
-                <li class="grid grid-cols-[3.75rem_minmax(0,1fr)] gap-2 py-2 first:pt-0 last:pb-0 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3">
-                    <time datetime="{{ $day }}" aria-label="{{ $date->format('l, d F Y') }}{{ $isNextDay && $panelTime ? ', '.$panelTime : '' }}" class="self-start rounded-lg px-1.5 py-2 text-center tabular-nums {{ $isNextDay ? 'bg-teal-100 text-[#16776e]' : 'bg-slate-100 text-slate-700' }}">
-                        <span class="block text-xs font-medium sm:hidden">{{ $date->format('D') }}</span>
-                        <span class="hidden text-xs font-medium sm:block">{{ $date->format('l') }}</span>
-                        <span class="block text-sm font-bold">{{ $date->format('d M') }}</span>
-                        <span class="block text-xs">{{ $date->format('Y') }}</span>
+                <li class="grid min-w-0 gap-1.5 border-l-2 pl-2.5 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3 sm:border-l-0 sm:pt-3 sm:pl-0 sm:first:pt-0 {{ $isNextDay ? 'border-teal-500' : 'border-slate-200' }}">
+                    <time datetime="{{ $day }}" aria-label="{{ $date->format('l, d F Y') }}{{ $isNextDay && $panelTime ? ', '.$panelTime : '' }}"
+                          class="flex flex-wrap items-baseline gap-x-2 self-start py-1 text-sm font-bold tabular-nums sm:block sm:rounded-lg sm:px-1.5 sm:py-2 sm:text-center {{ $isNextDay ? 'text-teal-800 sm:bg-teal-100' : 'text-slate-700 sm:bg-slate-100' }}">
+                        <span class="sm:block">{{ $date->format('d M Y') }}</span>
+                        <span class="text-xs font-medium sm:block">{{ $date->format('l') }}</span>
                     </time>
 
                     <div class="min-w-0 space-y-2">
@@ -109,7 +112,7 @@
                                     </div>
                                     <div @if($panelListing) id="cause-list" @endif class="scroll-mt-36">
                                         <x-hearing-strip :date="$panelNext['date']" :show-date="false" :show-room="false" :waiting="false" :court="$case->court_name" :room="$courtRoom"
-                                            :item="$item" :list-total="$listTotal" :cause-list="$causeList" :district="$case->court_level === 'district'"
+                                            :item="$item" :list-total="$listTotal" :cause-list="$causeList" :district="$case->court_level === 'district'" :high-court="$case->court_level === 'high'"
                                             :case-number="$case->case_number"
                                             :order-url="$latestOrder ? route('cases.documents.download', [$case, $latestOrder, 'preview' => 1]) : null"
                                             :order-date="$latestOrder?->created_at?->format('d M Y')" />
@@ -150,11 +153,19 @@
                                             @endif
                                         </span>
                                     </div>
-                                    @if($room || $listing?->item_number || (! $isNext && $hearing->item_number) || $hearing->hearing_time)
+                                    @if($case->court_level === 'high')
+                                        <x-hearing-strip :show-date="false" :date="$date" :court="$case->court_name" :room="$room"
+                                            :item="$isNext ? null : $hearing->item_number" :list-total="$isNext ? null : $hearing->list_total"
+                                            :cause-list="$listing?->stripData()" :case-number="$case->case_number" high-court />
+                                        @if(! $isNext && $hearing->hearing_time)
+                                            <p class="mt-1 text-sm text-slate-600">{{ \Illuminate\Support\Carbon::parse($hearing->hearing_time)->format('g:i a') }}</p>
+                                        @endif
+                                    @elseif($case->court_level === 'district' || $room || $listing?->item_number || (! $isNext && $hearing->item_number) || $hearing->hearing_time)
                                         <p class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-slate-800">
                                             @if($room)<span>Court room: {{ $room }}</span>@endif
                                             @if($listing?->item_number)<span>Item No: {{ $listing->item_number }}</span>
                                             @elseif(! $isNext && $hearing->item_number)<span>Item No: {{ $hearing->item_number }}@if($hearing->list_total) of {{ $hearing->list_total }}@endif</span>@endif
+                                            @if($case->court_level === 'district')<span>Curr. item: N/A</span>@endif
                                             @if($listing?->boardFacts())<span class="font-normal text-slate-600">{{ implode(' · ', $listing->boardFacts()) }}</span>@endif
                                             @if(! $isNext && $hearing->hearing_time)<span>{{ \Illuminate\Support\Carbon::parse($hearing->hearing_time)->format('g:i a') }}</span>@endif
                                         </p>
@@ -181,12 +192,18 @@
                                 @php $listing = $entry['listing']; @endphp
                                 <article class="{{ $card }} border-teal-200 bg-teal-50/50">
                                     <p class="font-semibold text-[#16776e]">Listed in the cause list</p>
-                                    {{-- One line: where and which item. The judge is with the hearing above. --}}
-                                    <p class="mt-1 text-sm text-slate-700"><strong class="text-slate-900">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</strong>@if($listing->boardFacts()) · {{ implode(' · ', $listing->boardFacts()) }}@endif</p>
-                                    {{-- The court, item and date are above; the list itself is one PDF link. --}}
+                                    @if($case->court_level === 'high')
+                                        <x-hearing-strip :show-date="false" :date="$date" :court="$case->court_name"
+                                            :cause-list="$listing->stripData()" :case-number="$case->case_number" high-court />
+                                    @else
+                                        <p class="mt-1 text-sm text-slate-700"><strong class="text-slate-900">@if($listing->court_room)Court {{ $listing->court_room }} · @endif Item {{ $listing->item_number }}</strong>@if($listing->boardFacts()) · {{ implode(' · ', $listing->boardFacts()) }}@endif</p>
+                                        @if($case->court_level === 'district')<p class="text-sm text-slate-700">Curr. item: N/A</p>@endif
+                                    @endif
                                     <p class="mt-1.5 flex flex-wrap gap-3 text-sm">
                                         @if($listing->vcLink())<a href="{{ $listing->vcLink() }}" target="_blank" rel="noopener" class="font-semibold text-[#16776e] hover:underline">Join VC</a>@endif
-                                        <a href="{{ $listing->courtDocument->source_url }}" target="_blank" rel="noopener" title="{{ $listing->courtDocument->document_label }}" class="vn-file-link">Cause list</a>
+                                        @unless($case->court_level === 'high')
+                                            <a href="{{ $listing->courtDocument->source_url }}" target="_blank" rel="noopener" title="{{ $listing->courtDocument->document_label }}" class="vn-file-link">Cause list</a>
+                                        @endunless
                                     </p>
                                 </article>
                             @else

@@ -99,7 +99,6 @@ class LegalCaseController extends Controller
                 'label' => $rows->first()['label'],
                 'count' => $order->where('group', $group)->count(),
             ])->keyBy('first')->all(),
-            'orders' => CaseDocument::latestOrdersForCases($cases->pluck('id')),
             'hearingCounts' => $hearingCounts,
             'hearingChips' => self::HEARING_CHIPS,
             'shareText' => $cases->total() > 0 ? $this->shareText($request) : null,

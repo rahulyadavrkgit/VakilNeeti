@@ -430,10 +430,21 @@
 .dark .vn-sheet { background: #141f31; border-color: #2a3b56; }
 
 :root {
+    --vn-ink: #142235;
+    --vn-ink-soft: #20334a;
+    --vn-accent: #16776e;
+    --vn-accent-dark: #125f58;
+    --vn-gold: #e6b84a;
+    --vn-canvas: #f6f5f1;
+    --vn-line: #e2e8ef;
+    --vn-text: #172536;
     --vn-link: #1d4ed8;
 }
 
-.dark {
+html.dark {
+    --vn-canvas: #0d1524;
+    --vn-line: #24344d;
+    --vn-text: #e3e9f1;
     --vn-link: #90b8ff;
 }
 

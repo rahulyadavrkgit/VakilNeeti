@@ -5,9 +5,8 @@
 @section('page-heading', $court['list'])
 
 @php
-    $cell = 'min-w-0 rounded-xl bg-slate-50 px-3 py-2';
-    $cellLabel = 'text-xs font-bold uppercase tracking-wide text-slate-500';
     $chip = 'inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition';
+    $visibleRooms = $groups->sum(fn ($rooms) => $rooms->count());
 @endphp
 
 @section('content')
@@ -40,77 +39,68 @@
         <label class="sticky top-[calc(var(--vn-header-height)+0.5rem)] z-10 flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-sm focus-within:border-[#16776e]">
             <x-icon name="search" :size="18" class="text-slate-400" />
             <span class="sr-only">Search judge, court no. or matter</span>
-            <input type="search" data-filter-list="court-rooms" placeholder="Search judge, court no. or matter (e.g. bail, GST)" class="min-h-12 w-full border-0 bg-transparent px-0 focus:ring-0">
+            <input type="search" data-filter-list="court-rooms" placeholder="Judge, room number or roster" class="min-h-12 w-full border-0 bg-transparent px-0 focus:ring-0">
         </label>
 
-        <div id="court-rooms" class="space-y-5">
+        <div id="court-rooms" class="space-y-4">
+            <p data-filter-count role="status" class="text-sm font-medium text-slate-600">{{ $visibleRooms }} {{ $visibleRooms === 1 ? 'room' : 'rooms' }}</p>
             @foreach($groups as $groupName => $benches)
-                <section data-filter-item>
+                <section data-filter-group>
                     @if($groupName !== '')
                         <h2 class="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-600">{{ $groupName }} <span class="rounded-full bg-slate-200 px-2 text-xs text-slate-700">{{ $benches->count() }}</span></h2>
                     @endif
                     <div class="grid gap-3 md:grid-cols-2">
                         @foreach($benches as $bench)
-                            <article data-filter-item class="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                @php $room = $bench->roomParts(); @endphp
-                                <div class="flex items-start gap-3">
-                                    <div class="min-w-0 flex-1 space-y-1">
-                                        @if($bench->bench || $bench->location)
-                                            <p class="text-xs font-bold uppercase tracking-wide text-[#16776e]">{{ collect([$bench->bench, $bench->location])->filter()->implode(' · ') }}</p>
-                                        @endif
-                                        @forelse($bench->judgeList() as $judge)
-                                            <div class="flex items-center gap-2">
+                            @php
+                                $room = $bench->roomParts();
+                                $judges = $bench->judgeList();
+                                $roomUrl = $bench->pageUrl();
+                                $searchTerms = collect([$bench->court_room, $bench->bench, $bench->location])
+                                    ->merge(collect($judges)->flatMap(fn ($judge) => [$judge['name'], $judge['designation']]))
+                                    ->merge($bench->roster ?? [])->filter()->implode(' ');
+                            @endphp
+                            <article data-filter-item data-filter-room="{{ $room['number'] }}" data-filter-text="{{ $searchTerms }}"
+                                     class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-teal-300 focus-within:border-teal-500 sm:p-4">
+                                <div class="flex min-w-0 items-start gap-2.5">
+                                    <div class="min-w-0 flex-1 space-y-2">
+                                        @forelse($judges as $judge)
+                                            <div class="flex min-w-0 items-start gap-2.5">
                                                 @if($judge['photo'])
-                                                    <img src="{{ $judge['photo'] }}" alt="" loading="lazy" class="h-12 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200">
+                                                    <img src="{{ $judge['photo'] }}" alt="" width="56" height="64" loading="lazy" class="h-16 w-14 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
                                                 @endif
-                                                <p class="leading-snug">
-                                                    <span class="font-semibold text-slate-900">{{ $judge['name'] }}</span>
-                                                    @if($judge['designation'])<span class="block text-xs font-medium text-slate-500">{{ $judge['designation'] }}</span>@endif
-                                                </p>
+                                                <div class="min-w-0">
+                                                    <a href="{{ $roomUrl }}" class="vn-link block wrap-anywhere text-base font-bold uppercase leading-snug">{{ $judge['name'] }}</a>
+                                                    @if($judge['designation'])<p class="mt-0.5 wrap-anywhere text-xs uppercase leading-relaxed text-slate-600">{{ $judge['designation'] }}</p>@endif
+                                                </div>
                                             </div>
                                         @empty
-                                            <p class="font-semibold text-slate-900">{{ $bench->court_room }}</p>
+                                            <a href="{{ $roomUrl }}" class="vn-link block wrap-anywhere font-semibold">{{ $bench->court_room ?: 'Room details' }}</a>
                                         @endforelse
-                                        @if($room['place'])
-                                            <p class="mt-1 flex items-center gap-1 text-xs font-medium text-slate-600">
-                                                <x-icon name="map" :size="12" class="shrink-0 text-slate-400" /> {{ $room['place'] }}
-                                            </p>
-                                        @endif
                                     </div>
-                                    <a href="{{ $bench->pageUrl() }}" title="This room's own page" class="flex h-11 min-w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-[#142235] px-2 text-white hover:ring-2 hover:ring-[#16776e]">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-white/70">Court</span>
-                                        <span class="whitespace-nowrap font-extrabold leading-none {{ mb_strlen((string) $room['number']) > 4 ? 'text-xs' : 'text-base' }}">{{ $room['number'] ?? '—' }}</span>
-                                    </a>
+                                    @if($room['number'])
+                                        <a href="{{ $roomUrl }}" aria-label="Open Court {{ $room['number'] }}"
+                                           class="flex min-h-11 max-w-24 shrink-0 flex-col items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-2 py-1.5 text-center text-teal-800 hover:border-teal-500">
+                                            <span class="text-xs font-medium">Room</span>
+                                            <span class="wrap-anywhere text-base font-bold tabular-nums">{{ $room['number'] }}</span>
+                                        </a>
+                                    @endif
                                 </div>
-
-                                @if($bench->vc_meeting_id || $bench->email)
-                                    <div class="mt-3 grid grid-cols-2 gap-2">
-                                        @if($bench->vc_meeting_id)
-                                            <div class="{{ $cell }}">
-                                                <p class="{{ $cellLabel }}">VC meeting ID</p>
-                                                <p class="mt-0.5 break-words text-sm font-semibold text-slate-900">{{ $bench->vc_meeting_id }}</p>
-                                            </div>
-                                        @endif
-                                        @if($bench->email)
-                                            <div class="{{ $cell }} {{ $bench->vc_meeting_id ? '' : 'col-span-2' }}">
-                                                <p class="{{ $cellLabel }}">Email</p>
-                                                <p class="mt-0.5 break-words text-sm">
-                                                    @foreach(preg_split('/\s*[\/,;]\s*/', $bench->email) as $emailAddress)
-                                                        <a href="mailto:{{ $emailAddress }}" data-direct-share class="font-semibold text-[#16776e] hover:underline">{{ $emailAddress }}</a>@if(! $loop->last)<span class="text-slate-400"> / </span>@endif
-                                                    @endforeach
-                                                </p>
-                                            </div>
-                                        @endif
-                                    </div>
+                                @if($bench->bench || $bench->location || $room['place'])
+                                    <p class="mt-2 flex items-start gap-1.5 text-xs text-slate-600">
+                                        <x-icon name="map" :size="14" class="shrink-0" />
+                                        <span class="min-w-0 wrap-anywhere">{{ collect([$bench->bench, $bench->location, $room['place']])->filter()->unique()->implode(' · ') }}</span>
+                                    </p>
                                 @endif
 
+                                <x-court-room-contact :bench="$bench" />
+
                                 @if($bench->roster)
-                                    <details class="group mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
-                                        <summary class="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-800">
+                                    <details class="group mt-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-sm">
+                                        <summary class="flex min-h-10 cursor-pointer list-none items-center justify-between font-semibold text-slate-800 [&::-webkit-details-marker]:hidden">
                                             Roster · {{ count($bench->roster) }} categories
                                             <x-icon name="chevron" :size="16" class="text-slate-400 transition group-open:rotate-180" />
                                         </summary>
-                                        <ol class="mt-2 list-decimal space-y-1 pl-5 text-slate-700">
+                                        <ol class="list-decimal space-y-1 pb-3 pl-5 text-slate-700">
                                             @foreach($bench->roster as $matter)
                                                 <li>{{ $matter }}</li>
                                             @endforeach
@@ -118,17 +108,10 @@
                                     </details>
                                 @endif
 
-                                <div class="mt-auto flex flex-wrap items-center gap-2 pt-3">
-                                    @if($bench->vc_link)
-                                        <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                                           class="inline-flex min-h-9 items-center gap-1.5 rounded-lg vn-primary-button px-3 text-sm font-semibold">
-                                            <x-icon name="screen" :size="16" /> Join VC
-                                        </a>
-                                        <button type="button" data-copy="{{ $bench->vc_link }}" class="min-h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Copy link</button>
-                                    @else
-                                        <span class="inline-flex min-h-9 items-center rounded-lg border border-dashed border-slate-300 px-3 text-xs font-semibold text-slate-400">VC link coming soon</span>
-                                    @endif
-                                    <a href="{{ $causeList }}" rel="noopener noreferrer" class="ml-auto inline-flex min-h-9 items-center text-sm font-semibold text-[#16776e] hover:underline">Cause list</a>
+                                <div class="mt-auto pt-2">
+                                    <a href="{{ $causeList }}" rel="noopener noreferrer" class="vn-link inline-flex min-h-9 items-center gap-1 text-sm font-semibold">
+                                        Cause list <span aria-hidden="true">&rarr;</span>
+                                    </a>
                                 </div>
                             </article>
                         @endforeach

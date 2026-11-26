@@ -14,6 +14,8 @@ class DelhiHighCourtCauseList
 {
     public const PAGE_URL = 'https://delhihighcourt.nic.in/web/cause-lists/cause-list';
 
+    public const EXTRACTION_VERSION = 'list-sections-v2';
+
     private const SITE = 'https://delhihighcourt.nic.in';
 
     /**
@@ -89,7 +91,7 @@ class DelhiHighCourtCauseList
     /**
      * Every listed matter in a cause list's text, with the court it is listed in.
      *
-     * @return list<array{key: string, reference: string, item: string, court: ?string, judges: list<string>, vc_link: ?string, line: int}>
+     * @return list<array{key: string, reference: string, item: string, court: ?string, judges: list<string>, vc_link: ?string, line: int, board_section: ?string}>
      */
     public function entries(string $text): array
     {
@@ -98,10 +100,25 @@ class DelhiHighCourtCauseList
         $judges = [];
         $vcLink = null;
         $item = null;
+        $section = null;
         $entries = [];
 
         foreach ($lines as $index => $rawLine) {
             $line = trim(str_replace("\u{00A0}", ' ', $rawLine));
+
+            if (preg_match('/^(?:\d{2}[.\/-]\d{2}[.\/-]\d{4}\s+)?(ADVANCE|SUPPLEMENTARY|REGULAR|FINAL)(?:\s+MATTERS)?\s+CAUSE\s+LIST\b/i', $line, $heading)) {
+                $newSection = strtolower($heading[1]);
+
+                if ($newSection !== $section) {
+                    $section = $newSection;
+                    $court = null;
+                    $judges = [];
+                    $vcLink = null;
+                    $item = null;
+                }
+
+                continue;
+            }
 
             if (preg_match('/^COURT\s*NO\.?\s*:?\s*(\d{1,3})\b/i', $line, $match)) {
                 $court = (string) (int) $match[1];
@@ -142,6 +159,7 @@ class DelhiHighCourtCauseList
                 'judges' => $judges,
                 'vc_link' => $vcLink,
                 'line' => $index + 1,
+                'board_section' => $section,
             ];
         }
 

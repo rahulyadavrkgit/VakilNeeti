@@ -70,13 +70,13 @@ class JudgePhotosAndBoardPickerTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         $this->get(route('courts.display-boards'))->assertOk()
-            ->assertSeeInOrder(['data-board-rooms-picker', 'data-board-rooms-list', 'data-board-combo-toggle', 'data-board-search role="combobox"'], false)
+            ->assertSeeInOrder(['data-board-rooms-picker', 'data-board-rooms-search', 'data-board-combo-toggle', 'data-board-search role="combobox"'], false)
+            ->assertDontSee('data-board-rooms-list', false)
             ->assertSee('Type a board name');
 
-        // The board in VakilNiti listens for the chosen court numbers and is coloured like the court's own board.
         $this->get(route('courts.live-board', 'delhi-high-court'))->assertOk()
             ->assertSee("type === 'vn-board-rooms'", false)->assertSee('data-label="', false)
-            ->assertSee('vn-court-board', false)->assertSee('bg-[#0066ff]', false);
+            ->assertSee('vn-court-board', false)->assertSee('data-live-room-search', false);
     }
 
     public function test_a_court_badge_is_not_repeated_by_a_court_name_chip(): void
@@ -87,8 +87,8 @@ class JudgePhotosAndBoardPickerTest extends TestCase
 
         $html = $this->get(route('cases.index'))->assertOk()->getContent();
 
-        $this->assertStringContainsString('<span class="truncate">2nd Jt C.J.J.D. and J.M.F.C. Mahad</span>', $html);
-        $this->assertStringNotContainsString('<span class="truncate">Allahabad High Court</span>', $html);
-        $this->assertStringContainsString('Room 90', $html);
+        $this->assertStringContainsString('text-slate-600">2nd Jt C.J.J.D. and J.M.F.C. Mahad</p>', $html);
+        $this->assertStringNotContainsString('text-slate-600">Allahabad High Court</p>', $html);
+        $this->assertStringNotContainsString('Join VC', $html);
     }
 }

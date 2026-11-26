@@ -27,17 +27,17 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex items-start gap-3">
             @if($judges[0]['photo'] ?? null)
-                <img src="{{ $judges[0]['photo'] }}" alt="" width="40" height="48" class="h-12 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200">
+                <img src="{{ $judges[0]['photo'] }}" alt="" width="56" height="64" class="h-16 w-14 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
             @endif
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">{{ $court['court'] }}</p>
-                <h1 class="mt-1 break-words text-2xl font-semibold text-slate-900">{{ $firstJudge ?: ($bench->court_room ?: $court['court']) }}</h1>
+                <h1 class="mt-1 break-words text-2xl font-semibold uppercase text-slate-900">{{ $firstJudge ?: ($bench->court_room ?: $court['court']) }}</h1>
                 @if($judges[0]['designation'] ?? null)
-                    <p class="text-sm text-slate-600">{{ $judges[0]['designation'] }}</p>
+                    <p class="text-xs uppercase leading-relaxed text-slate-600">{{ $judges[0]['designation'] }}</p>
                 @endif
             </div>
             @if($roomNumber)
-                <span class="inline-flex min-h-10 shrink-0 items-center rounded-lg bg-[#142235] px-2.5 text-sm font-semibold text-white">Court {{ $roomNumber }}</span>
+                <span class="inline-flex min-h-10 max-w-28 items-center rounded-lg border border-teal-200 bg-teal-50 px-2.5 text-sm font-semibold text-teal-800">Court {{ $roomNumber }}</span>
             @endif
         </div>
         @if($roomPlace || $bench->bench || $bench->location)
@@ -49,12 +49,12 @@
                 @foreach(array_slice($judges, 1) as $judge)
                     <li class="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
                         @if($judge['photo'])
-                            <img src="{{ $judge['photo'] }}" alt="" width="40" height="48" class="h-12 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200">
+                            <img src="{{ $judge['photo'] }}" alt="" width="40" height="48" class="h-12 w-10 shrink-0 rounded-lg border-2 border-white object-cover shadow-sm ring-1 ring-slate-200">
                         @endif
                         <div class="min-w-0">
-                            <p class="font-semibold text-slate-900">{{ $judge['name'] }}</p>
+                            <p class="font-semibold uppercase text-slate-900">{{ $judge['name'] }}</p>
                             @if($judge['designation'])
-                                <p class="text-sm text-slate-600">{{ $judge['designation'] }}</p>
+                                <p class="text-xs uppercase leading-relaxed text-slate-600">{{ $judge['designation'] }}</p>
                             @endif
                         </div>
                     </li>
@@ -62,34 +62,7 @@
             </ul>
         @endif
 
-        <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-            @if($bench->vc_meeting_id)
-                <div class="rounded-xl bg-slate-50 px-3 py-2">
-                    <dt class="text-slate-500">Webex meeting ID</dt>
-                    <dd class="flex items-center gap-2 font-semibold tabular-nums text-slate-900">
-                        {{ $bench->vc_meeting_id }}
-                        <button type="button" data-copy="{{ preg_replace('/\D+/', '', $bench->vc_meeting_id) }}" aria-label="Copy meeting ID" class="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600"><x-icon name="copy" :size="14" /><span data-copy-label>Copy</span></button>
-                    </dd>
-                </div>
-            @endif
-            @if($bench->email)
-                <div class="rounded-xl bg-slate-50 px-3 py-2">
-                    <dt class="text-slate-500">Court email</dt>
-                    <dd class="break-words font-semibold"><a href="mailto:{{ $bench->email }}" class="text-[#16776e] hover:underline">{{ $bench->email }}</a></dd>
-                </div>
-            @endif
-        </dl>
-
-        @if($bench->vc_link)
-            <div class="mt-4 grid gap-2 sm:grid-cols-2">
-                <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" class="vn-primary-button flex min-h-9 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold">
-                    <x-icon name="screen" :size="18" /> Join VC
-                </a>
-                <button type="button" data-copy="{{ $bench->vc_link }}" class="flex min-h-9 items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-800 hover:border-[#16776e]">
-                    <x-icon name="copy" :size="18" /><span data-copy-label>Copy VC link</span>
-                </button>
-            </div>
-        @endif
+        <x-court-room-contact :bench="$bench" />
     </section>
 
     <a href="{{ $listUrl }}" class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm hover:border-[#16776e]">

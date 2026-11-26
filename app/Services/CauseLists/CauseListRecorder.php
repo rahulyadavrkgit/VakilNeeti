@@ -34,7 +34,7 @@ class CauseListRecorder
      *
      * @param  array{title: string, url: string}  $listing
      * @param  array<string, list<array{id: int, user_id: int, title: string}>>  $casesByKey
-     * @param  Closure(string): list<array{key: string, reference: string, item: string, court: ?string, judges: list<string>, vc_link: ?string, line: int}>  $entriesFromPdf  reads the PDF's contents
+     * @param  Closure(string): list<array{key: string, reference: string, item: string, court: ?string, judges: list<string>, vc_link: ?string, line: int, board_section?: ?string}>  $entriesFromPdf  reads the PDF's contents
      * @param  Closure(string): void|null  $report  progress lines for the console
      */
     public function check(string $provider, string $courtShort, string $scope, array $listing, Carbon $date, array $casesByKey, Closure $entriesFromPdf, ?Closure $report = null): int
@@ -42,7 +42,8 @@ class CauseListRecorder
         $document = CourtDocument::query()->firstOrNew(['provider_key' => $provider, 'document_key' => sha1($listing['url'])]);
 
         $caseKeys = collect($casesByKey)->map(fn (array $cases): array => collect($cases)->pluck('id')->sort()->values()->all())->sortKeys();
-        $fingerprint = hash('sha256', (string) $caseKeys->toJson());
+        $version = $provider === 'delhi-high-court' ? DelhiHighCourtCauseList::EXTRACTION_VERSION : '';
+        $fingerprint = hash('sha256', $version.$caseKeys->toJson());
 
         if ($document->exists && $document->extraction_status === 'done'
             && ($document->metadata['matched_case_fingerprint'] ?? null) === $fingerprint) {
@@ -79,19 +80,27 @@ class CauseListRecorder
 
         $matches = collect($entries)->filter(fn (array $entry): bool => isset($casesByKey[$entry['key']]));
         $boards = self::boards($entries, $provider !== 'supreme-court');
+        $sectionBoards = collect($entries)
+            ->filter(fn (array $entry): bool => isset($entry['board_section']))
+            ->groupBy('board_section')
+            ->map(fn ($entries): array => self::boards($entries->all()))
+            ->all();
 
-        DB::transaction(function () use ($document, $matches, $casesByKey, $entries, $boards, $fingerprint) {
+        DB::transaction(function () use ($document, $matches, $casesByKey, $entries, $boards, $sectionBoards, $fingerprint) {
             $document->fill(['extraction_status' => 'done', 'extracted_at' => now(), 'metadata' => [
                 'entries' => count($entries),
                 'matched_case_fingerprint' => $fingerprint,
                 'boards' => collect($boards)->map(fn (array $items): array => ['total' => count($items), 'from' => $items[0] ?? null, 'to' => end($items) ?: null, 'items' => $items])->all(),
+                'supplementary_items' => $sectionBoards['supplementary'] ?? [],
             ]])->save();
             $document->appearances()->delete();
 
             foreach ($matches as $entry) {
+                $place = self::placeOnBoard($sectionBoards[$entry['board_section'] ?? ''] ?? $boards, $entry);
+
                 foreach ($casesByKey[$entry['key']] as $case) {
                     CauseListAppearance::query()->updateOrCreate(
-                        ['court_document_id' => $document->id, 'record_key' => sha1($case['id'].'|'.$entry['key'].'|'.$entry['item'].'|'.$entry['court'])],
+                        ['court_document_id' => $document->id, 'record_key' => sha1($case['id'].'|'.$entry['key'].'|'.$entry['item'].'|'.$entry['court'].'|'.($entry['board_section'] ?? ''))],
                         [
                             'legal_case_id' => $case['id'],
                             'item_number' => $entry['item'],
@@ -101,7 +110,8 @@ class CauseListRecorder
                             'source_line' => $entry['line'],
                             'match_status' => 'matched',
                             'matched_at' => now(),
-                            'metadata' => ['vc_link' => $entry['vc_link'], 'list' => $document->document_label] + self::placeOnBoard($boards, $entry),
+                            'metadata' => ['vc_link' => $entry['vc_link'], 'list' => $document->document_label]
+                                + array_intersect_key($entry, ['board_section' => true]) + $place,
                         ],
                     );
                 }
@@ -109,8 +119,10 @@ class CauseListRecorder
         });
 
         foreach ($matches as $entry) {
+            $place = self::placeOnBoard($sectionBoards[$entry['board_section'] ?? ''] ?? $boards, $entry);
+
             foreach ($casesByKey[$entry['key']] as $case) {
-                $this->addListedDate($case, $entry, $date, self::placeOnBoard($boards, $entry)['board_total'] ?: null, (string) $document->document_label);
+                $this->addListedDate($case, $entry, $date, $place['board_total'] ?: null, (string) $document->document_label);
                 $this->tellOwner($courtShort, $case, $entry, $date);
             }
         }

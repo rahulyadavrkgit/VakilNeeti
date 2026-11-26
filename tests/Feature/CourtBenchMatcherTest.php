@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CourtBench;
+use App\Models\CourtHearing;
 use App\Models\LegalCase;
 use App\Models\User;
 use App\Services\CourtBenchMatcher;
@@ -66,7 +67,7 @@ class CourtBenchMatcherTest extends TestCase
         $this->assertSame('401', $bench?->court_room);
     }
 
-    public function test_case_list_and_case_page_fill_judge_room_and_vc_link_from_the_official_list(): void
+    public function test_calendar_and_case_page_fill_judge_room_and_vc_link_from_the_official_list(): void
     {
         $this->actingAs(User::factory()->create());
         $case = LegalCase::create([
@@ -75,8 +76,9 @@ class CourtBenchMatcherTest extends TestCase
             'court_complex' => 'District and Sessions Judge, South-East, Saket, South East, Delhi',
             'case_status' => 'pending',
         ]);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => today()->toDateString()]);
 
-        $this->get(route('cases.index'))
+        $this->get(route('cases.calendar', ['view' => 'day', 'date' => today()->toDateString()]))
             ->assertOk()
             ->assertSeeInOrder(['District Judge - 05', 'Room 612, main building', 'Sh. Akash Jain', 'Join VC'])
             ->assertSee('title="From the court list"', false)
@@ -92,7 +94,7 @@ class CourtBenchMatcherTest extends TestCase
     public function test_what_the_case_records_itself_beats_the_official_list(): void
     {
         $this->actingAs(User::factory()->create());
-        LegalCase::create([
+        $case = LegalCase::create([
             'case_title' => 'Prahlad vs Sanjay',
             'court_name' => 'District Judge - 05',
             'court_complex' => 'District and Sessions Judge, South-East, Saket, Delhi',
@@ -100,8 +102,9 @@ class CourtBenchMatcherTest extends TestCase
             'court_room' => '9',
             'case_status' => 'pending',
         ]);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => today()->toDateString()]);
 
-        $this->get(route('cases.index'))
+        $this->get(route('cases.calendar', ['view' => 'day', 'date' => today()->toDateString()]))
             ->assertOk()
             ->assertSee('Ms. Own Entry')
             ->assertSee('Room 9')

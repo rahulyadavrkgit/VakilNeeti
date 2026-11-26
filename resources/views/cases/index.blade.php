@@ -256,14 +256,13 @@
                 $rowRoom = $rowListing?->court_room ?: ($nextHearing?->court_room ?: $case->court_room);
                 $rowJudge = $rowCauseList['judges'] ?? ($nextHearing?->judge_name ?: $case->judge_name);
                 $rowVc = $rowListing?->vcLink() ?: ($nextHearing?->vc_link ?: $case->vc_link);
-                $hasListDetails = $rowCauseList || ($ownDate && ($nextHearing->item_number || $nextHearing->list_total)) || isset($orders[$case->id]);
                 $caseShareItem = [
                     'title' => $case->case_title, 'case_number' => $case->case_number, 'side' => $case->appearing_for, 'parties' => $case->appearing_for_parties,
                     'date' => $upcomingDate ? $tileDate->toDateString() : null, 'time' => $upcomingDate['time'] ?? null,
                     'court' => $case->court_name, 'room' => $rowRoom, 'judge' => $rowJudge, 'vc_link' => $rowVc, 'details' => $nextHearing?->hearing_stage,
                     'item' => $rowCauseList['item'] ?? ($ownDate ? $nextHearing->item_number : null),
                     'list_total' => $rowCauseList['place']['total'] ?? ($rowCauseList['total'] ?? ($ownDate ? $nextHearing->list_total : null)),
-                    'supplementary' => $rowCauseList['place']['supplementary'] ?? null,
+                    'supplementary' => $rowCauseList['room_supplementary'] ?? $rowCauseList['place']['supplementary'] ?? null,
                 ];
                 $caseShareText = \App\Services\HearingShareText::single($caseShareItem);
                 $iconButton = 'inline-flex h-10 w-10 items-center justify-center rounded-lg sm:h-9 sm:w-9 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900';
@@ -320,15 +319,11 @@
                             @endif
                         </p>
 
-                        <x-court-info class="mt-1.5" :live="false" :court="$case->court_name" :designation="$case->court_name" :complex="$case->court_complex"
-                                      :room="$upcomingDate ? $rowRoom : $case->court_room" :judge="$upcomingDate ? $rowJudge : $case->judge_name" :vc-link="$upcomingDate ? $rowVc : $case->vc_link" />
-                        @if($upcomingDate && $hasListDetails)
-                            <x-hearing-strip :show-date="false" :show-room="false" :date="$tileDate->toDateString()" :court="$case->court_name" :room="$rowRoom"
-                                             :item="$ownDate ? $nextHearing->item_number : null" :list-total="$ownDate ? $nextHearing->list_total : null"
-                                             :cause-list="$rowCauseList" :case-number="$case->case_number"
-                                             :district="$case->court_level === 'district'"
-                                             :order-url="isset($orders[$case->id]) ? route('cases.documents.download', [$case, $orders[$case->id], 'preview' => 1]) : null"
-                                             :order-date="($orders[$case->id] ?? null)?->created_at?->format('d M Y')" />
+                        {{-- Room, item, VC link and the cause list belong to a hearing: they are on Home and in the calendar, not here.
+                             The bench or court name stays ("Saket Courts"); a plain "Delhi High Court" only repeats the badge. --}}
+                        @php $benchName = preg_match('/^(the\s+)?(supreme court(\s+of\s+india)?|high court(\s+of\s+[\p{L} &.]+)?|[\p{L} &.]+\s+high court)$/iu', trim((string) $case->court_name)) ? null : $case->court_name; @endphp
+                        @if($benchName)
+                            <p class="mt-1 truncate text-xs text-slate-600">{{ $benchName }}</p>
                         @endif
 
                         @if($case->tags->isNotEmpty())

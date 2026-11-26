@@ -84,23 +84,6 @@
     @stack('styles')
 
     <style>
-        /* VakilNiti theme: navy ink, teal for actions, gold accents from the logo. */
-        :root {
-            --vn-ink: #142235;
-            --vn-ink-soft: #20334a;
-            --vn-accent: #16776e;
-            --vn-accent-dark: #125f58;
-            --vn-gold: #e6b84a;
-            /* Warm paper rather than cold grey: easier on the eyes over a long working day. */
-            --vn-canvas: #f6f5f1;
-            --vn-line: #e2e8ef;
-            --vn-text: #172536;
-        }
-        html.dark {
-            --vn-canvas: #0d1524;
-            --vn-line: #24344d;
-            --vn-text: #e3e9f1;
-        }
         /* Figures line up in columns: dates, item numbers, rooms, amounts. */
         body { background: var(--vn-canvas); color: var(--vn-text); font-family: var(--font-sans), sans-serif; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
         /* Serif only for page titles; everything else in the device's own clean sans-serif. */
@@ -185,12 +168,9 @@
             .vn-main-content nav[aria-label="Breadcrumb"], .vn-dup-title { display: none !important; }
             .vn-mobile-nav .is-current { color: #126c64; background: #e8f4f2; }
             /* A page's own action bar (case page) sits just above the bottom menu. */
-            .vn-case-bar { bottom: calc(64px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 18px rgba(20,34,53,.06); }
         }
         /* A page with its own trail ("My cases › Case", "Home / Courts / …") needs no Back button as well. */
         .vn-main-content:has(nav[aria-label="Breadcrumb"]) .vn-page-trail { display: none !important; }
-        html.dark .vn-case-bar { background: rgba(13, 21, 36, .97); border-top-color: #1f2d44; }
-        html.dark .vn-case-bar a:not(.bg-\[\#16776e\]) { color: #cbd5e1; }
         @media (max-width: 359px) { .vn-header-brand [data-brand-word] { display: none; } }
         @media (min-width: 768px) and (max-width: 1100px) {
             .vn-main-content { padding: 18px; }

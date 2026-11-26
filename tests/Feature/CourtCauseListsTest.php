@@ -108,12 +108,13 @@ TEXT;
 
         $this->get(route('cases.index', ['hearing_filter' => 'today']))->assertOk()->assertSeeInOrder(['Ram vs Shyam', '12', '45']);
         $this->get(route('cases.show', $case))->assertOk()
-            ->assertSee('My item <strong class="text-sm">12</strong> of <strong>45</strong>', false);
+            ->assertSee('My item: <strong class="text-sm">12</strong> of <strong>45</strong>', false)
+            ->assertSee('Curr. item: <strong>N/A</strong>', false);
 
         $this->post(route('hearings.store'), ['case_id' => $case->id, 'hearing_date' => '2026-11-26', 'item_number' => 'twelve'])->assertSessionHasErrors('item_number');
     }
 
-    public function test_cause_list_details_show_on_my_cases_and_in_the_calendar(): void
+    public function test_cause_list_details_show_in_the_calendar(): void
     {
         $this->travelTo('2026-11-25 08:00:00');
         $this->actingAs(User::factory()->create());
@@ -124,7 +125,7 @@ TEXT;
         CauseListAppearance::create(['court_document_id' => $list->id, 'legal_case_id' => $case->id, 'record_key' => 'r', 'item_number' => '97', 'court_room' => '90',
             'judge_name' => 'JUSTICE VANI RANJAN AGRAWAL', 'metadata' => ['board_total' => 114, 'board_items' => 114, 'board_position' => 97]]);
 
-        foreach ([route('cases.index'), route('cases.calendar', ['view' => 'list', 'date' => '2026-11-26']), route('cases.calendar', ['view' => 'day', 'date' => '2026-11-26'])] as $page) {
+        foreach ([route('cases.calendar', ['view' => 'list', 'date' => '2026-11-26']), route('cases.calendar', ['view' => 'day', 'date' => '2026-11-26'])] as $page) {
             $this->get($page)->assertOk()
                 ->assertSee('href="https://example.test/90.pdf"', false)
                 ->assertDontSee('Allahabad HC cause list')

@@ -147,6 +147,24 @@ class CourtBenchMatcher
     }
 
     /**
+     * A Supreme Court or Delhi High Court room by its number (its roster names the judges sitting there):
+     * "23", "Court No. 23" and "Court 23" are the same room; R1 to R9 are the Registrar courts.
+     */
+    public function findRoom(?string $courtName, ?string $room): ?CourtBench
+    {
+        $courtKey = LiveCourtBoard::boardFor($courtName);
+        $roomKey = $courtKey ? LiveCourtBoard::roomKey($courtKey, $room) : null;
+
+        if (! $roomKey) {
+            return null;
+        }
+
+        $benches = $this->benches[$courtKey] ??= CourtBench::query()->where('court_key', $courtKey)->orderBy('sort_order')->get();
+
+        return $benches->first(fn (CourtBench $bench): bool => LiveCourtBoard::roomKey($courtKey, $bench->court_room) === $roomKey);
+    }
+
+    /**
      * Ids of the person's cases heard in a court room whose judge or room (per the official lists) matches the text.
      *
      * @param  list<'judge'|'room'>  $fields

@@ -38,23 +38,17 @@
         </div>
 
         <div class="mt-3 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2">
-            {{-- The courts on this board, by the names the board uses ("Court 5", "R1"): tick the ones to show. --}}
-            <div class="relative min-w-0" data-board-rooms-picker>
-                <span class="mb-1 block text-xs font-semibold text-slate-600">Court number</span>
-                <button type="button" data-board-rooms-toggle aria-label="Filter by court number" aria-expanded="false"
-                        class="flex min-h-11 w-full min-w-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 text-left text-sm hover:border-[#16776e] disabled:opacity-60 sm:px-3">
-                    <span data-board-rooms-label class="min-w-0 flex-1 truncate">All courts</span>
-                    <x-icon name="chevron" :size="16" class="shrink-0 text-slate-500" />
-                </button>
-                <div data-board-rooms-panel hidden class="absolute left-0 z-30 mt-1 w-[min(22rem,calc(100vw-5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-                    <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2 text-sm">
-                        <button type="button" data-board-rooms-all class="font-semibold text-[#16776e] hover:underline">All courts</button>
-                        <button type="button" data-board-rooms-done class="rounded-lg bg-[#16776e] px-3 py-1 font-semibold text-white hover:bg-[#125f58]">Done</button>
-                    </div>
-                    <div data-board-rooms-list class="grid max-h-64 grid-cols-3 gap-1 overflow-y-auto p-2 text-sm sm:grid-cols-4">
-                        <p class="col-span-full px-1 py-2 text-slate-500">Loading the courts…</p>
-                    </div>
-                </div>
+            <div class="min-w-0" data-board-rooms-picker>
+                <label class="block">
+                    <span class="mb-1 block text-xs font-semibold text-slate-600">Court number</span>
+                    <span class="flex min-w-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 focus-within:border-[#16776e] sm:px-3">
+                        <x-icon name="search" :size="15" class="shrink-0 text-slate-500" />
+                        <input type="search" data-board-rooms-search disabled maxlength="180" autocomplete="off" enterkeyhint="search" placeholder="1, 2, R1"
+                               title="Clear the search to show all courts"
+                               class="min-h-11 w-full min-w-0 border-0 bg-transparent px-0 text-base disabled:opacity-60 focus:ring-0 sm:text-sm">
+                    </span>
+                </label>
+                <p data-board-rooms-status hidden role="status" class="mt-1 text-xs text-slate-600"></p>
             </div>
             <div class="relative min-w-0" data-board-combo>
                 <span class="mb-1 block text-xs font-semibold text-slate-600">Live board</span>

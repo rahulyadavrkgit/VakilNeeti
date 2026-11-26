@@ -91,7 +91,7 @@ class CauseListAppearance extends Model
         $label = strtolower((string) $this->courtDocument?->document_label);
 
         return match (true) {
-            str_contains($label, 'supplementary') => 2,
+            str_contains($label, 'supplementary') || ($this->metadata['board_section'] ?? null) === 'supplementary' => 2,
             str_starts_with($label, 'advance') => 0,
             default => 1,
         };
@@ -111,7 +111,7 @@ class CauseListAppearance extends Model
     /**
      * What a hearing strip shows for this listing (components/hearing-strip).
      *
-     * @return array{court_short: string, court: ?string, item: ?string, provider: ?string, total: ?int, facts: list<string>, list: ?string, judges: ?string, vc_link: ?string, source_url: ?string}
+     * @return array{court_short: string, court: ?string, item: ?string, provider: ?string, total: ?int, facts: list<string>, list: ?string, judges: ?string, vc_link: ?string, source_url: ?string, place: array{item: ?string, total: ?int, supplementary: ?string}, room_supplementary: ?string}
      */
     public function stripData(): array
     {
@@ -127,7 +127,52 @@ class CauseListAppearance extends Model
             'vc_link' => $this->vcLink(),
             'source_url' => $this->courtDocument?->source_url,
             'place' => $this->place(),
+            'room_supplementary' => $this->roomSupplementary(),
         ];
+    }
+
+    public function roomSupplementary(): ?string
+    {
+        $document = $this->courtDocument;
+        $day = $document?->listing_date?->toDateString();
+
+        if (! self::isHighCourtList($document) || ! $day || blank($this->court_room)) {
+            return null;
+        }
+
+        $items = self::supplementaryItemsOn($document->provider_key, $day)[$this->court_room] ?? [];
+
+        if ($items === []) {
+            return null;
+        }
+
+        $count = count($items);
+        $range = $count === 1 ? $items[0] : $items[0].'–'.$items[$count - 1];
+
+        return $count.' '.($count === 1 ? 'item' : 'items').' · '.$range;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private static function supplementaryItemsOn(string $provider, string $day): array
+    {
+        return once(fn (): array => CourtDocument::query()
+            ->where('provider_key', $provider)
+            ->whereDate('listing_date', $day)
+            ->get(['document_label', 'metadata'])
+            ->flatMap(function (CourtDocument $list): array {
+                $rooms = $list->metadata['supplementary_items'] ?? [];
+
+                if ($rooms === [] && preg_match(self::SUPPLEMENTARY, (string) $list->document_label)) {
+                    $rooms = collect($list->metadata['boards'] ?? [])->map(fn (array $board): array => $board['items'] ?? [])->all();
+                }
+
+                return collect($rooms)->map(fn (array $items, string|int $room): array => ['room' => (string) $room, 'items' => $items])->values()->all();
+            })
+            ->groupBy('room')
+            ->map(fn ($lists): array => $lists->pluck('items')->flatten()->map('strval')->unique()->sort(SORT_NATURAL)->values()->all())
+            ->all());
     }
 
     /**
@@ -144,7 +189,8 @@ class CauseListAppearance extends Model
         $supplementary = null;
         $total = $boardTotal ?: null;
 
-        if (self::isHighCourtList($document) && preg_match(self::SUPPLEMENTARY, (string) ($document->document_label ?? ''), $number)) {
+        if (self::isHighCourtList($document) && (preg_match(self::SUPPLEMENTARY, (string) ($document->document_label ?? ''), $number)
+            || ($meta['board_section'] ?? null) === 'supplementary')) {
             $range = ($meta['board_from'] ?? null) && ($meta['board_to'] ?? null) ? $meta['board_from'].'-'.$meta['board_to'] : null;
             $supplementary = trim('Supple'.(isset($number[1]) ? '-'.$number[1] : '-').' '.($range ?? '').($boardTotal ? '('.$boardTotal.')' : ''));
             $total = max($boardTotal, self::courtTotalOn($document, (string) $this->court_room)) ?: null;
@@ -194,7 +240,8 @@ class CauseListAppearance extends Model
             ]));
         }
 
-        if (self::isHighCourtList($document) && preg_match(self::SUPPLEMENTARY, $label, $number)) {
+        if (self::isHighCourtList($document) && (preg_match(self::SUPPLEMENTARY, $label, $number)
+            || ($meta['board_section'] ?? null) === 'supplementary')) {
             $published = self::supplementaryListsOn($document);
 
             return array_values(array_filter([
