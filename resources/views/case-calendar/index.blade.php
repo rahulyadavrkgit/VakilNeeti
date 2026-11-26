@@ -10,6 +10,13 @@
 @endphp
 
 @section('content')
+@if($listOnPhones && $viewMode !== 'list')
+    <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
+        if (window.matchMedia('(max-width: 639px)').matches) {
+            window.location.replace(@json($calendarUrl(['view' => 'list'])));
+        }
+    </script>
+@endif
 <div class="mx-auto max-w-[1500px] space-y-5">
     @if($printList)
         <div data-autoprint hidden></div>
@@ -96,9 +103,10 @@
     </div>
 
     <div class="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside class="space-y-4 print:hidden">
+        {{-- Phones and tablets: the dates come first, the month picker and filters after them. --}}
+        <aside class="order-last space-y-4 lg:order-none print:hidden">
             {{-- Small month picker --}}
-            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <section class="{{ $viewMode === 'month' ? 'hidden lg:block' : '' }} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div class="flex items-center justify-between">
                     <a href="{{ route('cases.calendar', array_merge($query, ['view' => $viewMode, 'date' => $date->copy()->subMonthNoOverflow()->toDateString()])) }}" class="rounded px-2 py-1 text-slate-600 hover:bg-slate-100" aria-label="Previous month">&lsaquo;</a>
                     <p class="text-sm font-bold text-slate-900">{{ $date->format('F Y') }}</p>
@@ -305,9 +313,10 @@
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach($dayEvents as $event)
                                         <tr class="align-top">
-                                            <td class="w-16 py-1.5 pr-2 font-semibold text-slate-600">{{ $event['time'] ?? '—' }}</td>
-                                            <td class="w-28 py-1.5 pr-2 text-xs font-bold uppercase text-slate-500">{{ $event['label'] }}</td>
-                                            <td class="py-1.5">
+                                            <td class="hidden w-16 py-1.5 pr-2 font-semibold text-slate-600 sm:table-cell">{{ $event['time'] ?? '—' }}</td>
+                                            <td class="hidden w-28 py-1.5 pr-2 text-xs font-bold uppercase text-slate-500 sm:table-cell">{{ $event['label'] }}</td>
+                                            <td class="min-w-0 py-2 sm:py-1.5">
+                                                <span class="mb-0.5 block text-xs font-bold uppercase text-slate-500 sm:hidden">{{ $event['label'] }}{{ $event['time'] ? ' · '.$event['time'] : '' }}</span>
                                                 <span data-event-peek class="inline-flex flex-wrap items-center gap-1.5">
                                                     <a href="{{ $event['url'] }}" class="font-semibold text-slate-900 hover:text-[#16776e] {{ $event['type'] === 'task' && $event['is_done'] ? 'line-through' : '' }}">{{ $event['title'] }}</a>
                                                     <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" />
@@ -318,7 +327,7 @@
                                                 @endif
                                                 <x-court-info class="mt-1" :live="false" :court="$event['court']" :complex="$event['court_complex'] ?? null" :room="$event['cause_list']['court'] ?? $event['court_room'] ?? null" :judge="$event['cause_list']['judges'] ?? $event['judge_name'] ?? null" :vc-link="$event['cause_list']['vc_link'] ?? $event['vc_link'] ?? null" :share="['title' => $event['title'], 'case_number' => $event['case_number'], 'side' => $event['appearing_for'] ?? null, 'parties' => $event['appearing_for_parties'] ?? null, 'date' => $event['date'], 'time' => $event['time'], 'details' => $event['details']]" />
                                                 @if(($event['group'] ?? null) === 'hearing')
-                                                    <x-hearing-strip :show-room="false" :date="$event['date']" :court="$event['court']" :room="$event['court_room'] ?? null" :item="$event['item_number'] ?? null" :list-total="$event['list_total'] ?? null" :cause-list="$event['cause_list'] ?? null" :case-number="$event['case_number']" :district="($event['court_level'] ?? null) === 'district'" :order-url="!empty($event['order']) ? route('cases.documents.download', [$event['case_id'], $event['order'], 'preview' => 1]) : null" :order-date="($event['order'] ?? null)?->created_at?->format('d M Y')" />
+                                                    <x-hearing-strip :show-room="false" :show-date="false" :waiting="false" :date="$event['date']" :court="$event['court']" :room="$event['court_room'] ?? null" :item="$event['item_number'] ?? null" :list-total="$event['list_total'] ?? null" :cause-list="$event['cause_list'] ?? null" :case-number="$event['case_number']" :district="($event['court_level'] ?? null) === 'district'" :order-url="!empty($event['order']) ? route('cases.documents.download', [$event['case_id'], $event['order'], 'preview' => 1]) : null" :order-date="($event['order'] ?? null)?->created_at?->format('d M Y')" />
                                                 @endif
 
                                                 @if($event['details'])

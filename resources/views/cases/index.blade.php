@@ -33,19 +33,33 @@
                 {{ $cases->total() }} {{ \Illuminate\Support\Str::plural('case', $cases->total()) }}{{ $hasFilters ? ' match your search' : ' in your diary' }}
             </p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('cases.find') }}" class="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-[#16776e] bg-white px-4 text-sm font-semibold text-[#16776e] hover:bg-teal-50">
-                <x-icon name="download" :size="18" /> Import from eCourts
-            </a>
-            <a href="{{ route('cases.find') }}" data-sheet="{{ route('sheets.add-case') }}" class="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">
+        @php $menuItem = 'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-slate-700 hover:bg-slate-50'; @endphp
+        <div class="flex items-center gap-2">
+            <a href="{{ route('cases.find') }}" data-sheet="{{ route('sheets.add-case') }}" data-shortcut="n" aria-keyshortcuts="N"
+               class="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">
                 <x-icon name="plus" :size="18" /> Add case
             </a>
+            {{-- Everything else people do with the list sits behind one "⋯" button. --}}
             <details class="vn-profile-menu relative">
-                <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">More <x-icon name="chevron" :size="16" /></summary>
-                <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg">
-                    <a href="{{ route('cases.create') }}" class="block px-4 py-2.5 text-slate-700 hover:bg-slate-50">Import one case by CNR</a>
-                    <a href="{{ route('cases.export', request()->query()) }}" class="block px-4 py-2.5 text-slate-700 hover:bg-slate-50">Export these cases (CSV)</a>
-                    <a href="{{ route('cases.calendar') }}" class="block px-4 py-2.5 text-slate-700 hover:bg-slate-50">Open the calendar</a>
+                <summary aria-label="More actions" title="More actions"
+                         class="inline-flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-slate-300 bg-white px-2.5 text-lg font-bold leading-none text-slate-700 hover:bg-slate-50">&middot;&middot;&middot;</summary>
+                <div class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg">
+                    <a href="{{ route('cases.find') }}" class="{{ $menuItem }}"><x-icon name="download" :size="16" class="text-slate-400" /> Import from eCourts</a>
+                    <a href="{{ route('cases.create') }}" class="{{ $menuItem }}"><x-icon name="search" :size="16" class="text-slate-400" /> Import one case by CNR</a>
+                    @if($shareText)
+                        {{-- Send exactly the cases shown: each with its next date, our side, court, room, judge and VC link. --}}
+                        <div class="my-1 border-t border-slate-100"></div>
+                        <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                           data-share-text="{{ $shareText }}" data-share-title="Cases" class="{{ $menuItem }}">
+                            <x-icon name="share" :size="16" class="text-slate-400" /> Share {{ min($cases->total(), 100) }} {{ \Illuminate\Support\Str::plural('case', min($cases->total(), 100)) }}
+                        </a>
+                        <button type="button" data-copy="{{ $shareText }}" class="{{ $menuItem }}">
+                            <x-icon name="copy" :size="16" class="text-slate-400" /> <span data-copy-label>Copy this list</span>
+                        </button>
+                    @endif
+                    <div class="my-1 border-t border-slate-100"></div>
+                    <a href="{{ route('cases.export', request()->query()) }}" class="{{ $menuItem }}"><x-icon name="data" :size="16" class="text-slate-400" /> Export these cases (CSV)</a>
+                    <a href="{{ route('cases.calendar') }}" class="{{ $menuItem }}"><x-icon name="calendar" :size="16" class="text-slate-400" /> Open the calendar</a>
                 </div>
             </details>
         </div>
@@ -121,36 +135,26 @@
                     @endforeach
                 </nav>
                 @endif
-                <span class="flex shrink-0 items-center gap-1.5">
-                    @if($hasFilters)
-                        <a href="{{ route('cases.index') }}" class="inline-flex min-h-10 items-center px-2 text-sm font-semibold text-[#16776e] hover:underline">Clear</a>
-                    @endif
-                    @if($shareText)
-                        {{-- Send exactly the cases shown: each with its next date, our side, court, room, judge and VC link. --}}
-                        <button type="button" data-copy="{{ $shareText }}" title="Copy this list" aria-label="Copy this list of {{ $cases->total() }} cases"
-                                class="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-sm font-semibold text-slate-700 hover:border-[#16776e] hover:text-[#16776e]">
-                            <x-icon name="copy" :size="16" /><span data-copy-label class="sr-only sm:not-sr-only">Copy</span>
-                        </button>
-                        <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                           data-share-text="{{ $shareText }}" data-share-title="Cases"
-                           class="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-[#16776e] px-3 text-sm font-semibold text-white hover:bg-[#125f58]">
-                            <x-icon name="share" :size="16" /><span class="sr-only sm:not-sr-only">Share {{ min($cases->total(), 100) }} {{ \Illuminate\Support\Str::plural('case', min($cases->total(), 100)) }}</span>
-                        </a>
-                    @endif
-                </span>
+                @if($hasFilters)
+                    <a href="{{ route('cases.index') }}" class="inline-flex min-h-10 shrink-0 items-center px-2 text-sm font-semibold text-[#16776e] hover:underline">Clear</a>
+                @endif
             </div>
         </form>
     </x-panel>
 
     @if($list === 'active' && ! $hasFilters && ($hearingCounts['past'] > 0 || $hearingCounts['no_upcoming'] > 0))
-        <aside aria-label="Suggested next step" class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-teal-200 bg-teal-50 p-3 text-sm">
-            <span class="font-semibold text-slate-900">Suggested next step</span>
-            @if($hearingCounts['past'] > 0)
-                <a href="{{ $chipUrl('past') }}" class="inline-flex min-h-11 items-center font-semibold text-teal-900 underline underline-offset-2">Review cases with past dates ({{ $hearingCounts['past'] }})</a>
-            @else
-                <a href="{{ $chipUrl('no_upcoming') }}" class="inline-flex min-h-11 items-center font-semibold text-teal-900 underline underline-offset-2">Check cases without a date ({{ $hearingCounts['no_upcoming'] }})</a>
-            @endif
-        </aside>
+        {{-- One slim line: the single most useful thing to do next. --}}
+        @php
+            [$nextStepUrl, $nextStepText] = $hearingCounts['past'] > 0
+                ? [$chipUrl('past'), $hearingCounts['past'].' '.\Illuminate\Support\Str::plural('case', $hearingCounts['past']).' with a past date need the next date']
+                : [$chipUrl('no_upcoming'), $hearingCounts['no_upcoming'].' '.\Illuminate\Support\Str::plural('case', $hearingCounts['no_upcoming']).' without a hearing date'];
+        @endphp
+        <a href="{{ $nextStepUrl }}" aria-label="Suggested next step: {{ $nextStepText }}"
+           class="flex min-h-10 items-center gap-2 rounded-lg border-l-4 border-[#16776e] bg-teal-50 px-3 text-sm font-semibold text-teal-900 hover:bg-teal-100">
+            <x-icon name="bell" :size="16" class="shrink-0" />
+            <span class="min-w-0 flex-1 truncate">{{ $nextStepText }}</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
     @endif
 
     {{-- Running or closed cases, arranged by date or by court (district; High Court bench). --}}
@@ -316,7 +320,7 @@
                         </div>
 
                         <div class="col-span-2 mt-1 flex justify-end sm:col-span-1 sm:mt-0 sm:self-end">
-                            <span class="-mr-1.5 flex items-center transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100" role="group" aria-label="Actions for {{ $case->case_title ?: 'this case' }}">
+                            <span class="-mr-1.5 flex items-center transition-opacity [@media(hover:hover)]:opacity-40 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100" role="group" aria-label="Actions for {{ $case->case_title ?: 'this case' }}">
                                 @unless($upcomingDate || $isClosed)
                                     {{-- No date ahead (passed or never set): add it without leaving the list. --}}
                                     <a href="{{ route('hearings.create', ['case' => $case->id]) }}" data-sheet="{{ route('sheets.next-date', ['case' => $case->id]) }}"

@@ -23,7 +23,15 @@
         @forelse($notifications as $notification)
             @include('notifications.partials.item', ['notification' => $notification])
         @empty
-            <p class="p-6 text-sm text-slate-500">No notifications yet. Reminders appear here before hearings and when tasks or invoices are due.</p>
+            <div class="flex flex-col items-center px-6 py-10 text-center">
+                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-[#16776e]"><x-icon name="bell" :size="24" /></span>
+                <p class="mt-3 font-semibold text-slate-900">No alerts yet</p>
+                <p class="mt-1 max-w-sm text-sm text-slate-500">Reminders appear here before hearings and when tasks or invoices are due. Give your cases their next dates so nothing is missed.</p>
+                <div class="mt-4 flex flex-wrap justify-center gap-2">
+                    <a href="{{ route('cases.index', ['hearing_filter' => 'no_upcoming']) }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white hover:bg-[#125f58]">Add next dates</a>
+                    <a href="{{ route('profile.index') }}#system-preferences" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reminder settings</a>
+                </div>
+            </div>
         @endforelse
     </div>
 

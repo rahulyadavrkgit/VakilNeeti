@@ -11,12 +11,12 @@
 
     // [section label, [[tab label, url, current?], …]]
     $section = match (true) {
-        $is('courts', 'courts/*', 'tribunals*', 'court-catalogue*') => [__('Courts'), [
+        $is('courts', 'courts/*', 'tribunals*') => [__('Courts'), [
             [__('Supreme Court'), route('courts.supreme-court'), $is('courts/supreme-court*')],
             [__('Delhi High Court'), route('courts.delhi-high-court'), $is('courts/delhi-high-court*')],
             [__('High Courts'), route('courts.high-courts'), $is('courts/high-courts*')],
             [__('Delhi District Courts'), route('courts.delhi-district-courts'), $is('courts/delhi-district-courts*')],
-            [__('Tribunals'), route('tribunals.index'), $is('tribunals*', 'court-catalogue*')],
+            [__('Tribunals'), route('tribunals.index'), $is('tribunals*')],
             [__('All courts'), route('courts.index'), $is('courts', 'courts/ecourts-services')],
         ]],
         ! $user => null,

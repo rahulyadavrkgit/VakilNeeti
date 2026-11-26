@@ -91,58 +91,58 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             @if($showAllProfileTypes)
                 <a href="{{ route('profile.personal.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Personal Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage personal identity, address and individual information.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Personal Profile') }} →</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Personal Profile') }} →</p>
                 </a>
                 <a href="{{ route('profile.advocate.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Advocate Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage registration, practice areas and court information.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Advocate Profile') }} →</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Advocate Profile') }} →</p>
                 </a>
                 <a href="{{ route('profile.professional.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Professional Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage credentials, qualifications and professional information.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Professional Profile') }} →</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Professional Profile') }} →</p>
                 </a>
                 <a href="{{ route('firm-profile.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Company / Firm Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage firm identity, business address and tax details.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Company Profile') }} →</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Company Profile') }} →</p>
                 </a>
             @elseif($isCompany)
                 <a href="{{ route('firm-profile.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Company / Firm Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Manage company identity, proprietor, business address, GST and office details.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Company Profile') }} →</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Company Profile') }} →</p>
                 </a>
             @else
                 <a href="{{ route('profile.advocate.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Advocate Profile') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Update your registration details, practice areas, profile photo and court information.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Advocate Profile') }} →</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Advocate Profile') }} →</p>
                 </a>
                 <a href="{{ route('firm-profile.index') }}"
-                   class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+                   class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Office & billing details') }}</h3>
                     <p class="mt-2 text-sm text-slate-600">{{ __('Your chamber or office address and GSTIN, printed on your invoices.') }}</p>
-                    <p class="mt-4 text-sm font-semibold text-blue-600">{{ $firm ? 'Update office details' : 'Add office details' }} &rarr;</p>
+                    <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ $firm ? 'Update office details' : 'Add office details' }} &rarr;</p>
                 </a>
             @endif
 
             <a href="{{ route('profile.contacts.index') }}"
-               class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+               class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                 <h3 class="text-base font-semibold text-slate-900">{{ __('Contact Information') }}</h3>
                 <p class="mt-2 text-sm text-slate-600">
                     {{ __('Manage personal, professional and office contact channels.') }}
                 </p>
-                <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Contact Information') }} →</p>
+                <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Contact Information') }} →</p>
             </a>
 
         </div>
@@ -175,7 +175,7 @@
         <p class="mt-1 text-sm text-slate-600">{{ __('Choose the States/UTs where you practise.') }}</p>
 
         <a href="{{ route('profile.practice-states.index') }}"
-           class="mt-4 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+           class="mt-4 inline-flex rounded-lg bg-[#16776e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#125f58]">
             {{ __('Manage Practice States & Jurisdictions') }}
         </a>
     </section>
@@ -192,17 +192,17 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
             <a href="{{ route('profile.invoice-settings.index') }}"
-               class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+               class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                 <h3 class="text-base font-semibold text-slate-900">{{ __('Invoice & GST Settings') }}</h3>
                 <p class="mt-2 text-sm text-slate-600">{{ __('GST, numbering, bank details and terms.') }}</p>
-                <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Manage Invoice & GST Settings') }} →</p>
+                <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Manage Invoice & GST Settings') }} →</p>
             </a>
 
             <a href="{{ route('profile.tax-compliance') }}"
-               class="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-sm">
+               class="rounded-xl border border-slate-200 p-5 transition hover:border-[#16776e] hover:shadow-sm">
                 <h3 class="text-base font-semibold text-slate-900">{{ __('Tax & Compliance') }}</h3>
                 <p class="mt-2 text-sm text-slate-600">{{ __('TDS, certificates and Professional Tax.') }}</p>
-                <p class="mt-4 text-sm font-semibold text-blue-600">{{ __('Open Tax & Compliance') }} →</p>
+                <p class="mt-4 text-sm font-semibold text-[#16776e]">{{ __('Open Tax & Compliance') }} →</p>
             </a>
 
         </div>

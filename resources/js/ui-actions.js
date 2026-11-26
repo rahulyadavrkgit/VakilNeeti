@@ -12,7 +12,6 @@
  * - data-filter-list="id" on an input: live-filters [data-filter-item] (and data-filter-also="selector") inside #id.
  * - data-toggle-open="id"          toggles the `open` state of a <details>/<dialog> by id.
  * - data-toggle-display="id"       shows/hides an element by id.
- * - data-vn-close-webview          closes the external webview page.
  * - data-filter-dashboard-table="sourceId"  live table filter in Dashboard Studio.
  */
 function callGlobal(name, ...args) {
@@ -80,7 +79,7 @@ document.addEventListener('click', (event) => {
     }
 
     const action = event.target.closest(
-        '[data-print], [data-toggle-open], [data-toggle-display], [data-vn-close-webview]',
+        '[data-print], [data-toggle-open], [data-toggle-display]',
     );
 
     if (!action) {
@@ -101,8 +100,6 @@ document.addEventListener('click', (event) => {
         if (target) {
             target.style.display = target.style.display === 'none' ? 'block' : 'none';
         }
-    } else if (action.hasAttribute('data-vn-close-webview')) {
-        callGlobal('vnCloseWebview');
     }
 });
 
@@ -865,6 +862,37 @@ document.querySelectorAll('[data-tabs]').forEach((tabList) => {
     );
 });
 
+
+// Keyboard shortcuts: "/" jumps to the page's search box, "N" presses the page's [data-shortcut="n"]
+// button (Add case, New invoice…). Ignored while typing, with modifier keys, or when a pop-up is open.
+document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) {
+        return;
+    }
+
+    const typing = event.target.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
+
+    if (typing || document.querySelector('dialog[open]')) {
+        return;
+    }
+
+    if (event.key === '/') {
+        const search = document.querySelector('.vn-main-content input[type="search"], .vn-main-content input[name="search"], input[type="search"]');
+
+        if (search && search.offsetParent !== null) {
+            event.preventDefault();
+            search.focus();
+            search.select?.();
+        }
+    } else if (event.key === 'n' || event.key === 'N') {
+        const target = document.querySelector('[data-shortcut="n"]');
+
+        if (target) {
+            event.preventDefault();
+            target.click();
+        }
+    }
+});
 
 // Share buttons (data-share-text) open the share preview in resources/js/sheet.js.
 

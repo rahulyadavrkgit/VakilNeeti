@@ -12,14 +12,14 @@
     $items = array_values(array_filter([
         [__('Home'), route('dashboard'), $isActive('/')],
         $signedIn ? [__('Cases'), route('cases.index'), $isActive('cases*', 'tasks*', 'case-calendar*', 'hearings*')] : null,
-        $signedIn ? [__('Clients'), route('clients.index'), $isActive('clients*', 'client-management*')] : null,
+        $signedIn ? [__('Clients'), route('clients.index'), $isActive('clients*')] : null,
         $owner ? [__('Billing'), route('billing.index'), $isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')] : null,
-        [__('Courts'), null, $isActive('courts*', 'court-catalogue*', 'tribunals*', 'court-integrations*'), [
+        [__('Courts'), null, $isActive('courts*', 'tribunals*', 'court-integrations*'), [
             [__('Supreme Court'), route('courts.supreme-court'), $isActive('courts/supreme-court*')],
             [__('Delhi High Court'), route('courts.delhi-high-court'), $isActive('courts/delhi-high-court*')],
             [__('High Courts'), route('courts.high-courts'), $isActive('courts/high-courts*')],
             [__('Delhi District Courts'), route('courts.delhi-district-courts'), $isActive('courts/delhi-district-courts*')],
-            [__('Tribunals'), route('tribunals.index'), $isActive('tribunals*', 'court-catalogue*')],
+            [__('Tribunals'), route('tribunals.index'), $isActive('tribunals*')],
             [__('All courts'), route('courts.index'), $isActive('courts', 'courts/ecourts-services')],
         ]],
         [__('More'), null, $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*', 'police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'), [

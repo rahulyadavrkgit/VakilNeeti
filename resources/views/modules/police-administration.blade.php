@@ -10,7 +10,7 @@
     <x-page-header class="mb-5" title="Police Administration" subtitle="Police ranges, districts, sub-divisions and stations across India." />
 
     @if(!empty($profileStateIds) && count($profileStateIds))
-        <div class="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        <div class="mb-5 rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900">
             <strong>Profile jurisdiction:</strong>
             Your Profile practice States are prioritised in the State selection.
             You can still explore all States and Union Territories of India here.

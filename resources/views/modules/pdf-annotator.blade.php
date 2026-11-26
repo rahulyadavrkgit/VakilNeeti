@@ -43,7 +43,7 @@
         <h2 class="text-xl font-semibold mb-2">Open a PDF document</h2>
         <p class="text-sm text-slate-500 mb-5">Select a PDF from your device. Processing takes place in your browser.</p>
         <input id="vn-file" type="file" accept="application/pdf,.pdf" class="hidden">
-        <button id="vn-open" class="!bg-blue-700 !text-white !px-6 !py-3">Choose PDF</button>
+        <button id="vn-open" class="!bg-[#16776e] !text-white !px-6 !py-3">Choose PDF</button>
     </section>
 
     <section id="vn-workspace" hidden>
@@ -53,7 +53,7 @@
                 <button data-mode="edit">Edit PDF</button>
                 <span class="flex-1"></span>
                 <button id="vn-close">Close PDF</button>
-                <button id="vn-download" class="!bg-blue-700 !text-white">Download PDF</button>
+                <button id="vn-download" class="!bg-[#16776e] !text-white">Download PDF</button>
             </div>
 
             <div id="vn-annotate-panel">

@@ -47,7 +47,7 @@
 
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Certificates Received</p>
-                <p class="mt-2 text-2xl font-bold text-blue-700">
+                <p class="mt-2 text-2xl font-bold text-[#16776e]">
                     @money((float) $tdsReceived)
                 </p>
                 <p class="mt-1 text-xs text-slate-500">{{ $tdsReceivedCount }} records</p>
@@ -94,7 +94,7 @@
 
             <div class="rounded-xl border bg-white p-5">
                 <p class="text-sm text-slate-500">Upcoming / Undated Pending</p>
-                <p class="mt-2 text-2xl font-bold text-blue-700">
+                <p class="mt-2 text-2xl font-bold text-[#16776e]">
                     @money((float) $professionalTaxUpcoming)
                 </p>
             </div>

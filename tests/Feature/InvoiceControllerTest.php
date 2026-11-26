@@ -180,6 +180,39 @@ class InvoiceControllerTest extends TestCase
             ->assertDontSee('CGST');
     }
 
+    public function test_new_invoice_pop_up_asks_for_the_client_then_the_work_and_fee(): void
+    {
+        $client = $this->actingAsUserWithClient();
+
+        $this->get(route('sheets.invoice'))->assertOk()
+            ->assertSee('step 1 of 2')->assertSee('Asha Sharma')
+            ->assertSee('data-sheet="'.e(route('sheets.invoice', ['client' => $client->id])).'"', false);
+
+        $this->get(route('sheets.invoice', ['client' => $client->id]))->assertOk()
+            ->assertSee('step 2 of 2')
+            ->assertSee('name="items[0][description]"', false)
+            ->assertSee('Fee already received');
+
+        $this->get(route('billing.index'))->assertOk()
+            ->assertSee('data-sheet="'.route('sheets.invoice').'"', false);
+    }
+
+    public function test_a_fee_already_received_is_recorded_with_the_invoice(): void
+    {
+        $client = $this->actingAsUserWithClient();
+
+        $this->post(route('invoices.store'), $this->payload($client, ['received_now' => '1', 'received_by' => 'upi', 'received_reference' => 'UTR123']))
+            ->assertRedirect();
+
+        $invoice = Invoice::query()->firstOrFail();
+        $this->assertSame('paid', $invoice->status);
+        $this->assertDatabaseHas('payments', ['invoice_id' => $invoice->id, 'client_id' => $client->id, 'amount' => 1000, 'payment_method' => 'upi', 'transaction_reference' => 'UTR123']);
+
+        $this->post(route('invoices.store'), $this->payload($client))->assertRedirect();
+        $this->assertSame(1, DB::table('payments')->count());
+        $this->assertSame('sent', Invoice::query()->latest('id')->firstOrFail()->status);
+    }
+
     private function actingAsUserWithClient(): Client
     {
         $this->actingAs(User::factory()->create());

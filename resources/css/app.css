@@ -95,7 +95,11 @@
     color-scheme: dark;
     --vn-dark-canvas: #0d1524;
     --vn-dark-surface: #141f31;
+}
 
+/* The dark palette: the whole page, and white cards that sit inside a navy panel (see below). */
+.dark,
+.dark :is(.bg-slate-900, .bg-slate-800, .bg-\[\#142235\], .bg-\[\#20334a\]) :is(.bg-white, .bg-slate-50) {
     --color-slate-50: #18243a;
     --color-slate-100: #1e2c44;
     --color-slate-200: #2a3b56;
@@ -215,7 +219,7 @@
  * Panels and buttons that are dark in light mode (navy bands, dark buttons) stay exactly as they are:
  * inside them the original palette comes back, so their background and the text on it keep their contrast.
  */
-.dark :is(.bg-slate-900, .bg-slate-800, .bg-slate-700, .bg-gray-700, .bg-indigo-700, .hover\:bg-slate-800, .hover\:bg-slate-900) {
+.dark :is(.bg-slate-900, .bg-slate-800, .bg-slate-700, .bg-gray-700, .bg-indigo-700, .hover\:bg-slate-800, .hover\:bg-slate-900, .bg-\[\#142235\], .bg-\[\#20334a\], .vn-footer) {
     --color-slate-50: #f7f9fb;
     --color-slate-100: #eef2f6;
     --color-slate-200: #e2e8ef;
@@ -231,9 +235,7 @@
     --color-indigo-700: #24385a;
 }
 
-/* Links written in the mid teal or navy shade: lighter on dark cards. */
-.dark .text-blue-600,
-.dark .hover\:text-blue-600:hover { color: #5cc4b7; }
+/* Links written in the mid navy shade: lighter on dark cards. */
 .dark .text-indigo-600,
 .dark .hover\:text-indigo-600:hover { color: #9fb6d3; }
 .dark .bg-\[\#e8f4f2\],
@@ -339,6 +341,17 @@
         width: 100%;
         height: calc(100dvh - 3rem);
         border: 0;
+    }
+
+    /* Tablets (iPad portrait and landscape): more room for fingers and for the form. */
+    @media (min-width: 768px) and (max-width: 1279px) and (pointer: coarse) {
+        .vn-sheet {
+            width: min(38rem, 80vw);
+        }
+
+        .vn-sheet.is-frame {
+            width: 94vw;
+        }
     }
 
     @media (max-width: 767px) {

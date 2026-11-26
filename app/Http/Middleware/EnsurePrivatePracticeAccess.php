@@ -21,7 +21,6 @@ class EnsurePrivatePracticeAccess
         'register/*',
         'admin/login',
         'admin/verify',
-        'admin/initial-setup',
         'dashboard-studio/public/*',
 
         'police-administration',
@@ -51,18 +50,10 @@ class EnsurePrivatePracticeAccess
         'sitemap.xml',
         'robots.txt',
         'shared/invoices/*',
-        'court-directory',
-        'court-directory/*',
         'api/court-directory/*',
         'api/locations/*',
-        'court-management',
-        'court-management/*',
-        'court-catalogue',
-        'court-catalogue/*',
         'court-integrations/ecourts',
         'court-integrations/ecourts/*',
-        'webview',
-        'webview/*',
     ];
 
     /**

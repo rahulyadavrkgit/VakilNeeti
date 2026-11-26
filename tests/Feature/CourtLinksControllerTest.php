@@ -149,8 +149,6 @@ class CourtLinksControllerTest extends TestCase
                 $response->assertSee($tribunal['short'])->assertSee('href="'.$tribunal['url'].'"', false);
             }
         }
-
-        $this->get('/court-catalogue')->assertRedirect(route('tribunals.index'));
     }
 
     public function test_display_boards_and_courts_hub_are_public(): void

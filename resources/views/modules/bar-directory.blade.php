@@ -83,7 +83,7 @@
                     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
                         <div class="flex items-start justify-between">
                             <h3 class="text-base font-semibold text-slate-900">{{ $council->council_name }}</h3>
-                            <span class="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                            <span class="rounded bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-800">
                                 {{ ucfirst($council->jurisdiction_type) }}
                             </span>
                         </div>

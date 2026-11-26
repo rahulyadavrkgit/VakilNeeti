@@ -13,7 +13,7 @@
                 <a href="{{ route('register') }}" class="inline-flex min-h-12 items-center rounded-xl bg-[#16776e] px-5 text-base font-bold text-white shadow-sm hover:bg-[#12635c]">{{ __('Create your account') }}</a>
                 <a href="{{ route('login') }}" class="inline-flex min-h-12 items-center rounded-xl border border-slate-300 bg-white px-5 text-base font-semibold text-[#142235] hover:border-[#16776e] hover:text-[#16776e] dark:border-white/20 dark:bg-transparent dark:text-white">{{ __('Sign in') }}</a>
             </div>
-            <p class="mt-3 text-sm text-slate-600 dark:text-white/70">{{ __('Sign in with your email and a one-time code. No password to remember.') }}</p>
+            <p class="mt-3 text-sm text-slate-600 dark:text-white/70">{{ __('Sign in with your password, or with a one-time code sent to your email.') }}</p>
         </div>
 
         {{-- A small picture of the day, drawn with the same pieces the app uses. --}}

@@ -29,7 +29,7 @@
         @endif
 
         <div class="mt-8 overflow-x-auto rounded-xl bg-white shadow-sm">
-            <table class="w-full text-left">
+            <table class="vn-stack-table w-full text-left">
                 <thead class="bg-slate-100 text-slate-700">
                     <tr>
                         <th class="p-4">Receipt No.</th>
@@ -65,7 +65,7 @@
 
                             <td class="p-4">
                                 <a href="{{ route('payments.show', $payment) }}"
-                                   class="font-semibold text-blue-600 hover:underline">
+                                   class="font-semibold text-[#16776e] hover:underline">
                                     View Receipt
                                 </a>
                             </td>

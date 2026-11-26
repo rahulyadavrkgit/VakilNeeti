@@ -14,7 +14,7 @@
             </div>
 
             <a href="{{ route('clients.activities.create', $client) }}"
-               class="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
+               class="rounded-lg bg-[#16776e] px-5 py-3 font-semibold text-white hover:bg-[#125f58]">
                 + Add Activity
             </a>
         </div>

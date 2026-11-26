@@ -14,7 +14,7 @@
             : $seoPageTitle.' | VakilNiti';
         $seoDescription = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', $__env->yieldContent('meta_description')) ?: 'Case diary with hearings and reminders, clients and GST invoices, plus Supreme Court, High Court and District Court services, display boards, bare acts and court fee tools for Indian advocates.'), 160, '…');
         $seoIndexable = \App\Http\Middleware\EnsurePrivatePracticeAccess::isPublic(request())
-            && ! request()->is('login', 'register*', 'admin*', 'webview*', 'api/*')
+            && ! request()->is('login', 'register*', 'admin*', 'api/*')
             && trim($__env->yieldContent('robots')) === '';
         $seoQuery = array_filter(request()->only(['level', 'state', 'court', 'page']), fn ($value) => is_string($value) && $value !== '' && $value !== '1');
         $seoCanonical = url()->current().($seoQuery ? '?'.http_build_query($seoQuery) : '');
@@ -176,7 +176,13 @@
             /* The page name is already in the header: hide repeats (breadcrumbs, a matching first heading). */
             .vn-main-content nav[aria-label="Breadcrumb"], .vn-dup-title { display: none !important; }
             .vn-mobile-nav .is-current { color: #126c64; background: #e8f4f2; }
+            /* A page's own action bar (case page) sits just above the bottom menu. */
+            .vn-case-bar { bottom: calc(64px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 18px rgba(20,34,53,.06); }
         }
+        /* A page with its own trail ("My cases › Case", "Home / Courts / …") needs no Back button as well. */
+        .vn-main-content:has(nav[aria-label="Breadcrumb"]) .vn-page-trail { display: none !important; }
+        html.dark .vn-case-bar { background: rgba(13, 21, 36, .97); border-top-color: #1f2d44; }
+        html.dark .vn-case-bar a:not(.bg-\[\#16776e\]) { color: #cbd5e1; }
         @media (max-width: 359px) { .vn-header-brand [data-brand-word] { display: none; } }
         @media (min-width: 768px) and (max-width: 1100px) {
             .vn-main-content { padding: 18px; }
@@ -336,7 +342,7 @@
                             <a href="{{ route('cases.find') }}" data-sheet="{{ route('sheets.add-case') }}" class="{{ $headerMenuItem }}"><x-icon name="briefcase" :size="18" class="text-[#16776e]" />{{ __('Case') }}</a>
                             <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="{{ $headerMenuItem }}"><x-icon name="check" :size="18" class="text-[#16776e]" />{{ __('Task') }}</a>
                             <a href="{{ route('clients.create') }}" data-sheet="{{ route('sheets.client') }}" class="{{ $headerMenuItem }}"><x-icon name="people" :size="18" class="text-[#16776e]" />{{ __('Client') }}</a>
-                            <a href="{{ route('invoices.create') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-[#16776e]" />{{ __('Invoice') }}</a>
+                            <a href="{{ route('invoices.create') }}" data-sheet="{{ route('sheets.invoice') }}" class="{{ $headerMenuItem }}"><x-icon name="receipt" :size="18" class="text-[#16776e]" />{{ __('Invoice') }}</a>
                         </div>
                     </details>
 
@@ -540,7 +546,7 @@
     @endauth
     {{-- Courts: one tap lists every court; the panel opens above the bar. --}}
     <details class="vn-profile-menu">
-        <summary class="{{ request()->is('courts*', 'tribunals*', 'court-catalogue*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></summary>
+        <summary class="{{ request()->is('courts*', 'tribunals*') ? 'is-current' : '' }}"><x-icon name="pillars" :size="21" class="vn-mobile-icon" /><span>{{ __('Courts') }}</span></summary>
         <div class="vn-courts-panel fixed inset-x-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
             <p class="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Courts') }}</p>
             @foreach([
@@ -802,7 +808,7 @@
         const authModes = {
             login: {
                 title: 'Log in to VakilNiti',
-                description: 'We send you a one-time code. No password needed.'
+                description: 'Use your password, or get a one-time code by email.'
             },
             register: {
                 title: 'Create your VakilNiti account',
@@ -880,7 +886,7 @@
     <div class="flex h-full flex-col bg-slate-100">
         <header class="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
             <div class="min-w-0">
-                <p class="text-xs font-bold uppercase tracking-wider text-blue-700">External Website</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-[#16776e]">External Website</p>
                 <p id="vn-webview-host" class="truncate text-sm font-medium text-slate-700"></p>
             </div>
             <div class="flex shrink-0 gap-2">

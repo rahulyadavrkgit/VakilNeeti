@@ -27,7 +27,7 @@
 #/public/build/
 /public/hot
 /public/storage
-/public/fonts-manifest.dev.json
+/.composer-cache/
 
 # Test and coverage output
 /.phpunit.cache

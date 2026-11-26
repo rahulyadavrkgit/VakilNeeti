@@ -62,7 +62,7 @@
                     <a href="https://wa.me/{{ $client->whatsappNumber() }}" target="_blank" rel="noopener noreferrer" data-direct-share
                        class="inline-flex items-center gap-1.5 rounded-lg bg-[#25d366] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1ebe5b]">WhatsApp</a>
                 @endif
-                <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
+                <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}" data-sheet="{{ route('sheets.invoice', ['client' => $client->id]) }}"
                    class="rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
                     + Create Invoice
                 </a>
@@ -73,7 +73,7 @@
                 </a>
 
                 <a href="{{ route('clients.activities.create', $client) }}"
-                   class="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+                   class="rounded-lg bg-[#16776e] px-4 py-3 text-sm font-semibold text-white hover:bg-[#125f58]">
                     + Add Activity
                 </a>
 
@@ -162,14 +162,14 @@
     <section id="cases" data-tab-panel role="tabpanel" aria-labelledby="tab-cases" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Connected Cases</h3>
-            <a href="{{ route('cases.index') }}" class="text-sm text-blue-600 hover:underline">All Cases</a>
+            <a href="{{ route('cases.index') }}" class="text-sm text-[#16776e] hover:underline">All Cases</a>
         </div>
 
         <div class="mt-4 space-y-3">
             @forelse($cases as $case)
                 <div class="rounded-lg border border-slate-200 p-4">
                     <a href="{{ route('cases.show', $case) }}"
-                       class="font-semibold text-blue-700 hover:underline">
+                       class="font-semibold text-[#16776e] hover:underline">
                         {{ $case->case_title }}
                     </a>
                     <x-case-side :side="$case->appearing_for" :parties="$case->appearing_for_parties" class="ml-1 align-middle" />
@@ -192,7 +192,7 @@
     <section id="hearings" data-tab-panel role="tabpanel" aria-labelledby="tab-hearings" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Hearing History & Dates</h3>
-            <a href="{{ route('cases.calendar') }}" class="text-sm text-blue-600 hover:underline">Open Calendar</a>
+            <a href="{{ route('cases.calendar') }}" class="text-sm text-[#16776e] hover:underline">Open Calendar</a>
         </div>
 
         <div class="mt-4 space-y-3">
@@ -212,7 +212,7 @@
                         <p class="mt-2 text-sm text-slate-600">{{ $item->hearing->proceedings }}</p>
                     @endif
                     @if($item->hearing->next_hearing_date)
-                        <p class="mt-2 text-sm font-medium text-blue-700">
+                        <p class="mt-2 text-sm font-medium text-[#16776e]">
                             Next hearing: {{ $item->hearing->next_hearing_date->format('d-m-Y') }}
                         </p>
                     @endif
@@ -228,7 +228,7 @@
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Client Tasks</h3>
             <a href="{{ route('tasks.create', ['client_id' => $client->id]) }}"
-               class="text-sm font-semibold text-blue-600 hover:underline">
+               class="text-sm font-semibold text-[#16776e] hover:underline">
                 + Create Task
             </a>
         </div>
@@ -237,14 +237,14 @@
             @forelse($tasks as $task)
                 <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
                     <div>
-                        <a href="{{ route('tasks.show', $task) }}" class="font-semibold text-blue-700 hover:underline">
+                        <a href="{{ route('tasks.show', $task) }}" class="font-semibold text-[#16776e] hover:underline">
                             {{ $task->title }}
                         </a>
                         <p class="mt-1 text-sm text-slate-500">
                             Due: {{ $task->due_at?->format('d-m-Y H:i') ?? 'No due date' }}
                         </p>
                         @if($task->legalCase)
-                            <p class="mt-1 text-sm text-blue-700">
+                            <p class="mt-1 text-sm text-[#16776e]">
                                 Case: {{ $task->legalCase->case_title }}
                                 @if($task->legalCase->case_number)
                                     | {{ $task->legalCase->case_number }}
@@ -266,8 +266,8 @@
     <section id="invoices" data-tab-panel role="tabpanel" aria-labelledby="tab-invoices" class="rounded-xl border bg-white p-5">
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Client Invoices</h3>
-            <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
-               class="text-sm font-semibold text-blue-600 hover:underline">
+            <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}" data-sheet="{{ route('sheets.invoice', ['client' => $client->id]) }}"
+               class="text-sm font-semibold text-[#16776e] hover:underline">
                 + Create Invoice
             </a>
         </div>
@@ -291,7 +291,7 @@
                             <td class="p-3">@money($invoice->total_amount)</td>
                             <td class="p-3">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</td>
                             <td class="p-3">
-                                <a href="{{ route('invoices.show', $invoice) }}" class="text-blue-600 hover:underline">View</a>
+                                <a href="{{ route('invoices.show', $invoice) }}" class="text-[#16776e] hover:underline">View</a>
                             </td>
                         </tr>
                     @empty
@@ -307,7 +307,7 @@
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Client Payments</h3>
             <a href="{{ route('payments.create', ['client_id' => $client->id]) }}" data-sheet="{{ route('sheets.payment-pick', ['client' => $client->id]) }}"
-               class="text-sm font-semibold text-blue-600 hover:underline">
+               class="text-sm font-semibold text-[#16776e] hover:underline">
                 + Record Payment
             </a>
         </div>
@@ -339,7 +339,7 @@
                             <td class="p-3">{{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td>
                             <td class="p-3">@money($payment->amount)</td>
                             <td class="p-3">
-                                <a href="{{ route('payments.show', $payment) }}" class="text-blue-600 hover:underline">Receipt</a>
+                                <a href="{{ route('payments.show', $payment) }}" class="text-[#16776e] hover:underline">Receipt</a>
                             </td>
                         </tr>
                     @empty
@@ -355,7 +355,7 @@
         <div class="flex items-center justify-between gap-3">
             <h3 class="text-lg font-semibold text-slate-900">Client Activities</h3>
             <a href="{{ route('clients.activities.create', $client) }}"
-               class="text-sm font-semibold text-blue-600 hover:underline">
+               class="text-sm font-semibold text-[#16776e] hover:underline">
                 + Add Activity
             </a>
         </div>

@@ -13,26 +13,26 @@
     @endif
 
     <x-page-header title="Tasks & Reminders" subtitle="Your work, deadlines and reminders.">
-        <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Create task</a>
+        <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" data-shortcut="n" aria-keyshortcuts="N" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ Create task</a>
     </x-page-header>
 
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-5">
+    <section class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <p class="text-sm font-medium text-slate-500">All Tasks</p>
-            <p class="mt-2 text-3xl font-bold text-slate-800">{{ $totalTasks }}</p>
+            <p class="mt-2 text-2xl sm:text-3xl font-bold text-slate-800">{{ $totalTasks }}</p>
         </div>
-        <div class="rounded-xl border border-amber-200 bg-white p-5">
+        <div class="rounded-xl border border-amber-200 bg-white p-4 sm:p-5">
             <p class="text-sm font-medium text-slate-500">Open Tasks</p>
-            <p class="mt-2 text-3xl font-bold text-amber-700">{{ $pendingTasksCount }}</p>
+            <p class="mt-2 text-2xl sm:text-3xl font-bold text-amber-700">{{ $pendingTasksCount }}</p>
         </div>
-        <div class="rounded-xl border border-red-200 bg-white p-5">
+        <div class="rounded-xl border border-red-200 bg-white p-4 sm:p-5">
             <p class="text-sm font-medium text-slate-500">Overdue</p>
-            <p class="mt-2 text-3xl font-bold text-red-700">{{ $overdueTasksCount }}</p>
+            <p class="mt-2 text-2xl sm:text-3xl font-bold text-red-700">{{ $overdueTasksCount }}</p>
             <p class="mt-1 text-xs text-slate-500">Showing up to 6 overdue tasks below</p>
         </div>
-        <div class="rounded-xl border border-green-200 bg-white p-5">
+        <div class="rounded-xl border border-green-200 bg-white p-4 sm:p-5">
             <p class="text-sm font-medium text-slate-500">Completed Tasks</p>
-            <p class="mt-2 text-3xl font-bold text-green-700">{{ $completedTasksCount }}</p>
+            <p class="mt-2 text-2xl sm:text-3xl font-bold text-green-700">{{ $completedTasksCount }}</p>
         </div>
     </section>
 
@@ -50,7 +50,7 @@
                 <div class="divide-y divide-slate-100">
                     @forelse($taskGroup['items'] as $task)
                         <div class="p-4">
-                            <a href="{{ route('tasks.show', $task) }}" class="font-semibold text-blue-700 hover:underline">
+                            <a href="{{ route('tasks.show', $task) }}" class="font-semibold text-[#16776e] hover:underline">
                                 {{ $task->title }}
                             </a>
                             <p class="mt-1 text-xs text-slate-500">
@@ -64,7 +64,12 @@
                             </p>
                         </div>
                     @empty
-                        <p class="p-4 text-sm text-slate-500">No {{ strtolower($taskGroup['title']) }}.</p>
+                        <div class="p-4 text-sm text-slate-500">
+                            <p>No {{ strtolower($taskGroup['title']) }}.</p>
+                            @if($taskGroup['color'] !== 'red')
+                                <a href="{{ route('tasks.create') }}" data-sheet="{{ route('sheets.task') }}" class="mt-1 inline-flex min-h-10 items-center font-semibold text-[#16776e] hover:underline">+ Add a task</a>
+                            @endif
+                        </div>
                     @endforelse
                 </div>
             </div>
@@ -123,7 +128,7 @@
 
                         <td class="p-4">
                             <a href="{{ route('tasks.show', $task) }}"
-                               class="font-semibold text-blue-700 hover:underline">
+                               class="font-semibold text-[#16776e] hover:underline">
                                 {{ $task->title }}
                             </a>
                             @if($task->description)
@@ -136,7 +141,7 @@
                         <td class="p-4">
                             @if($task->client)
                                 <a href="{{ route('clients.show', $task->client) }}"
-                                   class="text-blue-700 hover:underline">
+                                   class="text-[#16776e] hover:underline">
                                     {{ $task->client->display_name ?: trim($task->client->first_name.' '.$task->client->last_name) }}
                                 </a>
                             @else
@@ -147,7 +152,7 @@
                         <td class="p-4">
                             @if($task->legalCase)
                                 <a href="{{ route('cases.show', $task->legalCase) }}"
-                                   class="text-blue-700 hover:underline">
+                                   class="text-[#16776e] hover:underline">
                                     {{ $task->legalCase->case_title }}
                                 </a>
                                 <p class="mt-1 text-xs text-slate-500">
@@ -177,12 +182,12 @@
 
                         <td class="p-4 whitespace-nowrap">
                             <a href="{{ route('tasks.show', $task) }}"
-                               class="text-blue-600 hover:underline">View</a>
+                               class="text-[#16776e] hover:underline">View</a>
 
                             <span class="mx-1 text-slate-300">|</span>
 
                             <a href="{{ route('tasks.edit', $task) }}"
-                               class="text-blue-600 hover:underline">Edit</a>
+                               class="text-[#16776e] hover:underline">Edit</a>
 
                             <form method="POST"
                                   action="{{ route('tasks.destroy', $task) }}"

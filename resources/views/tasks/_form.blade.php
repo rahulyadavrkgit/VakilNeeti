@@ -98,7 +98,7 @@
 
     <div class="flex flex-wrap gap-3">
         <button type="submit"
-            class="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
+            class="rounded-lg bg-[#16776e] px-5 py-3 font-semibold text-white hover:bg-[#125f58]">
             {{ isset($task) ? 'Update Task' : 'Create Task' }}
         </button>
 

@@ -30,11 +30,11 @@
 
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('payments.create') }}" data-sheet="{{ route('sheets.payment-pick') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">+ Record payment</a>
-            <a href="{{ route('invoices.create') }}" class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">+ New invoice</a>
+            <a href="{{ route('invoices.create') }}" data-sheet="{{ route('sheets.invoice') }}" data-shortcut="n" aria-keyshortcuts="N" class="rounded-xl bg-[#238b80] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#16776e]">+ New invoice</a>
         </div>
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         @foreach([
             ['Invoices raised', number_format($stats['invoices_raised']), 'text-slate-900'],
             ['Invoiced', \App\Enums\Currency::current()->format($stats['invoice_amount']), 'text-slate-900'],
@@ -45,7 +45,7 @@
         ] as [$label, $value, $colour])
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</p>
-                <p class="mt-2 text-xl font-bold {{ $colour }}">{{ $value }}</p>
+                <p class="mt-2 text-base font-bold tabular-nums [overflow-wrap:anywhere] sm:text-xl {{ $colour }}">{{ $value }}</p>
             </div>
         @endforeach
     </div>

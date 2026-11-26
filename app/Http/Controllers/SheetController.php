@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -55,18 +56,26 @@ class SheetController extends Controller
         return view('sheets.client', ['isCompany' => $request->query('type') === 'company']);
     }
 
-    public function case(): View
+    /**
+     * Quick case. A court picked in "Add case" (a tribunal, which eCourts does not cover) arrives filled in.
+     */
+    public function case(Request $request): View
     {
-        return view('sheets.case', ['sides' => LegalCase::SIDES]);
+        $preset = $request->validate([
+            'court_level' => ['nullable', Rule::in(array_keys(CourtIdentity::LEVELS))],
+            'court_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        return view('sheets.case', ['sides' => LegalCase::SIDES, 'preset' => array_filter($preset)]);
     }
 
     /**
-     * "Add case": search any court (Supreme Court, every High Court, every district court) and go on to import from
+     * "Add case": search any court (Supreme Court, every High Court, every district court, the tribunals) and go on to import from
      * it, or look up a CNR, import an eCourts app list or calendar, or type the case in.
      */
     public function addCase(): View
     {
-        $courts = Cache::remember('add-case:courts', now()->addDay(), function (): array {
+        $courts = Cache::remember('add-case:courts:with-tribunals', now()->addDay(), function (): array {
             $states = State::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'code']);
             $codes = $states->mapWithKeys(fn (State $state): array => [$state->id => Str::after((string) $state->code, 'IN-')]);
 
@@ -86,9 +95,18 @@ class SheetController extends Controller
                     'hint' => $states->firstWhere('id', $district->state_id)?->name,
                 ]);
 
+            // Tribunals and commissions are not on eCourts: they open the quick case form with the tribunal filled in.
+            $tribunals = collect(CourtLinksController::TRIBUNALS)->flatten(1)
+                ->map(fn (array $tribunal): array => [
+                    'level' => 'tribunal',
+                    'name' => $tribunal['name'],
+                    'hint' => $tribunal['short'],
+                ]);
+
             return collect([['level' => 'supreme_court', 'name' => 'Supreme Court of India', 'hint' => 'New Delhi']])
                 ->concat($highCourts->sortBy('name')->values())
                 ->concat($districtCourts)
+                ->concat($tribunals)
                 ->values()
                 ->all();
         });
@@ -300,6 +318,33 @@ class SheetController extends Controller
             ->values();
 
         return view('sheets.payment-pick', ['invoices' => $invoices, 'clientId' => $request->integer('client') ?: null]);
+    }
+
+    /**
+     * New invoice, step by step: first the client, then the work, the fee and whether it is already paid.
+     * Saves through invoices.store; the full invoice form stays for many lines, discounts and GST details.
+     */
+    public function invoice(Request $request): View
+    {
+        $client = $request->integer('client') ? Client::query()->find($request->integer('client')) : null;
+
+        if (! $client) {
+            return view('sheets.invoice-client', [
+                'clients' => Client::query()->where('status', 'active')->get()->sortBy(fn (Client $client): string => Str::lower($client->displayName()))->values(),
+            ]);
+        }
+
+        $settings = DB::table('invoice_settings')->where('user_id', auth()->id())->latest('id')->first();
+
+        return view('sheets.invoice', [
+            'client' => $client,
+            'cases' => LegalCase::query()
+                ->whereHas('parties', fn ($parties) => $parties->where('client_id', $client->id))
+                ->orderByDesc('updated_at')->get(['id', 'case_title', 'case_number']),
+            'gstEnabled' => (bool) ($settings->gst_enabled ?? false),
+            'defaultTaxRate' => (float) ($settings->default_tax_rate ?? 0),
+            'defaultTaxMode' => $settings->default_tax_mode ?? 'exclusive',
+        ]);
     }
 
     public function payment(Invoice $invoice): View

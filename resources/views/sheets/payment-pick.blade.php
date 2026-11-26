@@ -29,5 +29,6 @@
 @endif
 
 <p class="mt-4 text-sm">
-    <a href="{{ route('payments.create', array_filter(['client_id' => $clientId])) }}" class="font-semibold text-[#16776e] hover:underline">{{ __('Record a payment without an invoice') }}</a>
+    {{ __('Fee received with no invoice yet?') }}
+    <a href="{{ route('invoices.create', array_filter(['client_id' => $clientId])) }}" data-sheet="{{ route('sheets.invoice', array_filter(['client' => $clientId])) }}" class="font-semibold text-[#16776e] hover:underline">{{ __('Make the invoice and mark it paid') }}</a>
 </p>

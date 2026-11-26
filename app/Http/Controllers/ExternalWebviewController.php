@@ -6,7 +6,6 @@ use App\Services\CourtBoardEmbedCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
 
 class ExternalWebviewController extends Controller
 {
@@ -30,26 +29,6 @@ class ExternalWebviewController extends Controller
         'dhcba.in',
         'scba.co.in',
     ];
-
-    public function show(Request $request): View
-    {
-        $url = trim((string) $request->query('url', ''));
-        $parts = parse_url($url);
-
-        $host = is_array($parts) ? strtolower((string) ($parts['host'] ?? '')) : '';
-        $scheme = is_array($parts) ? strtolower((string) ($parts['scheme'] ?? '')) : '';
-
-        abort_unless(
-            in_array($scheme, ['http', 'https'], true) && self::isOfficialHost($host),
-            422,
-            'Only official government and legal websites can be opened here.'
-        );
-
-        return view('external.webview', [
-            'url' => $url,
-            'host' => $host,
-        ]);
-    }
 
     /**
      * Which official websites allow being shown inside VakilNiti: ?hosts[]=a.gov.in&hosts[]=b.nic.in.

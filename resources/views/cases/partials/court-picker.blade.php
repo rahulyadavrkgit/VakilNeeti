@@ -5,9 +5,10 @@
 --}}
 @php
     $case ??= null;
+    $preset ??= [];
     $field ??= 'mt-1 w-full rounded-xl border border-slate-300 bg-transparent px-3 py-2.5 text-base sm:text-sm';
     $label ??= 'block text-sm font-semibold text-slate-700';
-    $level = old('court_level', $case?->court_level ?? '');
+    $level = old('court_level', $case?->court_level ?? ($preset['court_level'] ?? ''));
     $state = old('state_code', $case?->state_code ?? '');
     $district = old('district', $case?->district ?? '');
     $fromCnr = $case?->cnr_number && $case?->court_code && $case->court_code !== 'SC';
@@ -87,7 +88,7 @@
     <label class="{{ $label }}">
         <span data-court-name-label>{{ in_array($level, ['supreme', 'high'], true) ? 'Bench / court no.' : 'Court / bench' }}</span>
         <span class="font-normal text-slate-500" data-court-name-hint>{{ in_array($level, ['supreme', 'high'], true) ? '(optional)' : '' }}</span>
-        <input name="court_name" value="{{ old('court_name', $case?->court_name) }}" maxlength="255" list="{{ $listId }}" autocomplete="off"
+        <input name="court_name" value="{{ old('court_name', $case?->court_name ?? ($preset['court_name'] ?? null)) }}" maxlength="255" list="{{ $listId }}" autocomplete="off"
                placeholder="e.g. Chief Judicial Magistrate, Civil Judge (J.D.), Court No. 16" class="{{ $field }}">
         <datalist id="{{ $listId }}">
             @foreach($myCourtNames as $courtName)

@@ -15,7 +15,7 @@
         <h2 class="text-lg font-semibold text-slate-900">Statutory Bar Councils</h2>
         <p class="mt-2 text-sm text-slate-600">Statutory regulators under the Advocates Act, 1961.</p>
         <a href="{{ route('bar-directory.index') }}"
-           class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
+           class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">
             Browse Bar Councils and directory records &rarr;
         </a>
     </section>
@@ -25,7 +25,7 @@
             <h2 class="text-lg font-semibold text-slate-900">State &amp; High Court Associations</h2>
             <p class="mt-2 text-sm text-slate-600">Associations for State and High Court practice.</p>
             <a href="{{ route('bar-directory.index', ['court_type' => 'High Court']) }}"
-               class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
+               class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">
                 View High Court associations &rarr;
             </a>
         </section>
@@ -34,7 +34,7 @@
             <h2 class="text-lg font-semibold text-slate-900">District Bar Associations</h2>
             <p class="mt-2 text-sm text-slate-600">District and court-level associations.</p>
             <a href="{{ route('bar-directory.index', ['court_type' => 'District Court']) }}"
-               class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
+               class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">
                 View District Court associations &rarr;
             </a>
         </section>

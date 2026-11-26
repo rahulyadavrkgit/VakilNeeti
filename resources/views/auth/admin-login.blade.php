@@ -48,7 +48,7 @@
 
         @endunless
         <button type="submit"
-                class="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
+                class="w-full rounded-lg bg-[#16776e] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#125f58]">
             {{ $setup ? 'Send setup code' : 'Sign in' }}
         </button>
     </form>

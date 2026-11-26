@@ -99,11 +99,6 @@ class CaseHearingFilterTest extends TestCase
         $this->get(route('cases.show', $privateCase))->assertNotFound();
         $this->get(route('cases.index'))->assertOk()->assertDontSee($privateCase->case_title);
         $this->get(route('cases.index', ['list' => 'disposed']))->assertOk()->assertDontSee($privateCase->case_title);
-        // Overview and Hearing history were folded into My cases and each case's timeline.
-        $this->get('/case-dashboard')->assertRedirect('/cases');
-        $this->get('/hearing-history')->assertRedirect('/cases');
-        // Court day was folded into My cases (today's filter).
-        $this->get('/today')->assertRedirect('/cases?hearing_filter=today');
     }
 
     public function test_admin_review_feedback_and_account_access_are_audited(): void

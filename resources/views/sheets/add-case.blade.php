@@ -3,14 +3,20 @@
     or look up one case by CNR, import an eCourts app list or calendar, or type the case in.
 --}}
 @php
-    $courtLink = fn (array $court): string => route('cases.find', ['method' => 'website', 'level' => $court['level'], 'court_name' => $court['name']]);
-    $nextStep = fn (array $court): string => route('sheets.add-case.method', ['level' => $court['level'], 'court' => $court['name']]);
+    $isTribunal = fn (array $court): bool => $court['level'] === 'tribunal';
+    $courtLink = fn (array $court): string => $isTribunal($court)
+        ? route('cases.manual')
+        : route('cases.find', ['method' => 'website', 'level' => $court['level'], 'court_name' => $court['name']]);
+    $nextStep = fn (array $court): string => $isTribunal($court)
+        ? route('sheets.case', ['court_level' => 'tribunal', 'court_name' => $court['name']])
+        : route('sheets.add-case.method', ['level' => $court['level'], 'court' => $court['name']]);
     $levelBadge = fn (string $level): string => match ($level) {
         'supreme_court' => 'bg-[#142235] text-[#e6b84a]',
         'high_court' => 'bg-[#16776e] text-white',
+        'tribunal' => 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200',
         default => 'bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200',
     };
-    $levelName = fn (string $level): string => match ($level) { 'supreme_court' => 'SC', 'high_court' => 'HC', default => 'District' };
+    $levelName = fn (string $level): string => match ($level) { 'supreme_court' => 'SC', 'high_court' => 'HC', 'tribunal' => 'Tribunal', default => 'District' };
     $row = 'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-800 hover:bg-teal-50';
     $other = 'flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 px-3.5 text-sm font-semibold text-slate-800 hover:border-[#16776e] hover:text-[#16776e]';
 @endphp
@@ -21,7 +27,7 @@
     <x-icon name="search" :size="18" class="shrink-0 text-slate-400" />
     <span class="sr-only">{{ __('Search courts') }}</span>
     <input type="search" data-filter-list="add-case-courts" autofocus autocomplete="off"
-           placeholder="{{ __('Supreme Court, a High Court, or a district…') }}" class="min-h-11 w-full border-0 bg-transparent px-0 text-base outline-none focus:ring-0 sm:text-sm">
+           placeholder="{{ __('Supreme Court, a High Court, a district or a tribunal…') }}" class="min-h-11 w-full border-0 bg-transparent px-0 text-base outline-none focus:ring-0 sm:text-sm">
 </label>
 
 <div id="add-case-courts" class="mt-2 max-h-72 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 p-1">

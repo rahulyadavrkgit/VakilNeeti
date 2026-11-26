@@ -58,7 +58,7 @@
             href="{{ $source->base_url }}"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-block mt-4 px-4 py-2 rounded bg-blue-600 text-white"
+            class="inline-block mt-4 px-4 py-2 rounded bg-[#16776e] text-white"
         >
             Open Official eCourts Portal
         </a>
@@ -143,7 +143,7 @@
 
 <div class="mt-5">
     <a href="{{ route('courts.ecourts-services') }}"
-       class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-700 text-white text-sm font-medium hover:bg-blue-800">
+       class="inline-flex items-center px-4 py-2 rounded-lg bg-[#16776e] text-white text-sm font-medium hover:bg-[#125f58]">
         Open eCourts Case Search
     </a>
 </div>

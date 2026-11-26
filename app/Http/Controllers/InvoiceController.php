@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\FirmProfile;
 use App\Models\Invoice;
 use App\Models\LegalCase;
+use App\Models\Payment;
 use App\Models\State;
 use App\Services\InvoiceCalculator;
 use App\Services\InvoiceNumberGenerator;
@@ -19,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -58,10 +60,34 @@ class InvoiceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $invoice = $this->save($request, new Invoice);
+        // A fee already received: the invoice is saved and its full payment recorded with it.
+        $received = $request->validate([
+            'received_now' => ['nullable', 'boolean'],
+            'received_by' => ['nullable', 'required_if:received_now,1', Rule::in(array_keys(Payment::METHODS))],
+            'received_reference' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $invoice = DB::transaction(function () use ($request, $received): Invoice {
+            $invoice = $this->save($request, new Invoice);
+
+            if ($request->boolean('received_now')) {
+                Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'client_id' => $invoice->client_id,
+                    'receipt_number' => 'REC-'.strtoupper(Str::random(10)),
+                    'payment_date' => $invoice->invoice_date,
+                    'amount' => $invoice->total_amount,
+                    'payment_method' => $received['received_by'],
+                    'transaction_reference' => $received['received_reference'] ?? null,
+                ]);
+                $invoice->update(['status' => 'paid']);
+            }
+
+            return $invoice;
+        });
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', "Invoice {$invoice->invoice_number} created.");
+            ->with('success', "Invoice {$invoice->invoice_number} created".($request->boolean('received_now') ? ' and marked paid.' : '.'));
     }
 
     public function show(Invoice $invoice)

@@ -35,6 +35,10 @@
                 class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Copy link</button>
         <button type="button" data-print
                 class="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print</button>
+        <a href="{{ route('invoices.edit', $invoice) }}"
+           class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <x-icon name="form" :size="16" /> Edit
+        </a>
         <p class="w-full text-xs text-slate-500 print:hidden">On a phone, Share sends the PDF file itself. On a computer, WhatsApp gets a secure link to the PDF that works for 30 days.</p>
     </div>
 
@@ -48,7 +52,7 @@
 
         <div class="flex justify-between border-b pb-8">
             <div>
-                <h1 class="text-3xl font-bold text-blue-700">
+                <h1 class="text-3xl font-bold text-[#16776e]">
     {{ $firm->firm_name ?? 'Firm Name' }}
 </h1>
 
@@ -102,7 +106,7 @@
 
             <div class="text-right">
                 <p class="mb-2 text-sm font-semibold uppercase text-slate-500">Invoice Status</p>
-                <span class="inline-block rounded-full bg-blue-100 px-4 py-2 font-semibold text-blue-700">
+                <span class="inline-block rounded-full bg-teal-100 px-4 py-2 font-semibold text-[#16776e]">
                     {{ ucfirst(str_replace('_', ' ', $invoice->status)) }}
                 </span>
             </div>

@@ -78,6 +78,8 @@ class CaseCalendarController extends Controller
 
         return view('case-calendar.index', [
             'viewMode' => $viewMode,
+            // A month grid is cramped on a phone: unless the person picked a view, phones open the list.
+            'listOnPhones' => ! $request->has('view') && ! isset(($request->user()->preferences ?? [])['calendar_view']),
             'date' => $date,
             'start' => $start,
             'end' => $end,

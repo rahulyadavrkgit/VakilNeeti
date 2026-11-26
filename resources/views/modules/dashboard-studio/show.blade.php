@@ -44,6 +44,13 @@
 
     @if(($readOnly ?? false))
         <div class="ds-alert" style="margin-top:15px;">Public preview mode — this dashboard is visible without sign-in, but management controls are hidden.</div>
+    @elseif($dashboard->visibility === 'public')
+        @php($publicDashboardUrl = route('dashboard-studio.public-show', $dashboard->id))
+        <div class="ds-alert" style="margin-top:15px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+            <span>Anyone with this link can see the dashboard:</span>
+            <a href="{{ $publicDashboardUrl }}" style="font-weight:600;word-break:break-all;">{{ $publicDashboardUrl }}</a>
+            <button type="button" data-copy="{{ $publicDashboardUrl }}" class="ds-button">Copy link</button>
+        </div>
     @endif
 
     @if(session('success'))

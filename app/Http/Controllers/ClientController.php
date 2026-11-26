@@ -18,7 +18,7 @@ class ClientController extends Controller
         $type = in_array($request->input('type'), ['people', 'companies'], true) ? $request->input('type') : 'all';
         $view = $request->input('view') === 'grid' ? 'grid' : 'list';
 
-        $query = Client::query()->with('company')->withCount('people');
+        $query = Client::query()->with('company')->withCount(['people', 'caseParties as cases_count']);
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {

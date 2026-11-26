@@ -6,11 +6,11 @@
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
     <form method="GET" action="{{ route('search') }}" role="search" class="flex gap-2">
-        <label class="flex flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-sm focus-within:border-[#16776e]">
+        <label class="flex flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-sm focus-within:border-[#16776e] focus-within:ring-2 focus-within:ring-[#16776e]/15">
             <x-icon name="search" class="text-slate-400" />
             <span class="sr-only">Search cases, courts, judges, clients and invoices</span>
             <input type="search" name="q" value="{{ $query }}" autofocus maxlength="100" placeholder="Case, CNR, party, court, judge, room, client or invoice"
-                   class="min-h-12 w-full border-0 bg-transparent px-0 focus:ring-0">
+                   class="min-h-12 w-full border-0 bg-transparent px-0 outline-none focus:ring-0">
         </label>
         <button type="submit" class="rounded-xl bg-[#16776e] px-5 text-sm font-semibold text-white hover:bg-[#125f58]">Search</button>
     </form>

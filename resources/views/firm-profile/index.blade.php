@@ -60,14 +60,14 @@
                     <input type="text" name="firm_name"
                            value="{{ old('firm_name', $firm->firm_name ?? $defaults['firm_name'] ?? '') }}"
                            required
-                           class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-2">{{ $isAdvocate ? 'Advocate name' : 'Proprietor / Owner Name' }}</label>
                     <input type="text" name="proprietor_name"
                            value="{{ old('proprietor_name', $firm->proprietor_name ?? $defaults['proprietor_name'] ?? '') }}"
-                           class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                 </div>
 
             </div>
@@ -83,7 +83,7 @@
                 <div>
                     <label class="block text-sm font-medium mb-2">Address</label>
                     <textarea name="address" rows="3"
-                              class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">{{ old('address', $firm->address ?? '') }}</textarea>
+                              class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">{{ old('address', $firm->address ?? '') }}</textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5" data-location-picker data-districts-url="{{ url('/api/court-directory/states') }}" data-cities-url="{{ url('/api/locations/districts') }}">
@@ -96,7 +96,7 @@
                     <div>
                         <label for="firm-state" class="block text-sm font-medium mb-2">State / Union Territory</label>
                         <select id="firm-state" name="state" data-location-state
-                                class="w-full rounded-lg border-slate-300 bg-white focus:border-blue-500 focus:ring-blue-500">
+                                class="w-full rounded-lg border-slate-300 bg-white focus:border-[#16776e] focus:ring-[#16776e]">
                             <x-state-options :groups="$stateGroups" :selected="$firmState" />
                         </select>
                         @if($firmStateIsUnlisted)
@@ -115,27 +115,27 @@
                     <div>
                         <label for="firm-district" class="block text-sm font-medium mb-2">District</label>
                         <select data-location-district-select aria-label="District" hidden
-                                class="w-full rounded-lg border-slate-300 bg-white focus:border-blue-500 focus:ring-blue-500"></select>
+                                class="w-full rounded-lg border-slate-300 bg-white focus:border-[#16776e] focus:ring-[#16776e]"></select>
                         <input type="text" id="firm-district" name="district" data-location-district-input placeholder="Type your district"
                                value="{{ old('district', $firm->district ?? '') }}"
-                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                         <p data-location-district-hint class="mt-1 text-xs text-slate-500" hidden></p>
                     </div>
 
                     <div>
                         <label for="firm-city" class="block text-sm font-medium mb-2">City / Town</label>
                         <select data-location-city-select aria-label="City or town" hidden
-                                class="w-full rounded-lg border-slate-300 bg-white focus:border-blue-500 focus:ring-blue-500"></select>
+                                class="w-full rounded-lg border-slate-300 bg-white focus:border-[#16776e] focus:ring-[#16776e]"></select>
                         <input type="text" id="firm-city" name="city" autocomplete="address-level2" data-location-city-input placeholder="Type the city or town"
                                value="{{ old('city', $firm->city ?? '') }}"
-                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-2">PIN Code</label>
                         <input type="text" name="pincode" maxlength="10"
                                value="{{ old('pincode', $firm->pincode ?? '') }}"
-                               class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                     </div>
 
                 </div>
@@ -154,21 +154,21 @@
                     <input type="text" name="gstin" maxlength="15"
                            value="{{ old('gstin', $firm->gstin ?? '') }}"
                            placeholder="15-character GSTIN"
-                           class="w-full rounded-lg border-slate-300 uppercase focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-slate-300 uppercase focus:border-[#16776e] focus:ring-[#16776e]">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-2">Email</label>
                     <input type="email" name="email"
                            value="{{ old('email', $firm->email ?? $defaults['email'] ?? '') }}"
-                           class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-2">Phone</label>
                     <input type="text" name="phone"
                            value="{{ old('phone', $firm->phone ?? $defaults['phone'] ?? '') }}"
-                           class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-lg border-slate-300 focus:border-[#16776e] focus:ring-[#16776e]">
                 </div>
 
             </div>

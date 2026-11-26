@@ -3,8 +3,8 @@
 
     // Few, plain entries: each section's own pages are reached from tabs inside it.
     $groups = [
-        'workspace' => $isActive('/', 'admin', 'admin/*', 'search', 'cases*', 'case-calendar*', 'hearings*', 'tasks*', 'clients*', 'client-management*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
-        'courts' => $isActive('courts*', 'court-catalogue*', 'tribunals*', 'court-integrations*'),
+        'workspace' => $isActive('/', 'admin', 'admin/*', 'search', 'cases*', 'case-calendar*', 'hearings*', 'tasks*', 'clients*', 'billing*', 'invoices*', 'payments*', 'notifications*', 'profile*', 'firm-profile*', 'tds*', 'professional-tax*'),
+        'courts' => $isActive('courts*', 'tribunals*', 'court-integrations*'),
         'library' => $isActive('bare-acts*', 'new-criminal-laws*', 'court-fee*', 'miscellaneous-forms*'),
         'more' => $isActive('police-administration*', 'bar-associations*', 'pdf-annotator*', 'dashboard-studio*', 'bar-directory*'),
     ];
@@ -36,7 +36,7 @@
             @auth
                 <a href="{{ route('cases.index') }}" class="{{ $link($isActive('cases*', 'tasks*')) }}"><x-icon name="briefcase" :size="18" />{{ __('Cases') }}</a>
                 <a href="{{ route('cases.calendar') }}" class="{{ $link($isActive('case-calendar*', 'hearings*')) }}"><x-icon name="calendar" :size="18" />{{ __('Calendar') }}</a>
-                <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*', 'client-management*')) }}"><x-icon name="people" :size="18" />{{ __('Clients') }}</a>
+                <a href="{{ route('clients.index') }}" class="{{ $link($isActive('clients*')) }}"><x-icon name="people" :size="18" />{{ __('Clients') }}</a>
                 @unless(auth()->user()->isTeamMember())
                     <a href="{{ route('billing.index') }}" class="{{ $link($isActive('billing*', 'invoices*', 'payments*', 'tds*', 'professional-tax*')) }}"><x-icon name="receipt" :size="18" />{{ __('Billing') }}</a>
                 @endunless
@@ -58,7 +58,7 @@
             <a href="{{ route('courts.delhi-high-court') }}" class="{{ $link($isActive('courts/delhi-high-court*')) }}"><x-icon name="building" :size="18" />{{ __('Delhi High Court') }}</a>
             <a href="{{ route('courts.high-courts') }}" class="{{ $link($isActive('courts/high-courts*')) }}"><x-icon name="building" :size="18" />{{ __('High Courts') }}</a>
             <a href="{{ route('courts.delhi-district-courts') }}" class="{{ $link($isActive('courts/delhi-district-courts*')) }}"><x-icon name="gavel" :size="18" />{{ __('Delhi District Courts') }}</a>
-            <a href="{{ route('tribunals.index') }}" class="{{ $link($isActive('tribunals*', 'court-catalogue*')) }}"><x-icon name="scale" :size="18" />{{ __('Tribunals') }}</a>
+            <a href="{{ route('tribunals.index') }}" class="{{ $link($isActive('tribunals*')) }}"><x-icon name="scale" :size="18" />{{ __('Tribunals') }}</a>
             <a href="{{ route('courts.index') }}" class="{{ $link($isActive('courts', 'courts/ecourts-services')) }}"><x-icon name="list" :size="18" />{{ __('All courts') }}</a>
         </div>
     </details>

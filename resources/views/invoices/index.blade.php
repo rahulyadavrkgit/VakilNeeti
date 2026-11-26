@@ -6,7 +6,7 @@
 
 
         <x-page-header class="mt-4" title="Invoices" subtitle="Bills sent to clients, with GST and payments.">
-            <a href="{{ route('invoices.create') }}" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ New invoice</a>
+            <a href="{{ route('invoices.create') }}" data-sheet="{{ route('sheets.invoice') }}" data-shortcut="n" aria-keyshortcuts="N" class="inline-flex min-h-11 items-center rounded-xl bg-[#16776e] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#125f58]">+ New invoice</a>
         </x-page-header>
 
         @if(session('success'))
@@ -47,7 +47,7 @@
                             <td class="p-4" data-stack="full">
                                 <span class="flex flex-wrap items-center gap-3">
                                     <a href="{{ route('invoices.show', $invoice) }}"
-                                       class="font-semibold text-blue-600 hover:underline">
+                                       class="font-semibold text-[#16776e] hover:underline">
                                         View
                                     </a>
                                     @unless(in_array($invoice->status, ['paid', 'cancelled', 'draft'], true))

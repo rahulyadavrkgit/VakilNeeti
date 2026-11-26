@@ -216,7 +216,7 @@ chmod -R 775 storage bootstrap/cache
 
 ### 5.3 Create the first admin
 
-Open `https://example.com/admin/initial-setup` in a browser, **or** promote an existing user:
+Create the one administrator account (it signs in with a password and an emailed code):
 
 ```bash
 php artisan vakilneeti:make-admin you@example.com

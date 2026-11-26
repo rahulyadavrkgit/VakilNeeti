@@ -54,7 +54,7 @@ class PaymentController extends Controller
             'invoice_id' => ['required', 'integer', Rule::exists('invoices', 'id')->where('user_id', auth()->id())],
             'payment_date' => 'required|date',
             'amount' => 'required|numeric|gt:0',
-            'payment_method' => 'required|in:cash,upi,bank_transfer,cheque,card,other',
+            'payment_method' => ['required', Rule::in(array_keys(Payment::METHODS))],
             'transaction_reference' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ], [

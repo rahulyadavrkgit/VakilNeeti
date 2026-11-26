@@ -360,7 +360,7 @@
                     <p class="text-xs font-medium uppercase text-slate-500">Source Reference</p>
                     @if(\Illuminate\Support\Str::startsWith($case->source_reference, ['https://', 'http://']))
                         <a href="{{ $case->source_reference }}" target="_blank" rel="noopener noreferrer"
-                           class="mt-1 inline-block break-all text-sm text-blue-700 hover:underline">
+                           class="mt-1 inline-block break-all text-sm text-[#16776e] hover:underline">
                             Open source record
                         </a>
                     @else
@@ -501,15 +501,15 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700">
                     Title <span class="font-normal text-slate-400">(optional)</span>
-                    <input name="note_title" value="{{ old('note_title') }}" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input name="note_title" value="{{ old('note_title') }}" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('note_title') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Note
-                    <textarea name="note_body" rows="3" required maxlength="10000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('note_body') }}</textarea>
+                    <textarea name="note_body" rows="3" required maxlength="10000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">{{ old('note_body') }}</textarea>
                     @error('note_body') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
-                <div><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add note</button></div>
+                <div><button class="rounded-lg bg-[#16776e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#125f58]">Add note</button></div>
             </form>
 
             <div class="mt-5 space-y-3">
@@ -534,25 +534,25 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                     Appointment title
-                    <input name="appointment_title" value="{{ old('appointment_title') }}" required maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input name="appointment_title" value="{{ old('appointment_title') }}" required maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('appointment_title') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Date and time
-                    <input type="datetime-local" name="appointment_starts_at" value="{{ old('appointment_starts_at') }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="datetime-local" name="appointment_starts_at" value="{{ old('appointment_starts_at') }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('appointment_starts_at') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Location
-                    <input name="appointment_location" value="{{ old('appointment_location') }}" maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input name="appointment_location" value="{{ old('appointment_location') }}" maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('appointment_location') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2">
                     Notes <span class="font-normal text-slate-400">(optional)</span>
-                    <textarea name="appointment_notes" rows="2" maxlength="5000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">{{ old('appointment_notes') }}</textarea>
+                    <textarea name="appointment_notes" rows="2" maxlength="5000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">{{ old('appointment_notes') }}</textarea>
                     @error('appointment_notes') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
-                <div class="sm:col-span-2"><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Schedule appointment</button></div>
+                <div class="sm:col-span-2"><button class="rounded-lg bg-[#16776e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#125f58]">Schedule appointment</button></div>
             </form>
 
             <div class="mt-5 divide-y divide-slate-100">
@@ -676,20 +676,20 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700 sm:col-span-3">
                     Expense description
-                    <input name="expense_description" value="{{ old('expense_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input name="expense_description" value="{{ old('expense_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('expense_description') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Amount (@currency)
-                    <input type="number" name="expense_amount" value="{{ old('expense_amount') }}" min="0.01" step="0.01" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="number" name="expense_amount" value="{{ old('expense_amount') }}" min="0.01" step="0.01" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('expense_amount') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Date
-                    <input type="date" name="expense_date" value="{{ old('expense_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="date" name="expense_date" value="{{ old('expense_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('expense_date') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
-                <div class="flex items-end"><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add expense</button></div>
+                <div class="flex items-end"><button class="rounded-lg bg-[#16776e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#125f58]">Add expense</button></div>
             </form>
 
             <div class="mt-5 divide-y divide-slate-100">
@@ -719,30 +719,30 @@
                 @csrf
                 <label class="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-4">
                     Work description
-                    <input name="time_description" value="{{ old('time_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input name="time_description" value="{{ old('time_description') }}" required maxlength="255" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('time_description') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Date
-                    <input type="date" name="entry_date" value="{{ old('entry_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="date" name="entry_date" value="{{ old('entry_date', now()->toDateString()) }}" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('entry_date') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Hours
-                    <input type="number" name="time_hours" value="{{ old('time_hours', 0) }}" min="0" max="23" step="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="number" name="time_hours" value="{{ old('time_hours', 0) }}" min="0" max="23" step="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('time_hours') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Minutes
-                    <input type="number" name="time_minutes" value="{{ old('time_minutes', 0) }}" min="0" max="59" step="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="number" name="time_minutes" value="{{ old('time_minutes', 0) }}" min="0" max="59" step="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('time_minutes') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="text-sm font-medium text-slate-700">
                     Hourly rate (@currency, optional)
-                    <input type="number" name="hourly_rate" value="{{ old('hourly_rate') }}" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input type="number" name="hourly_rate" value="{{ old('hourly_rate') }}" min="0" step="0.01" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#16776e] focus:ring-[#16776e]">
                     @error('hourly_rate') <span data-field-error class="mt-1 block text-xs text-red-600">{{ $message }}</span> @enderror
                 </label>
-                <div class="sm:col-span-2 lg:col-span-4"><button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add time entry</button></div>
+                <div class="sm:col-span-2 lg:col-span-4"><button class="rounded-lg bg-[#16776e] px-4 py-2 text-sm font-semibold text-white hover:bg-[#125f58]">Add time entry</button></div>
             </form>
 
             <div class="mt-5 divide-y divide-slate-100">
@@ -763,4 +763,34 @@
 
         <p class="text-xs text-slate-400">Verify case status and hearings with the court portal.</p>
 </div>
+
+{{-- Phones: the four things done most on a case stay one tap away, just above the bottom menu. --}}
+@php
+    $callableClient = $linkedClients->map->client->first(fn ($client) => $client->whatsappNumber());
+    $barButton = 'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-semibold';
+@endphp
+<div class="h-16 md:hidden print:hidden" aria-hidden="true"></div>
+<nav aria-label="Case actions" class="vn-case-bar fixed inset-x-0 z-40 grid grid-cols-4 gap-1 border-t border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden print:hidden">
+    <a href="{{ route('hearings.create', ['case' => $case->id]) }}" data-sheet="{{ route('sheets.next-date', ['case' => $case->id]) }}"
+       class="{{ $barButton }} bg-[#16776e] text-white">
+        <x-icon name="calendar" :size="18" /> Next date
+    </a>
+    @if($callableClient)
+        <a href="tel:+{{ $callableClient->whatsappNumber() }}" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
+            <x-icon name="phone" :size="18" /> Call client
+        </a>
+    @else
+        <a href="#case-clients" data-tab-link="case-clients" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
+            <x-icon name="people" :size="18" /> Add client
+        </a>
+    @endif
+    <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+       data-share-text="{{ $shareText }}" data-share-title="{{ $case->case_title ?: 'Case' }}"
+       class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
+        <x-icon name="share" :size="18" /> Share
+    </a>
+    <a href="{{ route('cases.download', $case) }}" class="{{ $barButton }} text-slate-700 hover:bg-slate-50">
+        <x-icon name="download" :size="18" /> Download
+    </a>
+</nav>
 @endsection

@@ -45,9 +45,9 @@ class SeoController extends Controller
      * @var list<string>
      */
     private const DISALLOWED = [
-        '/admin', '/cases', '/case-calendar', '/case-dashboard', '/hearings', '/hearing-history', '/tasks',
-        '/clients', '/client-management', '/billing', '/invoices', '/payments', '/profile', '/firm-profile',
-        '/notifications', '/search', '/tds', '/professional-tax', '/dashboard-studio', '/webview', '/shared', '/api', '/register', '/login',
+        '/admin', '/cases', '/case-calendar', '/hearings', '/tasks',
+        '/clients', '/billing', '/invoices', '/payments', '/profile', '/firm-profile',
+        '/notifications', '/search', '/tds', '/professional-tax', '/dashboard-studio', '/shared', '/api', '/register', '/login',
     ];
 
     public function robots(): Response

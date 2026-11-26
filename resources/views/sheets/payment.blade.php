@@ -22,7 +22,7 @@
     <label class="{{ $label }}">
         {{ __('Paid by') }}
         <select name="payment_method" required class="{{ $field }}">
-            @foreach(['upi' => 'UPI', 'bank_transfer' => 'Bank transfer', 'cash' => 'Cash', 'cheque' => 'Cheque', 'card' => 'Card', 'other' => 'Other'] as $value => $text)
+            @foreach(\App\Models\Payment::METHODS as $value => $text)
                 <option value="{{ $value }}">{{ __($text) }}</option>
             @endforeach
         </select>

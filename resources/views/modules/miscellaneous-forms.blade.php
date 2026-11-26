@@ -22,22 +22,22 @@
             <article data-form-card data-search="new case civil criminal case record" class="rounded-lg border border-slate-200 p-4">
                 <h3 class="text-base font-semibold text-slate-900">New case record</h3>
                 <p class="mt-2 text-sm text-slate-600">Add a matter to the private case diary.</p>
-                <a href="{{ route('cases.create') }}" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Create case &rarr;</a>
+                <a href="{{ route('cases.create') }}" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Create case &rarr;</a>
             </article>
             <article data-form-card data-search="client intake contact client record" class="rounded-lg border border-slate-200 p-4">
                 <h3 class="text-base font-semibold text-slate-900">Client record</h3>
                 <p class="mt-2 text-sm text-slate-600">Create an internal client profile.</p>
-                <a href="{{ route('clients.create') }}" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Add client &rarr;</a>
+                <a href="{{ route('clients.create') }}" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Add client &rarr;</a>
             </article>
             <article data-form-card data-search="invoice billing payment" class="rounded-lg border border-slate-200 p-4">
                 <h3 class="text-base font-semibold text-slate-900">Invoice</h3>
                 <p class="mt-2 text-sm text-slate-600">Prepare a practice billing record.</p>
-                <a href="{{ route('invoices.create') }}" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Create invoice &rarr;</a>
+                <a href="{{ route('invoices.create') }}" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Create invoice &rarr;</a>
             </article>
             <article data-form-card data-search="task deadline reminder" class="rounded-lg border border-slate-200 p-4">
                 <h3 class="text-base font-semibold text-slate-900">Task or reminder</h3>
                 <p class="mt-2 text-sm text-slate-600">Record a follow-up or practice deadline.</p>
-                <a href="{{ route('tasks.create') }}" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Create task &rarr;</a>
+                <a href="{{ route('tasks.create') }}" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Create task &rarr;</a>
             </article>
         </div>
     </section>
@@ -46,7 +46,7 @@
         <h2 class="text-lg font-semibold text-slate-900">Affidavits &amp; applications</h2>
         <p class="mt-2 text-sm text-slate-600">Use the court’s current prescribed form; check filing requirements with the registry.</p>
         <a href="{{ route('courts.index') }}"
-           class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">
+           class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">
             Find an official court directory entry &rarr;
         </a>
     </section>
@@ -55,12 +55,12 @@
         <article data-form-card data-search="police department contacts official directory" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">Police and department contacts</h2>
             <p class="mt-2 text-sm text-slate-600">Locate official police department and headquarters information.</p>
-            <a href="{{ route('police-administration.index') }}" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Open Police Administration &rarr;</a>
+            <a href="{{ route('police-administration.index') }}" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Open Police Administration &rarr;</a>
         </article>
         <article data-form-card data-search="rti right to information application official portal" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 class="text-lg font-semibold text-slate-900">Right to Information (RTI)</h2>
             <p class="mt-2 text-sm text-slate-600">Central authorities: use RTI Online. Others may have State portals.</p>
-            <a href="https://rtionline.gov.in/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:underline">Open RTI Online &rarr;</a>
+            <a href="https://rtionline.gov.in/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex text-sm font-semibold text-[#16776e] hover:underline">Open RTI Online &rarr;</a>
         </article>
     </section>
 
@@ -68,7 +68,7 @@
         <h2 class="text-lg font-semibold text-slate-900">Court e-filing</h2>
         <p class="mt-2 text-sm text-slate-600">Check formats, size limits and instructions on the e-filing portal.</p>
         <a href="https://efiling.ecourts.gov.in/" target="_blank" rel="noopener noreferrer"
-           class="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
+           class="mt-4 inline-flex rounded-lg bg-[#16776e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#125f58]">
             Open eCourts e-Filing
         </a>
     </section>

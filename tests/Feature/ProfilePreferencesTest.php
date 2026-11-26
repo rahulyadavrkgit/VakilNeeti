@@ -42,7 +42,7 @@ class ProfilePreferencesTest extends TestCase
     public function test_amounts_are_shown_in_rupees_by_default(): void
     {
         $this->actingAs(User::factory()->create())
-            ->get(route('client-management.index'))
+            ->get(route('billing.index'))
             ->assertOk()
             ->assertSee('Rs. 0.00')
             ->assertDontSee('₹');

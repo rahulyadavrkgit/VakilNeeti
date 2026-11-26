@@ -132,7 +132,7 @@
                             <label class="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
                                 <input type="checkbox" name="specializations[]" value="{{ $specialization }}"
                                        @checked(in_array($specialization, $selectedSpecializations, true))
-                                       class="rounded border-slate-300 text-blue-800 focus:ring-blue-700">
+                                       class="rounded border-slate-300 text-teal-800 focus:ring-[#16776e]">
                                 {{ $specialization }}
                             </label>
                         @endforeach

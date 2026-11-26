@@ -1,4 +1,4 @@
-@props(['always' => false, 'date' => null, 'showDate' => true, 'showRoom' => true, 'court' => null, 'room' => null, 'item' => null, 'listTotal' => null, 'causeList' => null, 'caseNumber' => null, 'tone' => 'light', 'orderUrl' => null, 'orderDate' => null, 'district' => false])
+@props(['always' => false, 'date' => null, 'showDate' => true, 'showRoom' => true, 'court' => null, 'room' => null, 'item' => null, 'listTotal' => null, 'causeList' => null, 'caseNumber' => null, 'tone' => 'light', 'orderUrl' => null, 'orderDate' => null, 'district' => false, 'waiting' => true])
 
 @php
     $day = $date ? \Illuminate\Support\Carbon::parse($date) : null;
@@ -15,7 +15,7 @@
     $dark = $tone === 'dark';
 @endphp
 
-@if($myItem || $listTotal || $causeList || $liveRoom || $orderUrl || $day || ($always && $room))
+@if($myItem || $listTotal || $causeList || $liveRoom || $orderUrl || ($day && ($showDate || $waiting)) || ($always && $room))
     <div {{ $attributes->class(['mt-2 space-y-1.5 rounded-xl border px-3 py-2 text-sm', 'border-white/15 bg-white/5 text-white' => $dark, 'border-slate-200 bg-slate-50 text-slate-800' => !$dark]) }}>
         @if($showDate && $day)
             <p class="font-semibold">{{ $day->format('l, d F Y') }}</p>

@@ -19,7 +19,6 @@ use App\Http\Controllers\CaseStatusLinkController;
 use App\Http\Controllers\CaseWorkspaceController;
 use App\Http\Controllers\ClientActivityController;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\ClientManagementController;
 use App\Http\Controllers\ClientsFromCasesController;
 use App\Http\Controllers\CourtIntegrationController;
 use App\Http\Controllers\CourtLinksController;
@@ -31,7 +30,6 @@ use App\Http\Controllers\DistrictCauseListController;
 use App\Http\Controllers\ExternalWebviewController;
 use App\Http\Controllers\FirmProfileController;
 use App\Http\Controllers\HearingController;
-use App\Http\Controllers\InitialAdminSetupController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSettingsController;
 use App\Http\Controllers\LegalCaseController;
@@ -68,13 +66,7 @@ Route::get('/', [DashboardController::class, 'index'])
 
 Route::view('/app', 'app-download')->name('app.download');
 
-// Today's and tomorrow's matters on one page; the phone keeps a copy for court rooms without signal.
-// Court day was removed: My cases shows today's hearings with the same details.
-Route::permanentRedirect('/today', '/cases?hearing_filter=today');
-
 Route::get('/court-integrations/ecourts', [CourtIntegrationController::class, 'index'])->name('court-integrations.ecourts');
-// Repeated eCourts services (which has the CNR search too).
-Route::permanentRedirect('/court-integrations/ecourts/search', '/courts/ecourts-services')->name('court-integrations.ecourts.search');
 
 /*
 |--------------------------------------------------------------------------
@@ -271,8 +263,6 @@ Route::resource('clients.activities', ClientActivityController::class)
 |--------------------------------------------------------------------------
 */
 
-// The empty court catalogue made way for the Tribunals page.
-Route::permanentRedirect('/court-catalogue', '/tribunals')->name('court-catalogue.index');
 Route::get('/tribunals', [CourtLinksController::class, 'tribunals'])->name('tribunals.index');
 
 Route::get('/firm-profile', [FirmProfileController::class, 'index'])
@@ -309,16 +299,6 @@ Route::get(
     [LocationController::class, 'cities']
 )->whereNumber('districtId')->name('api.locations.cities');
 
-// The old court directory held no courts; its addresses now open the Courts page.
-Route::permanentRedirect('/court-directory', '/courts')->name('court-directory.index');
-Route::get('/court-directory/districts/{districtId}', fn () => redirect()->route('courts.index', [], 301))
-    ->whereNumber('districtId')
-    ->name('court-directory.districts.show');
-
-// Overview and Hearing history were removed: My cases has the dates, and each case its own timeline of hearings.
-Route::permanentRedirect('/case-management/hearing-history', '/cases');
-Route::permanentRedirect('/hearing-history', '/cases');
-Route::permanentRedirect('/case-dashboard', '/cases');
 // Combined Invoices and Payments
 Route::get('/billing', [BillingController::class, 'index'])
     ->name('billing.index');
@@ -333,8 +313,6 @@ Route::post('/billing/expenses', [BillingController::class, 'storeExpense'])->na
 Route::get('/billing/expenses/export', [BillingController::class, 'exportExpenses'])->name('billing.expenses.export');
 Route::get('/billing/expenses/{expense}/receipt', [BillingController::class, 'downloadReceipt'])->whereNumber('expense')->name('billing.expenses.receipt');
 Route::get('/billing/payments/export', [BillingController::class, 'exportPayments'])->name('billing.payments.export');
-Route::get('/client-management', [ClientManagementController::class, 'index'])
-    ->name('client-management.index');
 Route::get('/profile', [ProfileController::class, 'index'])
     ->name('profile.index');
 Route::post('/profile/preferences', [ProfileController::class, 'updatePreferences'])
@@ -378,6 +356,7 @@ Route::prefix('sheets')->name('sheets.')->controller(SheetController::class)->gr
     Route::get('/clients/{client}', 'clientCard')->name('client-card');
     Route::get('/court', 'court')->name('court');
     Route::get('/payment', 'paymentPick')->name('payment-pick');
+    Route::get('/invoice', 'invoice')->name('invoice');
     Route::get('/invoices/{invoice}/payment', 'payment')->name('payment');
     Route::get('/search', 'search')->name('search');
 });
@@ -488,14 +467,10 @@ Route::get('/miscellaneous-forms', [ModuleDashboardController::class, 'miscellan
 
 Route::get('/pdf-annotator', [ModuleDashboardController::class, 'pdfAnnotator'])
     ->name('pdf-annotator.index');
-Route::get('/webview', [ExternalWebviewController::class, 'show'])
-    ->name('webview.show');
 
 Route::get('/embed-check', [ExternalWebviewController::class, 'embedCheck'])
     ->middleware('throttle:30,1')
     ->name('embed-check');
-// The old court management page repeated the Courts page.
-Route::permanentRedirect('/court-management', '/courts')->name('court-management.index');
 
 // Administrator authentication
 Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])
@@ -538,15 +513,6 @@ Route::get('/admin/accounts/{account}/cases/{caseId}', [AdminAuthController::cla
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
     ->middleware('auth')
     ->name('admin.logout');
-
-// Temporary first-administrator setup.
-// Controller restricts access to local environment and loopback requests.
-Route::get('/admin/initial-setup', [InitialAdminSetupController::class, 'show'])
-    ->name('admin.initial-setup');
-
-Route::post('/admin/initial-setup', [InitialAdminSetupController::class, 'store'])
-    ->middleware('throttle:5,1')
-    ->name('admin.initial-setup.store');
 
 // Bar Councils and Associations Directory
 

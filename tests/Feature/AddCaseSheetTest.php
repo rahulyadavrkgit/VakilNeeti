@@ -26,6 +26,25 @@ class AddCaseSheetTest extends TestCase
             ->assertSee('CNR number search')->assertSee('Import from eCourts app')->assertSee('Add case manually');
     }
 
+    public function test_tribunals_are_in_the_court_search_and_open_the_quick_case_filled_in(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $quickCase = route('sheets.case', ['court_level' => 'tribunal', 'court_name' => 'National Company Law Tribunal']);
+
+        $this->get(route('sheets.add-case'))->assertOk()
+            ->assertSee('National Company Law Tribunal')->assertSee('NCLT')
+            ->assertSee('data-sheet="'.e($quickCase).'"', false);
+
+        $this->get($quickCase)->assertOk()
+            ->assertSee('value="tribunal" data-court-level class="sr-only" checked', false)
+            ->assertSee('value="National Company Law Tribunal"', false);
+
+        $this->post(route('cases.store'), ['case_title' => 'Bank v. Asha', 'case_status' => 'pending', 'court_level' => 'tribunal', 'court_name' => 'National Company Law Tribunal'])
+            ->assertRedirect();
+        $this->assertDatabaseHas('legal_cases', ['case_title' => 'Bank v. Asha', 'court_level' => 'tribunal', 'court_name' => 'National Company Law Tribunal']);
+    }
+
     public function test_a_court_picked_in_add_case_arrives_filled_in(): void
     {
         $this->actingAs(User::factory()->create());

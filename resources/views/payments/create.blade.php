@@ -30,7 +30,7 @@
                 Create or select an invoice with an outstanding balance before recording a payment.
             </p>
             <a href="{{ route('invoices.create', $selectedClientId ? ['client_id' => $selectedClientId] : []) }}"
-               class="mt-3 inline-block font-semibold text-blue-700 hover:underline">
+               class="mt-3 inline-block font-semibold text-[#16776e] hover:underline">
                 Create Invoice
             </a>
         </div>
@@ -89,14 +89,7 @@
                 <select id="payment_method" name="payment_method" required
                         class="w-full rounded-lg border border-slate-300 p-3">
                     <option value="">Select Method</option>
-                    @foreach ([
-                        'cash' => 'Cash',
-                        'upi' => 'UPI',
-                        'bank_transfer' => 'Bank Transfer',
-                        'cheque' => 'Cheque',
-                        'card' => 'Card',
-                        'other' => 'Other'
-                    ] as $value => $label)
+                    @foreach (\App\Models\Payment::METHODS as $value => $label)
                         <option value="{{ $value }}"
                             @selected(old('payment_method') === $value)>
                             {{ $label }}
@@ -131,7 +124,7 @@
 
             <div class="flex flex-wrap gap-3">
                 <button type="submit"
-                        class="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700">
+                        class="rounded-lg bg-[#16776e] px-6 py-3 font-semibold text-white hover:bg-[#125f58]">
                     Record Payment
                 </button>
                 <a href="{{ route('payments.index') }}"

@@ -21,7 +21,7 @@ class SiteSmokeTest extends TestCase
      *
      * @var list<string>
      */
-    private const SKIPPED = ['webview', 'storage/{path}', 'up'];
+    private const SKIPPED = ['storage/{path}', 'up'];
 
     public function test_no_page_returns_a_server_error_for_guests_or_signed_in_users(): void
     {

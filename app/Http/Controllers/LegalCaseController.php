@@ -18,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -508,19 +509,21 @@ class LegalCaseController extends Controller
         }
 
         // A hearing counts on a day when either its own date or the next date fixed at it falls on that day.
-        $onDates = fn (string $from, ?string $to = null) => fn ($hearings) => $hearings->where(function ($dates) use ($from, $to) {
+        // Plain range comparisons ("on or after the first day, before the day after the last") let the
+        // database use its date indexes; whereDate() would wrap every row's date in a function.
+        $dayAfter = fn (string $date): string => Carbon::parse($date)->addDay()->toDateString();
+        $onDates = fn (string $from, ?string $to = null) => fn ($hearings) => $hearings->where(function ($dates) use ($from, $to, $dayAfter) {
             foreach (['hearing_date', 'next_hearing_date'] as $column) {
-                $dates->orWhere(fn ($range) => $range->whereNotNull($column)
-                    ->whereDate($column, '>=', $from)
-                    ->when($to, fn ($upTo) => $upTo->whereDate($column, '<=', $to)));
+                $dates->orWhere(fn ($range) => $range->where($column, '>=', $from)
+                    ->when($to, fn ($upTo) => $upTo->where($column, '<', $dayAfter($to))));
             }
         });
         $upcoming = $onDates($today);
         $dated = fn ($hearings) => $hearings->where(fn ($dates) => $dates->whereNotNull('hearing_date')->orWhereNotNull('next_hearing_date'));
 
         $listingDates = fn (string $from, ?string $to = null) => fn ($documents) => $documents
-            ->whereDate('listing_date', '>=', $from)
-            ->when($to, fn ($dates) => $dates->whereDate('listing_date', '<=', $to));
+            ->where('listing_date', '>=', $from)
+            ->when($to, fn ($dates) => $dates->where('listing_date', '<', $dayAfter($to)));
         $inRange = fn (string $from, string $to) => $query->where(fn ($cases) => $cases
             ->whereHas('hearings', $onDates($from, $to))
             ->orWhereHas('causeListAppearances.courtDocument', $listingDates($from, $to)));
