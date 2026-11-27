@@ -591,8 +591,9 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
     const filterRooms = () => {
         const terms = shortName(roomsSearch.value).toLowerCase().replace(/\br\s+(?=\d)/g, 'r')
             .split(/[\s,;]+/).filter(Boolean).map(roomKey);
-        const matchingRooms = [...new Set(terms.map((term) => roomLabels.get(term)).filter(Boolean))];
-        const unknownRoom = terms.some((term) => !roomLabels.has(term));
+        const labelFor = (term) => roomLabels.size ? roomLabels.get(term) : (/^r?\d+$/.test(term) ? term : null);
+        const matchingRooms = [...new Set(terms.map(labelFor).filter(Boolean))];
+        const unknownRoom = terms.some((term) => !labelFor(term));
         showRoomStatus(unknownRoom ? 'Check the court numbers you entered.' : '');
 
         if (!terms.length || matchingRooms.length) {
@@ -612,7 +613,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         roomsRequest?.abort();
         roomsBoard = slug;
         roomLabels = new Map();
-        roomsSearch.disabled = true;
+        roomsSearch.disabled = !slug;
         roomsSearch.placeholder = slug ? '1, 2, R1' : 'External board';
         chosenRooms = slug ? String(boardStore.get('vn-board-rooms:' + slug, '')).split(',').filter(Boolean) : [];
         roomsSearch.value = chosenRooms.map(shortName).join(', ');
@@ -625,7 +626,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         const request = new AbortController();
         roomsRequest = request;
 
-        fetch(new URL(url, window.location.origin).pathname.replace(/\/$/, '') + '/data', { headers: { Accept: 'application/json' }, signal: request.signal })
+        fetch(new URL(url, window.location.origin).pathname.replace(/\/$/, '') + '/data', { cache: 'no-store', headers: { Accept: 'application/json' }, signal: request.signal })
             .then((response) => response.ok ? response.json() : null)
             .catch(() => null)
             .then((board) => {
@@ -634,7 +635,6 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
                 }
 
                 if (!board?.rooms?.length) {
-                    roomsSearch.placeholder = 'Rooms unavailable';
                     return;
                 }
 
@@ -642,8 +642,6 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
                     roomLabels.set(roomKey(room.label), room.label);
                     roomLabels.set(roomKey(room.room), room.label);
                 });
-                roomsSearch.value = chosenRooms.filter((room) => roomLabels.has(roomKey(room))).map(shortName).join(', ');
-                roomsSearch.disabled = false;
                 filterRooms();
             });
     };
@@ -837,11 +835,10 @@ document.querySelectorAll('[data-theme-cycle]').forEach((button) => {
 
 markThemeButtons();
 
-// Today's hearings in courts with a live board (x-court-info): "Court 12 · now item 27". Each board is
-// fetched once per page and refreshed every 10 seconds while the page is open; the server caches it for everyone.
-const liveChips = [...document.querySelectorAll('[data-live-chip]')];
-
-if (liveChips.length) {
+// Share one request per board across all hearing chips, including ones inserted after the page loads.
+{
+    const liveChips = () => [...document.querySelectorAll('[data-live-chip][data-source]')];
+    const pendingSources = new Set();
     const caseKey = (text) => {
         const match = String(text || '').match(/(\d+)\s*(?:\/|of)\s*(\d{4})/i);
 
@@ -851,6 +848,8 @@ if (liveChips.length) {
     const fill = (chip, board) => {
         const room = board.rooms.find((item) => item.room === chip.dataset.room);
         const text = chip.querySelector('[data-live-chip-text]');
+        chip.toggleAttribute('data-live-current', Boolean(board.ok && room?.status === 'running' && room.item));
+
         if (chip.hasAttribute('data-live-item-only')) {
             const item = board.ok && room?.status === 'running' ? room.item : null;
             const shown = text.textContent.trim();
@@ -914,24 +913,41 @@ if (liveChips.length) {
             + (board.ok ? '' : ' (court site not answering, last known board)');
     };
 
-    const sources = [...new Set(liveChips.map((chip) => chip.dataset.source))];
     const refreshChips = () => {
         if (document.hidden) {
             return;
         }
 
+        const sources = new Set(liveChips().map((chip) => chip.dataset.source));
         sources.forEach((source) => {
-            fetch(source, { headers: { Accept: 'application/json' } })
+            if (pendingSources.has(source)) {
+                return;
+            }
+
+            pendingSources.add(source);
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
+            fetch(source, {
+                cache: 'no-store',
+                headers: { Accept: 'application/json' },
+                signal: controller.signal,
+            })
                 .then((response) => (response.ok ? response.json() : null))
                 .catch(() => null)
                 .then((board) => {
-                    liveChips.filter((chip) => chip.dataset.source === source).forEach((chip) => {
+                    liveChips().filter((chip) => chip.dataset.source === source).forEach((chip) => {
                         if (board) {
                             fill(chip, board);
                         } else if (chip.hasAttribute('data-live-item-only')) {
                             fill(chip, { rooms: [], ok: false });
+                        } else {
+                            chip.removeAttribute('data-live-current');
                         }
                     });
+                })
+                .finally(() => {
+                    clearTimeout(timeout);
+                    pendingSources.delete(source);
                 });
         });
     };
@@ -939,6 +955,12 @@ if (liveChips.length) {
     refreshChips();
     setInterval(refreshChips, 10000);
     document.addEventListener('visibilitychange', refreshChips);
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            refreshChips();
+        }
+    });
+    window.addEventListener('online', refreshChips);
 }
 
 // Collections with many similar items: data-view-toggle="id" data-view="grid|list" switches #id

@@ -2,7 +2,7 @@
 
 @php
     $emails = preg_split('/\s*[\/,;]\s*/', (string) $bench->email, -1, PREG_SPLIT_NO_EMPTY);
-    $copyButton = 'inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-teal-500';
+    $copyButton = 'inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-teal-500 [&.is-copied]:border-teal-500 [&.is-copied]:text-teal-800';
     // Supreme Court rooms: the court's own cause list for this room, dated the day the link is opened.
     $causeListUrl = $todaysList && $bench->court_key === 'supreme-court' ? \App\Services\SupremeCourtBenches::linkFor('Supreme Court of India', $bench->court_room) : null;
 @endphp
@@ -19,6 +19,7 @@
                             <button type="button" data-copy="{{ preg_replace('/\D+/', '', $bench->vc_meeting_id) }}" title="Copy meeting ID" aria-label="Copy meeting ID"
                                     class="{{ $copyButton }}">
                                 <x-icon name="copy" :size="15" />
+                                <span data-copy-label class="sr-only" aria-live="polite">Copy meeting ID</span>
                             </button>
                         </dd>
                     </div>
@@ -32,6 +33,7 @@
                                     <a class="vn-link min-w-0 flex-1 wrap-anywhere" href="mailto:{{ $email }}" data-direct-share>{{ $email }}</a>
                                     <button type="button" data-copy="{{ $email }}" title="Copy email" aria-label="Copy email {{ $email }}" class="{{ $copyButton }}">
                                         <x-icon name="copy" :size="15" />
+                                        <span data-copy-label class="sr-only" aria-live="polite">Copy email</span>
                                     </button>
                                 </div>
                             @endforeach
@@ -49,6 +51,7 @@
                     </a>
                     <button type="button" data-copy="{{ $bench->vc_link }}" title="Copy VC link" aria-label="Copy VC link" class="{{ $copyButton }}">
                         <x-icon name="copy" :size="15" />
+                        <span data-copy-label class="sr-only" aria-live="polite">Copy VC link</span>
                     </button>
                 @endif
                 @if($causeListUrl)

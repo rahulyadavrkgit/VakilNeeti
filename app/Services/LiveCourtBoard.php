@@ -13,9 +13,8 @@ use Illuminate\Support\Str;
  * Live court display boards shown inside VakilNiti, read from the data each court publishes for its
  * own public board (the courts do not allow their board pages inside other websites).
  *
- * Every visitor shares one copy, refreshed at most every 10 seconds, so a court's server sees about
- * six requests a minute however many people are watching. When a court cannot be reached, the last
- * good copy is shown and marked as not current.
+ * Every visitor shares one copy, refreshed at most every five seconds. When a court cannot be
+ * reached, the last good copy is shown and marked as not current.
  */
 class LiveCourtBoard
 {
@@ -23,7 +22,7 @@ class LiveCourtBoard
 
     private const USABLE_SECONDS = 300;
 
-    private const RETRY_MINUTES = 10;
+    private const RETRY_SECONDS = 30;
 
     /**
      * @var array<string, array{name: string, short: string, source: string, legend: string}>
@@ -108,7 +107,7 @@ class LiveCourtBoard
             return $fresh;
         }
 
-        Cache::add("live-board-down:{$court}", true, now()->addMinutes(self::RETRY_MINUTES));
+        Cache::add("live-board-down:{$court}", true, self::RETRY_SECONDS);
 
         return $this->lastKnown($court);
     }

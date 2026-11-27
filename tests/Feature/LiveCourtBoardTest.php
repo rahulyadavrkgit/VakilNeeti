@@ -40,7 +40,7 @@ class LiveCourtBoardTest extends TestCase
         $this->assertSame(['room' => '1', 'label' => 'Court 1', 'status' => 'not_in_session', 'item' => null, 'case_number' => null, 'parties' => null, 'message' => null], $board['rooms'][0]);
         $this->assertSame('Registrar Court 1', $board['rooms'][2]['label']);
 
-        // One fetch serves everyone for 30 seconds.
+        // One fetch serves everyone within the refresh window.
         app(LiveCourtBoard::class)->board('supreme-court');
         Http::assertSentCount(1);
     }
@@ -90,15 +90,38 @@ class LiveCourtBoardTest extends TestCase
         $this->assertNotContains(route('courts.live-board', 'supreme-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
         $this->assertContains(route('courts.live-board', 'delhi-high-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
 
-        $this->travel(1)->minutes();
+        $this->travel(10)->seconds();
         app(LiveCourtBoard::class)->board('supreme-court');
         Http::assertSentCount(1);
 
         $this->get(route('courts.live-board', 'supreme-court'))->assertOk()->assertSee("Open the court's board", false);
 
-        $this->travel(11)->minutes();
+        $this->travel(25)->seconds();
         app(LiveCourtBoard::class)->board('supreme-court');
         Http::assertSentCount(2);
+    }
+
+    public function test_live_data_is_uncached_and_recovers_without_reloading_the_board_page(): void
+    {
+        Http::fake(['delhihighcourt.nic.in/app/courtdata' => Http::sequence()
+            ->push('unavailable', 503)
+            ->push(['all_courts' => ['23' => '66']])
+            ->push(['all_courts' => ['23' => '67']])]);
+        $this->get(route('courts.live-board', 'delhi-high-court'))
+            ->assertOk()
+            ->assertSee('data-live-unavailable', false);
+
+        $url = route('courts.live-board.data', 'delhi-high-court');
+        $this->travel(31)->seconds();
+        $this->getJson($url)
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('rooms.22.item', '66');
+
+        $this->travel(10)->seconds();
+        $this->getJson($url)->assertOk()->assertJsonPath('rooms.22.item', '67');
+        Http::assertSentCount(3);
     }
 
     public function test_court_rooms_are_matched_to_board_rooms(): void

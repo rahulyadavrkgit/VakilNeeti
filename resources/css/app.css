@@ -655,12 +655,17 @@ body.vn-embed { padding-bottom: 0 !important; }
 .dark [data-live-chip][data-live-item-only][data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a; }
 .dark [data-live-chip][data-live-item-only][data-near] { background-color: rgb(249 115 22 / 0.3); color: #fed7aa; }
 .vn-item-changed { animation: vn-item-glow 1.4s ease-out 2; }
+[data-live-chip][data-live-current] [data-live-chip-text] { animation: vn-live-item-pulse 1.8s ease-in-out infinite; }
+@keyframes vn-live-item-pulse {
+    50% { opacity: 0.55; }
+}
 @keyframes vn-item-glow {
     0%, 100% { box-shadow: 0 0 0 0 rgb(245 158 11 / 0); }
     30% { box-shadow: 0 0 0 5px rgb(245 158 11 / 0.55); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .vn-item-changed { animation: none; }
+    .vn-item-changed,
+    [data-live-chip][data-live-current] [data-live-chip-text] { animation: none; }
 }
 [data-live-chip]:not([data-live-item-only])[data-live-running] { background-color: #fef3c7; padding-inline: 0.5rem; color: #78350f !important; }
 .dark [data-live-chip]:not([data-live-item-only])[data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a !important; }

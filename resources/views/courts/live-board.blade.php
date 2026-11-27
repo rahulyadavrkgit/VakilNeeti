@@ -60,43 +60,20 @@
     @endif
 
     <ul class="vn-court-board mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" data-live-rooms>
-        @forelse($board['rooms'] as $room)
-            @php
-                $mine = $myRooms[$room['room']] ?? null;
-            @endphp
-            <li data-room="{{ $room['room'] }}" data-label="{{ $room['label'] }}" data-status="{{ $room['status'] }}"
-                @if($mine !== null) data-mine data-my-cases="{{ collect($mine)->pluck('case_number')->filter()->implode('|') }}" @endif
-                class="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white {{ $mine !== null ? 'ring-2 ring-inset ring-teal-500' : '' }}">
-                <div class="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-2.5 py-1.5 group-data-[status=running]:bg-teal-50">
-                    <span class="text-sm font-bold text-slate-900">{{ $room['label'] }}</span>
-                    @if($mine !== null)
-                        <span class="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-800">Yours</span>
-                    @endif
-                </div>
-                <div class="flex min-w-0 flex-1 flex-col px-2.5 pb-2.5 pt-1.5">
-                    <p class="text-3xl font-extrabold leading-none tabular-nums text-slate-400 group-data-[status=running]:text-teal-800" data-item>{{ $room['item'] ?? '–' }}</p>
-                    <p class="mt-1 text-xs font-semibold text-slate-600 group-data-[status=running]:text-teal-800" data-status-text>{{ $statusText[$room['status']] ?? '' }}</p>
-                    <p class="mt-1 wrap-anywhere text-xs font-semibold text-slate-900" data-case @if(! $room['case_number']) hidden @endif>{{ $room['case_number'] }}</p>
-                    <p class="wrap-anywhere text-xs text-slate-700" data-parties @if(! $room['parties']) hidden @endif>{{ $room['parties'] }}</p>
-                    <p class="mt-1 wrap-anywhere text-xs text-slate-600" data-message @if(! $room['message']) hidden @endif>{{ $room['message'] }}</p>
-                    <p class="mt-1 text-xs font-bold text-teal-800" data-now-mine hidden>Your case is being heard now</p>
-                    @if($mine)
-                        <p class="mt-auto pt-2 text-xs text-teal-800">
-                            @foreach($mine as $case)
-                                <span class="block truncate">{{ $case['title'] }}{{ $case['time'] ? ' · '.$case['time'] : '' }}</span>
-                            @endforeach
-                        </p>
-                    @endif
-                </div>
-            </li>
-        @empty
-            <li class="col-span-full rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+        @foreach($board['rooms'] as $room)
+            @include('courts.partials.live-board-room', ['room' => $room, 'mine' => $myRooms[$room['room']] ?? []])
+        @endforeach
+        @if($board['rooms'] === [])
+            <li data-live-unavailable class="col-span-full rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
                 <p>The {{ $board['short'] }} board can't be reached from VakilNiti right now. Open the court's own board instead; it works from your device.</p>
                 <a href="{{ $board['source'] }}" target="_blank" rel="noopener noreferrer"
                     class="vn-primary-button mt-3 flex min-h-11 w-full items-center justify-center rounded-xl px-4 font-semibold sm:inline-flex sm:w-auto">Open the court's board</a>
             </li>
-        @endforelse
+        @endif
     </ul>
+    <template data-live-room-template>
+        @include('courts.partials.live-board-room', ['room' => [], 'mine' => []])
+    </template>
     <p data-live-rooms-empty hidden role="status" class="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">No courts match your filters.</p>
 
     <footer class="mt-3 text-xs leading-relaxed text-slate-500">
@@ -110,11 +87,16 @@
     (function () {
         const root = document.querySelector('[data-live-board]');
         const statusText = @json($statusText);
+        const myRooms = {{ \Illuminate\Support\Js::from($myRooms) }};
         const sittingOnly = root.querySelector('[data-live-sitting-only]');
         const roomSearch = root.querySelector('[data-live-room-search]');
+        const roomSearchWrap = root.querySelector('[data-live-room-search-wrap]');
+        const rooms = root.querySelector('[data-live-rooms]');
+        const roomTemplate = root.querySelector('[data-live-room-template]');
+        const staleMessage = root.querySelector('[data-live-stale]');
+        const standalone = window.self === window.top;
         // Opened on its own (from a hearing's live chip), not inside the board viewer: offer the way back.
-        root.querySelector('[data-live-back]').hidden = window.self !== window.top;
-        root.querySelector('[data-live-room-search-wrap]').hidden = window.self !== window.top || !root.querySelector('[data-room]');
+        root.querySelector('[data-live-back]').hidden = !standalone;
         // "SLP(C) No. 39493/2026" and "SLP (C) 39493 of 2026" both become "39493/2026".
         const caseKey = (text) => {
             const match = String(text || '').match(/(\d+)\s*(?:\/|of)\s*(\d{4})/i);
@@ -134,7 +116,7 @@
                 .replace(/\br\s+(?=\d)/gi, 'r').split(/[\s,;]+/).map(roomKey).filter(Boolean);
         };
 
-        if (window.self !== window.top) {
+        if (!standalone) {
             try {
                 setOnlyRooms(JSON.parse(localStorage.getItem('vn-board-rooms:' + root.dataset.liveBoard) || '""'));
             } catch (error) {}
@@ -153,6 +135,7 @@
                 const notChosen = onlyRooms.length > 0 && !onlyRooms.includes(roomKey(tile.dataset.room)) && !onlyRooms.includes(roomKey(tile.dataset.label));
                 tile.hidden = notChosen || (sittingOnly.checked && tile.dataset.status === 'not_in_session' && !tile.hasAttribute('data-mine'));
             });
+            roomSearchWrap.hidden = !standalone || tiles.length === 0;
             root.querySelector('[data-live-rooms-empty]').hidden = !tiles.length || tiles.some((tile) => !tile.hidden);
         };
 
@@ -162,16 +145,35 @@
             element.hidden = !value;
         };
 
+        const addRoom = (room) => {
+            const tile = roomTemplate.content.firstElementChild.cloneNode(true);
+            const mine = myRooms[room.room] || [];
+            tile.dataset.room = room.room;
+            tile.toggleAttribute('data-mine', mine.length > 0);
+            tile.dataset.myCases = mine.map((hearing) => hearing.case_number).filter(Boolean).join('|');
+            tile.querySelector('[data-tile-yours]').hidden = mine.length === 0;
+            const matters = tile.querySelector('[data-tile-matters]');
+            matters.hidden = mine.length === 0;
+            mine.forEach((hearing) => {
+                const matter = document.createElement('span');
+                matter.className = 'block truncate';
+                matter.textContent = hearing.title + (hearing.time ? ' · ' + hearing.time : '');
+                matters.append(matter);
+            });
+            rooms.append(tile);
+
+            return tile;
+        };
+
         const render = (board) => {
+            const tiles = new Map([...rooms.querySelectorAll('[data-room]')].map((tile) => [tile.dataset.room, tile]));
             board.rooms.forEach((room) => {
-                const tile = root.querySelector('[data-room="' + room.room + '"]');
+                const tile = tiles.get(room.room) || addRoom(room);
 
-                if (!tile) {
-                    return;
-                }
-
-                const running = room.status === 'running';
+                const running = board.ok && room.status === 'running';
+                tile.dataset.label = room.label;
                 tile.dataset.status = room.status;
+                setText(tile, '[data-tile-label]', room.label);
                 const item = tile.querySelector('[data-item]');
                 item.textContent = room.item || '–';
                 const status = tile.querySelector('[data-status-text]');
@@ -188,20 +190,43 @@
                 root.querySelector('[data-live-updated]').textContent = 'Updated ' + new Date(board.updated_at).toLocaleTimeString('en-IN', { hour12: false });
             }
 
-            root.querySelector('[data-live-stale]').hidden = board.ok;
+            if (board.rooms.length) {
+                rooms.querySelector('[data-live-unavailable]')?.remove();
+            }
+
+            staleMessage.hidden = board.ok;
             applySittingOnly();
         };
 
+        let refreshing = false;
         const refresh = () => {
-            if (document.hidden) {
+            if (document.hidden || refreshing) {
                 return;
             }
 
-            fetch(root.dataset.liveSource, { headers: { Accept: 'application/json' } })
-                .then((response) => response.ok ? response.json() : null)
-                .then((board) => board && render(board))
+            refreshing = true;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
+            fetch(root.dataset.liveSource, {
+                cache: 'no-store',
+                headers: { Accept: 'application/json' },
+                signal: controller.signal,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Live board unavailable');
+                    }
+
+                    return response.json();
+                })
+                .then(render)
                 .catch(() => {
-                    root.querySelector('[data-live-stale]').hidden = false;
+                    staleMessage.hidden = false;
+                    rooms.querySelectorAll('[data-now-mine]:not([hidden])').forEach((message) => { message.hidden = true; });
+                })
+                .finally(() => {
+                    clearTimeout(timeout);
+                    refreshing = false;
                 });
         };
 
@@ -218,14 +243,15 @@
         });
 
         applySittingOnly();
-        render({ rooms: [], ok: {{ $board['ok'] ? 'true' : 'false' }}, updated_at: @json($board['updated_at']) });
-        root.querySelectorAll('[data-room]').forEach((tile) => {
-            const mine = (tile.dataset.myCases || '').split('|').map(caseKey).filter(Boolean);
-            const running = tile.dataset.status === 'running';
-            tile.querySelector('[data-now-mine]').hidden = !(running && mine.includes(caseKey(tile.querySelector('[data-case]').textContent)));
-        });
+        refresh();
         setInterval(refresh, 10000);
         document.addEventListener('visibilitychange', refresh);
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                refresh();
+            }
+        });
+        window.addEventListener('online', refresh);
     })();
 </script>
 </body>
