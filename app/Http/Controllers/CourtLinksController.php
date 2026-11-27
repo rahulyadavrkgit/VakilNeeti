@@ -389,25 +389,12 @@ class CourtLinksController extends Controller
         return $disk->response($path, headers: ['Cache-Control' => $request->query('v') ? 'public, max-age=31536000, immutable' : 'public, max-age=3600']);
     }
 
-    public function room(CourtBench $bench, ?string $slug = null): View|RedirectResponse
+    /**
+     * Old room addresses (shared links, search engines): the room's card in its court's judges list.
+     */
+    public function room(CourtBench $bench, ?string $slug = null): RedirectResponse
     {
-        if ($slug !== $bench->pageSlug()) {
-            return redirect()->to($bench->pageUrl(), 301);
-        }
-
-        $court = CourtBench::courts()[$bench->court_key] ?? ['court' => $bench->court_key, 'title' => 'Judges list'];
-        $listUrl = match (true) {
-            $bench->court_key === 'supreme-court' => route('courts.supreme-court.court-list'),
-            $bench->court_key === 'delhi-high-court' => route('courts.delhi-high-court.judges'),
-            default => route('courts.delhi-district-courts.judges', Str::after($bench->court_key, 'delhi-district-')),
-        };
-
-        return view('courts.room', [
-            'bench' => $bench,
-            'court' => $court,
-            'listUrl' => $listUrl,
-            'neighbours' => CourtBench::query()->where('court_key', $bench->court_key)->where('id', '!=', $bench->id)->orderBy('sort_order')->limit(8)->get(),
-        ]);
+        return redirect()->to($bench->pageUrl(), 301);
     }
 
     public function highCourts(): View

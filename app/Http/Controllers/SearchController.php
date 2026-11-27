@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\CourtBench;
 use App\Models\Invoice;
 use App\Models\LegalCase;
+use App\Services\SiteDestinations;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -20,7 +21,7 @@ class SearchController extends Controller
         $query = mb_substr(trim((string) $request->query('q', '')), 0, 100);
         // Treat % and _ typed by the person as plain characters, not wildcards.
         $like = '%'.addcslashes($query, '\\%_').'%';
-        $results = ['cases' => collect(), 'court_rooms' => collect(), 'clients' => collect(), 'invoices' => collect()];
+        $results = ['cases' => collect(), 'court_rooms' => collect(), 'clients' => collect(), 'invoices' => collect(), 'places' => app(SiteDestinations::class)->matching($query, 10)];
 
         if (mb_strlen($query) >= 2) {
             // Cases: also by court, establishment, judge and room (including the official court lists).

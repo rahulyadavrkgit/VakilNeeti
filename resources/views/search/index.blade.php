@@ -26,6 +26,7 @@
             'court_rooms' => ['Court rooms', 'gavel'],
             'clients' => ['Clients', 'people'],
             'invoices' => ['Invoices', 'receipt'],
+            'places' => ['Pages & boards', 'screen'],
         ] as $key => [$label, $icon])
             @if($results[$key]->isNotEmpty())
                 <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -37,7 +38,7 @@
                             <li>
                                 @if($key === 'cases')
                                     <div class="px-4 py-3 hover:bg-slate-50">
-                                        <a href="{{ route('cases.show', $item) }}" data-sheet="{{ route('sheets.case-view', $item) }}" class="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900 hover:text-[#16776e]">
+                                        <a href="{{ route('cases.show', $item) }}" class="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900 hover:text-[#16776e]">
                                             {{ $item->case_title }}
                                             <x-case-side :side="$item->appearing_for" :parties="$item->appearing_for_parties" />
                                         </a>
@@ -48,7 +49,7 @@
                                     @php $courtList = $courts[$item->court_key] ?? null; @endphp
                                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
                                         <span class="min-w-0 flex-1">
-                                            <span class="block font-semibold text-slate-900">{{ collect($item->judgeList())->pluck('name')->implode(', ') ?: 'Court '.$item->court_room }}</span>
+                                            <a href="{{ $item->pageUrl() }}" class="block font-semibold text-slate-900 hover:text-[#16776e]">{{ collect($item->judgeList())->pluck('name')->implode(', ') ?: 'Court '.$item->court_room }}</a>
                                             <span class="block text-xs text-slate-500">{{ collect([collect($item->judgeList())->pluck('designation')->filter()->first(), $item->court_room ? 'Room '.$item->court_room : null, $courtList['court'] ?? null])->filter()->implode(' · ') }}</span>
                                         </span>
                                         @if($item->vc_link)
@@ -63,6 +64,14 @@
                                     <a href="{{ route('clients.show', $item) }}" class="block px-4 py-3 hover:bg-slate-50">
                                         <span class="block font-semibold text-slate-900">{{ $item->displayName() }}</span>
                                         <span class="block text-xs text-slate-500">{{ collect([$item->mobile, $item->email])->filter()->implode(' · ') }}</span>
+                                    </a>
+                                @elseif($key === 'places')
+                                    <a href="{{ $item['url'] }}" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                                        <span class="min-w-0">
+                                            <span class="block font-semibold text-slate-900">{{ $item['title'] }}</span>
+                                            <span class="block text-xs text-slate-500">{{ $item['detail'] }}</span>
+                                        </span>
+                                        <x-icon :name="$item['icon']" :size="16" class="shrink-0 text-slate-400" />
                                     </a>
                                 @else
                                     <a href="{{ route('invoices.show', $item) }}" class="block px-4 py-3 hover:bg-slate-50">

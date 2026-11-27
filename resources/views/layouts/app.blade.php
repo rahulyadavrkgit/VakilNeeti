@@ -308,13 +308,17 @@
                 <div class="vn-header-spacer flex-1"></div>
 
                 @auth
-                    <form method="GET" action="{{ route('search') }}" role="search" class="mr-1 hidden xl:block">
+                    {{-- Results show under the box as you type (resources/js/sheet.js); Enter opens all results. --}}
+                    <form method="GET" action="{{ route('search') }}" role="search" data-header-search class="relative mr-1 hidden xl:block">
                         <label class="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 transition focus-within:border-white/40 focus-within:bg-white/15">
                             <x-icon name="search" :size="17" class="text-white/60" />
                             <span class="sr-only">{{ __('Search cases, clients and invoices') }}</span>
                             <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="{{ __('Search…  (Ctrl K)') }}"
+                                   data-header-search-input autocomplete="off" aria-controls="header-search-results" aria-expanded="false"
                                    class="h-10 w-44 border-0 bg-transparent px-0 text-sm text-white placeholder:text-white/55 focus:ring-0 2xl:w-64">
                         </label>
+                        <div id="header-search-results" data-header-search-results hidden
+                             class="absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-[30rem] overflow-y-auto overscroll-contain rounded-2xl bg-white p-2 text-slate-900 shadow-2xl ring-1 ring-slate-200"></div>
                     </form>
                     <a href="{{ route('search') }}" data-search-open aria-label="{{ __('Search') }}" title="{{ __('Search') }} (Ctrl K)" class="{{ $headerIcon }} xl:hidden {{ request()->routeIs('dashboard') ? '' : 'max-md:hidden' }}">
                         <x-icon name="search" :size="20" />

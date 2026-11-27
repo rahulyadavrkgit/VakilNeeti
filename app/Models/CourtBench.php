@@ -139,11 +139,24 @@ class CourtBench extends Model
     }
 
     /**
-     * The public page for this room (judge, room, VC link), for people searching Google.
+     * The court's judges list this room is in.
+     */
+    public function listUrl(): string
+    {
+        return match (true) {
+            $this->court_key === 'supreme-court' => route('courts.supreme-court.court-list'),
+            $this->court_key === 'delhi-high-court' => route('courts.delhi-high-court.judges'),
+            default => route('courts.delhi-district-courts.judges', Str::after((string) $this->court_key, 'delhi-district-')),
+        };
+    }
+
+    /**
+     * This room's own place: its card in the court's judges list (opened there, scrolled to and marked).
+     * Rooms have no page of their own; old room addresses lead here too.
      */
     public function pageUrl(): string
     {
-        return route('courts.room', [$this->id, $this->pageSlug()]);
+        return $this->listUrl().'#room-'.$this->id;
     }
 
     /**

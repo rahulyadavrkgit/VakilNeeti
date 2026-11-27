@@ -94,14 +94,20 @@ class HearingShareText
     public static function room(string $courtName, CourtBench $bench, ?string $causeListUrl = null): string
     {
         $number = $bench->roomParts()['number'] ?? null;
-        $room = $bench->court_room && preg_match('/\b(court|room)\b/i', $bench->court_room) ? $bench->court_room : ($number ? 'Court '.$number : $bench->court_room);
+        // District courts number their rooms ("Room 320"); the Supreme Court and High Court their courts ("Court 23").
+        $word = str_starts_with((string) $bench->court_key, 'delhi-district-') ? 'Room ' : 'Court ';
+        $room = $bench->court_room && preg_match('/\b(court|room)\b/i', $bench->court_room) ? $bench->court_room : ($number ? $word.$number : $bench->court_room);
 
         return collect([
             '*'.collect([$courtName, $room])->filter()->implode(' · ').'*',
             $bench->bench,
-            collect($bench->judgeList())->pluck('name')->implode("\n") ?: null,
+            collect($bench->judgeList())->map(fn (array $judge): string => collect([$judge['name'], $judge['designation']])->filter()->implode(', '))->implode("\n") ?: null,
             $bench->vc_link ? 'VC: '.$bench->vc_link : null,
+            $bench->vc_meeting_id ? 'Meeting ID: '.$bench->vc_meeting_id : null,
+            $bench->email ? 'Email: '.$bench->email : null,
             $causeListUrl ? "Today's cause list: ".$causeListUrl : null,
+            // The room's card in the court's judges list (a public page).
+            $bench->exists ? 'Judges list: '.$bench->pageUrl() : null,
         ])->filter()->implode("\n");
     }
 

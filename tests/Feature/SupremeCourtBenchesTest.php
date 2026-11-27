@@ -106,7 +106,8 @@ class SupremeCourtBenchesTest extends TestCase
             ->assertSee("Today's cause list", false)
             ->assertDontSee(route('courts.supreme-court.cause-list', 1), false)
             // Each room can be shared: court and room, VC link and its cause list link.
-            ->assertSee('data-share-text="'.e("*Supreme Court of India · Court No. 5*\nVC: https://sci-vc.webex.com/meet/court05\nToday's cause list: ".route('courts.supreme-court.cause-list', 5)).'"', false);
+            ->assertSee('data-share-text="'.e("*Supreme Court of India · Court No. 5*\nVC: https://sci-vc.webex.com/meet/court05\nToday's cause list: ".route('courts.supreme-court.cause-list', 5).'
+Judges list: '.route('courts.supreme-court.court-list').'#room-'.CourtBench::query()->where('court_room', 'Court No. 5')->value('id')).'"', false);
 
         $this->actingAs(User::factory()->create());
         $case = LegalCase::create(['case_title' => 'Listed vs Later', 'court_name' => 'Supreme Court of India', 'court_room' => 'Court No. 5', 'case_status' => 'pending']);

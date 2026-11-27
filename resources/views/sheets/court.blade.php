@@ -3,9 +3,22 @@
     $judges = $bench ? $bench->judgeList() : [];
     $roomLabel = $bench?->court_room ?: $room;
     $link = $bench?->vc_link ?: $vcLink;
+    $heading = $roomLabel ? (preg_match('/^(court|room)\b/i', $roomLabel) ? $roomLabel : 'Room '.$roomLabel) : 'Court';
+    $shareText = $bench
+        ? \App\Services\HearingShareText::room($courtName ?: $court, $bench, $bench->court_key === 'supreme-court' ? \App\Services\SupremeCourtBenches::linkFor('Supreme Court of India', $bench->court_room) : null)
+        : collect(['*'.collect([$court, $heading])->filter()->implode(' · ').'*', $judge ?: null, $link ? 'VC: '.$link : null])->filter()->implode("\n");
+    $shareButton = 'data-share-now data-share-text="'.e($shareText).'" data-share-title="'.e($heading).'"';
 @endphp
-<h2 data-sheet-heading class="text-lg font-semibold text-slate-900">{{ $roomLabel ? (preg_match('/^(court|room)\b/i', $roomLabel) ? $roomLabel : 'Room '.$roomLabel) : 'Court' }}</h2>
-<p class="mt-0.5 text-sm text-slate-600">{{ $courtName ?: $court }}</p>
+{{-- Share: an icon at the top right on phones; on wider screens a button with the others at the bottom. --}}
+<div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+        <h2 data-sheet-heading class="text-lg font-semibold text-slate-900">{{ $heading }}</h2>
+        <p class="mt-0.5 text-sm text-slate-600">{{ $courtName ?: $court }}</p>
+    </div>
+    <button type="button" {!! $shareButton !!} aria-label="Share {{ $heading }}" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-slate-200 text-[#16776e] hover:border-[#16776e] sm:hidden">
+        <x-icon name="share" :size="18" />
+    </button>
+</div>
 
 <ul class="mt-4 space-y-2">
     @forelse($judges as $judgeRow)
@@ -43,6 +56,9 @@
 @endif
 
 <div class="mt-5 flex flex-wrap gap-2">
+    <button type="button" {!! $shareButton !!} class="hidden min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:border-[#16776e] sm:inline-flex">
+        <x-icon name="share" :size="16" /> Share
+    </button>
     @if($link)
         <button type="button" data-copy="{{ $link }}" class="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:border-[#16776e]">
             <x-icon name="copy" :size="16" /><span data-copy-label>Copy VC link</span>

@@ -74,9 +74,13 @@ class SeoController extends Controller
             $xml[] = '  <url><loc>'.e(route($route)).'</loc><lastmod>'.$today.'</lastmod><changefreq>'.$frequency.'</changefreq><priority>'.($route === 'dashboard' ? '1.0' : '0.7').'</priority></url>';
         }
 
-        // Every court room's own page (judge, room, VC link), so searches for a judge or a room find VakilNiti.
-        foreach (CourtBench::query()->orderBy('court_key')->orderBy('sort_order')->get() as $bench) {
-            $xml[] = '  <url><loc>'.e($bench->pageUrl()).'</loc><lastmod>'.$today.'</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url>';
+        // Each court's judges list (rooms have no page of their own: they are cards in these lists).
+        $listed = collect(array_keys(self::SITEMAP_ROUTES))->map(fn (string $route): string => route($route));
+
+        foreach (CourtBench::query()->select('court_key')->distinct()->orderBy('court_key')->get() as $bench) {
+            if (! $listed->contains($bench->listUrl())) {
+                $xml[] = '  <url><loc>'.e($bench->listUrl()).'</loc><lastmod>'.$today.'</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url>';
+            }
         }
 
         $xml[] = '</urlset>';

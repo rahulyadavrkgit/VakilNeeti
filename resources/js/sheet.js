@@ -238,6 +238,74 @@ function openSearch(trigger = null) {
     input.focus();
 }
 
+// Desktop header search: the same results drop down under the box while typing; Enter still opens all results.
+document.querySelectorAll('[data-header-search]').forEach((form) => {
+    const input = form.querySelector('[data-header-search-input]');
+    const panel = form.querySelector('[data-header-search-results]');
+    const url = document.querySelector('meta[name="vn-search-sheet"]')?.content;
+    let timer = null;
+    let latest = 0;
+
+    if (!input || !panel || !url) {
+        return;
+    }
+
+    const close = () => {
+        panel.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+    };
+
+    const run = async () => {
+        const query = input.value.trim();
+
+        if (query.length < 2) {
+            close();
+
+            return;
+        }
+
+        const ticket = ++latest;
+        const response = await fetch(`${url}?q=${encodeURIComponent(query)}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => null);
+
+        // An older answer arriving after a newer one is dropped.
+        if (response?.ok && ticket === latest) {
+            panel.innerHTML = await response.text();
+            panel.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        }
+    };
+
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(run, 200);
+    });
+    input.addEventListener('focus', () => {
+        if (input.value.trim().length >= 2 && panel.innerHTML.trim() !== '') {
+            panel.hidden = false;
+        }
+    });
+    form.addEventListener('keydown', (event) => {
+        const links = [...panel.querySelectorAll('a')];
+        const at = links.indexOf(document.activeElement);
+
+        if (event.key === 'Escape') {
+            close();
+            input.focus();
+        } else if (event.key === 'ArrowDown' && !panel.hidden && links.length) {
+            event.preventDefault();
+            links[Math.min(at + 1, links.length - 1)].focus();
+        } else if (event.key === 'ArrowUp' && at >= 0) {
+            event.preventDefault();
+            (at === 0 ? input : links[at - 1]).focus();
+        }
+    });
+    document.addEventListener('click', (event) => {
+        if (!form.contains(event.target)) {
+            close();
+        }
+    });
+});
+
 document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-search-open]');
 
@@ -253,6 +321,16 @@ document.addEventListener('keydown', (event) => {
 
     if (wantsSearch && document.querySelector('meta[name="vn-search-sheet"]')) {
         event.preventDefault();
+        // Wide screens have the box in the header: type there, with results under it.
+        const headerInput = document.querySelector('[data-header-search-input]');
+
+        if (headerInput && headerInput.offsetParent !== null) {
+            headerInput.focus();
+            headerInput.select();
+
+            return;
+        }
+
         openSearch();
     }
 });
@@ -267,10 +345,18 @@ document.addEventListener('click', (event) => {
 
     event.preventDefault();
     event.stopImmediatePropagation();
-    openSheet(link);
 
     const text = link.dataset.shareText;
     const title = link.dataset.shareTitle || 'Share';
+
+    // "Share now" buttons go straight to the phone's share menu; elsewhere (no share menu) the preview below opens.
+    if (link.hasAttribute('data-share-now') && navigator.share) {
+        navigator.share({ title, text }).catch(() => {});
+
+        return;
+    }
+
+    openSheet(link);
     body.innerHTML = `
         <h2 data-sheet-heading class="text-lg font-semibold text-slate-900"></h2>
         <textarea readonly rows="9" class="mt-3 w-full rounded-xl border border-slate-300 bg-transparent p-3 text-sm leading-relaxed"></textarea>

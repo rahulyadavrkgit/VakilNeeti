@@ -12,6 +12,7 @@ use App\Models\LegalCase;
 use App\Models\State;
 use App\Services\CourtBenchMatcher;
 use App\Services\CourtIdentity;
+use App\Services\SiteDestinations;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -317,7 +318,8 @@ class SheetController extends Controller
             'judge' => $request->string('judge')->toString(),
             'vcLink' => $request->string('vc')->toString(),
             'courtName' => $bench ? (CourtBench::courts()[$bench->court_key]['court'] ?? null) : null,
-            'listUrl' => $bench ? $this->listUrl($bench->court_key) : null,
+            // The judges list, opened at this room's card.
+            'listUrl' => $bench?->pageUrl(),
         ]);
     }
 
@@ -383,7 +385,7 @@ class SheetController extends Controller
     public function search(Request $request): View
     {
         $query = Str::of((string) $request->query('q'))->squish()->limit(100, '')->toString();
-        $results = ['cases' => collect(), 'clients' => collect(), 'rooms' => collect()];
+        $results = ['cases' => collect(), 'clients' => collect(), 'rooms' => collect(), 'places' => app(SiteDestinations::class)->matching($query)];
 
         if (mb_strlen($query) >= 2) {
             $like = '%'.$query.'%';
@@ -414,15 +416,5 @@ class SheetController extends Controller
             ->orderBy('case_title')
             ->limit(500)
             ->get(['id', 'case_title', 'case_number']);
-    }
-
-    private function listUrl(string $courtKey): ?string
-    {
-        return match (true) {
-            $courtKey === 'supreme-court' => route('courts.supreme-court.court-list'),
-            $courtKey === 'delhi-high-court' => route('courts.delhi-high-court.judges'),
-            str_starts_with($courtKey, 'delhi-district-') => route('courts.delhi-district-courts.judges', Str::after($courtKey, 'delhi-district-')),
-            default => null,
-        };
     }
 }

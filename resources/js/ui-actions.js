@@ -688,7 +688,9 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         }
     };
 
-    const saved = boardStore.get('vn-display-board', null);
+    // A board asked for in the address (?board=…, from search) wins over the one saved last time.
+    const asked = new URLSearchParams(window.location.search).get('board');
+    const saved = asked && options.some((option) => option.value === asked) ? asked : boardStore.get('vn-display-board', null);
 
     if (saved && options.some((option) => option.value === saved)) {
         select.value = saved;
