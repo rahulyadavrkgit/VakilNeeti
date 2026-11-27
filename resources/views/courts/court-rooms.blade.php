@@ -54,13 +54,13 @@
                             @php
                                 $room = $bench->roomParts();
                                 $judges = $bench->judgeList();
-                                // Each room is a card here, with its own spot (#room-12) to open, share or link to.
-                                $roomUrl = '#room-'.$bench->id;
+                                // Each room is a card here, with its own spot named after its number (#room-320) to open, share or link to.
+                                $roomUrl = '#'.$bench->anchor();
                                 $searchTerms = collect([$bench->court_room, $bench->bench, $bench->location])
                                     ->merge(collect($judges)->flatMap(fn ($judge) => [$judge['name'], $judge['designation']]))
                                     ->merge($bench->roster ?? [])->filter()->implode(' ');
                             @endphp
-                            <article id="room-{{ $bench->id }}" data-filter-item data-filter-room="{{ $room['number'] }}" data-filter-text="{{ $searchTerms }}"
+                            <article id="{{ $bench->anchor() }}" data-filter-item data-filter-room="{{ $room['number'] }}" data-filter-text="{{ $searchTerms }}"
                                      class="flex min-w-0 scroll-mt-36 flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-teal-300 focus-within:border-teal-500 target:border-teal-500 target:ring-4 target:ring-teal-500/25 sm:p-4">
                                 <div class="flex min-w-0 items-start gap-2.5">
                                     <div class="min-w-0 flex-1 space-y-2">

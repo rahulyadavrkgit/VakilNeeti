@@ -208,12 +208,13 @@ TEXT;
         $this->assertSame(['2026-11-25'], CourtHearing::query()->where('case_id', $pastOnly->id)->where('source_type', 'cause_list')->get()->map(fn ($hearing) => $hearing->hearing_date->toDateString())->all());
     }
 
-    public function test_the_check_runs_morning_and_evening(): void
+    public function test_the_check_runs_every_half_hour_in_the_morning_for_supplementary_lists_and_in_the_evening(): void
     {
-        $expression = collect(app(Schedule::class)->events())
-            ->first(fn ($event) => str_contains((string) $event->command, 'courts:delhi-hc-cause-list'))?->expression;
+        $expressions = collect(app(Schedule::class)->events())
+            ->filter(fn ($event) => str_contains((string) $event->command, 'courts:delhi-hc-cause-list'))
+            ->pluck('expression')->values()->all();
 
-        $this->assertSame('15 7,9,20,22 * * *', $expression);
+        $this->assertSame(['15,45 7-11 * * *', '15 13,15,17,20,22 * * *'], $expressions);
     }
 
     private function listingPage(): string

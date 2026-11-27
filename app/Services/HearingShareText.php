@@ -103,8 +103,6 @@ class HearingShareText
             $bench->bench,
             collect($bench->judgeList())->map(fn (array $judge): string => collect([$judge['name'], $judge['designation']])->filter()->implode(', '))->implode("\n") ?: null,
             $bench->vc_link ? 'VC: '.$bench->vc_link : null,
-            $bench->vc_meeting_id ? 'Meeting ID: '.$bench->vc_meeting_id : null,
-            $bench->email ? 'Email: '.$bench->email : null,
             $causeListUrl ? "Today's cause list: ".$causeListUrl : null,
             // The room's card in the court's judges list (a public page).
             $bench->exists ? 'Judges list: '.$bench->pageUrl() : null,

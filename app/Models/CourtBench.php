@@ -156,7 +156,46 @@ class CourtBench extends Model
      */
     public function pageUrl(): string
     {
-        return $this->listUrl().'#room-'.$this->id;
+        return $this->listUrl().'#'.$this->anchor();
+    }
+
+    /**
+     * This room's spot in its judges list, named after its real number: "room-320" in a district court,
+     * "court-5" in the Supreme Court and High Court ("-2" when a list has the number twice), or the judge's name
+     * ("judge-umed-singh") for a room without a number.
+     */
+    public function anchor(): string
+    {
+        return self::anchorsFor((string) $this->court_key)[$this->id] ?? 'room-'.$this->id;
+    }
+
+    /**
+     * Every room's spot in one judges list, worked out once per request.
+     *
+     * @return array<int, string>
+     */
+    private static function anchorsFor(string $courtKey): array
+    {
+        return once(function () use ($courtKey): array {
+            $word = str_starts_with($courtKey, 'delhi-district-') ? 'room' : 'court';
+            $taken = [];
+            $anchors = [];
+
+            foreach (self::query()->where('court_key', $courtKey)->orderBy('sort_order')->orderBy('id')->get() as $bench) {
+                $number = $bench->roomParts()['number'];
+                $base = $number ? $word.'-'.Str::slug($number) : 'judge-'.(Str::slug($bench->judgeList()[0]['name'] ?? '') ?: 'court');
+                $anchor = $base;
+
+                for ($count = 2; isset($taken[$anchor]); $count++) {
+                    $anchor = $base.'-'.$count;
+                }
+
+                $taken[$anchor] = true;
+                $anchors[$bench->id] = $anchor;
+            }
+
+            return $anchors;
+        });
     }
 
     /**

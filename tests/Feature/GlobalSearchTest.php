@@ -78,19 +78,25 @@ class GlobalSearchTest extends TestCase
             'vc_link' => 'https://districtcourtdelhi.webex.com/meet/ddc.vc.north06', 'vc_meeting_id' => '176 040 0022', 'email' => 'mm06-north@ddc.nic.in']);
 
         $html = $this->get(route('sheets.court', ['bench' => $room->id]))->assertOk()->getContent();
-        $message = e("*North District, Delhi (Rohini) · Room 320*\nMs. Garima Jindal, Judicial Magistrate First Class - 06\nVC: https://districtcourtdelhi.webex.com/meet/ddc.vc.north06\nMeeting ID: 176 040 0022\nEmail: mm06-north@ddc.nic.in\nJudges list: ".route('courts.delhi-district-courts.judges', 'north').'#room-'.$room->id);
+        $message = e("*North District, Delhi (Rohini) · Room 320*\nMs. Garima Jindal, Judicial Magistrate First Class - 06\nVC: https://districtcourtdelhi.webex.com/meet/ddc.vc.north06\nJudges list: ".route('courts.delhi-district-courts.judges', 'north').'#room-320');
 
         $this->assertSame(2, substr_count($html, 'data-share-now data-share-text="'.$message.'"'));
         $this->assertStringContainsString('aria-label="Share Room 320" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-slate-200 text-[#16776e] hover:border-[#16776e] sm:hidden"', $html);
         $this->assertStringContainsString('sm:inline-flex">', $html);
 
         // Rooms have no page of their own: the pop-up and old room addresses open the room's card in the judges list.
-        $this->assertStringContainsString('href="'.route('courts.delhi-district-courts.judges', 'north').'#room-'.$room->id.'"', $html);
+        $this->assertStringContainsString('href="'.route('courts.delhi-district-courts.judges', 'north').'#room-320"', $html);
         $this->get('/courts/room/'.$room->id.'/north-district-delhi-rohini-room-320-garima-jindal')
-            ->assertRedirect(route('courts.delhi-district-courts.judges', 'north').'#room-'.$room->id);
+            ->assertRedirect(route('courts.delhi-district-courts.judges', 'north').'#room-320');
         $this->get(route('courts.delhi-district-courts.judges', 'north'))->assertOk()
-            ->assertSee('<article id="room-'.$room->id.'"', false)
-            ->assertSee('href="#room-'.$room->id.'"', false);
+            ->assertSee('<article id="room-320"', false)
+            ->assertSee('href="#room-320"', false);
+
+        // A number that appears twice gets "-2"; a room without a number is named after its judge.
+        $first = CourtBench::create(['court_key' => 'delhi-district-west', 'court_room' => '011', 'sort_order' => 1]);
+        $second = CourtBench::create(['court_key' => 'delhi-district-west', 'court_room' => '011, Annexe', 'sort_order' => 2]);
+        $unnumbered = CourtBench::create(['court_key' => 'delhi-district-west', 'judges' => [['name' => 'Sh. Umed Singh']], 'sort_order' => 3]);
+        $this->assertSame(['room-011', 'room-011-2', 'judge-sh-umed-singh'], [$first->anchor(), $second->anchor(), $unnumbered->anchor()]);
     }
 
     public function test_search_needs_a_login(): void
