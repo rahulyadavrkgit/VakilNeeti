@@ -41,11 +41,11 @@ Schedule::command('courts:check-boards')->dailyAt('06:00');
 // After Hostinger's automatic deploy: migrate and rebuild the caches once for each new commit.
 Schedule::command('app:refresh-after-deploy')->everyMinute()->withoutOverlapping();
 
-// Delhi High Court cause lists: the next day's lists come out in the evening; supplementary lists for the day keep
-// coming through the morning (and now and then later), so the morning is read every half hour. Lists already read are
-// skipped, so a check that finds nothing new costs one page.
-Schedule::command('courts:delhi-hc-cause-list')->cron('15,45 7-11 * * *')->withoutOverlapping(60);
-Schedule::command('courts:delhi-hc-cause-list')->cron('15 13,15,17,20,22 * * *')->withoutOverlapping(60);
+// Delhi High Court cause lists, every 15 minutes from 6 am to midnight. The court puts up the next day's lists, its
+// supplementary lists included, mostly the evening before, and more supplementary lists can follow in the morning.
+// A case added to the diary is looked for in the lists already out (today, tomorrow, the day after) at the next check.
+// Lists already read are skipped, so a check with nothing new costs one page; a check cut short is finished by the next.
+Schedule::command('courts:delhi-hc-cause-list')->everyFifteenMinutes()->between('6:00', '23:59')->withoutOverlapping(60);
 
 // Supreme Court: the next day's lists in the evening, supplementary lists in the morning.
 Schedule::command('courts:cause-lists supreme-court')->cron('35 7,9,20,22 * * *')->withoutOverlapping(60);

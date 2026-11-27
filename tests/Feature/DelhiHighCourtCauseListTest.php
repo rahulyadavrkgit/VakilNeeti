@@ -208,13 +208,16 @@ TEXT;
         $this->assertSame(['2026-11-25'], CourtHearing::query()->where('case_id', $pastOnly->id)->where('source_type', 'cause_list')->get()->map(fn ($hearing) => $hearing->hearing_date->toDateString())->all());
     }
 
-    public function test_the_check_runs_every_half_hour_in_the_morning_for_supplementary_lists_and_in_the_evening(): void
+    public function test_the_check_runs_every_fifteen_minutes_from_morning_to_midnight(): void
     {
-        $expressions = collect(app(Schedule::class)->events())
-            ->filter(fn ($event) => str_contains((string) $event->command, 'courts:delhi-hc-cause-list'))
-            ->pluck('expression')->values()->all();
+        $events = collect(app(Schedule::class)->events())
+            ->filter(fn ($event) => str_contains((string) $event->command, 'courts:delhi-hc-cause-list'))->values();
 
-        $this->assertSame(['15,45 7-11 * * *', '15 13,15,17,20,22 * * *'], $expressions);
+        // Next-day lists (supplementary ones included) come out the evening before, more supplementary lists in the morning.
+        // (The 6 am to midnight window is read when the schedule loads, each minute on the server.)
+        $this->assertCount(1, $events);
+        $this->assertSame('*/15 * * * *', $events[0]->expression);
+        $this->assertNotEmpty((fn () => $this->filters)->call($events[0]));
     }
 
     private function listingPage(): string
