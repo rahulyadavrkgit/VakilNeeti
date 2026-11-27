@@ -188,6 +188,35 @@ class CourtBench extends Model
     public const PHOTOS_FILE = 'judge-photos.json';
 
     /**
+     * The saved photos, read once per request (see flushPhotos).
+     *
+     * @var array<string, string>|null
+     */
+    private static ?array $photos = null;
+
+    /**
+     * Each photo's version (its file time), worked out once per request.
+     *
+     * @var array<string, string>
+     */
+    private static array $photoVersions = [];
+
+    /**
+     * Whether the web server can hand out photos itself (public/storage exists).
+     */
+    private static ?bool $storageLinked = null;
+
+    /**
+     * Read the photos file again next time, after new photos were saved.
+     */
+    public static function flushPhotos(): void
+    {
+        self::$photos = null;
+        self::$photoVersions = [];
+        self::$storageLinked = null;
+    }
+
+    /**
      * "Hon'ble Ms. Justice Prathiba M. Singh" and "JUSTICE PRATHIBA M SINGH" → "PRATHIBAMSINGH".
      */
     public static function judgeKey(string $name): string
@@ -203,8 +232,7 @@ class CourtBench extends Model
      */
     public static function photoFor(string $name, ?string $district = null): ?string
     {
-        static $photos = null;
-        $photos ??= rescue(fn () => json_decode((string) Storage::disk('local')->get(self::PHOTOS_FILE), true), [], false) ?: [];
+        $photos = self::$photos ??= rescue(fn () => json_decode((string) Storage::disk('local')->get(self::PHOTOS_FILE), true), [], false) ?: [];
         $key = self::judgeKey($name);
         $slug = Str::slug((string) $district);
         if ($slug !== 'new-delhi') {
@@ -212,6 +240,21 @@ class CourtBench extends Model
         }
         $path = $photos[$slug !== '' ? $slug.'-'.$key : $key] ?? null;
 
-        return $path ? route('courts.judge-photo', ['photo' => basename($path)], absolute: false) : null;
+        return $path ? self::photoUrl($path) : null;
+    }
+
+    /**
+     * A photo's web address. Where the site has its storage link (public/storage, as on the live server) the web
+     * server hands the file out itself, without running the app, and browsers keep it for a year: the address carries
+     * the file's version, so a new photo gets a new address. Without the link, the app serves it (courts.judge-photo).
+     */
+    public static function photoUrl(string $path): string
+    {
+        $version = self::$photoVersions[$path] ??= base_convert((string) (@filemtime(Storage::disk('public')->path($path)) ?: 0), 10, 36);
+        $address = (self::$storageLinked ??= is_dir(public_path('storage')))
+            ? '/storage/'.ltrim($path, '/')
+            : route('courts.judge-photo', ['photo' => basename($path)], absolute: false);
+
+        return $address.'?v='.$version;
     }
 }

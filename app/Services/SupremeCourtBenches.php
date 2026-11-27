@@ -36,14 +36,14 @@ class SupremeCourtBenches
     /**
      * Saved benches, loaded once per request.
      *
-     * @var array<string, array<string, array{judges: list<string>, time: ?string}>>|null
+     * @var array<string, array<string, array{judges: list<string>, time: ?string, stage?: string}>>|null
      */
     private static ?array $saved = null;
 
     /**
      * Each court's bench on the date: court number → judges and sitting time. Courts not sitting are left out.
      *
-     * @return array<string, array{judges: list<string>, time: ?string}>
+     * @return array<string, array{judges: list<string>, time: ?string, stage?: string}>
      */
     public function fetch(Carbon $date): array
     {
@@ -54,7 +54,7 @@ class SupremeCourtBenches
                 $bench = $this->benchFrom($this->page($court, $stage, $date), $court);
 
                 if ($bench) {
-                    $benches[(string) $court] = $bench;
+                    $benches[(string) $court] = $bench + ['stage' => $stage];
 
                     break;
                 }
@@ -65,6 +65,44 @@ class SupremeCourtBenches
     }
 
     /**
+     * The court's own cause list for one court and date: the page the court links to, e.g.
+     * https://api.sci.gov.in/?pageid=900104&courtno=2&stage=Misc.%20Court&msb=both&cldate=2026-10-26.
+     * The list the court sat in that day (Misc. or Regular) when known, otherwise the Misc. list.
+     */
+    public static function listUrl(int|string $court, mixed $date = null, ?string $stage = null): string
+    {
+        $day = Carbon::parse($date ?? today())->toDateString();
+        $stage ??= self::all()[$day][(string) (int) $court]['stage'] ?? self::STAGES[0];
+
+        return self::PAGE_URL.'?'.http_build_query(self::query((int) $court, $stage, $day), '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /**
+     * @return array{pageid: string, courtno: int, stage: string, msb: string, cldate: string}
+     */
+    private static function query(int $court, string $stage, string $day): array
+    {
+        return ['pageid' => '900104', 'courtno' => $court, 'stage' => $stage, 'msb' => 'both', 'cldate' => $day];
+    }
+
+    /**
+     * VakilNiti's link to a Supreme Court room's cause list. It goes through VakilNiti so the date is filled in
+     * when the link is opened: no date means "today" at that moment. Null for other courts and Registrar courts.
+     */
+    public static function linkFor(?string $courtName, ?string $room, mixed $date = null): ?string
+    {
+        $court = LiveCourtBoard::boardFor($courtName) === 'supreme-court' && ! preg_match('/^\s*(r\b|rc|registrar)/i', (string) $room)
+            ? LiveCourtBoard::roomKey('supreme-court', $room)
+            : null;
+
+        if ($court === null || (int) $court < 1 || (int) $court > self::COURTS) {
+            return null;
+        }
+
+        return route('courts.supreme-court.cause-list', array_filter(['court' => (int) $court, 'date' => $date ? Carbon::parse($date)->toDateString() : null]));
+    }
+
+    /**
      * The court's page for one court, list and date. The site answers with status 404 even when the list is there,
      * so the page is read whatever the status.
      */
@@ -72,7 +110,7 @@ class SupremeCourtBenches
     {
         try {
             return Http::timeout(30)->connectTimeout(10)->withUserAgent('Mozilla/5.0 (VakilNiti bench check)')
-                ->get(self::PAGE_URL, ['pageid' => '900104', 'courtno' => $court, 'stage' => $stage, 'msb' => 'both', 'cldate' => $date->toDateString()])
+                ->get(self::PAGE_URL, self::query($court, $stage, $date->toDateString()))
                 ->body();
         } catch (Throwable) {
             return '';
@@ -126,7 +164,7 @@ class SupremeCourtBenches
     /**
      * Keep the day's benches with the last two weeks', and, for today, show them in the court list (court_benches).
      *
-     * @param  array<string, array{judges: list<string>, time: ?string}>  $benches
+     * @param  array<string, array{judges: list<string>, time: ?string, stage?: string}>  $benches
      */
     public function save(Carbon $date, array $benches): void
     {
@@ -169,7 +207,7 @@ class SupremeCourtBenches
     }
 
     /**
-     * @return array<string, array<string, array{judges: list<string>, time: ?string}>>
+     * @return array<string, array<string, array{judges: list<string>, time: ?string, stage?: string}>>
      */
     private static function all(): array
     {

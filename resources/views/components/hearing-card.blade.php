@@ -44,7 +44,11 @@
         <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <x-case-side :side="$event['appearing_for'] ?? null" :parties="$event['appearing_for_parties'] ?? null" :case-id="$event['case_id']" :edit-url="$event['case_id'] ? route('cases.edit', $event['case_id']) : null" class="relative z-10 max-w-full whitespace-normal!" />
             @if($orderUrl)<a href="{{ $orderUrl }}" class="vn-file-link relative z-10 min-h-8 text-sm">Latest order</a>@endif
-            @if($listPdf)<a href="{{ $listPdf }}" target="_blank" rel="noopener" class="vn-file-link relative z-10 min-h-8 text-sm">Cause list</a>@endif
+            @if($listPdf)
+                <a href="{{ $listPdf }}" target="_blank" rel="noopener" class="vn-file-link relative z-10 min-h-8 text-sm">Cause list</a>
+            @elseif($courtListUrl = \App\Services\SupremeCourtBenches::linkFor($event['court'] ?? null, $room, $event['date']))
+                <a href="{{ $courtListUrl }}" target="_blank" rel="noopener noreferrer" data-direct-share class="vn-link relative z-10 inline-flex min-h-8 items-center text-sm font-semibold">{{ $date->isToday() ? "Today's cause list" : 'Cause list' }}</a>
+            @endif
         </div>
     </div>
 

@@ -1,11 +1,13 @@
-@props(['bench'])
+@props(['bench', 'todaysList' => true])
 
 @php
     $emails = preg_split('/\s*[\/,;]\s*/', (string) $bench->email, -1, PREG_SPLIT_NO_EMPTY);
     $copyButton = 'inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:border-teal-500';
+    // Supreme Court rooms: the court's own cause list for this room, dated the day the link is opened.
+    $causeListUrl = $todaysList && $bench->court_key === 'supreme-court' ? \App\Services\SupremeCourtBenches::linkFor('Supreme Court of India', $bench->court_room) : null;
 @endphp
 
-@if($bench->vc_meeting_id || $emails || $bench->vc_link)
+@if($bench->vc_meeting_id || $emails || $bench->vc_link || $causeListUrl)
     <div {{ $attributes->class(['mt-3 space-y-2']) }}>
         @if($bench->vc_meeting_id || $emails)
             <dl class="grid gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200 {{ $bench->vc_meeting_id && $emails ? 'min-[380px]:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]' : '' }}">
@@ -38,15 +40,21 @@
                 @endif
             </dl>
         @endif
-        @if($bench->vc_link)
+        @if($bench->vc_link || $causeListUrl)
             <div class="flex flex-wrap items-center gap-1.5">
-                <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share
-                   class="vn-primary-button inline-flex min-h-8 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold">
-                    <x-icon name="screen" :size="15" /> Join VC
-                </a>
-                <button type="button" data-copy="{{ $bench->vc_link }}" title="Copy VC link" aria-label="Copy VC link" class="{{ $copyButton }}">
-                    <x-icon name="copy" :size="15" />
-                </button>
+                @if($bench->vc_link)
+                    <a href="{{ $bench->vc_link }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                       class="vn-primary-button inline-flex min-h-8 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold">
+                        <x-icon name="screen" :size="15" /> Join VC
+                    </a>
+                    <button type="button" data-copy="{{ $bench->vc_link }}" title="Copy VC link" aria-label="Copy VC link" class="{{ $copyButton }}">
+                        <x-icon name="copy" :size="15" />
+                    </button>
+                @endif
+                @if($causeListUrl)
+                    <a href="{{ $causeListUrl }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                       class="vn-link inline-flex min-h-8 items-center gap-1 px-1 text-xs font-semibold">Today's cause list</a>
+                @endif
             </div>
         @endif
     </div>

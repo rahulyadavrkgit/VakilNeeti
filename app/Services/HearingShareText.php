@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CourtBench;
 use App\Models\LegalCase;
 use Illuminate\Support\Carbon;
 
@@ -84,6 +85,24 @@ class HearingShareText
             ->filter(fn (array $event): bool => ($event['group'] ?? null) === 'hearing')
             ->map(fn (array $event): array => self::fromEvent($event))
             ->values());
+    }
+
+    /**
+     * One court room from a court's judges list: court and room, the judges, VC link and, for the Supreme Court,
+     * the room's cause list (a link that opens the list of the day it is clicked).
+     */
+    public static function room(string $courtName, CourtBench $bench, ?string $causeListUrl = null): string
+    {
+        $number = $bench->roomParts()['number'] ?? null;
+        $room = $bench->court_room && preg_match('/\b(court|room)\b/i', $bench->court_room) ? $bench->court_room : ($number ? 'Court '.$number : $bench->court_room);
+
+        return collect([
+            '*'.collect([$courtName, $room])->filter()->implode(' · ').'*',
+            $bench->bench,
+            collect($bench->judgeList())->pluck('name')->implode("\n") ?: null,
+            $bench->vc_link ? 'VC: '.$bench->vc_link : null,
+            $causeListUrl ? "Today's cause list: ".$causeListUrl : null,
+        ])->filter()->implode("\n");
     }
 
     /**

@@ -19,12 +19,14 @@
     $liveBoard = $day?->isToday() && $room && ! $districtBoard ? $supportedBoard : null;
     $liveRoom = $liveBoard ? \App\Services\LiveCourtBoard::roomKey($liveBoard, $room) : null;
     $listPdf = ! $districtBoard ? ($causeList['source_url'] ?? null) : null;
+    // Supreme Court rooms without a saved list: the court's own cause list for that room and date.
+    $courtListUrl = ! $listPdf && $day ? \App\Services\SupremeCourtBenches::linkFor($court, $room, $day) : null;
     $dark = $tone === 'dark';
     // Courts publish their lists a day ahead, so the "not out yet" note is for today and tomorrow only.
     $waitingNote = ! $highCourt && $day && $waiting && ! $myItem && ($day->isToday() || $day->isTomorrow());
 @endphp
 
-@if($highCourt || $districtBoard || $myItem || $listTotal || $causeList || $liveRoom || $orderUrl || ($day && ($showDate || $waitingNote)) || ($always && $room))
+@if($highCourt || $districtBoard || $myItem || $listTotal || $causeList || $courtListUrl || $liveRoom || $orderUrl || ($day && ($showDate || $waitingNote)) || ($always && $room))
     <div {{ $attributes->class(['mt-2 rounded-xl border px-3 py-2 text-xs', 'border-white/15 bg-white/5 text-white' => $dark, 'border-slate-200 bg-slate-50 text-slate-800' => !$dark]) }}>
         @if($showDate && $day)
             <p class="mb-1 text-sm font-semibold">{{ $day->format('l, d F Y') }}</p>
@@ -57,6 +59,8 @@
             @endif
             @if($listPdf)
                 <a href="{{ $listPdf }}" target="_blank" rel="noopener" class="vn-file-link">Cause list</a>
+            @elseif($courtListUrl)
+                <a href="{{ $courtListUrl }}" target="_blank" rel="noopener noreferrer" data-direct-share class="vn-link font-semibold">{{ $day?->isToday() ? "Today's cause list" : 'Cause list' }}</a>
             @endif
             @if($orderUrl)
                 <a href="{{ $orderUrl }}" class="vn-file-link">Latest order @if($orderDate)· {{ $orderDate }}@endif</a>

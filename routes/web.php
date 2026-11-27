@@ -535,6 +535,7 @@ Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class
     Route::get('/judges/{photo}', 'judgePhoto')->where('photo', '[a-z0-9]+(?:-[a-z0-9]+)*\.jpg')->name('judge-photo');
     Route::get('/supreme-court', 'supremeCourt')->name('supreme-court');
     Route::get('/supreme-court/court-list', 'supremeCourtList')->name('supreme-court.court-list');
+    Route::get('/supreme-court/cause-list/{court}', 'supremeCourtCauseList')->where('court', '[1-9]|1[0-7]')->name('supreme-court.cause-list');
     Route::get('/delhi-high-court/judges', 'delhiHighCourtJudges')->name('delhi-high-court.judges');
     Route::get('/delhi-district-courts/{district}/judges', 'delhiDistrictJudges')
         ->where('district', '[a-z-]+')

@@ -46,20 +46,24 @@ class JudgePhotosAndBoardPickerTest extends TestCase
 
         $bench = CourtBench::create(['court_key' => 'delhi-high-court', 'court_room' => '1', 'judges' => [['name' => "Hon'ble Mr. Justice Dinesh Mehta"], ['name' => 'Mr. Arun Goel']]]);
         [$judge, $registrar] = $bench->judgeList();
-        $this->assertStringEndsWith('/judges/dineshmehta.jpg', (string) $judge['photo']);
+        // The address carries the photo's version, so browsers may keep it for a year.
+        $this->assertMatchesRegularExpression('#/judges/dineshmehta\.jpg\?v=[0-9a-z]+$#', (string) $judge['photo']);
         $this->assertNull($registrar['photo']);
-        $this->get(route('courts.judge-photo', ['photo' => 'dineshmehta.jpg']))->assertOk()->assertStreamedContent('jpeg-bytes');
+        $this->get(route('courts.judge-photo', ['photo' => 'dineshmehta.jpg', 'v' => 'abc']))->assertOk()->assertStreamedContent('jpeg-bytes')
+            ->assertHeader('Cache-Control', 'immutable, max-age=31536000, public');
+        $this->get(route('courts.judge-photo', ['photo' => 'dineshmehta.jpg']))->assertOk()->assertHeader('Cache-Control', 'max-age=3600, public');
         $this->get(route('courts.judge-photo', ['photo' => 'missing.jpg']))->assertNotFound();
 
         $this->actingAs(User::factory()->create());
         $case = LegalCase::create(['case_title' => 'Applicant vs Respondent', 'court_name' => 'Delhi High Court', 'case_status' => 'pending']);
         CourtHearing::create(['case_id' => $case->id, 'hearing_date' => today()->addDay(), 'judge_name' => 'Hon’ble Mr. Justice Dinesh Mehta']);
         // If the photo cannot load, the page shows the judge's initials instead.
-        $this->get(route('cases.show', $case))->assertOk()->assertSee('src="/courts/judges/dineshmehta.jpg" alt="" loading="lazy" width="28" height="28" data-initials="DM"', false);
+        $this->get(route('cases.show', $case))->assertOk()->assertSee('src="/courts/judges/dineshmehta.jpg?v=', false)
+            ->assertSee('alt="" loading="lazy" width="28" height="28" data-initials="DM"', false);
         $this->assertSame(['RG', 'PS', 'AG'], [CourtBench::initials("Hon'ble Mr. Justice Rajneesh Kumar Gupta"), CourtBench::initials('Hon’ble Ms. Justice Prathiba M. Singh'), CourtBench::initials('Mr. Arun Goel')]);
         $districtCase = LegalCase::create(['case_title' => 'Mahad case', 'court_name' => '2nd Jt C.J.J.D. and J.M.F.C. Mahad', 'court_level' => 'district', 'district' => 'Raigad', 'case_status' => 'pending']);
         CourtHearing::create(['case_id' => $districtCase->id, 'hearing_date' => today()->addDay(), 'judge_name' => 'Sh. Uday Mahadev Jadhav']);
-        $this->get(route('cases.show', $districtCase))->assertOk()->assertSee('src="/courts/judges/raigad-udaymahadevjadhav.jpg"', false);
+        $this->get(route('cases.show', $districtCase))->assertOk()->assertSee('src="/courts/judges/raigad-udaymahadevjadhav.jpg?v=', false);
         $this->assertNull(CourtBench::photoFor('Uday Mahadev Jadhav', 'other district'));
 
         $this->assertSame('PRATHIBAMSINGH', CourtBench::judgeKey("Hon'ble Ms. Justice Prathiba M. Singh"));

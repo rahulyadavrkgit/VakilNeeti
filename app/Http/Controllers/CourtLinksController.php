@@ -8,6 +8,7 @@ use App\Services\CalendarEventService;
 use App\Services\CourtBenchMatcher;
 use App\Services\CourtBoardEmbedCheck;
 use App\Services\LiveCourtBoard;
+use App\Services\SupremeCourtBenches;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -373,14 +374,19 @@ class CourtLinksController extends Controller
      * One court room's own public page (judge, room, VC link and how to reach the court), so an advocate
      * searching Google for a judge or a room finds it. Old or wrong words in the address lead to the right one.
      */
-    public function judgePhoto(string $photo): StreamedResponse
+    /**
+     * A judge's photo, where the web server cannot hand it out itself (no public/storage link). An address with the
+     * photo's version (?v=) never changes its contents, so browsers keep it for a year; an old address without one,
+     * for an hour.
+     */
+    public function judgePhoto(Request $request, string $photo): StreamedResponse
     {
         $disk = Storage::disk('public');
         $path = 'judges/'.$photo;
 
         abort_unless($disk->exists($path), 404);
 
-        return $disk->response($path, headers: ['Cache-Control' => 'public, max-age=3600']);
+        return $disk->response($path, headers: ['Cache-Control' => $request->query('v') ? 'public, max-age=31536000, immutable' : 'public, max-age=3600']);
     }
 
     public function room(CourtBench $bench, ?string $slug = null): View|RedirectResponse
@@ -478,6 +484,18 @@ class CourtLinksController extends Controller
     public function supremeCourtList(): View
     {
         return $this->courtRooms('supreme-court');
+    }
+
+    /**
+     * A Supreme Court room's cause list on the court's site, for the date asked or, without one, the day the link
+     * is opened: the court number and date are put into the court's own address when clicked.
+     */
+    public function supremeCourtCauseList(Request $request, string $court): RedirectResponse
+    {
+        $date = $request->query('date');
+        $day = is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && strtotime($date) ? $date : today()->toDateString();
+
+        return redirect()->away(SupremeCourtBenches::listUrl((int) $court, $day));
     }
 
     public function delhiHighCourtJudges(): View

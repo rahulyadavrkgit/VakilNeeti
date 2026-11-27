@@ -49,6 +49,7 @@ class FetchJudgePhotos extends Command
             return self::FAILURE;
         }
 
+        CourtBench::flushPhotos();
         $this->info('Saved '.count($photos).' photos.');
 
         return self::SUCCESS;

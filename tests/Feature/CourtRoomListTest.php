@@ -12,7 +12,7 @@ class CourtRoomListTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_supreme_court_list_shows_rooms_with_copy_and_join_vc_only_link_leaving_the_site(): void
+    public function test_supreme_court_list_shows_rooms_with_join_vc_todays_cause_list_and_share(): void
     {
         CourtBench::create(['court_key' => 'supreme-court', 'court_room' => '1', 'vc_link' => 'https://sci-vc.webex.com/meet/court01']);
 
@@ -24,7 +24,11 @@ class CourtRoomListTest extends TestCase
             ->getContent();
 
         $list = substr($html, (int) strpos($html, 'id="court-rooms"'), (int) strpos($html, 'data-filter-empty') - (int) strpos($html, 'id="court-rooms"'));
-        $this->assertSame(1, substr_count($list, 'target="_blank"'), 'Join VC is the one link in the list that opens outside VakilNiti.');
+        // Outside VakilNiti: Join VC, the court's list for today, and sharing the room.
+        $this->assertSame(3, substr_count($list, 'target="_blank"'));
+        $this->assertStringContainsString('href="'.route('courts.supreme-court.cause-list', 1).'" target="_blank"', $list);
+        $this->assertStringContainsString("Today's cause list", $list);
+        $this->assertStringContainsString('title="Share this court room"', $list);
         $this->assertStringContainsString('href="https://sci-vc.webex.com/meet/court01" target="_blank"', $html);
     }
 

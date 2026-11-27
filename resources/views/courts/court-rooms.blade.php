@@ -92,7 +92,7 @@
                                     </p>
                                 @endif
 
-                                <x-court-room-contact :bench="$bench" />
+                                <x-court-room-contact :bench="$bench" :todays-list="false" />
 
                                 @if($bench->roster)
                                     <details class="group mt-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-sm">
@@ -108,9 +108,24 @@
                                     </details>
                                 @endif
 
-                                <div class="mt-auto pt-2">
-                                    <a href="{{ $causeList }}" rel="noopener noreferrer" class="vn-link inline-flex min-h-9 items-center gap-1 text-sm font-semibold">
-                                        Cause list <span aria-hidden="true">&rarr;</span>
+                                @php
+                                    // Supreme Court rooms: the court's own list for this court, dated the day the link is opened.
+                                    $todaysList = $courtKey === 'supreme-court' ? \App\Services\SupremeCourtBenches::linkFor($court['court'], $bench->court_room) : null;
+                                    $roomShare = \App\Services\HearingShareText::room($court['court'], $bench, $todaysList);
+                                @endphp
+                                <div class="mt-auto flex items-center justify-between gap-2 pt-2">
+                                    @if($todaysList)
+                                        <a href="{{ $todaysList }}" target="_blank" rel="noopener noreferrer" data-direct-share class="vn-link inline-flex min-h-9 items-center gap-1 text-sm font-semibold">Today's cause list</a>
+                                    @else
+                                        <a href="{{ $causeList }}" rel="noopener noreferrer" class="vn-link inline-flex min-h-9 items-center gap-1 text-sm font-semibold">
+                                            Cause list <span aria-hidden="true">&rarr;</span>
+                                        </a>
+                                    @endif
+                                    <a href="https://wa.me/?text={{ rawurlencode($roomShare) }}" target="_blank" rel="noopener noreferrer" data-direct-share
+                                       data-share-text="{{ $roomShare }}" data-share-title="{{ $court['court'] }} · {{ $bench->court_room }}"
+                                       title="Share this court room" aria-label="Share {{ $bench->court_room ?: 'this court room' }}"
+                                       class="ml-auto inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[#16776e] hover:border-teal-500">
+                                        <x-icon name="share" :size="17" />
                                     </a>
                                 </div>
                             </article>
