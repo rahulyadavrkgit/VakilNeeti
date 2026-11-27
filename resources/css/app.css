@@ -655,9 +655,11 @@ body.vn-embed { padding-bottom: 0 !important; }
 .dark [data-live-chip][data-live-item-only][data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a; }
 .dark [data-live-chip][data-live-item-only][data-near] { background-color: rgb(249 115 22 / 0.3); color: #fed7aa; }
 .vn-item-changed { animation: vn-item-glow 1.4s ease-out 2; }
-[data-live-chip][data-live-current] [data-live-chip-text] { animation: vn-live-item-pulse 1.8s ease-in-out infinite; }
+[data-live-chip][data-live-current] [data-live-chip-text],
+[data-item][data-live-current] { animation: vn-live-item-pulse 4s ease-in-out infinite; }
 @keyframes vn-live-item-pulse {
-    50% { opacity: 0.55; }
+    0%, 70%, 100% { opacity: 1; }
+    85% { opacity: 0.4; }
 }
 @keyframes vn-item-glow {
     0%, 100% { box-shadow: 0 0 0 0 rgb(245 158 11 / 0); }
@@ -665,7 +667,33 @@ body.vn-embed { padding-bottom: 0 !important; }
 }
 @media (prefers-reduced-motion: reduce) {
     .vn-item-changed,
-    [data-live-chip][data-live-current] [data-live-chip-text] { animation: none; }
+    [data-live-chip][data-live-current] [data-live-chip-text],
+    [data-item][data-live-current] { animation: none; }
 }
 [data-live-chip]:not([data-live-item-only])[data-live-running] { background-color: #fef3c7; padding-inline: 0.5rem; color: #78350f !important; }
 .dark [data-live-chip]:not([data-live-item-only])[data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a !important; }
+
+/* "Copied: …" note after any copy (resources/js/ui-actions.js), above the phone's bottom bar. */
+.vn-copied-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    z-index: 70;
+    max-width: calc(100vw - 2rem);
+    transform: translateX(-50%);
+    overflow: hidden;
+    border-radius: 9999px;
+    background: #142235;
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: 0 10px 25px rgb(0 0 0 / 0.25);
+}
+.vn-copied-toast[hidden] { display: none; }
+@media (min-width: 768px) {
+    .vn-copied-toast { bottom: 1.5rem; }
+}
+.dark .vn-copied-toast { background: #e3e9f1; color: #0d1524; }

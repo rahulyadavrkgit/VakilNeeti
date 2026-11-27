@@ -171,7 +171,7 @@
         }
         /* A page with its own trail ("My cases › Case", "Home / Courts / …") needs no Back button as well. */
         .vn-main-content:has(nav[aria-label="Breadcrumb"]) .vn-page-trail { display: none !important; }
-        @media (max-width: 359px) { .vn-header-brand [data-brand-word] { display: none; } }
+        @media (max-width: 379px) { .vn-header-brand [data-brand-word] { display: none; } }
         @media (min-width: 768px) and (max-width: 1100px) {
             .vn-main-content { padding: 18px; }
         }

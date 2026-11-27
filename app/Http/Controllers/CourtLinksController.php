@@ -6,7 +6,7 @@ use App\Models\CourtBench;
 use App\Models\LegalCase;
 use App\Services\CalendarEventService;
 use App\Services\CourtBenchMatcher;
-use App\Services\CourtBoardEmbedCheck;
+use App\Services\HearingShareText;
 use App\Services\LiveCourtBoard;
 use App\Services\SupremeCourtBenches;
 use Carbon\Carbon;
@@ -123,7 +123,7 @@ class CourtLinksController extends Controller
      * Official live display boards, by court. Only links published by the courts themselves.
      * `live` names the court's board in VakilNiti (App\Services\LiveCourtBoard), offered first.
      *
-     * @var list<array{court: string, live?: string, level: string, boards: list<array{title: string, url: string}>}>
+     * @var list<array{court: string, live: string, level: string, boards: list<array{title: string, url: string}>}>
      */
     public const DISPLAY_BOARDS = [
         [
@@ -146,47 +146,28 @@ class CourtLinksController extends Controller
         ],
         [
             'court' => 'Allahabad High Court',
+            'live' => 'allahabad-high-court',
             'level' => 'High Court',
             'boards' => [
-                ['title' => 'Court View display board', 'url' => 'https://courtview2.allahabadhighcourt.in/courtview/CourtViewAllahabad.do'],
+                ['title' => 'Court View display board', 'url' => LiveCourtBoard::COURTS['allahabad-high-court']['source']],
+                ['title' => 'Alternate Court View', 'url' => 'https://courtview2.allahabadhighcourt.in/courtview/CourtViewAllahabad.do'],
             ],
         ],
     ];
 
     /**
-     * Every display board as one flat list for the Home picker, with whether its court lets it be embedded.
+     * One VakilNiti board per court, with links to the court's original boards.
      *
-     * @return list<array{court: string, level: string, title: string, url: string, embeddable: bool}>
+     * @return list<array{court: string, level: string, url: string, official: list<array{title: string, url: string}>}>
      */
     public static function boardOptions(): array
     {
-        $check = app(CourtBoardEmbedCheck::class);
-        $options = [];
-
-        foreach (self::DISPLAY_BOARDS as $court) {
-            // Our own board for this court shows inside VakilNiti, while the court's data can be reached.
-            if (isset($court['live']) && app(LiveCourtBoard::class)->isAvailable($court['live'])) {
-                $options[] = [
-                    'court' => $court['court'],
-                    'level' => $court['level'],
-                    'title' => 'Live board in VakilNiti',
-                    'url' => route('courts.live-board', $court['live']),
-                    'embeddable' => true,
-                ];
-            }
-
-            foreach ($court['boards'] as $board) {
-                $options[] = [
-                    'court' => $court['court'],
-                    'level' => $court['level'],
-                    'title' => $board['title'],
-                    'url' => $board['url'],
-                    'embeddable' => $check->isEmbeddable($board['url']),
-                ];
-            }
-        }
-
-        return $options;
+        return array_map(fn (array $court): array => [
+            'court' => $court['court'],
+            'level' => $court['level'],
+            'url' => route('courts.live-board', $court['live']),
+            'official' => $court['boards'],
+        ], self::DISPLAY_BOARDS);
     }
 
     public function index(Request $request): View
@@ -536,38 +517,43 @@ class CourtLinksController extends Controller
      */
     public function liveBoard(Request $request, string $court, LiveCourtBoard $boards): View
     {
-        $myRooms = $request->user() ? $this->myRoomsToday($court) : [];
-        $askedRoom = LiveCourtBoard::roomKey($court, $request->string('room')->toString());
-
-        if ($askedRoom !== null && ! isset($myRooms[$askedRoom])) {
-            $myRooms[$askedRoom] = [];
-        }
+        // A live board is always today's; "My courts" (?my=1, or remembered on the device) narrows it to the courts
+        // where the workspace has a hearing today.
+        $user = $request->user();
+        $date = today();
+        $myRooms = $user ? $this->myRoomsOn($court, $date, $user->workspaceId()) : [];
+        $showMyCourts = $user && $request->boolean('my');
 
         return view('courts.live-board', [
             'board' => $boards->board($court),
+            'hearingDate' => $date,
             'myRooms' => $myRooms,
+            'myRoomLabels' => collect($myRooms)->map(fn (array $hearings, int|string $room): string => LiveCourtBoard::roomLabel($court, (string) $room))->all(),
+            'showMyCourts' => $showMyCourts,
+            'focusedRoom' => LiveCourtBoard::roomKey($court, $request->string('room')->toString()),
         ]);
     }
 
     /**
-     * The signed-in person's hearings today on this court's board, by board room: case title, number and time.
+     * The workspace's hearings for the chosen date on this board, grouped by room.
      * A room missing from the case is taken from the official court list, as on the hearing cards.
      *
      * @return array<string, list<array{title: string, case_number: ?string, time: ?string}>>
      */
-    private function myRoomsToday(string $court): array
+    private function myRoomsOn(string $court, Carbon $date, int $workspaceId): array
     {
         $matcher = app(CourtBenchMatcher::class);
         $rooms = [];
 
-        $hearings = app(CalendarEventService::class)->between(today(), today(), ['groups' => ['hearing'], 'user_id' => auth()->user()->workspaceId()]);
+        $hearings = app(CalendarEventService::class)->between($date, $date, ['groups' => ['hearing'], 'user_id' => $workspaceId]);
 
         foreach ($hearings as $hearing) {
             if (LiveCourtBoard::boardFor($hearing['court'] ?? null) !== $court) {
                 continue;
             }
 
-            $room = $hearing['court_room'] ?? null;
+            // The room as the hearing card shows it: the cause list first, then the case, then the court's list.
+            $room = HearingShareText::fromEvent($hearing)['room'] ?? null;
 
             if (! trim((string) $room)) {
                 $room = $matcher->find($hearing['court'] ?? null, $hearing['court_complex'] ?? null, $hearing['judge_name'] ?? null)?->court_room;

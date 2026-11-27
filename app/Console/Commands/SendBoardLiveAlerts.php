@@ -109,7 +109,9 @@ class SendBoardLiveAlerts extends Command
                 ->map(function (array $event) use ($user): ?array {
                     $details = HearingShareText::fromEvent($event);
                     $board = LiveCourtBoard::boardFor($event['court'] ?? null);
-                    $room = $board ? LiveCourtBoard::roomKey($board, $details['room'] ?? null) : null;
+                    $room = in_array($board, ['delhi-high-court', 'supreme-court'], true)
+                        ? LiveCourtBoard::roomKey($board, $details['room'] ?? null)
+                        : null;
 
                     return $room === null ? null : [
                         'user' => $user,

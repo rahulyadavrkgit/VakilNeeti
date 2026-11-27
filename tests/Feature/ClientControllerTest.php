@@ -27,7 +27,7 @@ class ClientControllerTest extends TestCase
         $this->post(route('clients.store'), $this->person('Asha'))->assertSessionHasNoErrors();
 
         $this->actingAs(User::factory()->create());
-        $this->post(route('clients.store'), $this->person('Ravi'))->assertRedirect(route('clients.index'));
+        $this->post(route('clients.store'), $this->person('Ravi'))->assertRedirect(route('clients.show', Client::query()->latest('id')->first()));
 
         $this->assertSame(2, Client::withoutGlobalScopes()->where('client_code', 1)->count());
     }

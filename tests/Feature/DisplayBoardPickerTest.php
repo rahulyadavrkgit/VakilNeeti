@@ -21,7 +21,7 @@ class DisplayBoardPickerTest extends TestCase
             ->assertSee('data-board-manage-toggle', false)
             ->assertSee('data-board-hide', false)
             ->assertSee('data-board-fullscreen', false)
-            ->assertSee('data-board-open="full"', false)
+            ->assertSee('Official board links')
             ->assertSee('General information, not legal advice');
 
         $this->actingAs(User::factory()->create())
@@ -54,6 +54,8 @@ class DisplayBoardPickerTest extends TestCase
         $this->assertFalse($check->isEmbeddable('https://cdb.sci.gov.in/'));
         $this->assertTrue($check->isEmbeddable('https://delhihighcourt.nic.in/app/display-board'));
 
-        $this->get(route('dashboard'))->assertSee('value="https://delhihighcourt.nic.in/app/display-board" data-embeddable="1"', false);
+        $this->get(route('dashboard'))
+            ->assertSee('href="https://delhihighcourt.nic.in/app/display-board"', false)
+            ->assertDontSee('<option value="https://delhihighcourt.nic.in/app/display-board"', false);
     }
 }

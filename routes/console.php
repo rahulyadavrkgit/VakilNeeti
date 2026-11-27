@@ -30,9 +30,11 @@ Artisan::command('reminders:send', function (ReminderService $reminders) {
 Schedule::command('reminders:send')->hourly();
 
 Artisan::command('courts:check-boards', function (CourtBoardEmbedCheck $check) {
-    foreach (CourtLinksController::boardOptions() as $board) {
-        $allowed = $check->refresh($board['url']);
-        $this->line(($allowed ? 'embeddable  ' : 'not allowed ').$board['court'].' · '.$board['title']);
+    foreach (CourtLinksController::DISPLAY_BOARDS as $court) {
+        foreach ($court['boards'] as $board) {
+            $allowed = $check->refresh($board['url']);
+            $this->line(($allowed ? 'embeddable  ' : 'not allowed ').$court['court'].' · '.$board['title']);
+        }
     }
 })->purpose('Check which court display boards allow being shown inside VakilNiti');
 

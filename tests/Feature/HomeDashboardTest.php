@@ -62,8 +62,7 @@ class HomeDashboardTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder(['Prahlad vs Sanjay', 'Saket Courts', 'Ms. Niti Phutela', 'Petitioner', '304, Main court building'])
             ->assertSeeInOrder(['Sh. Dheeraj Mor', '505'])
-            // No VC link for this court: Join VC and Copy VC link stay in their place, greyed out.
-            ->assertSeeInOrder(['Prahlad vs Sanjay', 'title="No VC link for this court yet"', 'Join VC', 'title="No VC link for this court yet"', 'Copy VC link'], false);
+            ->assertSeeInOrder(['Prahlad vs Sanjay', 'title="No VC link for this court yet"', 'Join VC', 'disabled aria-label="Copy VC link"'], false);
     }
 
     public function test_home_groups_hearings_by_date_and_keeps_todays_hearings_together(): void
@@ -100,7 +99,9 @@ class HomeDashboardTest extends TestCase
         CourtHearing::query()->whereIn('case_id', [$first->id, $second->id])->delete();
         $this->get(route('dashboard'))->assertOk()
             ->assertSeeInOrder(['id="hearing-day-2026-03-11"', 'Tomorrow', '11 Mar 2026', 'Meera vs Union', 'W.P.(C)/7/2026', 'Hearing · 10:30', 'Justice Dinesh Mehta', 'Appellant', '37', 'href="https://dhc.webex.com/meet/court37"', 'title="Share this hearing"'], false)
-            ->assertDontSee('id="hearing-day-2026-03-10"', false);
+            ->assertDontSee('id="hearing-day-2026-03-10"', false)
+            ->assertSee('data-copy="https://dhc.webex.com/meet/court37" title="Copy VC link" aria-label="Copy VC link"', false)
+            ->assertSee('data-copy-label class="sr-only" aria-live="polite">Copy VC link', false);
     }
 
     public function test_the_hearing_list_goes_on_to_the_last_hearing_about_ten_at_a_time_without_splitting_a_day(): void

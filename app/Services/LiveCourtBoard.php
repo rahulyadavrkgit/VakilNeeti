@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
@@ -13,12 +15,14 @@ use Illuminate\Support\Str;
  * Live court display boards shown inside VakilNiti, read from the data each court publishes for its
  * own public board (the courts do not allow their board pages inside other websites).
  *
- * Every visitor shares one copy, refreshed at most every five seconds. When a court cannot be
+ * Every visitor shares a cached copy of each board. When a court cannot be
  * reached, the last good copy is shown and marked as not current.
  */
 class LiveCourtBoard
 {
     private const FRESH_SECONDS = 5;
+
+    private const ALLAHABAD_FRESH_SECONDS = 30;
 
     private const USABLE_SECONDS = 300;
 
@@ -39,6 +43,12 @@ class LiveCourtBoard
             'short' => 'Delhi High Court',
             'source' => 'https://delhihighcourt.nic.in/app/display-board',
             'legend' => 'Item running in each court. R1 to R9 are the Registrar courts.',
+        ],
+        'allahabad-high-court' => [
+            'name' => 'Allahabad High Court',
+            'short' => 'Allahabad High Court',
+            'source' => 'https://courtview.allahabadhighcourt.in/courtview/CourtViewAllahabad.do',
+            'legend' => 'Current serial numbers and case details for the Allahabad bench.',
         ],
     ];
 
@@ -61,17 +71,17 @@ class LiveCourtBoard
      *
      * @return array{court: string, name: string, short: string, source: string, legend: string, ok: bool, updated_at: ?string, rooms: list<array{room: string, label: string, status: string, item: ?string, case_number: ?string, parties: ?string, message: ?string}>}|null
      */
-    public function board(string $court): ?array
+    public function board(string $court, bool $refresh = true): ?array
     {
         if (! isset(self::COURTS[$court])) {
             return null;
         }
 
-        // The court's board is at most a few seconds old: a copy is kept for FRESH_SECONDS, then whoever asks next
-        // fetches it from the court (one fetch at a time; everyone else meanwhile gets the copy, at most 5 minutes old).
+        // Match Allahabad's official 30-second board refresh interval.
+        $freshSeconds = $court === 'allahabad-high-court' ? self::ALLAHABAD_FRESH_SECONDS : self::FRESH_SECONDS;
         $board = Cache::get("live-board:{$court}");
 
-        if (! $board || now()->getTimestamp() - ($board['fetched'] ?? 0) >= self::FRESH_SECONDS) {
+        if ($refresh && (! $board || now()->getTimestamp() - ($board['fetched'] ?? 0) >= $freshSeconds)) {
             $lock = Cache::lock("live-board-fetch:{$court}", 20);
 
             if ($lock->get()) {
@@ -123,16 +133,7 @@ class LiveCourtBoard
     }
 
     /**
-     * False when the court's data has not been reachable lately and there is no recent copy to show,
-     * so the board viewer offers the court's own board instead. Never contacts the court.
-     */
-    public function isAvailable(string $court): bool
-    {
-        return ! Cache::has("live-board-down:{$court}") || Cache::has("live-board-last:{$court}");
-    }
-
-    /**
-     * Which live board a case's court is on ("supreme-court", "delhi-high-court"), if any.
+     * Which live board a case's court is on, if any.
      */
     public static function boardFor(?string $courtName): ?string
     {
@@ -141,6 +142,7 @@ class LiveCourtBoard
         return match (true) {
             str_contains($court, 'supreme court') => 'supreme-court',
             str_contains($court, 'high court') && str_contains($court, 'delhi') => 'delhi-high-court',
+            str_contains($court, 'high court') && str_contains($court, 'allahabad') && ! str_contains($court, 'lucknow') => 'allahabad-high-court',
             default => null,
         };
     }
@@ -157,6 +159,10 @@ class LiveCourtBoard
             return null;
         }
 
+        if ($board === 'allahabad-high-court' && preg_match('/^(?:court\s*(?:no\.?\s*)?)?(?:c\.?\s*j\.?|chief justice)$/i', $room)) {
+            return 'CJ';
+        }
+
         if (preg_match('/^(?:registrar(?:\s+court)?|rc|r)\s*[-.:]?\s*(?:no\.?\s*)?(\d{1,2})$/i', $room, $registrar)) {
             $number = (int) $registrar[1];
 
@@ -170,6 +176,16 @@ class LiveCourtBoard
         return preg_match('/(\d{1,3})/', $room, $number) ? (string) (int) $number[1] : null;
     }
 
+    public static function roomLabel(string $court, string $room): string
+    {
+        return match (true) {
+            $court === 'supreme-court' && (int) $room > 20 => 'Registrar Court '.((int) $room - 20),
+            $court === 'delhi-high-court' && (int) $room >= self::DELHI_HIGH_COURT_FIRST_REGISTRAR => 'R'.((int) $room - self::DELHI_HIGH_COURT_FIRST_REGISTRAR + 1),
+            $room === 'CJ' => 'C.J.',
+            default => 'Court '.$room,
+        };
+    }
+
     /**
      * @return list<array{room: string, label: string, status: string, item: ?string, case_number: ?string, parties: ?string, message: ?string}>|null
      */
@@ -179,6 +195,7 @@ class LiveCourtBoard
             return match ($court) {
                 'supreme-court' => $this->supremeCourt(),
                 'delhi-high-court' => $this->delhiHighCourt(),
+                'allahabad-high-court' => $this->allahabadHighCourt(),
                 default => null,
             };
         } catch (ConnectionException $exception) {
@@ -221,7 +238,7 @@ class LiveCourtBoard
 
             return [
                 'room' => (string) $number,
-                'label' => $number > 20 ? 'Registrar Court '.($number - 20) : 'Court '.$number,
+                'label' => self::roomLabel('supreme-court', (string) $number),
                 'status' => $notInSession ? 'not_in_session' : 'running',
                 'item' => $notInSession ? null : $item,
                 'case_number' => $notInSession ? null : $caseNumber,
@@ -258,7 +275,7 @@ class LiveCourtBoard
 
             $rooms[] = [
                 'room' => (string) $number,
-                'label' => $number >= self::DELHI_HIGH_COURT_FIRST_REGISTRAR ? 'R'.($number - self::DELHI_HIGH_COURT_FIRST_REGISTRAR + 1) : 'Court '.$number,
+                'label' => self::roomLabel('delhi-high-court', (string) $number),
                 'status' => $status,
                 'item' => $status === 'running' ? $value : null,
                 'case_number' => null,
@@ -268,6 +285,50 @@ class LiveCourtBoard
         }
 
         return $rooms;
+    }
+
+    /**
+     * @return list<array{room: string, label: string, status: string, item: ?string, case_number: ?string, parties: ?string, message: ?string}>|null
+     */
+    private function allahabadHighCourt(): ?array
+    {
+        $court = 'allahabad-high-court';
+        $response = $this->client()->accept('text/html')->get(self::COURTS[$court]['source']);
+        $document = new DOMDocument;
+
+        if (! $response->successful() || trim($response->body()) === ''
+            || ! $document->loadHTML($response->body(), LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            return null;
+        }
+
+        $xpath = new DOMXPath($document);
+        $rooms = [];
+
+        foreach ($xpath->query('//table[.//td[@class="head"][contains(., "Serial No.")]]//tr[td[not(@class="head")]]') as $row) {
+            $columns = $xpath->query('./td', $row);
+            $room = self::roomKey($court, $this->clean($columns->item(0)?->textContent));
+            $serial = $this->clean($columns->item(1)?->textContent);
+            if ($room === null || $serial === null) {
+                continue;
+            }
+
+            $running = preg_match('/^\d/', $serial) === 1;
+            $details = $columns->item(4)?->textContent ?? '';
+            preg_match('/Case Details\s*-\s*([^\s]+)/i', $details, $caseNumber);
+            preg_match('/Title\s*:\s*(.*?)(?:Petitioner\x27s Counsel|Respondent\x27s Counsel|$)/is', $details, $parties);
+
+            $rooms[] = [
+                'room' => $room,
+                'label' => self::roomLabel($court, $room),
+                'status' => $running ? 'running' : 'not_in_session',
+                'item' => $running ? $serial : null,
+                'case_number' => $running ? ($caseNumber[1] ?? null) : null,
+                'parties' => $running ? $this->clean($parties[1] ?? null) : null,
+                'message' => $this->clean($columns->item($columns->length - 1)?->textContent),
+            ];
+        }
+
+        return $rooms === [] ? null : $rooms;
     }
 
     private function client(): PendingRequest

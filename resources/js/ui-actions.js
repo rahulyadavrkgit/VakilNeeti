@@ -263,6 +263,26 @@ document.addEventListener('change', (event) => {
     }
 });
 
+// After any copy, a short note at the bottom of the screen says what was copied (a phone hides the clipboard).
+let copiedTimer = null;
+const showCopied = (text) => {
+    let note = document.querySelector('[data-copied-toast]');
+
+    if (!note) {
+        note = document.createElement('div');
+        note.dataset.copiedToast = '';
+        note.className = 'vn-copied-toast';
+        note.setAttribute('role', 'status');
+        document.body.append(note);
+    }
+
+    const preview = String(text).replace(/\s+/g, ' ').trim();
+    note.textContent = 'Copied: ' + (preview.length > 60 ? preview.slice(0, 57) + '…' : preview);
+    note.hidden = false;
+    clearTimeout(copiedTimer);
+    copiedTimer = setTimeout(() => { note.hidden = true; }, 2200);
+};
+
 // Copy buttons: data-copy="text" puts the text on the clipboard and briefly says "Copied".
 document.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-copy]');
@@ -273,13 +293,17 @@ document.addEventListener('click', async (event) => {
 
     try {
         await navigator.clipboard.writeText(button.dataset.copy);
-        // Icon buttons keep their icon: the label inside changes, or the whole button shows "Copied" briefly.
-        const label = button.querySelector('[data-copy-label]');
-        const target = label || button;
-        const original = target.innerHTML;
-        target.textContent = 'Copied';
+        // Icon-only buttons (data-copy-quiet) keep their icon and just turn teal; others say "Copied" briefly.
+        if (!button.hasAttribute('data-copy-quiet')) {
+            const label = button.querySelector('[data-copy-label]');
+            const target = label || button;
+            const original = target.innerHTML;
+            target.textContent = 'Copied';
+            setTimeout(() => { target.innerHTML = original; }, 1500);
+        }
         button.classList.add('is-copied');
-        setTimeout(() => { target.innerHTML = original; button.classList.remove('is-copied'); }, 1500);
+        setTimeout(() => button.classList.remove('is-copied'), 1500);
+        showCopied(button.dataset.copy);
     } catch {
         window.prompt('Copy this:', button.dataset.copy);
     }
@@ -408,8 +432,8 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
     const search = picker.querySelector('[data-board-search]');
     const frameWrap = picker.querySelector('[data-board-frame-wrap]');
     const frame = picker.querySelector('[data-board-frame]');
-    const blocked = picker.querySelector('[data-board-blocked]');
-    const name = picker.querySelector('[data-board-name]');
+    const empty = picker.querySelector('[data-board-none]');
+    const officialLinks = [...picker.querySelectorAll('[data-board-official]')];
     const manage = picker.querySelector('[data-board-manage]');
     const manageToggle = picker.querySelector('[data-board-manage-toggle]');
     const hideButton = picker.querySelector('[data-board-hide]');
@@ -425,7 +449,10 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         option,
     })));
     const options = allBoards.map((board) => board.option);
-    let chosen = boardStore.get('vn-board-choices', null);
+    const legacyBoards = new Map(officialLinks.flatMap((group) => [...group.querySelectorAll('a')].map((link) => [link.href, group.dataset.boardOfficial])));
+    const boardUrl = (url) => legacyBoards.get(url) || url;
+    const savedChoices = boardStore.get('vn-board-choices', null);
+    const chosen = Array.isArray(savedChoices) ? savedChoices.map(boardUrl) : null;
 
     choices.forEach((box) => {
         box.checked = !Array.isArray(chosen) || chosen.includes(box.value);
@@ -433,27 +460,22 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
 
     const show = () => {
         const option = select.selectedOptions[0];
+        frameWrap.hidden = !option;
+        empty.hidden = Boolean(option);
+        officialLinks.forEach((group) => { group.hidden = group.dataset.boardOfficial !== option?.value; });
 
         if (!option) {
-            name.textContent = 'No board chosen. Use Manage to pick your courts.';
             comboLabel.textContent = 'No board selected';
-            frameWrap.hidden = true;
-            blocked.hidden = false;
-            picker.querySelector('[data-board-open-actions]').hidden = true;
+            frame.removeAttribute('src');
             loadRooms(null);
 
             return;
         }
 
-        picker.querySelector('[data-board-open-actions]').hidden = false;
-        name.textContent = option.dataset.label;
         comboLabel.textContent = option.dataset.label;
-        const embeddable = option.dataset.embeddable === '1';
-        frameWrap.hidden = !embeddable;
-        blocked.hidden = embeddable;
-        loadRooms(embeddable ? option.value : null);
+        loadRooms(option.value);
 
-        if (embeddable && frame.src !== option.value) {
+        if (frame.src !== option.value) {
             frame.src = option.value;
         }
 
@@ -581,7 +603,8 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
 
     const boardSlug = (url) => (String(url || '').match(/\/live-board\/([a-z-]+)/) || [])[1] || null;
     const sendRooms = () => frame.contentWindow?.postMessage({ type: 'vn-board-rooms', rooms: chosenRooms.join(',') }, window.location.origin);
-    const shortName = (name) => String(name).replace(/\b(?:court|room)(?:\s+no\.?)?\s*[:.-]?\s*/gi, '').trim();
+    const shortName = (name) => String(name).replace(/\b(?:registrar(?:\s+court)?|rc)\s*[-.:]?\s*(?=\d)/gi, 'R')
+        .replace(/\b(?:court|room)(?:\s+no\.?)?\s*[:.-]?\s*/gi, '').trim();
     const roomKey = (name) => shortName(name).toLowerCase().replace(/[-.\s]/g, '').replace(/^(r?)0+(?=\d)/, '$1');
     const showRoomStatus = (message) => {
         roomsStatus.textContent = message;
@@ -591,7 +614,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
     const filterRooms = () => {
         const terms = shortName(roomsSearch.value).toLowerCase().replace(/\br\s+(?=\d)/g, 'r')
             .split(/[\s,;]+/).filter(Boolean).map(roomKey);
-        const labelFor = (term) => roomLabels.size ? roomLabels.get(term) : (/^r?\d+$/.test(term) ? term : null);
+        const labelFor = (term) => roomLabels.size ? roomLabels.get(term) : (/^(?:r?\d+|cj)$/.test(term) ? term : null);
         const matchingRooms = [...new Set(terms.map(labelFor).filter(Boolean))];
         const unknownRoom = terms.some((term) => !labelFor(term));
         showRoomStatus(unknownRoom ? 'Check the court numbers you entered.' : '');
@@ -614,7 +637,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         roomsBoard = slug;
         roomLabels = new Map();
         roomsSearch.disabled = !slug;
-        roomsSearch.placeholder = slug ? '1, 2, R1' : 'External board';
+        roomsSearch.placeholder = slug === 'allahabad-high-court' ? '1, 2, CJ' : '1, 2, R1';
         chosenRooms = slug ? String(boardStore.get('vn-board-rooms:' + slug, '')).split(',').filter(Boolean) : [];
         roomsSearch.value = chosenRooms.map(shortName).join(', ');
         showRoomStatus('');
@@ -687,8 +710,8 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
     };
 
     // A board asked for in the address (?board=…, from search) wins over the one saved last time.
-    const asked = new URLSearchParams(window.location.search).get('board');
-    const saved = asked && options.some((option) => option.value === asked) ? asked : boardStore.get('vn-display-board', null);
+    const asked = boardUrl(new URLSearchParams(window.location.search).get('board'));
+    const saved = asked && options.some((option) => option.value === asked) ? asked : boardUrl(boardStore.get('vn-display-board', null));
 
     if (saved && options.some((option) => option.value === saved)) {
         select.value = saved;
@@ -704,20 +727,7 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
         boardStore.set('vn-boards-hidden', hidden);
     };
 
-    const openBoard = (fullScreen) => {
-        const width = fullScreen ? window.screen.availWidth : Math.min(1100, window.screen.availWidth - 40);
-        const height = fullScreen ? window.screen.availHeight : Math.min(760, window.screen.availHeight - 60);
-        const left = fullScreen ? 0 : Math.max(0, window.screen.availWidth - width - 20);
-        window.open(select.value, 'vn-display-board', `popup=yes,width=${width},height=${height},left=${left},top=${fullScreen ? 0 : 40}`)?.focus();
-    };
-
-    select.addEventListener('change', () => {
-        show();
-
-        if (select.selectedOptions[0]?.dataset.embeddable !== '1') {
-            openBoard(false);
-        }
-    });
+    select.addEventListener('change', show);
 
     // Embedded boards: three heights, drag to resize, and full screen.
     const box = picker.querySelector('[data-board-frame-box]');
@@ -787,10 +797,6 @@ document.querySelectorAll('[data-board-picker]').forEach((picker, pickerIndex) =
     picker.querySelector('[data-board-manage-done]').addEventListener('click', () => {
         manage.hidden = true;
         manageToggle.setAttribute('aria-expanded', 'false');
-    });
-
-    picker.querySelectorAll('[data-board-open]').forEach((button) => {
-        button.addEventListener('click', () => openBoard(button.dataset.boardOpen === 'full'));
     });
 
     applyFilters();

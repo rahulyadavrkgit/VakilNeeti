@@ -153,16 +153,19 @@ class CourtLinksControllerTest extends TestCase
 
     public function test_display_boards_and_courts_hub_are_public(): void
     {
-        // One board viewer: every board is a choice in its drop-down, never hidden on this page.
+        // Each court has a single choice in the viewer, alongside its original board links.
         $response = $this->get(route('courts.display-boards'))
             ->assertOk()
             ->assertSee('data-board-page', false)
             ->assertSee('data-board-select', false);
 
         foreach (CourtLinksController::DISPLAY_BOARDS as $court) {
+            $response->assertSee('<option value="'.route('courts.live-board', $court['live']).'"', false)
+                ->assertSee($court['court']);
+
             foreach ($court['boards'] as $board) {
-                $response->assertSee('<option value="'.$board['url'].'"', false)
-                    ->assertSee($court['court'].' · '.$board['title']);
+                $response->assertSee('href="'.$board['url'].'"', false)
+                    ->assertSee($board['title']);
             }
         }
 

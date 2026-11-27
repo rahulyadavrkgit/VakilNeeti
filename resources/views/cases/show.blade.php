@@ -117,14 +117,15 @@
                 <h2 class="mt-2 wrap-anywhere text-xl font-bold leading-snug tracking-tight text-slate-900 sm:text-2xl">{{ $case->case_title ?: 'Untitled case' }}</h2>
                 <div class="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm">
                     @if($case->case_number)
-                        <span class="wrap-anywhere font-bold tabular-nums text-slate-900">{{ $case->case_number }}</span>
+                        <button type="button" data-copy="{{ $case->case_number }}" data-copy-quiet title="Copy case number" aria-label="Copy case number {{ $case->case_number }}"
+                                class="inline-flex min-h-8 items-center gap-1 wrap-anywhere text-left font-bold tabular-nums text-slate-900 hover:text-[#16776e] [&.is-copied]:text-[#16776e]">{{ $case->case_number }}<x-icon name="copy" :size="13" class="shrink-0 text-slate-400" /></button>
                     @endif
                     <span class="min-w-0 wrap-anywhere text-slate-600">{{ $case->court_name ?: $case->courtLevel() }}</span>
                 </div>
                 @if($case->cnr_number || $case->diary_number)
                     <dl class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-600">
                         @if($case->cnr_number)
-                            <div><dt class="inline font-semibold">CNR</dt> <dd class="inline break-all">{{ $case->cnr_number }}</dd></div>
+                            <div><dt class="inline font-semibold">CNR</dt> <dd class="inline"><button type="button" data-copy="{{ $case->cnr_number }}" data-copy-quiet title="Copy CNR" aria-label="Copy CNR {{ $case->cnr_number }}" class="inline-flex items-center gap-1 break-all text-left hover:text-[#16776e] [&.is-copied]:text-[#16776e]">{{ $case->cnr_number }}<x-icon name="copy" :size="12" class="shrink-0 text-slate-400" /></button></dd></div>
                         @endif
                         @if($case->diary_number)
                             <div><dt class="inline font-semibold">Diary</dt> <dd class="inline break-all">{{ $case->diary_number }}</dd></div>

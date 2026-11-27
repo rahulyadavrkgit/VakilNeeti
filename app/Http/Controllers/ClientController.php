@@ -70,10 +70,11 @@ class ClientController extends Controller
         $validated['client_code'] = Client::nextCode();
         $validated['status'] = 'active';
 
-        Client::create($validated);
+        $client = Client::create($validated);
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Client added successfully.');
+        // The new client's page, to link cases and add contact details straight away.
+        return redirect()->route('clients.show', $client)
+            ->with('success', 'Client added.');
     }
 
     public function show(Client $client)

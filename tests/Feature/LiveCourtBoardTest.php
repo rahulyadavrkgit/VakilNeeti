@@ -80,14 +80,13 @@ class LiveCourtBoardTest extends TestCase
         $this->assertSame('A27', collect($board['rooms'])->firstWhere('room', '12')['item']);
     }
 
-    public function test_an_unreachable_court_is_not_asked_again_for_a_while_and_its_live_board_is_not_offered(): void
+    public function test_an_unreachable_court_keeps_its_board_and_retries_after_a_pause(): void
     {
         Http::fake(['cdb.sci.gov.in/*' => Http::response('', 504)]);
         $this->withoutDefer();
 
         $this->assertSame([], app(LiveCourtBoard::class)->board('supreme-court')['rooms']);
-        $this->assertFalse(app(LiveCourtBoard::class)->isAvailable('supreme-court'));
-        $this->assertNotContains(route('courts.live-board', 'supreme-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
+        $this->assertContains(route('courts.live-board', 'supreme-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
         $this->assertContains(route('courts.live-board', 'delhi-high-court'), collect(CourtLinksController::boardOptions())->pluck('url'));
 
         $this->travel(10)->seconds();
@@ -128,12 +127,15 @@ class LiveCourtBoardTest extends TestCase
     {
         $this->assertSame('delhi-high-court', LiveCourtBoard::boardFor('High Court of Delhi'));
         $this->assertSame('supreme-court', LiveCourtBoard::boardFor('Supreme Court of India'));
+        $this->assertSame('allahabad-high-court', LiveCourtBoard::boardFor('High Court of Judicature at Allahabad'));
         $this->assertNull(LiveCourtBoard::boardFor('District Court Lucknow'));
+        $this->assertNull(LiveCourtBoard::boardFor('Allahabad High Court, Lucknow Bench'));
 
         $this->assertSame('12', LiveCourtBoard::roomKey('delhi-high-court', 'Court No. 12'));
         $this->assertSame('7', LiveCourtBoard::roomKey('supreme-court', 'C-07'));
         $this->assertSame('54', LiveCourtBoard::roomKey('delhi-high-court', 'R-3'));
         $this->assertSame('22', LiveCourtBoard::roomKey('supreme-court', 'RC 2'));
+        $this->assertSame('CJ', LiveCourtBoard::roomKey('allahabad-high-court', 'C.J.'));
         $this->assertNull(LiveCourtBoard::roomKey('delhi-high-court', 'Court hall'));
     }
 
@@ -146,14 +148,14 @@ class LiveCourtBoardTest extends TestCase
             ->assertSee('Supreme Court · Live board')
             ->assertSee('Gurmeet Kaur vs Honey Chahal')
             ->assertSee('cdb.sci.gov.in')
-            ->assertDontSee('Your courts today');
+            ->assertDontSee('<input type="checkbox" data-live-my-courts', false);
 
         $this->getJson(route('courts.live-board.data', 'delhi-high-court'))
             ->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('rooms.11.item', 'A27');
 
-        $this->get('/courts/live-board/allahabad-high-court')->assertNotFound();
+        $this->get('/courts/live-board/unknown-court')->assertNotFound();
 
         $this->actingAs(User::factory()->create());
         $case = LegalCase::create(['case_title' => 'Asha vs State', 'court_name' => 'High Court of Delhi', 'court_room' => 'Court No. 12', 'case_status' => 'pending']);
@@ -161,7 +163,8 @@ class LiveCourtBoardTest extends TestCase
 
         $this->get(route('courts.live-board', 'delhi-high-court'))
             ->assertOk()
-            ->assertSee('Your courts today:')
+            ->assertSee('<input type="checkbox" data-live-my-courts  aria-controls="board-rooms"', false)
+            ->assertDontSee('type="date"', false)
             ->assertSeeInOrder(['data-room="12"', 'data-mine', 'Yours', 'A27', 'Asha vs State · 10:30'], false);
     }
 
@@ -169,13 +172,69 @@ class LiveCourtBoardTest extends TestCase
     {
         $options = collect(CourtLinksController::boardOptions());
 
-        $this->assertSame(['Live board in VakilNiti', true], [$options[0]['title'], $options[0]['embeddable']]);
         $this->assertSame(route('courts.live-board', 'supreme-court'), $options[0]['url']);
         $this->assertSame(route('courts.live-board', 'delhi-high-court'), $options->firstWhere('court', 'High Court of Delhi')['url']);
 
         $this->get(route('courts.display-boards'))
             ->assertOk()
-            ->assertSee('<option value="'.route('courts.live-board', 'delhi-high-court').'" data-embeddable="1"', false);
+            ->assertSee('<option value="'.route('courts.live-board', 'delhi-high-court').'"', false)
+            ->assertSee('<option value="'.route('courts.live-board', 'allahabad-high-court').'"', false);
+    }
+
+    public function test_my_courts_shows_todays_courts_of_the_signed_in_workspace_only(): void
+    {
+        $this->fakeCourts();
+        $advocate = User::factory()->create();
+        $anotherAdvocate = User::factory()->create();
+        $this->actingAs($anotherAdvocate);
+        $otherCase = LegalCase::create(['case_title' => 'Another workspace hearing', 'court_name' => 'High Court of Delhi', 'court_room' => '12', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $otherCase->id, 'hearing_date' => '2026-03-11']);
+
+        $this->actingAs($advocate);
+        $today = LegalCase::create(['case_title' => 'Listed today', 'court_name' => 'High Court of Delhi', 'court_room' => '12', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $today->id, 'hearing_date' => '2026-03-10']);
+        $tomorrow = LegalCase::create(['case_title' => 'Listed tomorrow', 'court_name' => 'High Court of Delhi', 'court_room' => '23', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $tomorrow->id, 'hearing_date' => '2026-03-11']);
+
+        $this->get(route('courts.live-board', ['delhi-high-court', 'my' => 1, 'room' => '23']))
+            ->assertOk()
+            ->assertViewHas('myRooms', fn (array $rooms): bool => array_keys($rooms) === [12])
+            ->assertSee('Listed today')
+            ->assertDontSee('Listed tomorrow');
+
+        // A live board is always today's: an old address with a date shows today's courts, ticked when ?my=1.
+        $this->get(route('courts.live-board', ['delhi-high-court', 'date' => '2026-03-11', 'my' => 1]))
+            ->assertOk()
+            ->assertViewHas('myRooms', fn (array $rooms): bool => array_keys($rooms) === [12])
+            ->assertSee('data-live-my-courts checked', false)
+            ->assertDontSee('Listed tomorrow')
+            ->assertDontSee('Another workspace hearing');
+    }
+
+    public function test_allahabad_court_view_renders_in_the_shared_board_grid(): void
+    {
+        Http::fake([LiveCourtBoard::COURTS['allahabad-high-court']['source'] => Http::response(<<<'HTML'
+            <table>
+              <tr><td class="head">Court No.</td><td class="head">Serial No.</td><td class="head">List</td></tr>
+              <tr><td>&nbsp;C.J.&nbsp;</td><td><b>25</b></td><td>Fresh</td><td>Revised</td>
+                <td><b>Case Details</b> - WPIL/17/2026<br><b>Title</b> : Example vs State<br>Petitioner's Counsels - Counsel</td>
+                <td>Court notice</td></tr>
+              <tr><td>1</td><td colspan="4">Court NOT in session!</td><td></td></tr>
+            </table>
+            HTML)]);
+
+        $this->get(route('courts.live-board', 'allahabad-high-court'))
+            ->assertOk()
+            ->assertSee('data-live-room-template', false)
+            ->assertSeeInOrder(['data-room="CJ"', 'C.J.', 'data-live-current', '25', 'WPIL/17/2026', 'Example vs State', 'Court notice'], false)
+            ->assertSee('Sitting courts')
+            ->assertDontSee('Sitting courts only');
+
+        $this->getJson(route('courts.live-board.data', 'allahabad-high-court'))
+            ->assertOk()
+            ->assertJsonPath('rooms.0.item', '25')
+            ->assertJsonPath('rooms.1.status', 'not_in_session');
+        Http::assertSentCount(1);
     }
 
     public function test_todays_hearings_show_a_live_chip_for_their_room_and_other_days_do_not(): void

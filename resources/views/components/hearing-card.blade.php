@@ -30,7 +30,13 @@
             </a>
         </h3>
         <div class="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
-            @if($event['case_number'])<span class="font-semibold tabular-nums">{{ $event['case_number'] }}</span>@endif
+            @if($event['case_number'])
+                {{-- Tap to copy the case number (for e-filing or the court's site); the rest of the card opens the case. --}}
+                <button type="button" data-copy="{{ $event['case_number'] }}" data-copy-quiet title="Copy case number" aria-label="Copy case number {{ $event['case_number'] }}"
+                        class="relative z-10 inline-flex min-h-8 items-center gap-1 rounded font-semibold tabular-nums hover:text-[#16776e] [&.is-copied]:text-[#16776e]">
+                    {{ $event['case_number'] }}<x-icon name="copy" :size="13" class="text-slate-400" />
+                </button>
+            @endif
             <span class="text-slate-600">{{ $event['details'] ?: __('Hearing') }}@if($event['time']) · {{ $event['time'] }}@endif</span>
         </div>
         <div class="mt-1.5 space-y-0.5 text-sm text-slate-700">
