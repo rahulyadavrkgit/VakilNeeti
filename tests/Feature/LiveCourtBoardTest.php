@@ -65,12 +65,15 @@ class LiveCourtBoardTest extends TestCase
             ->push(['all_courts' => ['12' => 'A27']])
             ->push('down', 503)]);
         $this->withoutDefer();
-        app(LiveCourtBoard::class)->board('delhi-high-court');
-
-        // After 30 seconds the last copy is served at once while a new one is fetched (which fails here).
-        $this->travel(1)->minutes();
         $this->assertTrue(app(LiveCourtBoard::class)->board('delhi-high-court')['ok']);
 
+        // A few seconds on, the copy is still current: the court is not asked again.
+        $this->travel(3)->seconds();
+        $this->assertTrue(app(LiveCourtBoard::class)->board('delhi-high-court')['ok']);
+        Http::assertSentCount(1);
+
+        // Later the court is asked again (and does not answer): the last good board is shown, marked as not current.
+        $this->travel(1)->minutes();
         $board = app(LiveCourtBoard::class)->board('delhi-high-court');
 
         $this->assertFalse($board['ok']);

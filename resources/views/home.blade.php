@@ -36,6 +36,8 @@
             $boardsOnHome = (bool) auth()->user()->preference('home_display_boards');
         @endphp
 
+        <div class="space-y-2 has-[>:not([hidden])]:mb-3">@include('partials.push-offer')</div>
+
         <div class="grid items-start gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-5">
             <x-tabs label="Home sections" :tabs="[
                 'home-hearings' => __('Hearings'),

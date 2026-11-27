@@ -25,7 +25,7 @@
         <dd class="{{ $value }} text-sm">
             @if($liveRoom)
                 <a href="{{ route('courts.live-board', [$board, 'room' => $room]) }}" data-sheet-frame data-live-chip data-live-item-only
-                   data-source="{{ route('courts.live-board.data', $board) }}" data-room="{{ $liveRoom }}" data-case-number="{{ $caseNumber }}"
+                   data-source="{{ route('courts.live-board.data', $board) }}" data-room="{{ $liveRoom }}" data-case-number="{{ $caseNumber }}" data-my-item="{{ $item }}"
                    title="Open the live board for Court {{ $roomNumber }}" class="vn-link"><span data-live-chip-text>*</span></a>
             @else
                 *

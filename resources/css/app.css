@@ -640,3 +640,27 @@ body.vn-embed { padding-bottom: 0 !important; }
     from { transform: translateX(0); }
     to { transform: translateX(calc(-1 * var(--vn-ticker-shift, 0px))); }
 }
+
+/* The court's current item on hearing cards (resources/js/ui-actions.js): yellow while the court sits, orange once
+   the person's item is 7 or fewer away, red when it is on; a short glow each time the number changes. */
+[data-live-chip][data-live-item-only][data-live-running] {
+    border-radius: 0.375rem;
+    background-color: #fef3c7;
+    padding-inline: 0.375rem;
+    font-weight: 700;
+    color: #78350f;
+}
+[data-live-chip][data-live-item-only][data-near] { background-color: #fed7aa; color: #7c2d12; }
+[data-live-chip][data-live-item-only][data-mine-now] { background-color: #dc2626; color: #fff; }
+.dark [data-live-chip][data-live-item-only][data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a; }
+.dark [data-live-chip][data-live-item-only][data-near] { background-color: rgb(249 115 22 / 0.3); color: #fed7aa; }
+.vn-item-changed { animation: vn-item-glow 1.4s ease-out 2; }
+@keyframes vn-item-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(245 158 11 / 0); }
+    30% { box-shadow: 0 0 0 5px rgb(245 158 11 / 0.55); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .vn-item-changed { animation: none; }
+}
+[data-live-chip]:not([data-live-item-only])[data-live-running] { background-color: #fef3c7; padding-inline: 0.5rem; color: #78350f !important; }
+.dark [data-live-chip]:not([data-live-item-only])[data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a !important; }

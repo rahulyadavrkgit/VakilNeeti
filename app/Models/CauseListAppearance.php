@@ -154,6 +154,17 @@ class CauseListAppearance extends Model
     }
 
     /**
+     * A court room's supplementary items on a day ("70" … "85"), from every list read for that day. High Courts take
+     * the supplementary list up first, before the day's other matters.
+     *
+     * @return list<string>
+     */
+    public static function supplementaryItems(string $provider, string $day, string $room): array
+    {
+        return self::supplementaryItemsOn($provider, $day)[$room] ?? [];
+    }
+
+    /**
      * @return array<string, list<string>>
      */
     private static function supplementaryItemsOn(string $provider, string $day): array

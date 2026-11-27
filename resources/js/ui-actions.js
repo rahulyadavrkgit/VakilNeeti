@@ -838,7 +838,7 @@ document.querySelectorAll('[data-theme-cycle]').forEach((button) => {
 markThemeButtons();
 
 // Today's hearings in courts with a live board (x-court-info): "Court 12 · now item 27". Each board is
-// fetched once per page and refreshed every minute while the page is open; the server caches it for everyone.
+// fetched once per page and refreshed every 10 seconds while the page is open; the server caches it for everyone.
 const liveChips = [...document.querySelectorAll('[data-live-chip]')];
 
 if (liveChips.length) {
@@ -853,7 +853,27 @@ if (liveChips.length) {
         const text = chip.querySelector('[data-live-chip-text]');
         if (chip.hasAttribute('data-live-item-only')) {
             const item = board.ok && room?.status === 'running' ? room.item : null;
+            const shown = text.textContent.trim();
             text.textContent = item || '*';
+
+            // Yellow while the court sits, orange once this hearing's item is 7 or fewer away, red when it is on.
+            const number = (value) => {
+                const match = String(value || '').match(/\d+(?:\.\d+)?/);
+
+                return match ? parseFloat(match[0]) : null;
+            };
+            const left = item && number(chip.dataset.myItem) !== null && number(item) !== null ? number(chip.dataset.myItem) - number(item) : null;
+            chip.toggleAttribute('data-live-running', Boolean(item));
+            chip.toggleAttribute('data-near', left !== null && left > 0 && left <= 7);
+            chip.toggleAttribute('data-mine-now', left === 0);
+
+            // A short glow when the number moves on.
+            if (item && shown !== item) {
+                chip.classList.remove('vn-item-changed');
+                void chip.offsetWidth;
+                chip.classList.add('vn-item-changed');
+            }
+
             return;
         }
 
@@ -878,6 +898,18 @@ if (liveChips.length) {
         }
 
         chip.toggleAttribute('data-mine-now', isMineNow);
+        chip.toggleAttribute('data-live-running', room?.status === 'running' && !isMineNow);
+
+        if (room?.status === 'running' && chip.dataset.lastItem !== room.item) {
+            if (chip.dataset.lastItem) {
+                chip.classList.remove('vn-item-changed');
+                void chip.offsetWidth;
+                chip.classList.add('vn-item-changed');
+            }
+
+            chip.dataset.lastItem = room.item;
+        }
+
         chip.title = (room ? room.label + ': ' + text.textContent : 'Live display board')
             + (board.ok ? '' : ' (court site not answering, last known board)');
     };
@@ -905,7 +937,7 @@ if (liveChips.length) {
     };
 
     refreshChips();
-    setInterval(refreshChips, 30000);
+    setInterval(refreshChips, 10000);
     document.addEventListener('visibilitychange', refreshChips);
 }
 

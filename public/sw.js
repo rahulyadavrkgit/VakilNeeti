@@ -66,9 +66,15 @@ self.addEventListener('push', (event) => {
             alert = null;
         }
 
+        // A court alert pops up with sound and vibration, on the lock screen too, and stays until it is seen.
         await self.registration.showNotification(alert?.title || 'VakilNiti', {
             body: alert ? alert.body : 'You have a new alert. Tap to open.',
             tag: alert ? 'vn-' + alert.id : 'vn-alert',
+            renotify: true,
+            requireInteraction: true,
+            silent: false,
+            vibrate: [200, 100, 200, 100, 300],
+            timestamp: Date.now(),
             icon: '/images/app-icon-192.png',
             badge: '/images/app-icon-192.png',
             data: { url: alert?.url || '/notifications' },

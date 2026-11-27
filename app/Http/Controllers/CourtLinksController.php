@@ -588,6 +588,6 @@ class CourtLinksController extends Controller
      */
     public function liveBoardData(string $court, LiveCourtBoard $boards): JsonResponse
     {
-        return response()->json($boards->board($court))->header('Cache-Control', 'public, max-age=20');
+        return response()->json($boards->board($court))->header('Cache-Control', 'public, max-age=3');
     }
 }

@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
  */
 class LiveCourtBoard
 {
-    private const FRESH_SECONDS = 10;
+    private const FRESH_SECONDS = 5;
 
     private const USABLE_SECONDS = 300;
 
@@ -68,26 +68,59 @@ class LiveCourtBoard
             return null;
         }
 
-        // Fresh for 10 seconds; after that the copy is still served at once while a new one is fetched
-        // after the response has gone, so no visitor waits for the court (up to 5 minutes old).
-        $board = Cache::flexible("live-board:{$court}", [self::FRESH_SECONDS, self::USABLE_SECONDS], function () use ($court): array {
-            // After a failure, wait before asking again so no visitor sits through the court's timeout.
-            $rooms = Cache::has("live-board-down:{$court}") ? null : $this->fetch($court);
+        // The court's board is at most a few seconds old: a copy is kept for FRESH_SECONDS, then whoever asks next
+        // fetches it from the court (one fetch at a time; everyone else meanwhile gets the copy, at most 5 minutes old).
+        $board = Cache::get("live-board:{$court}");
 
-            if ($rooms !== null) {
-                $fresh = ['ok' => true, 'updated_at' => now()->toIso8601String(), 'rooms' => $rooms];
-                Cache::put("live-board-last:{$court}", $fresh, now()->addDay());
+        if (! $board || now()->getTimestamp() - ($board['fetched'] ?? 0) >= self::FRESH_SECONDS) {
+            $lock = Cache::lock("live-board-fetch:{$court}", 20);
 
-                return $fresh;
+            if ($lock->get()) {
+                try {
+                    $board = $this->fresh($court);
+                    Cache::put("live-board:{$court}", $board + ['fetched' => now()->getTimestamp()], self::USABLE_SECONDS);
+                } finally {
+                    $lock->release();
+                }
             }
+        }
 
-            Cache::add("live-board-down:{$court}", true, now()->addMinutes(self::RETRY_MINUTES));
-            $last = Cache::get("live-board-last:{$court}");
-
-            return ['ok' => false, 'updated_at' => $last['updated_at'] ?? null, 'rooms' => $last['rooms'] ?? []];
-        });
+        $board ??= $this->lastKnown($court);
+        unset($board['fetched']);
 
         return ['court' => $court] + self::COURTS[$court] + $board;
+    }
+
+    /**
+     * The court's board now, or the last good copy marked as not current when the court does not answer.
+     *
+     * @return array{ok: bool, updated_at: ?string, rooms: list<array<string, mixed>>}
+     */
+    private function fresh(string $court): array
+    {
+        // After a failure, wait before asking again so no visitor sits through the court's timeout.
+        $rooms = Cache::has("live-board-down:{$court}") ? null : $this->fetch($court);
+
+        if ($rooms !== null) {
+            $fresh = ['ok' => true, 'updated_at' => now()->toIso8601String(), 'rooms' => $rooms];
+            Cache::put("live-board-last:{$court}", $fresh, now()->addDay());
+
+            return $fresh;
+        }
+
+        Cache::add("live-board-down:{$court}", true, now()->addMinutes(self::RETRY_MINUTES));
+
+        return $this->lastKnown($court);
+    }
+
+    /**
+     * @return array{ok: bool, updated_at: ?string, rooms: list<array<string, mixed>>}
+     */
+    private function lastKnown(string $court): array
+    {
+        $last = Cache::get("live-board-last:{$court}");
+
+        return ['ok' => false, 'updated_at' => $last['updated_at'] ?? null, 'rooms' => $last['rooms'] ?? []];
     }
 
     /**
