@@ -6,6 +6,10 @@ import './court-picker.js';
 import './push.js';
 
 // Large page-specific modules are only downloaded on the pages that use them.
+if (document.querySelector('[data-pdf-viewer]')) {
+    import('./pdf-viewer.js');
+}
+
 if (document.getElementById('vn-pdf-annotator')) {
     import('./pdf-annotator.js');
 }

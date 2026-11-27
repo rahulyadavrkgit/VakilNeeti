@@ -6,6 +6,7 @@ use App\Http\Controllers\CourtLinksController;
 use App\Models\BarAssociation;
 use App\Models\BarCouncil;
 use App\Models\CourtBench;
+use App\Services\DistrictCourtDocuments;
 use Database\Seeders\BarCouncilAndAssociationSeeder;
 use Database\Seeders\CourtCatalogueSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -56,27 +57,34 @@ class CourtLinksControllerTest extends TestCase
             ->assertSee('https://wdb.sci.gov.in/display_original.php', false);
     }
 
-    public function test_each_delhi_district_has_the_six_buttons_on_its_own_website(): void
+    public function test_each_delhi_district_has_its_services_and_rosters_open_inside_vakilniti(): void
     {
-        $response = $this->get(route('courts.delhi-district-courts'))->assertOk()->assertSee('E-Courts Filing Portal');
+        $response = $this->get(route('courts.delhi-district-courts'))->assertOk();
 
         foreach (CourtLinksController::DELHI_DISTRICT_COMPLEXES as $complex => $districts) {
-            $response->assertSee($complex);
+            $response->assertSee($complex)->assertSee('data-complex-panel="'.Str::slug($complex).'"', false);
 
             foreach ($districts as $district) {
+                $slug = Str::slug($district['district']);
                 $response->assertSee($district['district'])
-                    ->assertSee(route('courts.delhi-district-courts.judges', Str::slug($district['district'])), false)
+                    ->assertSee(route('courts.delhi-district-courts.judges', $slug), false)
                     ->assertSee('href="'.$district['url'].'judges-on-leave/"', false)
-                    ->assertSee('href="'.$district['url'].'duty-magistrate/"', false)
+                    ->assertSee(route('courts.delhi-district-courts.document', [$slug, 'bail-roster']), false)
+                    ->assertSee(route('courts.delhi-district-courts.document', [$slug, 'duty-magistrate']), false)
                     ->assertSee('href="'.$district['url'].'case-status-search-by-case-number/"', false)
                     ->assertSee('href="'.$district['url'].'cause-list-%e2%81%84-daily-board/"', false);
             }
         }
 
-        // A bail roster page where the district keeps one; otherwise the district site's search for the latest roster.
-        $response->assertSee('href="https://rohini.dcourts.gov.in/document-category/bail-roster-link-roster/"', false)
-            ->assertSee('href="https://westdelhi.dcourts.gov.in/?s=bail+roster"', false)
-            ->assertSeeInOrder(['Judges List', 'Judges On Leave', 'Bail Roster', 'Duty Magistrate', 'Case Status / Order', 'Cause List']);
+        // One complex at a time: the first, unless another is asked for (as when coming back from a roster).
+        $response->assertSee('data-complex-pick="rohini" aria-pressed="true"', false)
+            ->assertSeeInOrder(['Judges, rooms &amp; VC links', 'On leave', 'Bail roster', 'Duty magistrate', 'Case status', 'Cause list', 'e-Filing'], false);
+        $this->get(route('courts.delhi-district-courts', ['complex' => 'saket']))->assertOk()
+            ->assertSee('data-complex-pick="saket" aria-pressed="true"', false);
+
+        // The court's own roster pages stay one tap away from each roster ("Older rosters on the court's site").
+        $this->assertSame('https://rohini.dcourts.gov.in/document-category/bail-roster-link-roster/', DistrictCourtDocuments::listPage(DistrictCourtDocuments::districts()['north-west'], 'bail-roster'));
+        $this->assertSame('https://westdelhi.dcourts.gov.in/?s=bail+roster', DistrictCourtDocuments::listPage(DistrictCourtDocuments::districts()['west'], 'bail-roster'));
     }
 
     public function test_district_page_counts_courts_and_finds_a_judge_or_room(): void
@@ -87,8 +95,8 @@ class CourtLinksControllerTest extends TestCase
 
         $this->get(route('courts.delhi-district-courts'))
             ->assertOk()
-            ->assertSeeInOrder(['Courts', '3', 'Districts', '11', 'Complexes', '7', 'Vacant', '1'])
-            ->assertSee('2 courts · 1 vacant');
+            ->assertSee('3 courts in 11 districts')
+            ->assertSeeInOrder(['>West</h2>', '>2</strong> courts', '>1</strong> vacant'], false);
 
         $this->get(route('courts.delhi-district-courts', ['q' => 'dutt']))
             ->assertOk()

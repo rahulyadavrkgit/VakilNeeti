@@ -1,0 +1,6 @@
+<!doctype html><html><body><script type="module">
+const w = new Worker('/zz-worker.mjs', { type: 'module' });
+w.onmessage = (e) => console.log('WORKER SAYS', e.data);
+w.onerror = (e) => console.log('WORKER ERROR', e.message);
+w.postMessage('ping');
+</script></body></html>

@@ -6,6 +6,7 @@ use App\Models\CourtBench;
 use App\Models\LegalCase;
 use App\Services\CalendarEventService;
 use App\Services\CourtBenchMatcher;
+use App\Services\DistrictCourtDocuments;
 use App\Services\HearingShareText;
 use App\Services\LiveCourtBoard;
 use App\Services\SupremeCourtBenches;
@@ -414,6 +415,46 @@ class CourtLinksController extends Controller
         'Cause list' => 'cause-list-%e2%81%84-daily-board/',
     ];
 
+    /**
+     * A district's latest bail roster or duty magistrate roster, open inside VakilNiti: the PDF itself, to read,
+     * share or download, with the way back to the district's complex.
+     */
+    public function districtDocument(string $district, string $document, DistrictCourtDocuments $documents): View
+    {
+        $info = DistrictCourtDocuments::districts()[$district] ?? abort(404);
+        $found = $documents->latest($district, $document);
+
+        return view('courts.district-document', [
+            'district' => $info,
+            'slug' => $district,
+            'kind' => $document,
+            'label' => DistrictCourtDocuments::KINDS[$document]['label'],
+            'found' => $found,
+            'listPage' => DistrictCourtDocuments::listPage($info, $document),
+            'backUrl' => route('courts.delhi-district-courts', ['complex' => Str::slug($info['complex'])]),
+        ]);
+    }
+
+    /**
+     * The document's PDF from VakilNiti's copy (the same address on any device, readable inside the page).
+     */
+    public function districtDocumentPdf(string $district, string $document, DistrictCourtDocuments $documents): StreamedResponse|RedirectResponse
+    {
+        abort_unless(isset(DistrictCourtDocuments::districts()[$district]), 404);
+        $found = $documents->latest($district, $document) ?? abort(404);
+        $path = $documents->pdfPath($district, $document, $found);
+
+        // Copying failed: the court's own file instead.
+        if (! $path) {
+            return redirect()->away($found['url']);
+        }
+
+        return Storage::disk('local')->response($path, Str::slug(DistrictCourtDocuments::KINDS[$document]['label'].' '.$district).'.pdf', [
+            'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'private, max-age=3600',
+        ], 'inline');
+    }
+
     public function delhiDistrictCourts(Request $request): View
     {
         $benches = CourtBench::query()->where('court_key', 'like', 'delhi-district-%')->get();
@@ -446,7 +487,38 @@ class CourtLinksController extends Controller
             'query' => $query,
             'results' => $results,
             'districtNames' => collect(self::DELHI_DISTRICT_COMPLEXES)->flatten(1)->mapWithKeys(fn (array $district): array => ['delhi-district-'.Str::slug($district['district']) => $district['district']]),
+            'matters' => $matters = $this->districtMatters($request),
+            // The complex asked for (back from a roster), else the one with most of your matters this week, else the first.
+            'selectedComplex' => collect(array_keys(self::DELHI_DISTRICT_COMPLEXES))->map(fn (string $complex): string => Str::slug($complex))
+                ->first(fn (string $slug): bool => $slug === $request->query('complex'))
+                ?? $matters->sortByDesc(fn ($list) => $list->count())->keys()->first()
+                ?? Str::slug(array_key_first(self::DELHI_DISTRICT_COMPLEXES)),
         ]);
+    }
+
+    /**
+     * The signed-in workspace's hearings in the next seven days in Delhi district courts, by complex.
+     *
+     * @return Collection<string, Collection<int, array<string, mixed>>>
+     */
+    private function districtMatters(Request $request): Collection
+    {
+        if (! $request->user()) {
+            return collect();
+        }
+
+        $districts = DistrictCourtDocuments::districts();
+        $matcher = app(CourtBenchMatcher::class);
+
+        return app(CalendarEventService::class)->between(today(), today()->addDays(7), ['groups' => ['hearing']])
+            ->map(function (array $event) use ($districts, $matcher): ?array {
+                $key = $matcher->courtKeyFor($event['court'] ?? null, $event['court_complex'] ?? null);
+                $district = $key ? ($districts[Str::after($key, 'delhi-district-')] ?? null) : null;
+
+                return $district ? $event + ['district' => $district['district'], 'complex_slug' => Str::slug($district['complex']), 'facts' => HearingShareText::fromEvent($event)] : null;
+            })
+            ->filter()
+            ->groupBy('complex_slug');
     }
 
     public function supremeCourtList(): View

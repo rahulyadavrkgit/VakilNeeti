@@ -1,10 +1,17 @@
 {
+  "_pdf.worker.min-j_SyasRA.js": {
+    "file": "assets/pdf.worker.min-j_SyasRA.js",
+    "name": "pdf.worker.min",
+    "assets": [
+      "assets/pdf.worker.min-CIqJB0yW.mjs"
+    ]
+  },
   "node_modules/pdfjs-dist/build/pdf.worker.min.mjs": {
     "file": "assets/pdf.worker.min-CIqJB0yW.mjs",
     "src": "node_modules/pdfjs-dist/build/pdf.worker.min.mjs"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CRkCqjJu.css",
+    "file": "assets/app-D4udElRs.css",
     "name": "app",
     "names": [
       "app.css"
@@ -13,11 +20,12 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-I3zVUiZ9.js",
+    "file": "assets/app-Cylqld6-.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
+      "resources/js/pdf-viewer.js",
       "resources/js/pdf-annotator.js",
       "resources/js/invoice-editor.js",
       "resources/js/event-peek.js"
@@ -36,12 +44,21 @@
     "isDynamicEntry": true
   },
   "resources/js/pdf-annotator.js": {
-    "file": "assets/pdf-annotator-BsXqo0tH.js",
+    "file": "assets/pdf-annotator-dfUqFj6T.js",
     "name": "pdf-annotator",
     "src": "resources/js/pdf-annotator.js",
     "isDynamicEntry": true,
-    "assets": [
-      "assets/pdf.worker.min-CIqJB0yW.mjs"
+    "imports": [
+      "_pdf.worker.min-j_SyasRA.js"
+    ]
+  },
+  "resources/js/pdf-viewer.js": {
+    "file": "assets/pdf-viewer-BOQ-0xwL.js",
+    "name": "pdf-viewer",
+    "src": "resources/js/pdf-viewer.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_pdf.worker.min-j_SyasRA.js"
     ]
   }
 }

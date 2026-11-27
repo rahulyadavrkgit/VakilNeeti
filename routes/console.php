@@ -70,6 +70,9 @@ Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping()
 // (Alerts and push). Only the boards of courts with matters today are read.
 Schedule::command('courts:board-live-alerts')->everyMinute()->days([1, 2, 3, 4, 5, 6])->between('9:30', '17:30')->withoutOverlapping(5);
 
+// The latest bail roster and duty magistrate roster of each Delhi district, morning and evening (opened inside VakilNiti).
+Schedule::command('courts:district-documents')->twiceDailyAt(6, 18, 30)->withoutOverlapping(30);
+
 // Who sits in each Supreme Court room, today and tomorrow (the court's list comes out the evening before).
 Schedule::command('courts:supreme-court-benches')->cron('40 7,20,22 * * *')->withoutOverlapping(30);
 

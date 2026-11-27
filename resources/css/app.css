@@ -652,8 +652,8 @@ body.vn-embed { padding-bottom: 0 !important; }
 }
 [data-live-chip][data-live-item-only][data-near] { background-color: #fed7aa; color: #7c2d12; }
 [data-live-chip][data-live-item-only][data-mine-now] { background-color: #dc2626; color: #fff; }
-.dark [data-live-chip][data-live-item-only][data-live-running] { background-color: rgb(245 158 11 / 0.22); color: #fde68a; }
-.dark [data-live-chip][data-live-item-only][data-near] { background-color: rgb(249 115 22 / 0.3); color: #fed7aa; }
+.dark [data-live-chip][data-live-item-only][data-live-running] { background-color: rgb(245 158 11 / 0.38); color: #fef3c7; }
+.dark [data-live-chip][data-live-item-only][data-near] { background-color: rgb(249 115 22 / 0.5); color: #fff7ed; }
 .vn-item-changed { animation: vn-item-glow 1.4s ease-out 2; }
 [data-live-chip][data-live-current] [data-live-chip-text],
 [data-item][data-live-current] { animation: vn-live-item-pulse 4s ease-in-out infinite; }

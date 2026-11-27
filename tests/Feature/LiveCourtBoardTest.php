@@ -123,6 +123,29 @@ class LiveCourtBoardTest extends TestCase
         Http::assertSentCount(3);
     }
 
+    public function test_a_hearing_card_arrives_with_the_current_item_and_its_colour_without_asking_the_court(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $case = LegalCase::create(['case_title' => 'Near vs Item', 'case_number' => 'RSA/141/2026', 'court_name' => 'High Court of Delhi', 'court_room' => '23', 'case_status' => 'pending']);
+        CourtHearing::create(['case_id' => $case->id, 'hearing_date' => '2026-03-10', 'item_number' => '66']);
+        $copy = fn (string $item, string $updated): array => ['ok' => true, 'updated_at' => $updated, 'fetched' => now()->getTimestamp(),
+            'rooms' => [['room' => '23', 'label' => 'Court 23', 'status' => 'running', 'item' => $item, 'case_number' => null, 'parties' => null, 'message' => null]]];
+
+        // The server's latest copy (kept fresh by the minute check) fills in item A61, five from item 66: orange at once.
+        Cache::put('live-board:delhi-high-court', $copy('A61', now()->subSeconds(20)->toIso8601String()), 300);
+        $this->get(route('dashboard'))->assertOk()
+            ->assertSee('data-live-running data-live-current', false)
+            ->assertSee('data-near', false)
+            ->assertSee('<span data-live-chip-text>A61</span>', false);
+        Http::assertNothingSent();
+
+        // A copy older than two minutes is not shown as current: the script fills it in.
+        Cache::put('live-board:delhi-high-court', $copy('A61', now()->subMinutes(5)->toIso8601String()), 300);
+        $this->get(route('dashboard'))->assertOk()
+            ->assertSee('<span data-live-chip-text>*</span>', false)
+            ->assertDontSee('data-near', false);
+    }
+
     public function test_court_rooms_are_matched_to_board_rooms(): void
     {
         $this->assertSame('delhi-high-court', LiveCourtBoard::boardFor('High Court of Delhi'));

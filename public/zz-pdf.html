@@ -1,0 +1,10 @@
+<!doctype html><html><body>
+<section data-pdf-viewer data-src="/courts/delhi-district-courts/south/bail-roster/pdf"><p data-pdf-status>Opening</p><div data-pdf-pages style="width:600px"></div><p data-pdf-failed hidden>FAILED</p></section>
+<script type="module">
+window.addEventListener('error', (e) => console.log('ERR', e.message));
+window.addEventListener('unhandledrejection', (e) => console.log('REJ', String(e.reason)));
+const lib = await import('/build/assets/pdf.worker.min-j_SyasRA.js').catch((e) => console.log('IMPORT FAIL', String(e)));
+console.log('lib keys', lib ? Object.keys(lib).slice(0, 8).join(',') : 'none');
+await import('/build/assets/pdf-viewer-BOQ-0xwL.js').catch((e) => console.log('VIEWER FAIL', String(e)));
+setTimeout(() => console.log('status hidden?', document.querySelector('[data-pdf-status]').hidden, 'canvases', document.querySelectorAll('canvas').length, 'failed', !document.querySelector('[data-pdf-failed]').hidden), 6000);
+</script></body></html>

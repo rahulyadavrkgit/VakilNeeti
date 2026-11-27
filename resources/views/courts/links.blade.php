@@ -30,25 +30,31 @@
         </form>
     @endif
 
-    <nav class="grid gap-3 sm:grid-cols-2" aria-label="{{ $heading }} services">
-        @foreach($links as $link)
-            <a href="{{ $link['url'] }}" rel="noopener noreferrer"
-               class="group flex items-center gap-4 rounded-2xl bg-[#142235] px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#16776e] hover:shadow-md focus-visible:outline-offset-4">
-                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#8ed2c8] group-hover:text-white">
-                    <x-icon :name="$link['icon']" :size="24" />
-                </span>
-                <span class="min-w-0 flex-1">
-                    <span class="block text-base font-bold uppercase tracking-wide">{{ $link['title'] }}</span>
-                    <span class="mt-0.5 block text-sm text-white/75 group-hover:text-white/90">{{ $link['description'] }}</span>
-                </span>
-                @if($link['internal'] ?? false)
-                    <x-icon name="chevron" :size="18" class="-rotate-90 text-white/60 group-hover:text-white" />
-                @else
-                    <x-icon name="external" :size="18" class="text-white/60 group-hover:text-white" />
-                @endif
-            </a>
-        @endforeach
-    </nav>
+    {{-- Simple outlined cards, in two groups: what opens in VakilNiti, then the court's own website. --}}
+    @foreach(collect($links)->groupBy(fn (array $link): string => ($link['internal'] ?? false) ? 'In VakilNiti' : 'On the court\'s website') as $group => $groupLinks)
+        <section class="space-y-2">
+            <h2 class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ $group }}</h2>
+            <nav class="grid gap-2 sm:grid-cols-2" aria-label="{{ $heading }} · {{ $group }}">
+                @foreach($groupLinks as $link)
+                    <a href="{{ $link['url'] }}" rel="noopener noreferrer"
+                       class="group flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-teal-400 focus-visible:border-teal-500">
+                        <span class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[#16776e]">
+                            <x-icon :name="$link['icon']" :size="20" />
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block font-semibold text-slate-900 group-hover:text-[#16776e]">{{ $link['title'] }}</span>
+                            <span class="block text-sm text-slate-600">{{ $link['description'] }}</span>
+                        </span>
+                        @if($link['internal'] ?? false)
+                            <x-icon name="chevron" :size="18" class="shrink-0 -rotate-90 text-slate-400 group-hover:text-[#16776e]" />
+                        @else
+                            <x-icon name="external" :size="16" class="shrink-0 text-slate-400 group-hover:text-[#16776e]" />
+                        @endif
+                    </a>
+                @endforeach
+            </nav>
+        </section>
+    @endforeach
 
     <p class="text-xs text-slate-500">Links go to {{ $source }}.</p>
 </div>

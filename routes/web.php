@@ -537,6 +537,12 @@ Route::prefix('courts')->name('courts.')->controller(CourtLinksController::class
     Route::get('/supreme-court/court-list', 'supremeCourtList')->name('supreme-court.court-list');
     Route::get('/supreme-court/cause-list/{court}', 'supremeCourtCauseList')->where('court', '[1-9]|1[0-7]')->name('supreme-court.cause-list');
     Route::get('/delhi-high-court/judges', 'delhiHighCourtJudges')->name('delhi-high-court.judges');
+    Route::get('/delhi-district-courts/{district}/{document}', 'districtDocument')
+        ->where(['district' => '[a-z-]+', 'document' => 'bail-roster|duty-magistrate'])
+        ->name('delhi-district-courts.document');
+    Route::get('/delhi-district-courts/{district}/{document}/pdf', 'districtDocumentPdf')
+        ->where(['district' => '[a-z-]+', 'document' => 'bail-roster|duty-magistrate'])
+        ->name('delhi-district-courts.document.pdf');
     Route::get('/delhi-district-courts/{district}/judges', 'delhiDistrictJudges')
         ->where('district', '[a-z-]+')
         ->name('delhi-district-courts.judges');

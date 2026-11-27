@@ -9,6 +9,18 @@
         ? \App\Services\LiveCourtBoard::roomKey($board, $room)
         : null;
     $value = 'wrap-anywhere font-semibold tabular-nums text-slate-900';
+
+    // The page arrives with the court's item and its colour already in place, from the server's latest copy of the
+    // board (kept fresh in court hours; the court is not asked while the page loads). The script then keeps it current.
+    $now = null;
+    if ($liveRoom) {
+        $latest = app(\App\Services\LiveCourtBoard::class)->board($board, refresh: false);
+        $fresh = ($latest['ok'] ?? false) && filled($latest['updated_at'] ?? null) && \Illuminate\Support\Carbon::parse($latest['updated_at'])->gt(now()->subMinutes(2));
+        $running = $fresh ? collect($latest['rooms'] ?? [])->first(fn (array $entry): bool => ($entry['room'] ?? null) === $liveRoom && ($entry['status'] ?? null) === 'running') : null;
+        $now = filled($running['item'] ?? null) ? (string) $running['item'] : null;
+    }
+    $number = fn (?string $text): ?float => $text !== null && preg_match('/\d+(?:\.\d+)?/', $text, $match) ? (float) $match[0] : null;
+    $left = $now !== null && $number($item) !== null && $number($now) !== null ? $number($item) - $number($now) : null;
 @endphp
 
 <dl {{ $attributes->class(['flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-slate-600']) }} data-high-court-listing>
@@ -26,7 +38,8 @@
             @if($liveRoom)
                 <a href="{{ route('courts.live-board', [$board, 'room' => $room]) }}" data-sheet-frame data-live-chip data-live-item-only
                    data-source="{{ route('courts.live-board.data', $board) }}" data-room="{{ $liveRoom }}" data-case-number="{{ $caseNumber }}" data-my-item="{{ $item }}"
-                   title="Open the live board for Court {{ $roomNumber }}" class="vn-link"><span data-live-chip-text>*</span></a>
+                   @if($now) data-live-running data-live-current @endif @if($left !== null && $left > 0 && $left <= 7) data-near @endif @if($left === 0.0) data-mine-now @endif
+                   title="Open the live board for Court {{ $roomNumber }}" class="vn-link"><span data-live-chip-text>{{ $now ?? '*' }}</span></a>
             @else
                 *
             @endif
