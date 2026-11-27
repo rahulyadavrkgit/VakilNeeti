@@ -64,6 +64,10 @@ Schedule::command('courts:judge-photos')->weeklyOn(0, '05:00')->withoutOverlappi
 // A compressed database copy every night, kept for 14 days (storage/app/backups).
 Schedule::command('app:backup-database')->dailyAt('02:30')->withoutOverlapping();
 
+// Court hours: when the display board of a room where someone has a matter today goes live, they get one alert
+// (Alerts and push). Only the boards of courts with matters today are read.
+Schedule::command('courts:board-live-alerts')->everyMinute()->days([1, 2, 3, 4, 5, 6])->between('9:30', '17:30')->withoutOverlapping(5);
+
 // Who sits in each Supreme Court room, today and tomorrow (the court's list comes out the evening before).
 Schedule::command('courts:supreme-court-benches')->cron('40 7,20,22 * * *')->withoutOverlapping(30);
 

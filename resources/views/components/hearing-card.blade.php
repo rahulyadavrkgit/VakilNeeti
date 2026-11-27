@@ -77,7 +77,8 @@
             </div>
         @endif
         <div class="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-            @if($vcLink)<x-vc-buttons :link="$vcLink" class="relative z-10 max-w-full flex-wrap" />@endif
+            {{-- Always in the same place on every card; greyed out when the court has no VC link. --}}
+            <x-vc-buttons :link="$vcLink" class="relative z-10 max-w-full flex-wrap" />
             <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" data-direct-share
                data-share-text="{{ $shareText }}" data-share-title="{{ $event['title'] }}" title="Share this hearing" aria-label="Share {{ $event['title'] }}"
                class="vn-link relative z-10 ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-md px-1.5 text-xs font-semibold">

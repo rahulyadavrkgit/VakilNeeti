@@ -61,7 +61,9 @@ class HomeDashboardTest extends TestCase
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSeeInOrder(['Prahlad vs Sanjay', 'Saket Courts', 'Ms. Niti Phutela', 'Petitioner', '304, Main court building'])
-            ->assertSeeInOrder(['Sh. Dheeraj Mor', '505']);
+            ->assertSeeInOrder(['Sh. Dheeraj Mor', '505'])
+            // No VC link for this court: Join VC and Copy VC link stay in their place, greyed out.
+            ->assertSeeInOrder(['Prahlad vs Sanjay', 'title="No VC link for this court yet"', 'Join VC', 'title="No VC link for this court yet"', 'Copy VC link'], false);
     }
 
     public function test_home_groups_hearings_by_date_and_keeps_todays_hearings_together(): void
